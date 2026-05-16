@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  listBerichte, deleteBericht, updateBericht, sendBericht, getBericht,
+  listBerichte, deleteBericht, updateBericht, sendBericht, getBericht, getRohrserviceConfig,
 } from "@/lib/rohrservice.functions";
 import { buildRohrservicePdf } from "@/lib/rohrservice-pdf";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,12 @@ function Nachbearbeitung() {
   const listFn = useServerFn(listBerichte);
   const delFn = useServerFn(deleteBericht);
   const sendFn = useServerFn(sendBericht);
+  const cfgFn = useServerFn(getRohrserviceConfig);
   const { data: settings } = useAppSettings();
 
   const { data } = useQuery({ queryKey: ["rs-berichte"], queryFn: () => listFn() });
+  const { data: cfg } = useQuery({ queryKey: ["rs-config"], queryFn: () => cfgFn() });
+  const variante = (cfg?.variante ?? "standard") as "standard" | "budeko";
   const berichte = (data?.berichte ?? []) as any[];
 
   const [editId, setEditId] = useState<string | null>(null);
@@ -49,7 +52,7 @@ function Nachbearbeitung() {
   });
 
   async function handleSend(b: any, email: string) {
-    const doc = buildRohrservicePdf(b, settings?.firmenname ?? "Rohrservice");
+    const doc = buildRohrservicePdf(b, settings?.firmenname ?? "Rohrservice", variante);
     const ab = doc.output("arraybuffer");
     const b64 = btoa(String.fromCharCode(...new Uint8Array(ab as ArrayBuffer)));
     await sendFn({
@@ -122,7 +125,7 @@ function Nachbearbeitung() {
         </table>
       </div>
 
-      {editId && <EditDialog id={editId} onClose={() => setEditId(null)} />}
+      {editId && <EditDialog id={editId} variante={variante} onClose={() => setEditId(null)} />}
       {sendId && (
         <SendDialog
           bericht={berichte.find((b) => b.id === sendId)}
@@ -168,7 +171,8 @@ function SendDialog({
   );
 }
 
-const FIELDS: Array<[string, string, "text" | "textarea" | "datetime-local"]> = [
+type FieldDef = [string, string, "text" | "textarea" | "datetime-local"];
+const FIELDS_STANDARD: FieldDef[] = [
   ["anrufer_name", "Anrufer Name", "text"],
   ["anrufer_telefon", "Anrufer Telefon", "text"],
   ["anrufer_adresse", "Anrufer Adresse", "text"],
@@ -188,6 +192,21 @@ const FIELDS: Array<[string, string, "text" | "textarea" | "datetime-local"]> = 
   ["monteur_rueckmeldung", "Monteur Rückmeldung", "text"],
   ["diensthabender_alarmzentrale", "Diensthabender Alarmzentrale", "text"],
 ];
+const FIELDS_BUDEKO: FieldDef[] = [
+  ["anrufer_name", "Anrufer Name", "text"],
+  ["anrufer_telefon", "Anrufer Telefon", "text"],
+  ["anrufer_adresse", "Anrufer Adresse", "text"],
+  ["anrufer_firma", "Anrufer Firma", "text"],
+  ["mieter_name", "Objekt/Mieter Name", "text"],
+  ["mieter_telefon", "Telefon", "text"],
+  ["mieter_strasse", "Straße/Hausnummer", "text"],
+  ["mieter_ort", "Ort", "text"],
+  ["stoerungsart", "Störungsart", "textarea"],
+  ["zeit_kundenanruf", "Kundenanruf", "datetime-local"],
+  ["zeit_weitergabe", "Weitergabe", "datetime-local"],
+  ["monteur_weitergabe", "Name der Bereitschaft", "text"],
+  ["diensthabender_alarmzentrale", "Diensthabender Alarmzentrale", "text"],
+];
 
 function toLocalInput(iso?: string | null) {
   if (!iso) return "";
@@ -195,7 +214,8 @@ function toLocalInput(iso?: string | null) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function EditDialog({ id, onClose }: { id: string; onClose: () => void }) {
+function EditDialog({ id, variante, onClose }: { id: string; variante: "standard" | "budeko"; onClose: () => void }) {
+  const FIELDS = variante === "budeko" ? FIELDS_BUDEKO : FIELDS_STANDARD;
   const qc = useQueryClient();
   const getFn = useServerFn(getBericht);
   const updFn = useServerFn(updateBericht);

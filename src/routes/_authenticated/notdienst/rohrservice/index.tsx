@@ -1,14 +1,21 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { FileText, Wrench, Phone, StickyNote, Plus, Trash2 } from "lucide-react";
+import {
+  FileText, Wrench, Phone, StickyNote, Plus, Trash2, Pencil,
+  Bold, Italic, Underline as UnderlineIcon, Link2, Paperclip, Download,
+} from "lucide-react";
 import {
   getCurrentNotdienst,
   listNotdienst,
   listMitarbeiter,
   upsertNotdienst,
   deleteNotdienst,
+  getRohrserviceConfig,
+  updateRohrserviceConfig,
+  uploadNotizDatei,
+  deleteNotizDatei,
 } from "@/lib/rohrservice.functions";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +27,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useRole } from "@/hooks/use-role";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/notdienst/rohrservice/")({
   component: Dashboard,
@@ -41,13 +50,19 @@ function toLocalInput(iso?: string | null) {
 
 function Dashboard() {
   const currentFn = useServerFn(getCurrentNotdienst);
+  const cfgFn = useServerFn(getRohrserviceConfig);
   const { data: current } = useQuery({
     queryKey: ["rs-notdienst-current"],
     queryFn: () => currentFn(),
     refetchInterval: 60_000,
   });
+  const { data: cfg } = useQuery({
+    queryKey: ["rs-config"],
+    queryFn: () => cfgFn(),
+  });
 
   const aktiv = current?.eintrag as any;
+  const isBudeko = cfg?.variante === "budeko";
 
   return (
     <div className="grid sm:grid-cols-2 gap-4">
@@ -89,17 +104,221 @@ function Dashboard() {
         tone="warning"
         title="Notizen"
         desc={
-          <div className="text-sm space-y-2">
-            <div className="inline-flex px-2 py-0.5 rounded-full bg-destructive/15 text-destructive text-xs font-medium">
-              Achtung
-            </div>
-            <div className="text-foreground">
-              Es wird erst der Bericht versendet, wenn wir die <b>Endzeit</b> haben.
-            </div>
-          </div>
+          <NotizContent
+            html={cfg?.notiz ?? null}
+            dateien={(cfg?.dateien ?? []) as any[]}
+            isBudeko={isBudeko}
+          />
         }
+        cta={<NotizDialog cfg={cfg} />}
       />
     </div>
+  );
+}
+
+function NotizContent({
+  html, dateien, isBudeko,
+}: { html: string | null; dateien: any[]; isBudeko: boolean }) {
+  return (
+    <div className="space-y-3">
+      {html ? (
+        <div
+          className="text-sm prose-sm max-w-none [&_a]:text-primary [&_a]:underline whitespace-pre-wrap"
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
+      ) : (
+        <span className="text-sm text-muted-foreground">Noch keine Notiz hinterlegt.</span>
+      )}
+      {isBudeko && dateien.length > 0 && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {dateien.map((d) => {
+            const url = supabase.storage.from("rohrservice-notizen").getPublicUrl(d.storage_path).data.publicUrl;
+            return (
+              <a
+                key={d.id}
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border bg-muted hover:bg-accent transition-colors"
+              >
+                <Download className="size-3" /> {d.label}
+              </a>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NotizDialog({ cfg }: { cfg: any }) {
+  const { isAdmin } = useRole();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [variante, setVariante] = useState<"standard" | "budeko">(cfg?.variante ?? "standard");
+  const updFn = useServerFn(updateRohrserviceConfig);
+  const upFn = useServerFn(uploadNotizDatei);
+  const delFn = useServerFn(deleteNotizDatei);
+
+  useEffect(() => {
+    if (open) {
+      setVariante(cfg?.variante ?? "standard");
+      if (editorRef.current) editorRef.current.innerHTML = cfg?.notiz ?? "";
+    }
+  }, [open, cfg]);
+
+  const isBudeko = variante === "budeko";
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const html = editorRef.current?.innerHTML ?? "";
+      return updFn({ data: { variante, notiz: html } });
+    },
+    onSuccess: () => {
+      toast.success("Notiz gespeichert");
+      qc.invalidateQueries({ queryKey: ["rs-config"] });
+      setOpen(false);
+    },
+    onError: (e: any) => toast.error(e.message ?? "Fehler"),
+  });
+
+  const upload = useMutation({
+    mutationFn: async (file: File) => {
+      const buf = await file.arrayBuffer();
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+      return upFn({
+        data: {
+          label: file.name.replace(/\.[^.]+$/, ""),
+          filename: file.name,
+          mime_type: file.type || null,
+          file_base64: b64,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success("Datei hochgeladen");
+      qc.invalidateQueries({ queryKey: ["rs-config"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Upload fehlgeschlagen"),
+  });
+
+  const del = useMutation({
+    mutationFn: (id: string) => delFn({ data: { id } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["rs-config"] }),
+  });
+
+  if (!isAdmin) return null;
+
+  const exec = (cmd: string, arg?: string) => {
+    editorRef.current?.focus();
+    document.execCommand(cmd, false, arg);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="secondary"><Pencil className="size-4 mr-1.5" /> Notiz bearbeiten</Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><StickyNote className="size-4" /> Notiz & Konfiguration</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Bericht-Variante</Label>
+            <Select value={variante} onValueChange={(v: any) => setVariante(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="budeko">Budeko (ohne Rechnungsempfänger / Rückmeldung)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Notiz-Text</Label>
+            <div className="rounded-lg border border-border bg-background">
+              <div className="flex items-center gap-1 border-b border-border px-2 py-1.5">
+                <ToolbarBtn onClick={() => exec("bold")} title="Fett"><Bold className="size-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("italic")} title="Kursiv"><Italic className="size-3.5" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("underline")} title="Unterstrichen"><UnderlineIcon className="size-3.5" /></ToolbarBtn>
+                <div className="w-px h-5 bg-border mx-1" />
+                <ToolbarBtn onClick={() => exec("foreColor", "#dc2626")} title="Rot"><span className="size-3.5 rounded-full bg-destructive" /></ToolbarBtn>
+                <ToolbarBtn onClick={() => exec("foreColor", "inherit")} title="Standard"><span className="size-3.5 rounded-full border border-border" /></ToolbarBtn>
+                <div className="w-px h-5 bg-border mx-1" />
+                <ToolbarBtn
+                  onClick={() => {
+                    const url = prompt("Link-URL");
+                    if (url) exec("createLink", url);
+                  }}
+                  title="Link"
+                ><Link2 className="size-3.5" /></ToolbarBtn>
+              </div>
+              <div
+                ref={editorRef}
+                contentEditable
+                suppressContentEditableWarning
+                className="min-h-[140px] max-h-[300px] overflow-y-auto p-3 text-sm focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {isBudeko && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5"><Paperclip className="size-3.5" /> Datei-Anhänge</Label>
+              <div className="space-y-1.5">
+                {(cfg?.dateien ?? []).length === 0 && (
+                  <div className="text-xs text-muted-foreground">Keine Anhänge.</div>
+                )}
+                {(cfg?.dateien ?? []).map((d: any) => (
+                  <div key={d.id} className="flex items-center justify-between gap-2 text-sm border border-border rounded-md px-3 py-1.5">
+                    <span className="truncate">{d.label}</span>
+                    <Button size="sm" variant="ghost" onClick={() => del.mutate(d.id)}>
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) upload.mutate(f);
+                    e.target.value = "";
+                  }}
+                />
+                <Button asChild size="sm" variant="secondary" disabled={upload.isPending}>
+                  <span><Plus className="size-3.5 mr-1" /> {upload.isPending ? "Lade…" : "Datei hinzufügen"}</span>
+                </Button>
+              </label>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>Speichern</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ToolbarBtn({
+  onClick, title, children,
+}: { onClick: () => void; title: string; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      title={title}
+      className="size-7 grid place-items-center rounded hover:bg-accent text-muted-foreground hover:text-foreground"
+    >
+      {children}
+    </button>
   );
 }
 

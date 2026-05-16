@@ -4,6 +4,132 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
+// ---------- Notiz / Variante ----------
+
+export const getRohrserviceConfig = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { data } = await supabase
+      .from("app_settings")
+      .select("rohrservice_variante, rohrservice_notiz")
+      .eq("domain_id", domainId)
+      .maybeSingle();
+    const { data: files } = await supabase
+      .from("rohrservice_notiz_dateien")
+      .select("*")
+      .order("sort_order")
+      .order("created_at");
+    return {
+      variante: (data?.rohrservice_variante ?? "standard") as "standard" | "budeko",
+      notiz: (data?.rohrservice_notiz ?? null) as string | null,
+      dateien: (files ?? []) as any[],
+    };
+  });
+
+async function assertDomainAdmin(supabase: any, userId: string, domainId: string) {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("role,domain_id")
+    .eq("user_id", userId)
+    .in("role", ["admin", "superadmin"]);
+  const ok = (data ?? []).some(
+    (r: any) => r.role === "superadmin" || r.domain_id === domainId,
+  );
+  if (!ok) throw new Error("Nur Admins dürfen diese Einstellung ändern");
+}
+
+export const updateRohrserviceConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      variante: z.enum(["standard", "budeko"]).optional(),
+      notiz: z.string().max(20000).nullable().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertDomainAdmin(supabase, userId, domainId);
+
+    const patch: any = { domain_id: domainId, updated_by: userId };
+    if (data.variante !== undefined) patch.rohrservice_variante = data.variante;
+    if (data.notiz !== undefined) patch.rohrservice_notiz = data.notiz;
+
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(patch, { onConflict: "domain_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const uploadNotizSchema = z.object({
+  label: z.string().trim().min(1).max(200),
+  filename: z.string().min(1).max(200).regex(/^[A-Za-z0-9_\-. ]+$/),
+  mime_type: z.string().max(120).optional().nullable(),
+  file_base64: z.string().min(10).max(20_000_000),
+});
+
+export const uploadNotizDatei = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => uploadNotizSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertDomainAdmin(supabase, userId, domainId);
+
+    const safeName = data.filename.replace(/\s+/g, "_");
+    const path = `${domainId}/${Date.now()}_${safeName}`;
+    const buf = Buffer.from(data.file_base64, "base64");
+    const up = await supabaseAdmin.storage
+      .from("rohrservice-notizen")
+      .upload(path, buf, {
+        contentType: data.mime_type ?? "application/octet-stream",
+        upsert: false,
+      });
+    if (up.error) throw new Error("Upload fehlgeschlagen: " + up.error.message);
+
+    const { data: row, error } = await supabase
+      .from("rohrservice_notiz_dateien")
+      .insert({
+        domain_id: domainId,
+        label: data.label,
+        storage_path: path,
+        mime_type: data.mime_type ?? null,
+        size_bytes: buf.byteLength,
+        created_by: userId,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const deleteNotizDatei = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertDomainAdmin(supabase, userId, domainId);
+
+    const { data: row } = await supabase
+      .from("rohrservice_notiz_dateien")
+      .select("storage_path")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (row?.storage_path) {
+      await supabaseAdmin.storage.from("rohrservice-notizen").remove([row.storage_path]);
+    }
+    const { error } = await supabase
+      .from("rohrservice_notiz_dateien")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 // ---------- Mitarbeiter ----------
 
 export const listMitarbeiter = createServerFn({ method: "GET" })

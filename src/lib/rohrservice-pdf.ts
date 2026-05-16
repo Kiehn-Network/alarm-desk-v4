@@ -14,7 +14,11 @@ const WEITERLEITUNG_LABEL: Record<string, string> = {
   mail_naechster_tag: "Nein, per Mail am nächsten Werktag",
 };
 
-export function buildRohrservicePdf(b: any, firmenname: string) {
+export function buildRohrservicePdf(
+  b: any,
+  firmenname: string,
+  variante: "standard" | "budeko" = "standard",
+) {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
@@ -68,13 +72,15 @@ export function buildRohrservicePdf(b: any, firmenname: string) {
   kv("Firma", b.anrufer_firma);
   sep();
 
-  line("Rechnungsempfänger", { size: 11, bold: true });
-  kv("Name", b.rechnung_name);
-  kv("Adresse", b.rechnung_adresse);
-  kv("Telefon", b.rechnung_telefon);
-  sep();
+  if (variante === "standard") {
+    line("Rechnungsempfänger", { size: 11, bold: true });
+    kv("Name", b.rechnung_name);
+    kv("Adresse", b.rechnung_adresse);
+    kv("Telefon", b.rechnung_telefon);
+    sep();
+  }
 
-  line("Mieter / Standort", { size: 11, bold: true });
+  line(variante === "budeko" ? "Objekt / Mieter" : "Mieter / Standort", { size: 11, bold: true });
   kv("Name", b.mieter_name);
   kv("Telefon", b.mieter_telefon);
   kv("Straße/Hausnummer", b.mieter_strasse);
@@ -92,9 +98,14 @@ export function buildRohrservicePdf(b: any, firmenname: string) {
   line("Zeitangaben", { size: 11, bold: true });
   kv("Datum des Kundenanrufes", fmt(b.zeit_kundenanruf));
   kv("Datum der Weitergabe an", fmt(b.zeit_weitergabe));
-  kv("Name des Monteurs (Weitergabe)", b.monteur_weitergabe);
-  kv("Datum der Rückmeldung von", fmt(b.zeit_rueckmeldung));
-  kv("Name des Monteurs (Rückmeldung)", b.monteur_rueckmeldung);
+  kv(
+    variante === "budeko" ? "Name der Bereitschaft" : "Name des Monteurs (Weitergabe)",
+    b.monteur_weitergabe,
+  );
+  if (variante === "standard") {
+    kv("Datum der Rückmeldung von", fmt(b.zeit_rueckmeldung));
+    kv("Name des Monteurs (Rückmeldung)", b.monteur_rueckmeldung);
+  }
   kv("Diensthabender Alarmzentrale", b.diensthabender_alarmzentrale);
 
   // Footer
