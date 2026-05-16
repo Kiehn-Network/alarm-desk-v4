@@ -43,10 +43,19 @@ const sections: Section[] = [
 
 export function SidebarContent({ displayName, onNavigate }: { displayName: string; onNavigate?: () => void }) {
   const { location } = useRouterState();
-  const { role } = useRole();
+  const { role, actualRole } = useRole();
   const { data: settings } = useAppSettings();
   const visibleSections = sections
-    .map((s) => ({ ...s, items: s.items.filter((i) => !i.roles || (role && i.roles.includes(role))) }))
+    .map((s) => ({
+      ...s,
+      items: s.items.filter((i) => {
+        if (!i.roles) return true;
+        // SuperAdmin-only items always check the actual role (not the
+        // impersonated effective role).
+        if (i.roles.includes("superadmin") && actualRole === "superadmin") return true;
+        return !!(role && i.roles.includes(role));
+      }),
+    }))
     .filter((s) => s.items.length > 0);
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
