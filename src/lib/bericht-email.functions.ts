@@ -44,19 +44,6 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
     }
     const downloadUrl = signed.data.signedUrl;
 
-    // Versand-Versuch via Lovable Email API
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    if (!LOVABLE_API_KEY) {
-      await supabaseAdmin.from("einsatz_email_log").insert({
-        einsatz_id: data.einsatz_id,
-        recipient_email: data.recipient_email,
-        status: "failed",
-        error_message: "LOVABLE_API_KEY fehlt",
-        sent_by: userId,
-      });
-      throw new Error("E-Mail-System ist nicht konfiguriert");
-    }
-
     const subject = `Einsatzbericht: ${einsatz.einsatzgrund}`;
     const html = `
       <div style="font-family:Arial,sans-serif;color:#222;max-width:600px;margin:auto;padding:24px">
@@ -74,25 +61,33 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
       </div>
     `;
 
-    // Direktversand via Lovable Email Gateway
+    // Enqueue via Lovable Email queue (transactional_emails pgmq queue)
+    const SENDER_DOMAIN = "notify.einsatz-bericht.de";
+    const FROM = `Einsatzbericht <bericht@${SENDER_DOMAIN}>`;
+    const messageId = crypto.randomUUID();
+    const idempotencyKey = `einsatz-bericht-${data.einsatz_id}-${Date.now()}`;
+
     let status: "sent" | "failed" = "sent";
     let errorMessage: string | null = null;
     try {
-      const resp = await fetch("https://email.lovable.app/v1/send", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        },
-        body: JSON.stringify({
+      const { error: enqErr } = await (supabaseAdmin as any).rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload: {
+          message_id: messageId,
           to: data.recipient_email,
+          from: FROM,
+          sender_domain: SENDER_DOMAIN,
           subject,
           html,
-        }),
+          purpose: "transactional",
+          label: "einsatz-bericht",
+          idempotency_key: idempotencyKey,
+          queued_at: new Date().toISOString(),
+        },
       });
-      if (!resp.ok) {
+      if (enqErr) {
         status = "failed";
-        errorMessage = `HTTP ${resp.status}: ${await resp.text().catch(() => "")}`.slice(0, 500);
+        errorMessage = enqErr.message.slice(0, 500);
       }
     } catch (e: any) {
       status = "failed";
