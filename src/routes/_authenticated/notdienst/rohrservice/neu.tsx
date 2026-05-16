@@ -32,12 +32,7 @@ function NeuerBericht() {
   });
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-primary">Neuer Bericht</h1>
-        <p className="text-muted-foreground text-sm">Bitte füllen Sie das Formular aus</p>
-      </div>
-
+    <div className="max-w-3xl">
       <form
         className="space-y-5"
         onSubmit={(e) => {
@@ -131,8 +126,10 @@ function NeuerBericht() {
 function Section({ title, children, cols = 2 }: { title: string; children: React.ReactNode; cols?: 1 | 2 | 3 }) {
   const grid = cols === 1 ? "" : cols === 2 ? "grid sm:grid-cols-2 gap-4" : "grid sm:grid-cols-3 gap-4";
   return (
-    <div className="rounded-lg border border-border bg-muted/40 p-4">
-      {title && <div className="text-sm font-semibold text-primary mb-3">{title}</div>}
+    <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+      {title && (
+        <div className="text-xs uppercase tracking-widest text-muted-foreground mb-4">{title}</div>
+      )}
       <div className={grid}>{children}</div>
     </div>
   );
