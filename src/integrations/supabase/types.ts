@@ -821,6 +821,176 @@ export type Database = {
           },
         ]
       }
+      rohrservice_berichte: {
+        Row: {
+          anrufer_adresse: string | null
+          anrufer_firma: string | null
+          anrufer_name: string | null
+          anrufer_telefon: string | null
+          bericht_nr: number
+          created_at: string
+          created_by: string | null
+          diensthabender_alarmzentrale: string | null
+          domain_id: string
+          id: string
+          mieter_name: string | null
+          mieter_ort: string | null
+          mieter_strasse: string | null
+          mieter_telefon: string | null
+          monteur_rueckmeldung: string | null
+          monteur_weitergabe: string | null
+          rechnung_adresse: string | null
+          rechnung_name: string | null
+          rechnung_telefon: string | null
+          stoerungsart: string | null
+          updated_at: string
+          versendet: boolean
+          versendet_am: string | null
+          versendet_an: string | null
+          weiterleitung: string | null
+          zeit_kundenanruf: string | null
+          zeit_rueckmeldung: string | null
+          zeit_weitergabe: string | null
+        }
+        Insert: {
+          anrufer_adresse?: string | null
+          anrufer_firma?: string | null
+          anrufer_name?: string | null
+          anrufer_telefon?: string | null
+          bericht_nr?: number
+          created_at?: string
+          created_by?: string | null
+          diensthabender_alarmzentrale?: string | null
+          domain_id: string
+          id?: string
+          mieter_name?: string | null
+          mieter_ort?: string | null
+          mieter_strasse?: string | null
+          mieter_telefon?: string | null
+          monteur_rueckmeldung?: string | null
+          monteur_weitergabe?: string | null
+          rechnung_adresse?: string | null
+          rechnung_name?: string | null
+          rechnung_telefon?: string | null
+          stoerungsart?: string | null
+          updated_at?: string
+          versendet?: boolean
+          versendet_am?: string | null
+          versendet_an?: string | null
+          weiterleitung?: string | null
+          zeit_kundenanruf?: string | null
+          zeit_rueckmeldung?: string | null
+          zeit_weitergabe?: string | null
+        }
+        Update: {
+          anrufer_adresse?: string | null
+          anrufer_firma?: string | null
+          anrufer_name?: string | null
+          anrufer_telefon?: string | null
+          bericht_nr?: number
+          created_at?: string
+          created_by?: string | null
+          diensthabender_alarmzentrale?: string | null
+          domain_id?: string
+          id?: string
+          mieter_name?: string | null
+          mieter_ort?: string | null
+          mieter_strasse?: string | null
+          mieter_telefon?: string | null
+          monteur_rueckmeldung?: string | null
+          monteur_weitergabe?: string | null
+          rechnung_adresse?: string | null
+          rechnung_name?: string | null
+          rechnung_telefon?: string | null
+          stoerungsart?: string | null
+          updated_at?: string
+          versendet?: boolean
+          versendet_am?: string | null
+          versendet_an?: string | null
+          weiterleitung?: string | null
+          zeit_kundenanruf?: string | null
+          zeit_rueckmeldung?: string | null
+          zeit_weitergabe?: string | null
+        }
+        Relationships: []
+      }
+      rohrservice_mitarbeiter: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          name: string
+          telefon_1: string | null
+          telefon_2: string | null
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          name: string
+          telefon_1?: string | null
+          telefon_2?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          name?: string
+          telefon_1?: string | null
+          telefon_2?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rohrservice_notdienst: {
+        Row: {
+          bis: string
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          mitarbeiter_id: string
+          updated_at: string
+          von: string
+        }
+        Insert: {
+          bis: string
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          mitarbeiter_id: string
+          updated_at?: string
+          von: string
+        }
+        Update: {
+          bis?: string
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          mitarbeiter_id?: string
+          updated_at?: string
+          von?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rohrservice_notdienst_mitarbeiter_id_fkey"
+            columns: ["mitarbeiter_id"]
+            isOneToOne: false
+            referencedRelation: "rohrservice_mitarbeiter"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       superadmin_impersonation: {
         Row: {
           started_at: string
