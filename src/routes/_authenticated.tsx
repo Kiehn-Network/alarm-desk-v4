@@ -26,7 +26,7 @@ function AuthLayout() {
     <div className="min-h-screen flex bg-background text-foreground">
       <Sidebar displayName={name} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Topbar />
+        <Topbar displayName={name} />
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
