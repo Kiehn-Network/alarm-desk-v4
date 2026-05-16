@@ -7,8 +7,15 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole, type AppRole } from "@/hooks/use-role";
 import { useAppSettings } from "@/hooks/use-app-settings";
+import { useDomainModules } from "@/hooks/use-domain-modules";
 
-type Item = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; roles?: AppRole[] };
+type Item = {
+  to: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: AppRole[];
+  module?: string;
+};
 type Section = { label: string; items: Item[] };
 
 const sections: Section[] = [
@@ -25,9 +32,9 @@ const sections: Section[] = [
     { to: "/intrahub", label: "IntraHub", icon: Network },
   ]},
   { label: "Notdienste", items: [
-    { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench },
-    { to: "/notdienst/budeko", label: "Budeko", icon: Home },
-    { to: "/notdienst/lutz", label: "Lutz", icon: Building2 },
+    { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice" },
+    { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko" },
+    { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz" },
   ]},
   { label: "Tools", items: [
     { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound },
@@ -45,10 +52,16 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
   const { location } = useRouterState();
   const { role, actualRole } = useRole();
   const { data: settings } = useAppSettings();
+  const { data: enabledModules } = useDomainModules();
   const visibleSections = sections
     .map((s) => ({
       ...s,
       items: s.items.filter((i) => {
+        // Module gating — hide item if its module is not enabled for the
+        // effective domain. SuperAdmins outside impersonation see everything.
+        if (i.module && actualRole !== "superadmin") {
+          if (!enabledModules || !enabledModules.has(i.module)) return false;
+        }
         if (!i.roles) return true;
         // SuperAdmin-only items always check the actual role (not the
         // impersonated effective role).
