@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
-  History as HistoryIcon, Flag,
+  History as HistoryIcon, Flag, Radio as RadioIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +41,8 @@ function fmt(d?: string | null) {
 
 function MeineEinsaetzePage() {
   const { loading: roleLoading, isFahrer, isAdmin } = useRole();
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const list = useServerFn(listMeineEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
 
@@ -46,6 +50,27 @@ function MeineEinsaetzePage() {
     queryKey: ["meine-einsaetze"],
     queryFn: () => list(),
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`einsaetze-fahrer-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "einsaetze", filter: `assigned_to=eq.${user.id}` },
+        (payload) => {
+          qc.invalidateQueries({ queryKey: ["meine-einsaetze"] });
+          if (payload.eventType === "INSERT") {
+            const e: any = payload.new;
+            toast.success(`Neuer Einsatz: ${e.einsatzgrund}`, {
+              description: e.kunden_name ?? e.address ?? undefined,
+            });
+          }
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, qc]);
 
   const [tab, setTab] = useState("aktiv");
   const [history, setHistory] = useState<Einsatz | null>(null);
