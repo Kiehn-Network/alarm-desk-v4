@@ -20,17 +20,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  getAppSettings, updateAppSettings,
-  listAppModules, upsertAppModule, setAppModuleEnabled, deleteAppModule,
-} from "@/lib/settings.functions";
+import { getAppSettings, updateAppSettings } from "@/lib/settings.functions";
 
 export function SystemSettingsPanel() {
   return (
     <div className="space-y-6">
       <GeneralSettings />
       <MaintenanceSettings />
-      <ModulesSettings />
     </div>
   );
 }
