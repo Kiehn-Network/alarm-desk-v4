@@ -8,10 +8,14 @@ import {
   createLicense, revokeLicense, toggleDomainModule,
   listAllTenantUsers, assignUserToDomain,
   startImpersonation, stopImpersonation, getImpersonation,
+  getPlatformSettings, updatePlatformMaintenance,
+  listAppVersions, createAppVersion, deleteAppVersion,
 } from "@/lib/superadmin.functions";
 import { listAppModules } from "@/lib/settings.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
@@ -41,6 +45,15 @@ function SuperAdminPage() {
   const uq = useQuery({ queryKey: ["sa-users"], queryFn: () => listUsersFn() });
   const iq = useQuery({ queryKey: ["sa-imp"], queryFn: () => impFn() });
 
+  const getPlat = useServerFn(getPlatformSettings);
+  const updMaint = useServerFn(updatePlatformMaintenance);
+  const listVers = useServerFn(listAppVersions);
+  const addVers = useServerFn(createAppVersion);
+  const delVers = useServerFn(deleteAppVersion);
+
+  const pq = useQuery({ queryKey: ["platform-settings"], queryFn: () => getPlat() });
+  const vq = useQuery({ queryKey: ["sa-versions"], queryFn: () => listVers() });
+
   const invalidateAll = () => {
     qc.invalidateQueries({ queryKey: ["sa-domains"] });
     qc.invalidateQueries({ queryKey: ["sa-users"] });
@@ -59,6 +72,17 @@ function SuperAdminPage() {
   const [newSlug, setNewSlug] = useState("");
   const [newName, setNewName] = useState("");
 
+  // System tab state
+  const [newVersion, setNewVersion] = useState("");
+  const [newChangelog, setNewChangelog] = useState("");
+  const [maintActive, setMaintActive] = useState<boolean | null>(null);
+  const [maintMsg, setMaintMsg] = useState<string>("");
+  const [maintColor, setMaintColor] = useState<"info" | "orange" | "rot">("info");
+  const platform = pq.data;
+  const effMaintActive = maintActive ?? !!platform?.wartung_aktiv;
+  const effMaintMsg = maintActive === null ? (platform?.wartung_nachricht ?? "") : maintMsg;
+  const effMaintColor = maintActive === null ? ((platform?.wartung_farbe ?? "info") as any) : maintColor;
+
   const m_createDom = useMutation({
     mutationFn: () => createDom({ data: { slug: newSlug, name: newName } }),
     onSuccess: () => { setNewSlug(""); setNewName(""); toast.success("Domain angelegt"); invalidateAll(); },
@@ -71,6 +95,7 @@ function SuperAdminPage() {
   const modules = mq.data ?? [];
   const users = uq.data?.users ?? [];
   const imp = iq.data?.domain;
+  const versions = vq.data ?? [];
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -93,6 +118,7 @@ function SuperAdminPage() {
           <TabsTrigger value="licenses">Lizenzen</TabsTrigger>
           <TabsTrigger value="modules">Module</TabsTrigger>
           <TabsTrigger value="users">Nutzer</TabsTrigger>
+          <TabsTrigger value="system">System</TabsTrigger>
         </TabsList>
 
         <TabsContent value="domains" className="space-y-4">
@@ -229,6 +255,119 @@ function SuperAdminPage() {
               </Card>
             );
           })}
+        </TabsContent>
+
+        <TabsContent value="system" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Aktuelle Version</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-1">
+              <div className="text-2xl font-bold">{platform?.current_version ?? "—"}</div>
+              <div className="text-xs text-muted-foreground">
+                Wird im gesamten System angezeigt.
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Neue Version veröffentlichen</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid sm:grid-cols-[200px_1fr] gap-3">
+                <div>
+                  <Label>Version</Label>
+                  <Input placeholder="z.B. 1.2.0" value={newVersion} onChange={(e) => setNewVersion(e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <Label>Changelog</Label>
+                <Textarea rows={6} placeholder="Was ist neu?" value={newChangelog} onChange={(e) => setNewChangelog(e.target.value)} />
+              </div>
+              <Button
+                disabled={!newVersion}
+                onClick={async () => {
+                  try {
+                    await addVers({ data: { version: newVersion, changelog: newChangelog || null, set_current: true } });
+                    setNewVersion(""); setNewChangelog("");
+                    qc.invalidateQueries({ queryKey: ["sa-versions"] });
+                    qc.invalidateQueries({ queryKey: ["platform-settings"] });
+                    toast.success("Version gespeichert");
+                  } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+                }}
+              >Version veröffentlichen</Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Changelog-Historie</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {versions.length === 0 && <div className="text-sm text-muted-foreground">Noch keine Versionen.</div>}
+              {versions.map((v: any) => (
+                <div key={v.id} className="border rounded p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="font-semibold">
+                      v{v.version}
+                      {platform?.current_version === v.version && (
+                        <span className="ml-2 text-xs px-2 py-0.5 rounded bg-primary/15 text-primary">aktuell</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground">{new Date(v.released_at).toLocaleString()}</span>
+                      <Button size="sm" variant="ghost" onClick={async () => {
+                        if (!confirm(`Version ${v.version} löschen?`)) return;
+                        await delVers({ data: { id: v.id } });
+                        qc.invalidateQueries({ queryKey: ["sa-versions"] });
+                      }}>Löschen</Button>
+                    </div>
+                  </div>
+                  {v.changelog && <pre className="whitespace-pre-wrap text-sm text-muted-foreground">{v.changelog}</pre>}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Globaler Wartungsmodus</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-muted-foreground">
+                Wenn aktiv, wird in <b>allen Domänen</b> ein Wartungsbanner eingeblendet.
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={effMaintActive}
+                  onCheckedChange={(v) => { setMaintActive(v); if (maintActive === null) { setMaintMsg(platform?.wartung_nachricht ?? ""); setMaintColor((platform?.wartung_farbe ?? "info") as any); } }}
+                />
+                <span className="text-sm">Aktiv</span>
+              </div>
+              <div>
+                <Label>Nachricht</Label>
+                <Input value={effMaintMsg} onChange={(e) => { setMaintActive(effMaintActive); setMaintMsg(e.target.value); }} placeholder="z.B. Geplante Wartung 02:00–03:00 Uhr" />
+              </div>
+              <div>
+                <Label>Farbe</Label>
+                <Select value={effMaintColor} onValueChange={(v) => { setMaintActive(effMaintActive); setMaintColor(v as any); }}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="info">Info (blau)</SelectItem>
+                    <SelectItem value="orange">Warnung (orange)</SelectItem>
+                    <SelectItem value="rot">Kritisch (rot)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={async () => {
+                try {
+                  await updMaint({ data: {
+                    wartung_aktiv: effMaintActive,
+                    wartung_nachricht: effMaintMsg || null,
+                    wartung_farbe: effMaintColor,
+                  }});
+                  setMaintActive(null);
+                  qc.invalidateQueries({ queryKey: ["platform-settings"] });
+                  toast.success("Wartungsstatus gespeichert");
+                } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+              }}>Speichern</Button>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
