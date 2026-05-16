@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
-  History as HistoryIcon, Flag,
+  History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +17,11 @@ import {
 } from "@/components/ui/dialog";
 import { useRole } from "@/hooks/use-role";
 import {
-  listMeineEinsaetze, abschliessenEinsatz, listEinsatzHistorie,
+  listMeineEinsaetze, abschliessenEinsatz, listEinsatzHistorie, setEinsatzZeit,
 } from "@/lib/einsaetze.functions";
+import { HoldButton } from "@/components/hold-button";
+import { EinsatzDateienDialog } from "@/components/einsatz-dateien-dialog";
+import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 
 export const Route = createFileRoute("/_authenticated/meine-einsaetze")({
   component: MeineEinsaetzePage,
@@ -45,6 +48,7 @@ function MeineEinsaetzePage() {
   const qc = useQueryClient();
   const list = useServerFn(listMeineEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
+  const setZeit = useServerFn(setEinsatzZeit);
 
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["meine-einsaetze"],
@@ -75,6 +79,8 @@ function MeineEinsaetzePage() {
   const [tab, setTab] = useState("aktiv");
   const [history, setHistory] = useState<Einsatz | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [dateienFor, setDateienFor] = useState<string | null>(null);
+  const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -112,6 +118,13 @@ function MeineEinsaetzePage() {
     } catch (e: any) {
       toast.error(e.message ?? "Fehler");
     } finally { setBusy(null); }
+  }
+
+  async function setTime(id: string, feld: "vor_ort" | "abfahrt" | "ende") {
+    try {
+      await setZeit({ data: { id, feld } });
+      qc.invalidateQueries({ queryKey: ["meine-einsaetze"] });
+    } catch (e: any) { toast.error(e.message ?? "Fehler"); }
   }
 
   return (
@@ -193,6 +206,28 @@ function MeineEinsaetzePage() {
                   {e.abgeschlossen_am && <> · Abgeschlossen {fmt(e.abgeschlossen_am)}</>}
                 </div>
 
+                {isAktiv(e) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-border">
+                    <HoldButton label="Vor Ort" value={e.vor_ort_am}
+                      icon={<MapPinned className="size-4" />}
+                      onComplete={() => setTime(e.id, "vor_ort")} />
+                    <HoldButton label="Abfahrt" value={e.abfahrt_am}
+                      icon={<LogOut className="size-4" />}
+                      onComplete={() => setTime(e.id, "abfahrt")} />
+                    <HoldButton label="Einsatz Ende" value={e.einsatz_ende_am}
+                      icon={<Square className="size-4" />}
+                      onComplete={() => setTime(e.id, "ende")} />
+                  </div>
+                )}
+
+                {!isAktiv(e) && (e.vor_ort_am || e.abfahrt_am || e.einsatz_ende_am) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-border text-xs">
+                    <TimeBadge label="Vor Ort" value={e.vor_ort_am} />
+                    <TimeBadge label="Abfahrt" value={e.abfahrt_am} />
+                    <TimeBadge label="Ende" value={e.einsatz_ende_am} />
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
                   {mapsUrl && (
                     <a href={mapsUrl} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none">
@@ -201,6 +236,12 @@ function MeineEinsaetzePage() {
                       </Button>
                     </a>
                   )}
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setDateienFor(e.id)}>
+                    <FolderOpen className="size-4" /> Dateien
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBerichtFor(e)}>
+                    <ClipboardList className="size-4" /> Bericht
+                  </Button>
                   <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => setHistory(e)}>
                     <HistoryIcon className="size-4" /> Verlauf
                   </Button>
@@ -222,6 +263,8 @@ function MeineEinsaetzePage() {
       )}
 
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
+      <EinsatzDateienDialog einsatzId={dateienFor} open={!!dateienFor} onClose={() => setDateienFor(null)} />
+      <EinsatzBerichtDialog einsatz={berichtFor} open={!!berichtFor} onClose={() => setBerichtFor(null)} />
     </div>
   );
 }
@@ -235,11 +278,22 @@ function InfoRow({ icon: Icon, value }: { icon: any; value: string }) {
   );
 }
 
+function TimeBadge({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="rounded-md border border-border bg-muted/30 px-2 py-1.5 flex items-center justify-between gap-2">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="tabular-nums">{value ? fmt(value) : "–"}</span>
+    </div>
+  );
+}
+
 const FIELD_LABELS: Record<string, string> = {
   status: "Status", einsatzgrund: "Einsatzgrund", kunden_name: "Kunde",
   address: "Adresse", key_number: "Schlüssel-Nr.", anlagen_nr: "Anlagen-Nr.",
   teilnehmer_id: "Teilnehmer-ID", beschreibung: "Beschreibung",
   assigned_to: "Fahrer", abgeschlossen_am: "Abgeschlossen am",
+  vor_ort_am: "Vor Ort", abfahrt_am: "Abfahrt", einsatz_ende_am: "Einsatz Ende",
+  bericht: "Bericht",
 };
 
 function HistoryDialog({ einsatz, onClose }: { einsatz: Einsatz | null; onClose: () => void }) {
