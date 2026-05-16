@@ -1,17 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 async function assertAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
-  if (!data) throw new Error("Nicht autorisiert");
+  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).in("role", ["admin", "superadmin"]);
+  if (!data || data.length === 0) throw new Error("Nicht autorisiert");
 }
 
 export const getAppSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabase } = context;
-    const { data, error } = await supabase.from("app_settings").select("*").eq("id", true).maybeSingle();
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { data, error } = await supabase.from("app_settings").select("*").eq("domain_id", domainId).maybeSingle();
     if (error) throw error;
     return data;
   });
@@ -31,10 +33,10 @@ export const updateAppSettings = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdmin(supabase, userId);
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { error } = await supabase
       .from("app_settings")
-      .update({ ...data, updated_by: userId })
-      .eq("id", true);
+      .upsert({ ...data, updated_by: userId, domain_id: domainId }, { onConflict: "domain_id" });
     if (error) throw error;
     return { ok: true };
   });
