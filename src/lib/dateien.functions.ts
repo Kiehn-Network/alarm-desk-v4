@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 const createSchema = z.object({
   filename: z.string().min(1).max(255),
@@ -42,9 +43,10 @@ export const createDatei = createServerFn({ method: "POST" })
   .inputValidator((input) => createSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: row, error } = await supabase
       .from("dateien")
-      .insert({ ...data, uploaded_by: userId })
+      .insert({ ...data, uploaded_by: userId, domain_id: domainId })
       .select()
       .single();
     if (error) throw new Error(error.message);
@@ -56,6 +58,7 @@ export const updateDatei = createServerFn({ method: "POST" })
   .inputValidator((input) => updateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { id, ...patch } = data;
     const { data: before, error: beforeErr } = await supabase
       .from("dateien").select("*").eq("id", id).single();
@@ -76,6 +79,7 @@ export const updateDatei = createServerFn({ method: "POST" })
         old_value: (before as any)?.[k] ?? null,
         new_value: (patch as any)[k] ?? null,
         changed_by: userId,
+        domain_id: domainId,
       }))
       .filter((e) => (e.old_value ?? null) !== (e.new_value ?? null));
     if (entries.length > 0) {
@@ -128,11 +132,12 @@ export const linkDateien = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     if (data.a === data.b) throw new Error("Datei kann nicht mit sich selbst verknüpft werden");
     const [a, b] = [data.a, data.b].sort();
     const { data: row, error } = await supabase
       .from("datei_verknuepfungen")
-      .insert({ datei_a_id: a, datei_b_id: b, created_by: userId })
+      .insert({ datei_a_id: a, datei_b_id: b, created_by: userId, domain_id: domainId })
       .select()
       .single();
     if (error) throw new Error(error.message);
