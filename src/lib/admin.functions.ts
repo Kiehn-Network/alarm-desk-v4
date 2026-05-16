@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 const ROLES = ["admin", "dispatcher", "fahrer"] as const;
 const roleEnum = z.enum(ROLES);
@@ -171,8 +172,9 @@ export const upsertGrund = createServerFn({ method: "POST" })
         .from("einsatz_gruende").update({ name: data.name, aktiv: data.aktiv }).eq("id", data.id);
       if (error) throw new Error(error.message);
     } else {
+      const domainId = await requireEffectiveDomainId(supabaseAdmin, context.userId);
       const { error } = await supabaseAdmin
-        .from("einsatz_gruende").insert({ name: data.name, aktiv: data.aktiv, created_by: context.userId });
+        .from("einsatz_gruende").insert({ name: data.name, aktiv: data.aktiv, created_by: context.userId, domain_id: domainId });
       if (error) throw new Error(error.message);
     }
     return { ok: true };
