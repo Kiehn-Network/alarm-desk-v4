@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
-  Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Radio,
+  Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Radio, Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +37,7 @@ const sections: Section[] = [
     { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher"] },
     { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher"] },
     { to: "/admin", label: "Admin Center", icon: Settings, roles: ["admin"] },
+    { to: "/superadmin", label: "SuperAdmin", icon: Crown, roles: ["superadmin"] },
   ]},
 ];
 

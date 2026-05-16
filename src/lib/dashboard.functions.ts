@@ -1,10 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getEffectiveDomainId } from "@/lib/tenant.server";
 
 export const getDashboardStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
+    const domainId = await getEffectiveDomainId(supabase, userId);
+    if (!domainId) {
+      return {
+        userId,
+        stats: { monatEinsaetze: 0, aktiveEinsaetze: 0, gesamtEinsaetze: 0, storniert: 0, datensaetze: 0 },
+        recent: [],
+        noDomain: true as const,
+      };
+    }
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
