@@ -50,7 +50,7 @@ const sections: Section[] = [
 
 export function SidebarContent({ displayName, onNavigate }: { displayName: string; onNavigate?: () => void }) {
   const { location } = useRouterState();
-  const { role, actualRole } = useRole();
+  const { role, actualRole, isImpersonating } = useRole();
   const { data: settings } = useAppSettings();
   const { data: enabledModules } = useDomainModules();
   const visibleSections = sections
@@ -58,8 +58,10 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
       ...s,
       items: s.items.filter((i) => {
         // Module gating — hide item if its module is not enabled for the
-        // effective domain. SuperAdmins outside impersonation see everything.
-        if (i.module && actualRole !== "superadmin") {
+        // effective domain. Only a SuperAdmin who is NOT currently
+        // impersonating a domain sees everything; during impersonation we
+        // mirror the domain's actual module configuration.
+        if (i.module && !(actualRole === "superadmin" && !isImpersonating)) {
           if (!enabledModules || !enabledModules.has(i.module)) return false;
         }
         if (!i.roles) return true;
