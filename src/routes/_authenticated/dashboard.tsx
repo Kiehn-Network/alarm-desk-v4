@@ -59,6 +59,23 @@ function DashboardContent() {
 
   const name = (user?.user_metadata?.display_name as string) ?? user?.email?.split("@")[0] ?? "";
 
+  if ((data as any).noDomain) {
+    return (
+      <div className="p-6 lg:p-8 max-w-3xl">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Dashboard</div>
+        <h1 className="text-3xl font-bold mt-1">Hallo {name} 👋</h1>
+        <div className="mt-6 rounded-xl border border-border bg-card p-6 text-sm">
+          <p className="font-medium">Keine Domain aktiv</p>
+          <p className="text-muted-foreground mt-2">
+            Du hast aktuell keine Domain zugewiesen. Als SuperAdmin kannst du im
+            <a href="/superadmin" className="text-primary underline mx-1">SuperAdmin-Bereich</a>
+            eine Domain wählen und dich darin als Admin einloggen.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const cards = [
     { label: "Monat Einsätze", value: data.stats.monatEinsaetze, icon: BarChart3, tone: "info" },
     { label: "Aktive Einsätze", value: data.stats.aktiveEinsaetze, icon: CheckCircle2, tone: "success" },
