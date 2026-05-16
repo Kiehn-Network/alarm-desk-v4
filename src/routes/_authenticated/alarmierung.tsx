@@ -51,6 +51,9 @@ function fmt(d?: string | null) {
 function AlarmierungPage() {
   const { canManage, isAdmin } = useRole();
   const list = useServerFn(listEinsaetze);
+  const freigeben = useServerFn(freigebenEinsatz);
+  const abschliessen = useServerFn(abschliessenEinsatz);
+  const remove = useServerFn(deleteEinsatz);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
@@ -173,7 +176,8 @@ function AlarmierungPage() {
                         </Button>
                         <Button size="sm" className="gap-1.5"
                           onClick={async () => {
-                            try { await (useServerFn(freigebenEinsatz) as any)({ data: { id: e.id } }); } catch {}
+                            try { await freigeben({ data: { id: e.id } }); toast.success("Freigegeben"); refetch(); }
+                            catch (err: any) { toast.error(err.message); }
                           }}>
                           <CheckCircle2 className="size-4" /> Freigeben
                         </Button>
@@ -187,7 +191,8 @@ function AlarmierungPage() {
                     {canManage && e.status === "in_bearbeitung" && (
                       <Button size="sm" variant="secondary" className="gap-1.5"
                         onClick={async () => {
-                          try { await (useServerFn(abschliessenEinsatz) as any)({ data: { id: e.id } }); } catch {}
+                          try { await abschliessen({ data: { id: e.id } }); toast.success("Abgeschlossen"); refetch(); }
+                          catch (err: any) { toast.error(err.message); }
                         }}>
                         <CheckSquare className="size-4" /> Abschließen
                       </Button>
@@ -197,7 +202,7 @@ function AlarmierungPage() {
                         onClick={async () => {
                           if (!confirm("Einsatz wirklich löschen?")) return;
                           try {
-                            await (useServerFn(deleteEinsatz) as any)({ data: { id: e.id } });
+                            await remove({ data: { id: e.id } });
                             toast.success("Gelöscht"); refetch();
                           } catch (err: any) { toast.error(err.message); }
                         }}>
@@ -212,20 +217,11 @@ function AlarmierungPage() {
         )}
       </div>
 
-      <FreigebenInline einsaetze={einsaetze} onDone={refetch} />
       <RejectDialog einsatz={reject} onClose={() => setReject(null)} onDone={() => { setReject(null); refetch(); }} />
       <AssignDialog einsatz={assign} onClose={() => setAssign(null)} onDone={() => { setAssign(null); refetch(); }} />
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
     </div>
   );
-}
-
-// Hilfs-Komponente: rendert Freigabe/Abschließen-Aktionen mit korrekten Hooks
-function FreigebenInline({ einsaetze, onDone }: { einsaetze: Einsatz[]; onDone: () => void }) {
-  // serverFns werden über onClick-Handler oben aufgerufen – diese Komponente
-  // existiert nur, um nach erfolgreichen Mutationen `onDone` aufzurufen.
-  // (Die Buttons rufen aktuell useServerFn inline – das ist unsauber; hier ein sauberer Wrapper.)
-  return null;
 }
 
 function RejectDialog({ einsatz, onClose, onDone }: { einsatz: Einsatz | null; onClose: () => void; onDone: () => void }) {
