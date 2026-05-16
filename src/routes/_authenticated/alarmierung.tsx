@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   History as HistoryIcon, Plus, Search, Trash2, Clock, Flag, CheckSquare,
+  ClipboardList, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,8 @@ import { useRole } from "@/hooks/use-role";
 import {
   listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, deleteEinsatz,
 } from "@/lib/einsaetze.functions";
+import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
+import { BerichtSendDialog } from "@/components/bericht-send-dialog";
 
 export const Route = createFileRoute("/_authenticated/alarmierung")({
   component: AlarmierungPage,
@@ -47,6 +50,8 @@ function AlarmierungPage() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<string>("aktiv");
   const [history, setHistory] = useState<Einsatz | null>(null);
+  const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
+  const [sendFor, setSendFor] = useState<Einsatz | null>(null);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -154,6 +159,16 @@ function AlarmierungPage() {
                     <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => setHistory(e)}>
                       <HistoryIcon className="size-4" /> Verlauf
                     </Button>
+                    {canManage && (
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setBerichtFor(e)}>
+                        <ClipboardList className="size-4" /> Bericht
+                      </Button>
+                    )}
+                    {canManage && (
+                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setSendFor(e)}>
+                        <Mail className="size-4" /> Senden
+                      </Button>
+                    )}
                     {canManage && isAktiv(e) && (
                       <Button size="sm" className="gap-1.5"
                         onClick={async () => {
@@ -182,6 +197,17 @@ function AlarmierungPage() {
       </div>
 
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
+      <EinsatzBerichtDialog
+        einsatz={berichtFor}
+        open={!!berichtFor}
+        onClose={() => setBerichtFor(null)}
+      />
+      <BerichtSendDialog
+        einsatz={sendFor}
+        fahrerName={sendFor?.assigned_to ? profiles[sendFor.assigned_to] ?? null : null}
+        open={!!sendFor}
+        onClose={() => setSendFor(null)}
+      />
     </div>
   );
 }
