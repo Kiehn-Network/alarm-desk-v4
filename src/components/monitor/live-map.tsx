@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { Fragment, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import L from "leaflet";
@@ -95,7 +95,7 @@ export default function LiveMap() {
             const phase = d.einsatz?.phase ?? "frei";
             const meta = PHASE_META[phase];
             return (
-              <div key={d.user_id}>
+              <Fragment key={d.user_id}>
                 {d.accuracy && d.accuracy < 1000 ? (
                   <CircleMarker
                     center={[d.lat, d.lng]}
@@ -125,7 +125,7 @@ export default function LiveMap() {
                     </div>
                   </Popup>
                 </Marker>
-              </div>
+              </Fragment>
             );
           })}
         </MapContainer>
