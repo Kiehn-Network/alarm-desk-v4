@@ -1,8 +1,14 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+
+type VersionInfo = {
+  current_version: string;
+  versions: { id: string; version: string; changelog: string | null; released_at: string }[];
+};
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
