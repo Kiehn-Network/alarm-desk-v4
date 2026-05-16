@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, useParams, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useParams, redirect } from "@tanstack/react-router";
 import { useState, useEffect, type FormEvent } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
