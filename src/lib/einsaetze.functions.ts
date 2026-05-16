@@ -271,8 +271,14 @@ export const updateEinsatzBericht = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
+    // Admin/Disponent dürfen Berichte auch nach Abschluss bearbeiten
     if (before?.status === "abgeschlossen") {
-      throw new Error("Bericht kann nach Abschluss nicht mehr bearbeitet werden");
+      const { data: roles } = await supabaseAdmin
+        .from("user_roles").select("role").eq("user_id", userId);
+      const canEdit = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher");
+      if (!canEdit) {
+        throw new Error("Bericht kann nach Abschluss nicht mehr bearbeitet werden");
+      }
     }
     const patch: any = {
       bericht_typ: data.bericht_typ,
