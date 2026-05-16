@@ -50,16 +50,14 @@ function MitarbeiterSeite() {
   });
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
-      <div className="text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-primary flex items-center justify-center gap-2">
-          <Users className="size-6" /> Mitarbeiter
-        </h1>
-        <p className="text-muted-foreground text-sm">Für die Notdienst-Auswahl</p>
+    <div className="space-y-5 max-w-4xl">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Users className="size-4" />
+        <span>Mitarbeiter für die Notdienst-Auswahl</span>
       </div>
 
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
-        <div className="text-sm font-semibold">Neuer Mitarbeiter</div>
+      <div className="rounded-xl border border-border bg-card p-5 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Neuer Mitarbeiter</div>
         <div className="grid sm:grid-cols-3 gap-3">
           <div className="space-y-1.5"><Label>Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="space-y-1.5"><Label>Telefon 1</Label><Input value={t1} onChange={(e) => setT1(e.target.value)} /></div>
@@ -70,9 +68,9 @@ function MitarbeiterSeite() {
         </Button>
       </div>
 
-      <div className="rounded-lg border border-border bg-card overflow-x-auto" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="rounded-xl border border-border bg-card overflow-x-auto" style={{ boxShadow: "var(--shadow-card)" }}>
         <table className="w-full text-sm">
-          <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
+          <thead className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
             <tr>
               <th className="text-left px-4 py-3">Name</th>
               <th className="text-left px-4 py-3">Telefon 1</th>
@@ -83,7 +81,7 @@ function MitarbeiterSeite() {
           <tbody>
             {mitarbeiter.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Keine Mitarbeiter.</td></tr>}
             {mitarbeiter.map((m) => (
-              <tr key={m.id} className="border-t border-border">
+              <tr key={m.id} className="border-b border-border/50 last:border-0">
                 <td className="px-4 py-2">
                   <Input defaultValue={m.name} onBlur={(e) => e.target.value !== m.name && upd.mutate({ id: m.id, name: e.target.value })} />
                 </td>

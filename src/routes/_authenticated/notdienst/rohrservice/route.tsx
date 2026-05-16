@@ -16,39 +16,45 @@ const TABS = [
 function RohrserviceLayout() {
   const { location } = useRouterState();
   return (
-    <div className="min-h-full">
-      <header className="bg-primary text-primary-foreground">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <Wrench className="size-5" />
-            <span className="text-lg font-bold tracking-tight">Rohrservice</span>
+    <div className="p-6 lg:p-8 space-y-6 max-w-[1600px]">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="text-xs uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+            <Wrench className="size-3.5" /> Notdienst
           </div>
-          <nav className="flex items-center gap-2">
-            {TABS.map((t) => {
-              const active = t.exact
-                ? location.pathname === t.to
-                : location.pathname.startsWith(t.to);
-              return (
-                <Link
-                  key={t.to}
-                  to={t.to}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md text-sm transition-colors",
-                    active
-                      ? "bg-white/15 font-medium"
-                      : "text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/10",
-                  )}
-                >
-                  {t.label}
-                </Link>
-              );
-            })}
-          </nav>
+          <h1 className="text-3xl font-bold mt-1">Rohrservice</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Berichte erfassen, nachbearbeiten und versenden.
+          </p>
         </div>
-      </header>
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <Outlet />
       </div>
+
+      <nav
+        className="flex items-center gap-1 rounded-xl border border-border bg-card p-1 w-fit"
+        style={{ boxShadow: "var(--shadow-card)" }}
+      >
+        {TABS.map((t) => {
+          const active = t.exact
+            ? location.pathname === t.to
+            : location.pathname.startsWith(t.to);
+          return (
+            <Link
+              key={t.to}
+              to={t.to}
+              className={cn(
+                "px-3.5 py-1.5 rounded-lg text-sm transition-colors",
+                active
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent",
+              )}
+            >
+              {t.label}
+            </Link>
+          );
+        })}
+      </nav>
+
+      <Outlet />
     </div>
   );
 }

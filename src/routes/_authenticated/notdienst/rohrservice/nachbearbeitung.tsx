@@ -66,16 +66,15 @@ function Nachbearbeitung() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-2xl md:text-3xl font-bold text-primary flex items-center justify-center gap-2">
-          <ClipboardList className="size-6" /> Nachbearbeitung der Berichte
-        </h1>
+    <div className="space-y-5">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <ClipboardList className="size-4" />
+        <span>{berichte.length} {berichte.length === 1 ? "Bericht" : "Berichte"}</span>
       </div>
 
-      <div className="rounded-lg border border-border bg-card overflow-x-auto" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="rounded-xl border border-border bg-card overflow-x-auto" style={{ boxShadow: "var(--shadow-card)" }}>
         <table className="w-full text-sm">
-          <thead className="bg-muted/60 text-xs uppercase text-muted-foreground">
+          <thead className="text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
             <tr>
               <th className="text-left px-4 py-3">ID</th>
               <th className="text-left px-4 py-3">Anrufer</th>
@@ -90,16 +89,16 @@ function Nachbearbeitung() {
               <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Keine Berichte vorhanden.</td></tr>
             )}
             {berichte.map((b) => (
-              <tr key={b.id} className="border-t border-border hover:bg-muted/30">
+              <tr key={b.id} className="border-b border-border/50 last:border-0 hover:bg-muted/30">
                 <td className="px-4 py-3 font-medium text-primary">{b.bericht_nr}</td>
                 <td className="px-4 py-3">{b.anrufer_name ?? "–"}</td>
                 <td className="px-4 py-3">{b.mieter_strasse ?? "–"}</td>
                 <td className="px-4 py-3">{b.mieter_ort ?? "–"}</td>
-                <td className="px-4 py-3 text-xs">{fmtDe(b.created_at)}</td>
+                <td className="px-4 py-3 text-xs text-muted-foreground">{fmtDe(b.created_at)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1.5 flex-wrap">
                     {b.versendet ? (
-                      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700">
+                      <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-success/15 text-success">
                         <CheckCircle2 className="size-3" /> Versendet
                       </span>
                     ) : (
