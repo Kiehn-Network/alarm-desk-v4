@@ -146,6 +146,44 @@ export const assignUserToDomain = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const createTenantUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    email: z.string().email().max(255),
+    password: z.string().min(8).max(72),
+    display_name: z.string().min(1).max(120),
+    domain_id: z.string().uuid().nullable(),
+    role: z.enum(["superadmin", "admin", "user"]),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    if (data.role !== "superadmin" && !data.domain_id) {
+      throw new Error("Domain erforderlich für diese Rolle.");
+    }
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { display_name: data.display_name },
+    });
+    if (error || !created.user) throw new Error(error?.message ?? "Konnte Nutzer nicht anlegen.");
+    const newUserId = created.user.id;
+    // handle_new_user trigger creates profile with null domain_id; update it
+    await supabaseAdmin.from("profiles").upsert({
+      id: newUserId,
+      display_name: data.display_name,
+      domain_id: data.role === "superadmin" ? null : data.domain_id,
+    }, { onConflict: "id" });
+    // remove any auto-assigned role (e.g. first-user superadmin path) and set requested one
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", newUserId);
+    await supabaseAdmin.from("user_roles").insert({
+      user_id: newUserId,
+      role: data.role,
+      domain_id: data.role === "superadmin" ? null : data.domain_id,
+    });
+    return { ok: true, user_id: newUserId };
+  });
+
 export const startImpersonation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ domain_id: z.string().uuid() }).parse(i))
