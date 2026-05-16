@@ -44,6 +44,14 @@ function formatSize(bytes: number | null) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function DateienGate() {
+  const { isFahrer, loading } = useRole();
+  if (loading) return <div className="p-6 lg:p-8 text-sm text-muted-foreground">Lade…</div>;
+  if (isFahrer)
+    return <AccessDenied title="Kein Zugriff" message="Die Datei-Verwaltung ist nicht für Fahrer freigegeben." />;
+  return <DateienPage />;
+}
+
 function DateienPage() {
   const qc = useQueryClient();
   const list = useServerFn(listDateien);
