@@ -348,14 +348,19 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
 
 export const listFahrer = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => {
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    // Strictly limit Fahrer to the caller's domain.
     const { data: roles, error } = await supabaseAdmin
-      .from("user_roles").select("user_id").eq("role", "fahrer");
+      .from("user_roles").select("user_id")
+      .eq("role", "fahrer").eq("domain_id", domainId);
     if (error) throw new Error(error.message);
     const ids = (roles ?? []).map((r) => r.user_id);
     if (ids.length === 0) return { fahrer: [] };
     const { data: profiles } = await supabaseAdmin
-      .from("profiles").select("id, display_name").in("id", ids);
+      .from("profiles").select("id, display_name")
+      .in("id", ids).eq("domain_id", domainId);
     return { fahrer: profiles ?? [] };
   });
 
