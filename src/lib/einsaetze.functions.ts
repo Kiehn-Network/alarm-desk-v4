@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 const prioritaet = z.enum(["niedrig", "normal", "hoch", "kritisch"]);
 
@@ -34,6 +35,7 @@ async function logHistory(
   einsatzId: string,
   before: Record<string, any>,
   patch: Record<string, any>,
+  domainId: string,
 ) {
   const entries = TRACKABLE.filter((k) => k in patch)
     .map((k) => ({
@@ -42,6 +44,7 @@ async function logHistory(
       old_value: before?.[k] != null ? String(before[k]) : null,
       new_value: (patch as any)[k] != null ? String((patch as any)[k]) : null,
       changed_by: userId,
+      domain_id: domainId,
     }))
     .filter((e) => (e.old_value ?? null) !== (e.new_value ?? null));
   if (entries.length > 0) await supabase.from("einsatz_historie").insert(entries);
@@ -108,9 +111,10 @@ export const createEinsatzGrund = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ name: z.string().trim().min(1).max(200) }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: row, error } = await supabase
       .from("einsatz_gruende")
-      .insert({ name: data.name, created_by: userId })
+      .insert({ name: data.name, created_by: userId, domain_id: domainId })
       .select().single();
     if (error) throw new Error(error.message);
     return row;
@@ -121,6 +125,7 @@ export const createEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => createSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const payload: any = {
       einsatzgrund: data.einsatzgrund,
       einsatzgrund_id: data.einsatzgrund_id ?? null,
@@ -133,6 +138,7 @@ export const createEinsatz = createServerFn({ method: "POST" })
       prioritaet: "normal",
       status: "in_bearbeitung",
       created_by: userId,
+      domain_id: domainId,
       assigned_to: data.assigned_to,
       assigned_at: new Date().toISOString(),
       approved_by: userId,
@@ -144,6 +150,7 @@ export const createEinsatz = createServerFn({ method: "POST" })
     await supabase.from("einsatz_historie").insert({
       einsatz_id: row.id, field_name: "status",
       old_value: null, new_value: row.status, changed_by: userId,
+      domain_id: domainId,
     });
     return row;
   });
@@ -153,6 +160,7 @@ export const updateEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => updateSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { id, ...patch } = data;
     const { data: before, error: bErr } = await supabase
       .from("einsaetze").select("*").eq("id", id).single();
@@ -162,7 +170,7 @@ export const updateEinsatz = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("einsaetze").update(cleanPatch).eq("id", id).select().single();
     if (error) throw new Error(error.message);
-    await logHistory(supabase, userId, id, before, cleanPatch);
+    await logHistory(supabase, userId, id, before, cleanPatch, domainId);
     return row;
   });
 
@@ -171,13 +179,14 @@ export const freigebenEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
     const patch = { status: "freigegeben" as const, approved_by: userId, approved_at: new Date().toISOString(), ablehnung_grund: null };
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
-    await logHistory(supabase, userId, data.id, before ?? {}, patch);
+    await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
     return row;
   });
 
@@ -186,13 +195,14 @@ export const ablehnenEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid(), grund: z.string().trim().min(1).max(1000) }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
     const patch = { status: "abgelehnt" as const, approved_by: userId, approved_at: new Date().toISOString(), ablehnung_grund: data.grund };
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
-    await logHistory(supabase, userId, data.id, before ?? {}, patch);
+    await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
     return row;
   });
 
@@ -201,6 +211,7 @@ export const zuweisenEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid(), fahrer_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
     if (!before || before.status !== "freigegeben") {
@@ -210,7 +221,7 @@ export const zuweisenEinsatz = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
-    await logHistory(supabase, userId, data.id, before, patch);
+    await logHistory(supabase, userId, data.id, before, patch, domainId);
     return row;
   });
 
@@ -219,6 +230,7 @@ export const abschliessenEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
     const now = new Date().toISOString();
@@ -227,7 +239,7 @@ export const abschliessenEinsatz = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
-    await logHistory(supabase, userId, data.id, before ?? {}, patch);
+    await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
     return row;
   });
 
@@ -241,6 +253,7 @@ export const setEinsatzZeit = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const col =
       data.feld === "vor_ort" ? "vor_ort_am"
       : data.feld === "abfahrt" ? "abfahrt_am"
@@ -252,7 +265,7 @@ export const setEinsatzZeit = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
-    await logHistory(supabase, userId, data.id, before ?? {}, patch);
+    await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
     return row;
   });
 
@@ -269,13 +282,14 @@ export const updateEinsatzBericht = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
     // Admin/Disponent dürfen Berichte auch nach Abschluss bearbeiten
     if (before?.status === "abgeschlossen") {
       const { data: roles } = await supabaseAdmin
         .from("user_roles").select("role").eq("user_id", userId);
-      const canEdit = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher");
+      const canEdit = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher" || r.role === "superadmin");
       if (!canEdit) {
         throw new Error("Bericht kann nach Abschluss nicht mehr bearbeitet werden");
       }
@@ -294,6 +308,7 @@ export const updateEinsatzBericht = createServerFn({ method: "POST" })
       old_value: before?.bericht_data ? JSON.stringify(before.bericht_data) : null,
       new_value: JSON.stringify(patch.bericht_data),
       changed_by: userId,
+      domain_id: domainId,
     });
     return row;
   });

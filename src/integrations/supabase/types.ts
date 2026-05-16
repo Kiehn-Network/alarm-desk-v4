@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           enabled: boolean
           id: string
+          is_global: boolean
           key: string
           name: string
           sort_order: number
@@ -30,6 +31,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
+          is_global?: boolean
           key: string
           name: string
           sort_order?: number
@@ -40,6 +42,7 @@ export type Database = {
           created_at?: string
           enabled?: boolean
           id?: string
+          is_global?: boolean
           key?: string
           name?: string
           sort_order?: number
@@ -50,8 +53,8 @@ export type Database = {
       app_settings: {
         Row: {
           dashboard_hinweis: string | null
+          domain_id: string
           firmenname: string
-          id: boolean
           logo_url: string | null
           updated_at: string
           updated_by: string | null
@@ -61,8 +64,8 @@ export type Database = {
         }
         Insert: {
           dashboard_hinweis?: string | null
+          domain_id: string
           firmenname?: string
-          id?: boolean
           logo_url?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -72,8 +75,8 @@ export type Database = {
         }
         Update: {
           dashboard_hinweis?: string | null
+          domain_id?: string
           firmenname?: string
-          id?: boolean
           logo_url?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -81,13 +84,22 @@ export type Database = {
           wartung_farbe?: string
           wartung_nachricht?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "app_settings_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: true
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       datei_historie: {
         Row: {
           changed_at: string
           changed_by: string | null
           datei_id: string
+          domain_id: string
           field_name: string
           id: string
           new_value: string | null
@@ -97,6 +109,7 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           datei_id: string
+          domain_id: string
           field_name: string
           id?: string
           new_value?: string | null
@@ -106,6 +119,7 @@ export type Database = {
           changed_at?: string
           changed_by?: string | null
           datei_id?: string
+          domain_id?: string
           field_name?: string
           id?: string
           new_value?: string | null
@@ -119,6 +133,13 @@ export type Database = {
             referencedRelation: "dateien"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "datei_historie_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
         ]
       }
       datei_verknuepfungen: {
@@ -127,6 +148,7 @@ export type Database = {
           created_by: string | null
           datei_a_id: string
           datei_b_id: string
+          domain_id: string
           id: string
         }
         Insert: {
@@ -134,6 +156,7 @@ export type Database = {
           created_by?: string | null
           datei_a_id: string
           datei_b_id: string
+          domain_id: string
           id?: string
         }
         Update: {
@@ -141,6 +164,7 @@ export type Database = {
           created_by?: string | null
           datei_a_id?: string
           datei_b_id?: string
+          domain_id?: string
           id?: string
         }
         Relationships: [
@@ -158,6 +182,13 @@ export type Database = {
             referencedRelation: "dateien"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "datei_verknuepfungen_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
         ]
       }
       dateien: {
@@ -168,6 +199,7 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           deleted_reason: string | null
+          domain_id: string
           filename: string
           folder: string | null
           id: string
@@ -188,6 +220,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          domain_id: string
           filename: string
           folder?: string | null
           id?: string
@@ -208,6 +241,7 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           deleted_reason?: string | null
+          domain_id?: string
           filename?: string
           folder?: string | null
           id?: string
@@ -220,6 +254,73 @@ export type Database = {
           teilnehmer_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dateien_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_modules: {
+        Row: {
+          created_at: string
+          domain_id: string
+          enabled: boolean
+          module_key: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          enabled?: boolean
+          module_key: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          enabled?: boolean
+          module_key?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_modules_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domains: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          status?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -239,6 +340,7 @@ export type Database = {
           beschreibung: string | null
           created_at: string
           created_by: string
+          domain_id: string
           einsatz_ende_am: string | null
           einsatzgrund: string
           einsatzgrund_id: string | null
@@ -270,6 +372,7 @@ export type Database = {
           beschreibung?: string | null
           created_at?: string
           created_by: string
+          domain_id: string
           einsatz_ende_am?: string | null
           einsatzgrund: string
           einsatzgrund_id?: string | null
@@ -301,6 +404,7 @@ export type Database = {
           beschreibung?: string | null
           created_at?: string
           created_by?: string
+          domain_id?: string
           einsatz_ende_am?: string | null
           einsatzgrund?: string
           einsatzgrund_id?: string | null
@@ -319,6 +423,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "einsaetze_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "einsaetze_einsatzgrund_id_fkey"
             columns: ["einsatzgrund_id"]
             isOneToOne: false
@@ -329,6 +440,7 @@ export type Database = {
       }
       einsatz_email_log: {
         Row: {
+          domain_id: string
           einsatz_id: string
           error_message: string | null
           id: string
@@ -338,6 +450,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          domain_id: string
           einsatz_id: string
           error_message?: string | null
           id?: string
@@ -347,6 +460,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          domain_id?: string
           einsatz_id?: string
           error_message?: string | null
           id?: string
@@ -355,13 +469,22 @@ export type Database = {
           sent_by?: string | null
           status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "einsatz_email_log_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       einsatz_gruende: {
         Row: {
           aktiv: boolean
           created_at: string
           created_by: string | null
+          domain_id: string
           id: string
           name: string
         }
@@ -369,6 +492,7 @@ export type Database = {
           aktiv?: boolean
           created_at?: string
           created_by?: string | null
+          domain_id: string
           id?: string
           name: string
         }
@@ -376,15 +500,25 @@ export type Database = {
           aktiv?: boolean
           created_at?: string
           created_by?: string | null
+          domain_id?: string
           id?: string
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "einsatz_gruende_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       einsatz_historie: {
         Row: {
           changed_at: string
           changed_by: string | null
+          domain_id: string
           einsatz_id: string
           field_name: string
           id: string
@@ -394,6 +528,7 @@ export type Database = {
         Insert: {
           changed_at?: string
           changed_by?: string | null
+          domain_id: string
           einsatz_id: string
           field_name: string
           id?: string
@@ -403,6 +538,7 @@ export type Database = {
         Update: {
           changed_at?: string
           changed_by?: string | null
+          domain_id?: string
           einsatz_id?: string
           field_name?: string
           id?: string
@@ -410,6 +546,13 @@ export type Database = {
           old_value?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "einsatz_historie_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "einsatz_historie_einsatz_id_fkey"
             columns: ["einsatz_id"]
@@ -506,11 +649,59 @@ export type Database = {
         }
         Relationships: []
       }
+      licenses: {
+        Row: {
+          created_at: string
+          domain_id: string
+          id: string
+          license_key: string
+          max_users: number | null
+          notes: string | null
+          status: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          id?: string
+          license_key: string
+          max_users?: number | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          id?: string
+          license_key?: string
+          max_users?: number | null
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "licenses_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string
           display_name: string | null
+          domain_id: string | null
           id: string
           updated_at: string
         }
@@ -518,6 +709,7 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          domain_id?: string | null
           id: string
           updated_at?: string
         }
@@ -525,10 +717,45 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
+          domain_id?: string | null
           id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      superadmin_impersonation: {
+        Row: {
+          started_at: string
+          superadmin_id: string
+          target_domain_id: string
+        }
+        Insert: {
+          started_at?: string
+          superadmin_id: string
+          target_domain_id: string
+        }
+        Update: {
+          started_at?: string
+          superadmin_id?: string
+          target_domain_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "superadmin_impersonation_target_domain_id_fkey"
+            columns: ["target_domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suppressed_emails: {
         Row: {
@@ -557,29 +784,42 @@ export type Database = {
       user_roles: {
         Row: {
           created_at: string
+          domain_id: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
+          domain_id?: string | null
           id?: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
+          domain_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      current_effective_domain_id: { Args: never; Returns: string }
+      current_user_domain_id: { Args: never; Returns: string }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -588,6 +828,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      has_active_license: { Args: { _domain_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -595,6 +836,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_domain_admin: { Args: { _domain_id: string }; Returns: boolean }
+      is_superadmin: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -614,7 +857,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "dispatcher" | "fahrer"
+      app_role: "admin" | "dispatcher" | "fahrer" | "superadmin" | "user"
       einsatz_prioritaet: "niedrig" | "normal" | "hoch" | "kritisch"
       einsatz_status:
         | "entwurf"
@@ -750,7 +993,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "dispatcher", "fahrer"],
+      app_role: ["admin", "dispatcher", "fahrer", "superadmin", "user"],
       einsatz_prioritaet: ["niedrig", "normal", "hoch", "kritisch"],
       einsatz_status: [
         "entwurf",
