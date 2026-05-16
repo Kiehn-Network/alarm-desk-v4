@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { createBericht } from "@/lib/rohrservice.functions";
+import { createBericht, getRohrserviceConfig } from "@/lib/rohrservice.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,9 @@ type Form = Record<string, any>;
 function NeuerBericht() {
   const navigate = useNavigate();
   const createFn = useServerFn(createBericht);
+  const cfgFn = useServerFn(getRohrserviceConfig);
+  const { data: cfg } = useQuery({ queryKey: ["rs-config"], queryFn: () => cfgFn() });
+  const isBudeko = cfg?.variante === "budeko";
   const [f, setF] = useState<Form>({});
 
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
@@ -53,13 +56,15 @@ function NeuerBericht() {
           <Field label="Firma"><Input value={f.anrufer_firma ?? ""} onChange={(e) => set("anrufer_firma", e.target.value)} /></Field>
         </Section>
 
-        <Section title="Rechnungsempfänger:">
-          <Field label="Name"><Input value={f.rechnung_name ?? ""} onChange={(e) => set("rechnung_name", e.target.value)} /></Field>
-          <Field label="Adresse"><Input value={f.rechnung_adresse ?? ""} onChange={(e) => set("rechnung_adresse", e.target.value)} /></Field>
-          <Field label="Telefonnummer"><Input value={f.rechnung_telefon ?? ""} onChange={(e) => set("rechnung_telefon", e.target.value)} /></Field>
-        </Section>
+        {!isBudeko && (
+          <Section title="Rechnungsempfänger:">
+            <Field label="Name"><Input value={f.rechnung_name ?? ""} onChange={(e) => set("rechnung_name", e.target.value)} /></Field>
+            <Field label="Adresse"><Input value={f.rechnung_adresse ?? ""} onChange={(e) => set("rechnung_adresse", e.target.value)} /></Field>
+            <Field label="Telefonnummer"><Input value={f.rechnung_telefon ?? ""} onChange={(e) => set("rechnung_telefon", e.target.value)} /></Field>
+          </Section>
+        )}
 
-        <Section title="Mieter und Standort:">
+        <Section title={isBudeko ? "Objekt / Mieter:" : "Mieter und Standort:"}>
           <Field label="Name"><Input value={f.mieter_name ?? ""} onChange={(e) => set("mieter_name", e.target.value)} /></Field>
           <Field label="Telefonnummer"><Input value={f.mieter_telefon ?? ""} onChange={(e) => set("mieter_telefon", e.target.value)} /></Field>
           <Field label="Straße/Hausnummer"><Input value={f.mieter_strasse ?? ""} onChange={(e) => set("mieter_strasse", e.target.value)} /></Field>
@@ -98,15 +103,19 @@ function NeuerBericht() {
           <Field label="Datum der Weitergabe an">
             <Input type="datetime-local" value={f.zeit_weitergabe ?? ""} onChange={(e) => set("zeit_weitergabe", e.target.value)} />
           </Field>
-          <Field label="Name des Monteurs">
+          <Field label={isBudeko ? "Name der Bereitschaft" : "Name des Monteurs"}>
             <Input value={f.monteur_weitergabe ?? ""} onChange={(e) => set("monteur_weitergabe", e.target.value)} />
           </Field>
-          <Field label="Datum der Rückmeldung von">
-            <Input type="datetime-local" value={f.zeit_rueckmeldung ?? ""} onChange={(e) => set("zeit_rueckmeldung", e.target.value)} />
-          </Field>
-          <Field label="Name des Monteurs">
-            <Input value={f.monteur_rueckmeldung ?? ""} onChange={(e) => set("monteur_rueckmeldung", e.target.value)} />
-          </Field>
+          {!isBudeko && (
+            <>
+              <Field label="Datum der Rückmeldung von">
+                <Input type="datetime-local" value={f.zeit_rueckmeldung ?? ""} onChange={(e) => set("zeit_rueckmeldung", e.target.value)} />
+              </Field>
+              <Field label="Name des Monteurs">
+                <Input value={f.monteur_rueckmeldung ?? ""} onChange={(e) => set("monteur_rueckmeldung", e.target.value)} />
+              </Field>
+            </>
+          )}
         </Section>
 
         <Section title="" cols={1}>
