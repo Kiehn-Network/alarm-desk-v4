@@ -27,12 +27,14 @@ import {
   linkDateien, unlinkDateien, getDateiSignedUrl,
   updateDatei, listDateiHistorie,
 } from "@/lib/dateien.functions";
+import { useRole } from "@/hooks/use-role";
+import { AccessDenied } from "@/components/layout/access-denied";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
 
 export const Route = createFileRoute("/_authenticated/dateien")({
-  component: DateienPage,
+  component: DateienGate,
 });
 
 function formatSize(bytes: number | null) {
@@ -40,6 +42,14 @@ function formatSize(bytes: number | null) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function DateienGate() {
+  const { isFahrer, loading } = useRole();
+  if (loading) return <div className="p-6 lg:p-8 text-sm text-muted-foreground">Lade…</div>;
+  if (isFahrer)
+    return <AccessDenied title="Kein Zugriff" message="Die Datei-Verwaltung ist nicht für Fahrer freigegeben." />;
+  return <DateienPage />;
 }
 
 function DateienPage() {

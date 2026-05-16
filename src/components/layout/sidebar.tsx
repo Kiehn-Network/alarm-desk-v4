@@ -28,7 +28,7 @@ const sections: Section[] = [
   { label: "Menü", items: [
     { to: "/alarmierung", label: "Alarmierung", icon: Bell, roles: ["admin", "dispatcher"] },
     { to: "/dienstplaene", label: "Dienstpläne", icon: CalendarDays },
-    { to: "/dateien", label: "Datei-Verwaltung", icon: FolderOpen },
+    { to: "/dateien", label: "Datei-Verwaltung", icon: FolderOpen, roles: ["admin", "dispatcher"] },
     { to: "/intrahub", label: "IntraHub", icon: Network },
   ]},
   { label: "Notdienste", items: [
@@ -37,8 +37,8 @@ const sections: Section[] = [
     { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz" },
   ]},
   { label: "Tools", items: [
-    { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound },
-    { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare },
+    { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"] },
+    { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher"] },
   ]},
   { label: "Center", items: [
     { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher"] },

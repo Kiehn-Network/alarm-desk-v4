@@ -1,8 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Construction } from "lucide-react";
+import { useRole } from "@/hooks/use-role";
+import { AccessDenied } from "@/components/layout/access-denied";
 
 export const Route = createFileRoute("/_authenticated/schluesselbuch")({
-  component: () => (
+  component: SchluesselbuchPage,
+});
+
+function SchluesselbuchPage() {
+  const { isFahrer, loading } = useRole();
+  if (loading) return <div className="p-6 lg:p-8 text-sm text-muted-foreground">Lade…</div>;
+  if (isFahrer)
+    return <AccessDenied title="Kein Zugriff" message="Das Schlüsselbuch ist nicht für Fahrer freigegeben." />;
+  return (
     <div className="p-6 lg:p-8">
       <h1 className="text-3xl font-bold">Schlüsselbuch</h1>
       <div className="mt-8 rounded-xl border border-border bg-card p-12 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -15,5 +25,5 @@ export const Route = createFileRoute("/_authenticated/schluesselbuch")({
         </p>
       </div>
     </div>
-  ),
-});
+  );
+}
