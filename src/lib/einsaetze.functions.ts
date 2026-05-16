@@ -13,10 +13,9 @@ const createSchema = z.object({
   key_number: z.string().max(100).optional().nullable(),
   anlagen_nr: z.string().max(100).optional().nullable(),
   teilnehmer_id: z.string().max(100).optional().nullable(),
-  prioritaet: prioritaet.default("normal"),
   beschreibung: z.string().max(4000).optional().nullable(),
-  geplant_am: z.string().optional().nullable(),
-  status: z.enum(["entwurf", "wartet_freigabe"]).default("wartet_freigabe"),
+  assigned_to: z.string().uuid(),
+  datei_id: z.string().uuid().optional().nullable(),
 });
 
 const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
@@ -98,8 +97,23 @@ export const createEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => createSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const payload: any = { ...data, created_by: userId };
-    if (!payload.geplant_am) delete payload.geplant_am;
+    const payload: any = {
+      einsatzgrund: data.einsatzgrund,
+      einsatzgrund_id: data.einsatzgrund_id ?? null,
+      kunden_name: data.kunden_name ?? null,
+      address: data.address ?? null,
+      key_number: data.key_number ?? null,
+      anlagen_nr: data.anlagen_nr ?? null,
+      teilnehmer_id: data.teilnehmer_id ?? null,
+      beschreibung: data.beschreibung ?? null,
+      prioritaet: "normal",
+      status: "in_bearbeitung",
+      created_by: userId,
+      assigned_to: data.assigned_to,
+      assigned_at: new Date().toISOString(),
+      approved_by: userId,
+      approved_at: new Date().toISOString(),
+    };
     const { data: row, error } = await supabase
       .from("einsaetze").insert(payload).select().single();
     if (error) throw new Error(error.message);
