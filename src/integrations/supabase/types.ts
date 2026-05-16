@@ -178,6 +178,7 @@ export type Database = {
           hausnotruf_problem: string | null
           id: string
           key_number: string | null
+          kunden_email: string | null
           kunden_name: string | null
           prioritaet: Database["public"]["Enums"]["einsatz_prioritaet"]
           status: Database["public"]["Enums"]["einsatz_status"]
@@ -208,6 +209,7 @@ export type Database = {
           hausnotruf_problem?: string | null
           id?: string
           key_number?: string | null
+          kunden_email?: string | null
           kunden_name?: string | null
           prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
           status?: Database["public"]["Enums"]["einsatz_status"]
@@ -238,6 +240,7 @@ export type Database = {
           hausnotruf_problem?: string | null
           id?: string
           key_number?: string | null
+          kunden_email?: string | null
           kunden_name?: string | null
           prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
           status?: Database["public"]["Enums"]["einsatz_status"]
@@ -254,6 +257,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      einsatz_email_log: {
+        Row: {
+          einsatz_id: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          sent_at: string
+          sent_by: string | null
+          status: string
+        }
+        Insert: {
+          einsatz_id: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+        }
+        Update: {
+          einsatz_id?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+        }
+        Relationships: []
       }
       einsatz_gruende: {
         Row: {

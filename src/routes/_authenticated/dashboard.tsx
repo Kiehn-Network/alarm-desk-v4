@@ -1,13 +1,14 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import {
   BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users,
 } from "lucide-react";
 import { getDashboardStats } from "@/lib/dashboard.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -38,7 +39,21 @@ function DashboardContent() {
   const { data } = useSuspenseQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch(),
+    refetchInterval: 30000,
+    refetchOnWindowFocus: true,
   });
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("dashboard-stats-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "einsaetze" },
+        () => qc.invalidateQueries({ queryKey: ["dashboard-stats"] }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "dateien" },
+        () => qc.invalidateQueries({ queryKey: ["dashboard-stats"] }))
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [qc]);
+
   const name = (user?.user_metadata?.display_name as string) ?? user?.email?.split("@")[0] ?? "";
 
   const cards = [

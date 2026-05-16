@@ -271,8 +271,14 @@ export const updateEinsatzBericht = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
+    // Admin/Disponent dürfen Berichte auch nach Abschluss bearbeiten
     if (before?.status === "abgeschlossen") {
-      throw new Error("Bericht kann nach Abschluss nicht mehr bearbeitet werden");
+      const { data: roles } = await supabaseAdmin
+        .from("user_roles").select("role").eq("user_id", userId);
+      const canEdit = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher");
+      if (!canEdit) {
+        throw new Error("Bericht kann nach Abschluss nicht mehr bearbeitet werden");
+      }
     }
     const patch: any = {
       bericht_typ: data.bericht_typ,
@@ -390,6 +396,20 @@ export const deleteEinsatz = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { error } = await supabase.from("einsaetze").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const updateKundenEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    id: z.string().uuid(),
+    email: z.string().email().max(200),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { error } = await supabase
+      .from("einsaetze").update({ kunden_email: data.email }).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
