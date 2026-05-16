@@ -122,6 +122,28 @@ export const deleteUser = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const impersonateUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    if (data.user_id === context.userId) {
+      throw new Error("Du bist bereits angemeldet");
+    }
+    const { data: target, error: uErr } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
+    if (uErr || !target.user?.email) {
+      throw new Error(uErr?.message ?? "Benutzer nicht gefunden");
+    }
+    const { data: link, error: lErr } = await supabaseAdmin.auth.admin.generateLink({
+      type: "magiclink",
+      email: target.user.email,
+    });
+    if (lErr) throw new Error(lErr.message);
+    const hashed = (link as any)?.properties?.hashed_token;
+    if (!hashed) throw new Error("Token konnte nicht erzeugt werden");
+    return { token_hash: hashed as string, email: target.user.email };
+  });
+
 // Einsatzgründe management
 export const listAllGruende = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
