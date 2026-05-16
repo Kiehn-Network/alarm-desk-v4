@@ -24,6 +24,8 @@ const TRACKABLE = [
   "einsatzgrund","kunden_name","address","key_number","anlagen_nr",
   "teilnehmer_id","prioritaet","beschreibung","geplant_am","status",
   "assigned_to","ablehnung_grund","approved_by","abgeschlossen_am",
+  "vor_ort_am","abfahrt_am","einsatz_ende_am",
+  "bericht_typ","hausnotruf_problem","hausnotruf_loesung",
 ] as const;
 
 async function logHistory(
@@ -219,12 +221,108 @@ export const abschliessenEinsatz = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
-    const patch = { status: "abgeschlossen" as const, abgeschlossen_am: new Date().toISOString() };
+    const now = new Date().toISOString();
+    const patch: any = { status: "abgeschlossen", abgeschlossen_am: now };
+    if (!before?.einsatz_ende_am) patch.einsatz_ende_am = now;
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
     await logHistory(supabase, userId, data.id, before ?? {}, patch);
     return row;
+  });
+
+export const setEinsatzZeit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      feld: z.enum(["vor_ort", "abfahrt", "ende"]),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const col =
+      data.feld === "vor_ort" ? "vor_ort_am"
+      : data.feld === "abfahrt" ? "abfahrt_am"
+      : "einsatz_ende_am";
+    const { data: before } = await supabase
+      .from("einsaetze").select("*").eq("id", data.id).single();
+    if (before?.[col]) return before;
+    const patch: any = { [col]: new Date().toISOString() };
+    const { data: row, error } = await supabase
+      .from("einsaetze").update(patch).eq("id", data.id).select().single();
+    if (error) throw new Error(error.message);
+    await logHistory(supabase, userId, data.id, before ?? {}, patch);
+    return row;
+  });
+
+export const updateEinsatzBericht = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      bericht_typ: z.enum(["hausnotruf", "av_einsatz"]),
+      bericht_data: z.record(z.string(), z.any()).optional().nullable(),
+      hausnotruf_problem: z.string().max(4000).optional().nullable(),
+      hausnotruf_loesung: z.string().max(4000).optional().nullable(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: before } = await supabase
+      .from("einsaetze").select("*").eq("id", data.id).single();
+    if (before?.status === "abgeschlossen") {
+      throw new Error("Bericht kann nach Abschluss nicht mehr bearbeitet werden");
+    }
+    const patch: any = {
+      bericht_typ: data.bericht_typ,
+      bericht_data: data.bericht_data ?? null,
+      hausnotruf_problem: data.hausnotruf_problem ?? null,
+      hausnotruf_loesung: data.hausnotruf_loesung ?? null,
+    };
+    const { data: row, error } = await supabase
+      .from("einsaetze").update(patch).eq("id", data.id).select().single();
+    if (error) throw new Error(error.message);
+    await supabase.from("einsatz_historie").insert({
+      einsatz_id: data.id, field_name: "bericht",
+      old_value: before?.bericht_data ? JSON.stringify(before.bericht_data) : null,
+      new_value: JSON.stringify(patch.bericht_data),
+      changed_by: userId,
+    });
+    return row;
+  });
+
+export const listDateienForEinsatz = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ einsatz_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: e } = await supabase
+      .from("einsaetze").select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id")
+      .eq("id", data.einsatz_id).single();
+    if (!e) return { dateien: [] };
+    const ors: string[] = [];
+    const add = (col: string, val: any) => {
+      if (!val) return;
+      const v = String(val).replace(/[%_,()]/g, "").trim();
+      if (v.length === 0) return;
+      ors.push(`${col}.ilike.%${v}%`);
+    };
+    add("kunden_name", e.kunden_name);
+    add("address", e.address);
+    add("key_number", e.key_number);
+    add("anlagen_nr", e.anlagen_nr);
+    add("teilnehmer_id", e.teilnehmer_id);
+    if (ors.length === 0) return { dateien: [] };
+    const { data: rows, error } = await supabase
+      .from("dateien")
+      .select("id,filename,kunden_name,address,key_number,anlagen_nr,teilnehmer_id,storage_path,mime_type,size_bytes,created_at")
+      .is("deleted_at", null)
+      .or(ors.join(","))
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return { dateien: rows ?? [] };
   });
 
 export const listFahrer = createServerFn({ method: "GET" })
