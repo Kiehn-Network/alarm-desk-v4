@@ -183,7 +183,7 @@ export const adminStats = createServerFn({ method: "GET" })
     const byStatus: Record<string, number> = {};
     (einsaetzeR.data ?? []).forEach((e: any) => { byStatus[e.status] = (byStatus[e.status] ?? 0) + 1; });
     return {
-      totalUsers: usersR.data?.total ?? (usersR.data?.users?.length ?? 0),
+      totalUsers: (usersR.data as any)?.total ?? (usersR.data?.users?.length ?? 0),
       byRole,
       dateienCount: dateienR.count ?? 0,
       einsaetzeTotal: (einsaetzeR.data ?? []).length,
