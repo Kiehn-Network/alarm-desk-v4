@@ -17,6 +17,7 @@ import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_
 import { Route as AuthenticatedSchluesselbuchRouteImport } from './routes/_authenticated/schluesselbuch'
 import { Route as AuthenticatedRevierCenterRouteImport } from './routes/_authenticated/revier-center'
 import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
+import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authenticated/meine-einsaetze'
 import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
@@ -71,6 +72,12 @@ const AuthenticatedMonitorRoute = AuthenticatedMonitorRouteImport.update({
   path: '/monitor',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedMeineEinsaetzeRoute =
+  AuthenticatedMeineEinsaetzeRouteImport.update({
+    id: '/meine-einsaetze',
+    path: '/meine-einsaetze',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedIntrahubRoute = AuthenticatedIntrahubRouteImport.update({
   id: '/intrahub',
   path: '/intrahub',
@@ -138,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
+  '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
   '/revier-center': typeof AuthenticatedRevierCenterRoute
   '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
@@ -157,6 +165,7 @@ export interface FileRoutesByTo {
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
+  '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
   '/revier-center': typeof AuthenticatedRevierCenterRoute
   '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
@@ -178,6 +187,7 @@ export interface FileRoutesById {
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
+  '/_authenticated/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/_authenticated/monitor': typeof AuthenticatedMonitorRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRoute
   '/_authenticated/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
@@ -199,6 +209,7 @@ export interface FileRouteTypes {
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/intrahub'
+    | '/meine-einsaetze'
     | '/monitor'
     | '/revier-center'
     | '/schluesselbuch'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/intrahub'
+    | '/meine-einsaetze'
     | '/monitor'
     | '/revier-center'
     | '/schluesselbuch'
@@ -238,6 +250,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
     | '/_authenticated/intrahub'
+    | '/_authenticated/meine-einsaetze'
     | '/_authenticated/monitor'
     | '/_authenticated/revier-center'
     | '/_authenticated/schluesselbuch'
@@ -310,6 +323,13 @@ declare module '@tanstack/react-router' {
       path: '/monitor'
       fullPath: '/monitor'
       preLoaderRoute: typeof AuthenticatedMonitorRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/meine-einsaetze': {
+      id: '/_authenticated/meine-einsaetze'
+      path: '/meine-einsaetze'
+      fullPath: '/meine-einsaetze'
+      preLoaderRoute: typeof AuthenticatedMeineEinsaetzeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/intrahub': {
@@ -393,6 +413,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
   AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
+  AuthenticatedMeineEinsaetzeRoute: typeof AuthenticatedMeineEinsaetzeRoute
   AuthenticatedMonitorRoute: typeof AuthenticatedMonitorRoute
   AuthenticatedRevierCenterRoute: typeof AuthenticatedRevierCenterRoute
   AuthenticatedSchluesselbuchRoute: typeof AuthenticatedSchluesselbuchRoute
@@ -411,6 +432,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
   AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,
+  AuthenticatedMeineEinsaetzeRoute: AuthenticatedMeineEinsaetzeRoute,
   AuthenticatedMonitorRoute: AuthenticatedMonitorRoute,
   AuthenticatedRevierCenterRoute: AuthenticatedRevierCenterRoute,
   AuthenticatedSchluesselbuchRoute: AuthenticatedSchluesselbuchRoute,

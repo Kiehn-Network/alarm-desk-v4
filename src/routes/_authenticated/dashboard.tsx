@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense } from "react";
@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { getDashboardStats } from "@/lib/dashboard.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { useRole } from "@/hooks/use-role";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -21,6 +22,13 @@ function greeting() {
 
 function DashboardPage() {
   const { user } = useAuth();
+  const { isFahrer, isAdmin, isDispatcher, loading: roleLoading } = useRole();
+  if (roleLoading) {
+    return <div className="p-6 text-sm text-muted-foreground">Lade…</div>;
+  }
+  if (isFahrer && !isAdmin && !isDispatcher) {
+    return <Navigate to="/meine-einsaetze" />;
+  }
   const fetch = useServerFn(getDashboardStats);
   const qc = useQueryClient();
   const { data } = useSuspenseQuery({
