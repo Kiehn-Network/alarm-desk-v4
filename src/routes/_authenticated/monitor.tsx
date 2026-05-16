@@ -1,19 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Construction } from "lucide-react";
+import { lazy, Suspense } from "react";
+
+const LiveMap = lazy(() => import("@/components/monitor/live-map"));
 
 export const Route = createFileRoute("/_authenticated/monitor")({
-  component: () => (
-    <div className="p-6 lg:p-8">
-      <h1 className="text-3xl font-bold">Monitor</h1>
-      <div className="mt-8 rounded-xl border border-border bg-card p-12 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-        <div className="mx-auto size-14 rounded-full bg-muted grid place-items-center">
-          <Construction className="size-6 text-muted-foreground" />
-        </div>
-        <h2 className="mt-4 text-lg font-semibold">In Vorbereitung</h2>
-        <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-          Dieses Modul wird in einer der nächsten Iterationen umgesetzt.
+  component: MonitorPage,
+  ssr: false,
+});
+
+function MonitorPage() {
+  return (
+    <div className="p-6 lg:p-8 flex flex-col gap-4 h-full">
+      <div>
+        <h1 className="text-3xl font-bold">Monitor</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Live-Standorte aller Fahrer der Domäne und ihr aktueller Einsatzstatus.
         </p>
       </div>
+      <Suspense
+        fallback={
+          <div className="flex-1 grid place-items-center rounded-xl border border-border bg-card min-h-[400px]">
+            <div className="size-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
+        }
+      >
+        <LiveMap />
+      </Suspense>
     </div>
-  ),
-});
+  );
+}

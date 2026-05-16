@@ -5,6 +5,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { MaintenanceBanner } from "@/components/layout/maintenance-banner";
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocationTracker } from "@/hooks/use-location-tracker";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const { user, loading } = useAuth();
+  useLocationTracker(!!user);
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
