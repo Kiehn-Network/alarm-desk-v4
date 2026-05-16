@@ -1,8 +1,14 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import { Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+
+type VersionInfo = {
+  current_version: string;
+  versions: { id: string; version: string; changelog: string | null; released_at: string }[];
+};
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
@@ -19,6 +25,14 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [info, setInfo] = useState<VersionInfo | null>(null);
+
+  useEffect(() => {
+    fetch("/api/public/version")
+      .then((r) => r.json())
+      .then((d) => setInfo(d))
+      .catch(() => {});
+  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -67,7 +81,7 @@ function LoginPage() {
             <h1 className="text-4xl font-bold leading-tight">Schnell.<br/>Übersichtlich.<br/><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-primary)" }}>Im Einsatz bereit.</span></h1>
             <p className="mt-4 text-muted-foreground max-w-md">Verwalte Einsätze, Fahrer, Schlüssel und Notdienste an einem Ort.</p>
           </div>
-          <div className="text-xs text-muted-foreground">© 2026 AlarmDesk · v3.2.0</div>
+          <VersionBadge info={info} />
         </div>
       </div>
 
@@ -106,6 +120,9 @@ function LoginPage() {
               {mode === "login" ? "Registrieren" : "Anmelden"}
             </button>
           </div>
+          <div className="mt-8 text-center lg:hidden">
+            <VersionBadge info={info} />
+          </div>
         </div>
       </div>
       <style>{`.input{width:100%;height:44px;padding:0 14px;border-radius:10px;background:var(--color-input);border:1px solid var(--color-border);color:var(--color-foreground);font-size:14px;transition:all .15s}.input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-ring)}`}</style>
@@ -119,5 +136,45 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="block text-xs font-medium text-muted-foreground mb-1.5">{label}</span>
       {children}
     </label>
+  );
+}
+
+function VersionBadge({ info }: { info: VersionInfo | null }) {
+  const version = info?.current_version ?? "…";
+  return (
+    <div className="text-xs text-muted-foreground">
+      © 2026 AlarmDesk ·{" "}
+      <Dialog>
+        <DialogTrigger asChild>
+          <button className="text-primary hover:underline font-medium">v{version}</button>
+        </DialogTrigger>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Changelog</DialogTitle>
+            <DialogDescription>Aktuelle Version: v{version}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 mt-2">
+            {(info?.versions ?? []).length === 0 && (
+              <p className="text-sm text-muted-foreground">Noch keine Einträge.</p>
+            )}
+            {info?.versions.map((v) => (
+              <div key={v.id} className="border-l-2 border-primary/40 pl-3">
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="font-semibold text-sm">v{v.version}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(v.released_at).toLocaleDateString("de-DE")}
+                  </div>
+                </div>
+                {v.changelog && (
+                  <pre className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground font-sans">
+                    {v.changelog}
+                  </pre>
+                )}
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
