@@ -81,7 +81,7 @@ function LoginPage() {
             <h1 className="text-4xl font-bold leading-tight">Schnell.<br/>Übersichtlich.<br/><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-primary)" }}>Im Einsatz bereit.</span></h1>
             <p className="mt-4 text-muted-foreground max-w-md">Verwalte Einsätze, Fahrer, Schlüssel und Notdienste an einem Ort.</p>
           </div>
-          <div className="text-xs text-muted-foreground">© 2026 AlarmDesk · v3.2.0</div>
+          <VersionBadge info={info} />
         </div>
       </div>
 
@@ -119,6 +119,9 @@ function LoginPage() {
             <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="text-primary hover:underline font-medium">
               {mode === "login" ? "Registrieren" : "Anmelden"}
             </button>
+          </div>
+          <div className="mt-8 text-center lg:hidden">
+            <VersionBadge info={info} />
           </div>
         </div>
       </div>
