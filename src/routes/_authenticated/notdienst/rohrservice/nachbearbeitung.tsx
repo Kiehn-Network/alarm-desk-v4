@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  listBerichte, deleteBericht, updateBericht, sendBericht, getBericht,
+  listBerichte, deleteBericht, updateBericht, sendBericht, getBericht, getRohrserviceConfig,
 } from "@/lib/rohrservice.functions";
 import { buildRohrservicePdf } from "@/lib/rohrservice-pdf";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,12 @@ function Nachbearbeitung() {
   const listFn = useServerFn(listBerichte);
   const delFn = useServerFn(deleteBericht);
   const sendFn = useServerFn(sendBericht);
+  const cfgFn = useServerFn(getRohrserviceConfig);
   const { data: settings } = useAppSettings();
 
   const { data } = useQuery({ queryKey: ["rs-berichte"], queryFn: () => listFn() });
+  const { data: cfg } = useQuery({ queryKey: ["rs-config"], queryFn: () => cfgFn() });
+  const variante = (cfg?.variante ?? "standard") as "standard" | "budeko";
   const berichte = (data?.berichte ?? []) as any[];
 
   const [editId, setEditId] = useState<string | null>(null);
@@ -49,7 +52,7 @@ function Nachbearbeitung() {
   });
 
   async function handleSend(b: any, email: string) {
-    const doc = buildRohrservicePdf(b, settings?.firmenname ?? "Rohrservice");
+    const doc = buildRohrservicePdf(b, settings?.firmenname ?? "Rohrservice", variante);
     const ab = doc.output("arraybuffer");
     const b64 = btoa(String.fromCharCode(...new Uint8Array(ab as ArrayBuffer)));
     await sendFn({
