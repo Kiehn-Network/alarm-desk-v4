@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useState, useEffect, type FormEvent } from "react";
-import { Radio } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
+import logo from "@/assets/alarmdesk-logo.png";
 
 type VersionInfo = {
   current_version: string;
@@ -69,8 +69,8 @@ function LoginPage() {
         }} />
         <div className="relative z-10 p-12 flex flex-col justify-between w-full">
           <div className="flex items-center gap-3">
-            <div className="size-11 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-              <Radio className="size-6 text-primary-foreground" />
+            <div className="size-11 rounded-xl grid place-items-center bg-card/40 backdrop-blur" style={{ boxShadow: "var(--shadow-glow)" }}>
+              <img src={logo} alt="AlarmDesk" className="size-8 object-contain" />
             </div>
             <div>
               <div className="text-lg font-semibold">AlarmDesk</div>
@@ -88,8 +88,8 @@ function LoginPage() {
       <div className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 flex items-center gap-3">
-            <div className="size-10 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)" }}>
-              <Radio className="size-5 text-primary-foreground" />
+            <div className="size-10 rounded-xl grid place-items-center bg-card">
+              <img src={logo} alt="AlarmDesk" className="size-7 object-contain" />
             </div>
             <div className="font-semibold">AlarmDesk</div>
           </div>

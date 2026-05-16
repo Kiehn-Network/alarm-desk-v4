@@ -1,13 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
-  Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Radio, Crown,
+  Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole, type AppRole } from "@/hooks/use-role";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useDomainModules } from "@/hooks/use-domain-modules";
+import logo from "@/assets/alarmdesk-logo.png";
 
 type Item = {
   to: string;
@@ -81,8 +82,8 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
               <img src={settings.logo_url} alt="Logo" className="size-full object-contain" />
             </div>
           ) : (
-            <div className="size-10 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-              <Radio className="size-5 text-primary-foreground" />
+            <div className="size-10 rounded-xl grid place-items-center bg-card" style={{ boxShadow: "var(--shadow-glow)" }}>
+              <img src={logo} alt="AlarmDesk" className="size-7 object-contain" />
             </div>
           )}
           <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-success border-2 border-sidebar" />
