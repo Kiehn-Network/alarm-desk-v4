@@ -154,6 +154,148 @@ export type Database = {
         }
         Relationships: []
       }
+      einsaetze: {
+        Row: {
+          abgeschlossen_am: string | null
+          ablehnung_grund: string | null
+          address: string | null
+          anlagen_nr: string | null
+          approved_at: string | null
+          approved_by: string | null
+          assigned_at: string | null
+          assigned_to: string | null
+          beschreibung: string | null
+          created_at: string
+          created_by: string
+          einsatzgrund: string
+          einsatzgrund_id: string | null
+          geplant_am: string | null
+          id: string
+          key_number: string | null
+          kunden_name: string | null
+          prioritaet: Database["public"]["Enums"]["einsatz_prioritaet"]
+          status: Database["public"]["Enums"]["einsatz_status"]
+          teilnehmer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          abgeschlossen_am?: string | null
+          ablehnung_grund?: string | null
+          address?: string | null
+          anlagen_nr?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          beschreibung?: string | null
+          created_at?: string
+          created_by: string
+          einsatzgrund: string
+          einsatzgrund_id?: string | null
+          geplant_am?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
+          status?: Database["public"]["Enums"]["einsatz_status"]
+          teilnehmer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          abgeschlossen_am?: string | null
+          ablehnung_grund?: string | null
+          address?: string | null
+          anlagen_nr?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          assigned_at?: string | null
+          assigned_to?: string | null
+          beschreibung?: string | null
+          created_at?: string
+          created_by?: string
+          einsatzgrund?: string
+          einsatzgrund_id?: string | null
+          geplant_am?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
+          status?: Database["public"]["Enums"]["einsatz_status"]
+          teilnehmer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "einsaetze_einsatzgrund_id_fkey"
+            columns: ["einsatzgrund_id"]
+            isOneToOne: false
+            referencedRelation: "einsatz_gruende"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      einsatz_gruende: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      einsatz_historie: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          einsatz_id: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          einsatz_id: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          einsatz_id?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "einsatz_historie_einsatz_id_fkey"
+            columns: ["einsatz_id"]
+            isOneToOne: false
+            referencedRelation: "einsaetze"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -214,6 +356,14 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "dispatcher" | "fahrer"
+      einsatz_prioritaet: "niedrig" | "normal" | "hoch" | "kritisch"
+      einsatz_status:
+        | "entwurf"
+        | "wartet_freigabe"
+        | "freigegeben"
+        | "abgelehnt"
+        | "in_bearbeitung"
+        | "abgeschlossen"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -342,6 +492,15 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "dispatcher", "fahrer"],
+      einsatz_prioritaet: ["niedrig", "normal", "hoch", "kritisch"],
+      einsatz_status: [
+        "entwurf",
+        "wartet_freigabe",
+        "freigegeben",
+        "abgelehnt",
+        "in_bearbeitung",
+        "abgeschlossen",
+      ],
     },
   },
 } as const
