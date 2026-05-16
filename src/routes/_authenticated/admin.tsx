@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Users, ShieldCheck, FileText, Siren, Tag, Plus, Pencil, Trash2,
-  KeyRound, Search, Shield, Truck, Radio, Lock,
+  KeyRound, Search, Shield, Truck, Radio, Lock, LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +27,11 @@ import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
 import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
-  resetUserPassword, deleteUser,
+  resetUserPassword, deleteUser, impersonateUser,
   listAllGruende, upsertGrund, deleteGrund,
 } from "@/lib/admin.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
@@ -134,6 +136,9 @@ function UsersPanel() {
   const qc = useQueryClient();
   const { user: me } = useAuth();
   const fetchUsers = useServerFn(listUsers);
+  const impersonate = useServerFn(impersonateUser);
+  const navigate = useNavigate();
+  const [impBusy, setImpBusy] = useState<string | null>(null);
   const { data, isLoading } = useQuery({ queryKey: ["admin-users"], queryFn: () => fetchUsers() });
 
   const [search, setSearch] = useState("");
@@ -200,6 +205,27 @@ function UsersPanel() {
                 </span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={isSelf || impBusy === u.id}
+                  onClick={async () => {
+                    if (!confirm(`Als "${u.display_name || u.email}" einloggen? Du wirst dabei abgemeldet.`)) return;
+                    setImpBusy(u.id);
+                    try {
+                      const { token_hash } = await impersonate({ data: { user_id: u.id } });
+                      await supabase.auth.signOut();
+                      const { error } = await supabase.auth.verifyOtp({ token_hash, type: "magiclink" });
+                      if (error) throw error;
+                      toast.success(`Angemeldet als ${u.display_name || u.email}`);
+                      navigate({ to: "/dashboard" });
+                    } catch (e: any) {
+                      toast.error(e?.message ?? "Login fehlgeschlagen");
+                    } finally { setImpBusy(null); }
+                  }}
+                >
+                  <LogIn className="size-4 mr-1" />Einloggen als
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setEditUser(u)}>
                   <Pencil className="size-4 mr-1" />Bearbeiten
                 </Button>
