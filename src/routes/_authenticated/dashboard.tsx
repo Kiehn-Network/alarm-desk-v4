@@ -21,16 +21,20 @@ function greeting() {
 }
 
 function DashboardPage() {
-  const { user } = useAuth();
   const { isFahrer, isAdmin, isDispatcher, loading: roleLoading } = useRole();
-  const fetch = useServerFn(getDashboardStats);
-  const qc = useQueryClient();
   if (roleLoading) {
     return <div className="p-6 text-sm text-muted-foreground">Lade…</div>;
   }
   if (isFahrer && !isAdmin && !isDispatcher) {
     return <Navigate to="/meine-einsaetze" />;
   }
+  return <DashboardContent />;
+}
+
+function DashboardContent() {
+  const { user } = useAuth();
+  const fetch = useServerFn(getDashboardStats);
+  const qc = useQueryClient();
   const { data } = useSuspenseQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch(),
