@@ -14,6 +14,108 @@ export type Database = {
   }
   public: {
     Tables: {
+      datei_verknuepfungen: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          datei_a_id: string
+          datei_b_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          datei_a_id: string
+          datei_b_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          datei_a_id?: string
+          datei_b_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "datei_verknuepfungen_datei_a_id_fkey"
+            columns: ["datei_a_id"]
+            isOneToOne: false
+            referencedRelation: "dateien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "datei_verknuepfungen_datei_b_id_fkey"
+            columns: ["datei_b_id"]
+            isOneToOne: false
+            referencedRelation: "dateien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dateien: {
+        Row: {
+          address: string | null
+          anlagen_nr: string | null
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
+          filename: string
+          folder: string | null
+          id: string
+          key_number: string | null
+          kunden_name: string | null
+          mime_type: string | null
+          notiz: string | null
+          size_bytes: number | null
+          storage_path: string
+          teilnehmer_id: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          address?: string | null
+          anlagen_nr?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          filename: string
+          folder?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          mime_type?: string | null
+          notiz?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          teilnehmer_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          address?: string | null
+          anlagen_nr?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
+          filename?: string
+          folder?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          mime_type?: string | null
+          notiz?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          teilnehmer_id?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
