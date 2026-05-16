@@ -37,10 +37,10 @@ const sections: Section[] = [
   ]},
 ];
 
-export function Sidebar({ displayName }: { displayName: string }) {
+export function SidebarContent({ displayName, onNavigate }: { displayName: string; onNavigate?: () => void }) {
   const { location } = useRouterState();
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border">
         <div className="relative">
           <div className="size-10 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
@@ -66,6 +66,7 @@ export function Sidebar({ displayName }: { displayName: string }) {
                   <li key={it.to}>
                     <Link
                       to={it.to}
+                      onClick={onNavigate}
                       className={cn(
                         "group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
                         active
@@ -92,6 +93,14 @@ export function Sidebar({ displayName }: { displayName: string }) {
           <LogOut className="size-4" /> Abmelden
         </button>
       </div>
+    </div>
+  );
+}
+
+export function Sidebar({ displayName }: { displayName: string }) {
+  return (
+    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-sidebar-border">
+      <SidebarContent displayName={displayName} />
     </aside>
   );
 }
