@@ -125,7 +125,7 @@ function Nachbearbeitung() {
         </table>
       </div>
 
-      {editId && <EditDialog id={editId} onClose={() => setEditId(null)} />}
+      {editId && <EditDialog id={editId} variante={variante} onClose={() => setEditId(null)} />}
       {sendId && (
         <SendDialog
           bericht={berichte.find((b) => b.id === sendId)}
@@ -171,7 +171,8 @@ function SendDialog({
   );
 }
 
-const FIELDS: Array<[string, string, "text" | "textarea" | "datetime-local"]> = [
+type FieldDef = [string, string, "text" | "textarea" | "datetime-local"];
+const FIELDS_STANDARD: FieldDef[] = [
   ["anrufer_name", "Anrufer Name", "text"],
   ["anrufer_telefon", "Anrufer Telefon", "text"],
   ["anrufer_adresse", "Anrufer Adresse", "text"],
@@ -191,6 +192,21 @@ const FIELDS: Array<[string, string, "text" | "textarea" | "datetime-local"]> = 
   ["monteur_rueckmeldung", "Monteur Rückmeldung", "text"],
   ["diensthabender_alarmzentrale", "Diensthabender Alarmzentrale", "text"],
 ];
+const FIELDS_BUDEKO: FieldDef[] = [
+  ["anrufer_name", "Anrufer Name", "text"],
+  ["anrufer_telefon", "Anrufer Telefon", "text"],
+  ["anrufer_adresse", "Anrufer Adresse", "text"],
+  ["anrufer_firma", "Anrufer Firma", "text"],
+  ["mieter_name", "Objekt/Mieter Name", "text"],
+  ["mieter_telefon", "Telefon", "text"],
+  ["mieter_strasse", "Straße/Hausnummer", "text"],
+  ["mieter_ort", "Ort", "text"],
+  ["stoerungsart", "Störungsart", "textarea"],
+  ["zeit_kundenanruf", "Kundenanruf", "datetime-local"],
+  ["zeit_weitergabe", "Weitergabe", "datetime-local"],
+  ["monteur_weitergabe", "Name der Bereitschaft", "text"],
+  ["diensthabender_alarmzentrale", "Diensthabender Alarmzentrale", "text"],
+];
 
 function toLocalInput(iso?: string | null) {
   if (!iso) return "";
@@ -198,7 +214,8 @@ function toLocalInput(iso?: string | null) {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function EditDialog({ id, onClose }: { id: string; onClose: () => void }) {
+function EditDialog({ id, variante, onClose }: { id: string; variante: "standard" | "budeko"; onClose: () => void }) {
+  const FIELDS = variante === "budeko" ? FIELDS_BUDEKO : FIELDS_STANDARD;
   const qc = useQueryClient();
   const getFn = useServerFn(getBericht);
   const updFn = useServerFn(updateBericht);
