@@ -33,6 +33,8 @@ const settingsSchema = z.object({
   wartung_aktiv: z.boolean(),
   wartung_nachricht: z.string().max(500).nullable().optional(),
   wartung_farbe: z.enum(["info", "orange", "rot"]),
+  rohrservice_variante: z.enum(["standard", "budeko"]).optional(),
+  rohrservice_notiz: z.string().max(20000).nullable().optional(),
 });
 
 export const updateAppSettings = createServerFn({ method: "POST" })
