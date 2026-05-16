@@ -14,6 +14,75 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_modules: {
+        Row: {
+          beschreibung: string | null
+          created_at: string
+          enabled: boolean
+          id: string
+          key: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          beschreibung?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          beschreibung?: string | null
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          key?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      app_settings: {
+        Row: {
+          dashboard_hinweis: string | null
+          firmenname: string
+          id: boolean
+          logo_url: string | null
+          updated_at: string
+          updated_by: string | null
+          wartung_aktiv: boolean
+          wartung_farbe: string
+          wartung_nachricht: string | null
+        }
+        Insert: {
+          dashboard_hinweis?: string | null
+          firmenname?: string
+          id?: boolean
+          logo_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          wartung_aktiv?: boolean
+          wartung_farbe?: string
+          wartung_nachricht?: string | null
+        }
+        Update: {
+          dashboard_hinweis?: string | null
+          firmenname?: string
+          id?: boolean
+          logo_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          wartung_aktiv?: boolean
+          wartung_farbe?: string
+          wartung_nachricht?: string | null
+        }
+        Relationships: []
+      }
       datei_historie: {
         Row: {
           changed_at: string
