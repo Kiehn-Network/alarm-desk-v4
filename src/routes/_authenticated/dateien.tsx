@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Upload, Search, Link2, Trash2, Download, FileText, Loader2,
-  X, Eye, Link as LinkIcon,
+  X, Eye, Link as LinkIcon, Pencil, History, ArrowRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   listDateien, createDatei, softDeleteDatei,
   linkDateien, unlinkDateien, getDateiSignedUrl,
+  updateDatei, listDateiHistorie,
 } from "@/lib/dateien.functions";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
@@ -53,6 +54,7 @@ function DateienPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [linkFor, setLinkFor] = useState<Datei | null>(null);
   const [detailFor, setDetailFor] = useState<Datei | null>(null);
+  const [editFor, setEditFor] = useState<Datei | null>(null);
 
   const dateien = data?.dateien ?? [];
   const links = data?.links ?? [];
@@ -144,6 +146,9 @@ function DateienPage() {
                   <TableCell>{d.folder ?? "—"}</TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="inline-flex gap-1">
+                      <Button size="sm" variant="ghost" onClick={() => setEditFor(d)} title="Bearbeiten">
+                        <Pencil className="size-4" />
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => setLinkFor(d)} title="Verknüpfen">
                         <Link2 className="size-4" />
                       </Button>
@@ -170,6 +175,9 @@ function DateienPage() {
           datei={detailFor} all={dateien} links={links}
           onClose={() => setDetailFor(null)}
         />
+      )}
+      {editFor && (
+        <EditDialog datei={editFor} onClose={() => setEditFor(null)} onDone={refresh} />
       )}
     </div>
   );
