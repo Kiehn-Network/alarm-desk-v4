@@ -174,3 +174,77 @@ export const getImpersonation = createServerFn({ method: "GET" })
     const { data: d } = await supabaseAdmin.from("domains").select("id,name,slug").eq("id", data.target_domain_id).maybeSingle();
     return { domain: d };
   });
+
+// ---------- Platform settings (global version & maintenance) ----------
+
+export const getPlatformSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data } = await supabaseAdmin.from("platform_settings").select("*").eq("id", 1).maybeSingle();
+    return data;
+  });
+
+export const updatePlatformMaintenance = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    wartung_aktiv: z.boolean(),
+    wartung_nachricht: z.string().max(500).nullable().optional(),
+    wartung_farbe: z.enum(["info", "orange", "rot"]),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { error } = await supabaseAdmin.from("platform_settings").upsert({
+      id: 1,
+      wartung_aktiv: data.wartung_aktiv,
+      wartung_nachricht: data.wartung_nachricht ?? null,
+      wartung_farbe: data.wartung_farbe,
+      updated_by: context.userId,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const listAppVersions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const { data } = await supabaseAdmin.from("app_versions")
+      .select("*").order("released_at", { ascending: false }).limit(100);
+    return data ?? [];
+  });
+
+export const createAppVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    version: z.string().min(1).max(50).regex(/^[a-zA-Z0-9._+-]+$/),
+    changelog: z.string().max(10000).nullable().optional(),
+    set_current: z.boolean().optional(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: row, error } = await supabaseAdmin.from("app_versions").insert({
+      version: data.version,
+      changelog: data.changelog ?? null,
+      created_by: context.userId,
+    }).select().single();
+    if (error) throw new Error(error.message);
+    if (data.set_current !== false) {
+      await supabaseAdmin.from("platform_settings").upsert({
+        id: 1,
+        current_version: data.version,
+        updated_by: context.userId,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: "id" });
+    }
+    return row;
+  });
+
+export const deleteAppVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { error } = await supabaseAdmin.from("app_versions").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
