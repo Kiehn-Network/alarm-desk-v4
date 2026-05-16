@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { requireEffectiveDomainId } from "@/lib/tenant.server";
+import { getEffectiveDomainId, requireEffectiveDomainId } from "@/lib/tenant.server";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).in("role", ["admin", "superadmin"]);
@@ -12,7 +12,8 @@ export const getAppSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const domainId = await getEffectiveDomainId(supabase, userId);
+    if (!domainId) return null;
     const { data, error } = await supabase.from("app_settings").select("*").eq("domain_id", domainId).maybeSingle();
     if (error) throw error;
     return data;
