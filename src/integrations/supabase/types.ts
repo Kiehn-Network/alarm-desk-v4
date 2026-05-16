@@ -156,6 +156,7 @@ export type Database = {
       }
       einsaetze: {
         Row: {
+          abfahrt_am: string | null
           abgeschlossen_am: string | null
           ablehnung_grund: string | null
           address: string | null
@@ -164,12 +165,17 @@ export type Database = {
           approved_by: string | null
           assigned_at: string | null
           assigned_to: string | null
+          bericht_data: Json | null
+          bericht_typ: string | null
           beschreibung: string | null
           created_at: string
           created_by: string
+          einsatz_ende_am: string | null
           einsatzgrund: string
           einsatzgrund_id: string | null
           geplant_am: string | null
+          hausnotruf_loesung: string | null
+          hausnotruf_problem: string | null
           id: string
           key_number: string | null
           kunden_name: string | null
@@ -177,8 +183,10 @@ export type Database = {
           status: Database["public"]["Enums"]["einsatz_status"]
           teilnehmer_id: string | null
           updated_at: string
+          vor_ort_am: string | null
         }
         Insert: {
+          abfahrt_am?: string | null
           abgeschlossen_am?: string | null
           ablehnung_grund?: string | null
           address?: string | null
@@ -187,12 +195,17 @@ export type Database = {
           approved_by?: string | null
           assigned_at?: string | null
           assigned_to?: string | null
+          bericht_data?: Json | null
+          bericht_typ?: string | null
           beschreibung?: string | null
           created_at?: string
           created_by: string
+          einsatz_ende_am?: string | null
           einsatzgrund: string
           einsatzgrund_id?: string | null
           geplant_am?: string | null
+          hausnotruf_loesung?: string | null
+          hausnotruf_problem?: string | null
           id?: string
           key_number?: string | null
           kunden_name?: string | null
@@ -200,8 +213,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["einsatz_status"]
           teilnehmer_id?: string | null
           updated_at?: string
+          vor_ort_am?: string | null
         }
         Update: {
+          abfahrt_am?: string | null
           abgeschlossen_am?: string | null
           ablehnung_grund?: string | null
           address?: string | null
@@ -210,12 +225,17 @@ export type Database = {
           approved_by?: string | null
           assigned_at?: string | null
           assigned_to?: string | null
+          bericht_data?: Json | null
+          bericht_typ?: string | null
           beschreibung?: string | null
           created_at?: string
           created_by?: string
+          einsatz_ende_am?: string | null
           einsatzgrund?: string
           einsatzgrund_id?: string | null
           geplant_am?: string | null
+          hausnotruf_loesung?: string | null
+          hausnotruf_problem?: string | null
           id?: string
           key_number?: string | null
           kunden_name?: string | null
@@ -223,6 +243,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["einsatz_status"]
           teilnehmer_id?: string | null
           updated_at?: string
+          vor_ort_am?: string | null
         }
         Relationships: [
           {
