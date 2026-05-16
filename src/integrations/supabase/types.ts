@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      datei_historie: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          datei_id: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          datei_id: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          datei_id?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "datei_historie_datei_id_fkey"
+            columns: ["datei_id"]
+            isOneToOne: false
+            referencedRelation: "dateien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       datei_verknuepfungen: {
         Row: {
           created_at: string
