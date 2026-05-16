@@ -8,6 +8,13 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data || data.length === 0) throw new Error("Nicht autorisiert");
 }
 
+async function assertSuperadmin(supabase: any, userId: string) {
+  const { data } = await supabase
+    .from("user_roles").select("role")
+    .eq("user_id", userId).eq("role", "superadmin").maybeSingle();
+  if (!data) throw new Error("Nur SuperAdmin");
+}
+
 export const getAppSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -45,6 +52,7 @@ export const updateAppSettings = createServerFn({ method: "POST" })
 export const listAppModules = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    await assertSuperadmin(context.supabase, context.userId);
     const { data, error } = await context.supabase
       .from("app_modules").select("*").order("sort_order").order("name");
     if (error) throw error;
@@ -65,7 +73,7 @@ export const upsertAppModule = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => moduleSchema.parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertSuperadmin(supabase, userId);
     if (data.id) {
       const { error } = await supabase.from("app_modules").update({
         key: data.key, name: data.name, beschreibung: data.beschreibung ?? null,
@@ -87,7 +95,7 @@ export const setAppModuleEnabled = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), enabled: z.boolean() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertSuperadmin(supabase, userId);
     const { error } = await supabase.from("app_modules").update({ enabled: data.enabled }).eq("id", data.id);
     if (error) throw error;
     return { ok: true };
@@ -98,7 +106,7 @@ export const deleteAppModule = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertSuperadmin(supabase, userId);
     const { error } = await supabase.from("app_modules").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
