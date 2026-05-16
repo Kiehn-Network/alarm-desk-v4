@@ -34,6 +34,7 @@ import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './ro
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
 import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
+import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from './routes/_authenticated/notdienst/rohrservice/mitarbeiter'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -174,6 +175,12 @@ const AuthenticatedNotdienstRohrserviceNachbearbeitungRoute =
     path: '/nachbearbeitung',
     getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
   } as any)
+const AuthenticatedNotdienstRohrserviceMitarbeiterRoute =
+  AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport.update({
+    id: '/mitarbeiter',
+    path: '/mitarbeiter',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -221,6 +229,7 @@ export interface FileRoutesByTo {
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -249,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/_authenticated/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/_authenticated/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/_authenticated/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
     | '/lovable/email/queue/process'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
     | '/lovable/email/queue/process'
@@ -329,6 +341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/version'
+    | '/_authenticated/notdienst/rohrservice/mitarbeiter'
     | '/_authenticated/notdienst/rohrservice/nachbearbeitung'
     | '/_authenticated/notdienst/rohrservice/neu'
     | '/lovable/email/queue/process'
@@ -520,10 +533,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport
       parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
     }
+    '/_authenticated/notdienst/rohrservice/mitarbeiter': {
+      id: '/_authenticated/notdienst/rohrservice/mitarbeiter'
+      path: '/mitarbeiter'
+      fullPath: '/notdienst/rohrservice/mitarbeiter'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
   }
 }
 
 interface AuthenticatedNotdienstRohrserviceRouteRouteChildren {
+  AuthenticatedNotdienstRohrserviceMitarbeiterRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   AuthenticatedNotdienstRohrserviceNachbearbeitungRoute: typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   AuthenticatedNotdienstRohrserviceNeuRoute: typeof AuthenticatedNotdienstRohrserviceNeuRoute
   AuthenticatedNotdienstRohrserviceIndexRoute: typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -531,6 +552,8 @@ interface AuthenticatedNotdienstRohrserviceRouteRouteChildren {
 
 const AuthenticatedNotdienstRohrserviceRouteRouteChildren: AuthenticatedNotdienstRohrserviceRouteRouteChildren =
   {
+    AuthenticatedNotdienstRohrserviceMitarbeiterRoute:
+      AuthenticatedNotdienstRohrserviceMitarbeiterRoute,
     AuthenticatedNotdienstRohrserviceNachbearbeitungRoute:
       AuthenticatedNotdienstRohrserviceNachbearbeitungRoute,
     AuthenticatedNotdienstRohrserviceNeuRoute:
