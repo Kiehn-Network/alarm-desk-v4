@@ -31,6 +31,7 @@ import { Route as AuthenticatedNotdienstRohrserviceRouteImport } from './routes/
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedNotdienstBudekoRouteImport } from './routes/_authenticated/notdienst/budeko'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicDomainSlugRouteImport } from './routes/api/public/domain.$slug'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -153,6 +154,11 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDomainSlugRoute = ApiPublicDomainSlugRouteImport.update({
+  id: '/api/public/domain/$slug',
+  path: '/api/public/domain/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -175,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/domain/$slug': typeof ApiPublicDomainSlugRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
@@ -198,6 +205,7 @@ export interface FileRoutesByTo {
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/domain/$slug': typeof ApiPublicDomainSlugRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/domain/$slug': typeof ApiPublicDomainSlugRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/notdienst/lutz'
     | '/notdienst/rohrservice'
     | '/api/public/version'
+    | '/api/public/domain/$slug'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/notdienst/lutz'
     | '/notdienst/rohrservice'
     | '/api/public/version'
+    | '/api/public/domain/$slug'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notdienst/lutz'
     | '/_authenticated/notdienst/rohrservice'
     | '/api/public/version'
+    | '/api/public/domain/$slug'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
@@ -303,6 +315,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
+  ApiPublicDomainSlugRoute: typeof ApiPublicDomainSlugRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -462,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/domain/$slug': {
+      id: '/api/public/domain/$slug'
+      path: '/api/public/domain/$slug'
+      fullPath: '/api/public/domain/$slug'
+      preLoaderRoute: typeof ApiPublicDomainSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -515,6 +535,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
+  ApiPublicDomainSlugRoute: ApiPublicDomainSlugRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
