@@ -1,0 +1,64 @@
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Download, FileText, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { listDateienForEinsatz } from "@/lib/einsaetze.functions";
+import { getDateiSignedUrl } from "@/lib/dateien.functions";
+
+export function EinsatzDateienDialog({
+  einsatzId, open, onClose,
+}: { einsatzId: string | null; open: boolean; onClose: () => void }) {
+  const list = useServerFn(listDateienForEinsatz);
+  const signedUrl = useServerFn(getDateiSignedUrl);
+  const { data, isLoading } = useQuery({
+    queryKey: ["einsatz-dateien", einsatzId],
+    queryFn: () => list({ data: { einsatz_id: einsatzId! } }),
+    enabled: open && !!einsatzId,
+  });
+  const dateien = (data?.dateien ?? []) as any[];
+
+  async function openDatei(d: any) {
+    try {
+      const res = await signedUrl({ data: { storage_path: d.storage_path } });
+      window.open(res.url, "_blank", "noopener");
+    } catch (e: any) { toast.error(e.message ?? "Fehler"); }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Kunden-Dateien</DialogTitle>
+          <DialogDescription>Treffer anhand Kunde, Adresse, Schlüssel, Anlage oder TN.</DialogDescription>
+        </DialogHeader>
+        {isLoading ? (
+          <div className="p-8 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+            <Loader2 className="size-4 animate-spin" /> Lade…
+          </div>
+        ) : dateien.length === 0 ? (
+          <p className="p-6 text-center text-sm text-muted-foreground">Keine passenden Dateien gefunden.</p>
+        ) : (
+          <ul className="max-h-[60vh] overflow-y-auto divide-y divide-border">
+            {dateien.map((d) => (
+              <li key={d.id} className="py-2 flex items-center gap-3">
+                <FileText className="size-4 text-muted-foreground shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{d.filename}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {[d.kunden_name, d.address, d.key_number && `🔑 ${d.key_number}`, d.anlagen_nr && `🏷️ ${d.anlagen_nr}`]
+                      .filter(Boolean).join(" · ")}
+                  </div>
+                </div>
+                <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => openDatei(d)}>
+                  <Download className="size-4" /> Öffnen
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
