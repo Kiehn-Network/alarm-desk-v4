@@ -399,3 +399,17 @@ export const deleteEinsatz = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const updateKundenEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    id: z.string().uuid(),
+    email: z.string().email().max(200),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { error } = await supabase
+      .from("einsaetze").update({ kunden_email: data.email }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
