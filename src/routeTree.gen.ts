@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
 import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
 import { Route as AuthenticatedSchluesselbuchRouteImport } from './routes/_authenticated/schluesselbuch'
@@ -43,6 +44,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedServiceCenterRoute =
   AuthenticatedServiceCenterRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
+  '/superadmin': typeof AuthenticatedSuperadminRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
@@ -179,6 +186,7 @@ export interface FileRoutesByTo {
   '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
+  '/superadmin': typeof AuthenticatedSuperadminRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
@@ -202,6 +210,7 @@ export interface FileRoutesById {
   '/_authenticated/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/_authenticated/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
+  '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/schluesselbuch'
     | '/schluesseluebergabe'
     | '/service-center'
+    | '/superadmin'
     | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/notdienst/rohrservice'
@@ -246,6 +256,7 @@ export interface FileRouteTypes {
     | '/schluesselbuch'
     | '/schluesseluebergabe'
     | '/service-center'
+    | '/superadmin'
     | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/notdienst/rohrservice'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/schluesselbuch'
     | '/_authenticated/schluesseluebergabe'
     | '/_authenticated/service-center'
+    | '/_authenticated/superadmin'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/lutz'
     | '/_authenticated/notdienst/rohrservice'
@@ -303,6 +315,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/superadmin': {
+      id: '/_authenticated/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof AuthenticatedSuperadminRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/service-center': {
       id: '/_authenticated/service-center'
@@ -440,6 +459,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSchluesselbuchRoute: typeof AuthenticatedSchluesselbuchRoute
   AuthenticatedSchluesseluebergabeRoute: typeof AuthenticatedSchluesseluebergabeRoute
   AuthenticatedServiceCenterRoute: typeof AuthenticatedServiceCenterRoute
+  AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
   AuthenticatedNotdienstBudekoRoute: typeof AuthenticatedNotdienstBudekoRoute
   AuthenticatedNotdienstLutzRoute: typeof AuthenticatedNotdienstLutzRoute
   AuthenticatedNotdienstRohrserviceRoute: typeof AuthenticatedNotdienstRohrserviceRoute
@@ -459,6 +479,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSchluesselbuchRoute: AuthenticatedSchluesselbuchRoute,
   AuthenticatedSchluesseluebergabeRoute: AuthenticatedSchluesseluebergabeRoute,
   AuthenticatedServiceCenterRoute: AuthenticatedServiceCenterRoute,
+  AuthenticatedSuperadminRoute: AuthenticatedSuperadminRoute,
   AuthenticatedNotdienstBudekoRoute: AuthenticatedNotdienstBudekoRoute,
   AuthenticatedNotdienstLutzRoute: AuthenticatedNotdienstLutzRoute,
   AuthenticatedNotdienstRohrserviceRoute:
@@ -478,3 +499,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
