@@ -292,6 +292,8 @@ const FIELD_LABELS: Record<string, string> = {
   address: "Adresse", key_number: "Schlüssel-Nr.", anlagen_nr: "Anlagen-Nr.",
   teilnehmer_id: "Teilnehmer-ID", beschreibung: "Beschreibung",
   assigned_to: "Fahrer", abgeschlossen_am: "Abgeschlossen am",
+  vor_ort_am: "Vor Ort", abfahrt_am: "Abfahrt", einsatz_ende_am: "Einsatz Ende",
+  bericht: "Bericht",
 };
 
 function HistoryDialog({ einsatz, onClose }: { einsatz: Einsatz | null; onClose: () => void }) {
