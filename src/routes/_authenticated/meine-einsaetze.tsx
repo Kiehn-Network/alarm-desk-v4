@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
-  History as HistoryIcon, Flag, Radio as RadioIcon,
+  History as HistoryIcon, Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
