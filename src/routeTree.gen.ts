@@ -12,7 +12,21 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
+import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
+import { Route as AuthenticatedSchluesselbuchRouteImport } from './routes/_authenticated/schluesselbuch'
+import { Route as AuthenticatedRevierCenterRouteImport } from './routes/_authenticated/revier-center'
+import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
+import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
+import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
+import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
+import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticated/dateien'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedNotdienstRohrserviceRouteImport } from './routes/_authenticated/notdienst/rohrservice'
+import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
+import { Route as AuthenticatedNotdienstBudekoRouteImport } from './routes/_authenticated/notdienst/budeko'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -28,40 +42,210 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedServiceCenterRoute =
+  AuthenticatedServiceCenterRouteImport.update({
+    id: '/service-center',
+    path: '/service-center',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSchluesseluebergabeRoute =
+  AuthenticatedSchluesseluebergabeRouteImport.update({
+    id: '/schluesseluebergabe',
+    path: '/schluesseluebergabe',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSchluesselbuchRoute =
+  AuthenticatedSchluesselbuchRouteImport.update({
+    id: '/schluesselbuch',
+    path: '/schluesselbuch',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRevierCenterRoute =
+  AuthenticatedRevierCenterRouteImport.update({
+    id: '/revier-center',
+    path: '/revier-center',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMonitorRoute = AuthenticatedMonitorRouteImport.update({
+  id: '/monitor',
+  path: '/monitor',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedIntrahubRoute = AuthenticatedIntrahubRouteImport.update({
+  id: '/intrahub',
+  path: '/intrahub',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedEinsatzErstellenRoute =
+  AuthenticatedEinsatzErstellenRouteImport.update({
+    id: '/einsatz-erstellen',
+    path: '/einsatz-erstellen',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDienstplaeneRoute =
+  AuthenticatedDienstplaeneRouteImport.update({
+    id: '/dienstplaene',
+    path: '/dienstplaene',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDateienRoute = AuthenticatedDateienRouteImport.update({
+  id: '/dateien',
+  path: '/dateien',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAlarmierungRoute =
+  AuthenticatedAlarmierungRouteImport.update({
+    id: '/alarmierung',
+    path: '/alarmierung',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedNotdienstRohrserviceRoute =
+  AuthenticatedNotdienstRohrserviceRouteImport.update({
+    id: '/notdienst/rohrservice',
+    path: '/notdienst/rohrservice',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedNotdienstLutzRoute =
+  AuthenticatedNotdienstLutzRouteImport.update({
+    id: '/notdienst/lutz',
+    path: '/notdienst/lutz',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedNotdienstBudekoRoute =
+  AuthenticatedNotdienstBudekoRouteImport.update({
+    id: '/notdienst/budeko',
+    path: '/notdienst/budeko',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dateien': typeof AuthenticatedDateienRoute
+  '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
+  '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/intrahub': typeof AuthenticatedIntrahubRoute
+  '/monitor': typeof AuthenticatedMonitorRoute
+  '/revier-center': typeof AuthenticatedRevierCenterRoute
+  '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
+  '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
+  '/service-center': typeof AuthenticatedServiceCenterRoute
+  '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
+  '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dateien': typeof AuthenticatedDateienRoute
+  '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
+  '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/intrahub': typeof AuthenticatedIntrahubRoute
+  '/monitor': typeof AuthenticatedMonitorRoute
+  '/revier-center': typeof AuthenticatedRevierCenterRoute
+  '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
+  '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
+  '/service-center': typeof AuthenticatedServiceCenterRoute
+  '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
+  '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/dateien': typeof AuthenticatedDateienRoute
+  '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
+  '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
+  '/_authenticated/monitor': typeof AuthenticatedMonitorRoute
+  '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRoute
+  '/_authenticated/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
+  '/_authenticated/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
+  '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
+  '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
+  '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/admin'
+    | '/alarmierung'
+    | '/dashboard'
+    | '/dateien'
+    | '/dienstplaene'
+    | '/einsatz-erstellen'
+    | '/intrahub'
+    | '/monitor'
+    | '/revier-center'
+    | '/schluesselbuch'
+    | '/schluesseluebergabe'
+    | '/service-center'
+    | '/notdienst/budeko'
+    | '/notdienst/lutz'
+    | '/notdienst/rohrservice'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard'
+  to:
+    | '/'
+    | '/login'
+    | '/admin'
+    | '/alarmierung'
+    | '/dashboard'
+    | '/dateien'
+    | '/dienstplaene'
+    | '/einsatz-erstellen'
+    | '/intrahub'
+    | '/monitor'
+    | '/revier-center'
+    | '/schluesselbuch'
+    | '/schluesseluebergabe'
+    | '/service-center'
+    | '/notdienst/budeko'
+    | '/notdienst/lutz'
+    | '/notdienst/rohrservice'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
+    | '/_authenticated/admin'
+    | '/_authenticated/alarmierung'
     | '/_authenticated/dashboard'
+    | '/_authenticated/dateien'
+    | '/_authenticated/dienstplaene'
+    | '/_authenticated/einsatz-erstellen'
+    | '/_authenticated/intrahub'
+    | '/_authenticated/monitor'
+    | '/_authenticated/revier-center'
+    | '/_authenticated/schluesselbuch'
+    | '/_authenticated/schluesseluebergabe'
+    | '/_authenticated/service-center'
+    | '/_authenticated/notdienst/budeko'
+    | '/_authenticated/notdienst/lutz'
+    | '/_authenticated/notdienst/rohrservice'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -93,6 +277,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/service-center': {
+      id: '/_authenticated/service-center'
+      path: '/service-center'
+      fullPath: '/service-center'
+      preLoaderRoute: typeof AuthenticatedServiceCenterRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/schluesseluebergabe': {
+      id: '/_authenticated/schluesseluebergabe'
+      path: '/schluesseluebergabe'
+      fullPath: '/schluesseluebergabe'
+      preLoaderRoute: typeof AuthenticatedSchluesseluebergabeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/schluesselbuch': {
+      id: '/_authenticated/schluesselbuch'
+      path: '/schluesselbuch'
+      fullPath: '/schluesselbuch'
+      preLoaderRoute: typeof AuthenticatedSchluesselbuchRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/revier-center': {
+      id: '/_authenticated/revier-center'
+      path: '/revier-center'
+      fullPath: '/revier-center'
+      preLoaderRoute: typeof AuthenticatedRevierCenterRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/monitor': {
+      id: '/_authenticated/monitor'
+      path: '/monitor'
+      fullPath: '/monitor'
+      preLoaderRoute: typeof AuthenticatedMonitorRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/intrahub': {
+      id: '/_authenticated/intrahub'
+      path: '/intrahub'
+      fullPath: '/intrahub'
+      preLoaderRoute: typeof AuthenticatedIntrahubRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/einsatz-erstellen': {
+      id: '/_authenticated/einsatz-erstellen'
+      path: '/einsatz-erstellen'
+      fullPath: '/einsatz-erstellen'
+      preLoaderRoute: typeof AuthenticatedEinsatzErstellenRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dienstplaene': {
+      id: '/_authenticated/dienstplaene'
+      path: '/dienstplaene'
+      fullPath: '/dienstplaene'
+      preLoaderRoute: typeof AuthenticatedDienstplaeneRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dateien': {
+      id: '/_authenticated/dateien'
+      path: '/dateien'
+      fullPath: '/dateien'
+      preLoaderRoute: typeof AuthenticatedDateienRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -100,15 +347,79 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/alarmierung': {
+      id: '/_authenticated/alarmierung'
+      path: '/alarmierung'
+      fullPath: '/alarmierung'
+      preLoaderRoute: typeof AuthenticatedAlarmierungRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notdienst/rohrservice': {
+      id: '/_authenticated/notdienst/rohrservice'
+      path: '/notdienst/rohrservice'
+      fullPath: '/notdienst/rohrservice'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notdienst/lutz': {
+      id: '/_authenticated/notdienst/lutz'
+      path: '/notdienst/lutz'
+      fullPath: '/notdienst/lutz'
+      preLoaderRoute: typeof AuthenticatedNotdienstLutzRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notdienst/budeko': {
+      id: '/_authenticated/notdienst/budeko'
+      path: '/notdienst/budeko'
+      fullPath: '/notdienst/budeko'
+      preLoaderRoute: typeof AuthenticatedNotdienstBudekoRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDateienRoute: typeof AuthenticatedDateienRoute
+  AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
+  AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
+  AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
+  AuthenticatedMonitorRoute: typeof AuthenticatedMonitorRoute
+  AuthenticatedRevierCenterRoute: typeof AuthenticatedRevierCenterRoute
+  AuthenticatedSchluesselbuchRoute: typeof AuthenticatedSchluesselbuchRoute
+  AuthenticatedSchluesseluebergabeRoute: typeof AuthenticatedSchluesseluebergabeRoute
+  AuthenticatedServiceCenterRoute: typeof AuthenticatedServiceCenterRoute
+  AuthenticatedNotdienstBudekoRoute: typeof AuthenticatedNotdienstBudekoRoute
+  AuthenticatedNotdienstLutzRoute: typeof AuthenticatedNotdienstLutzRoute
+  AuthenticatedNotdienstRohrserviceRoute: typeof AuthenticatedNotdienstRohrserviceRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAlarmierungRoute: AuthenticatedAlarmierungRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDateienRoute: AuthenticatedDateienRoute,
+  AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
+  AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
+  AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,
+  AuthenticatedMonitorRoute: AuthenticatedMonitorRoute,
+  AuthenticatedRevierCenterRoute: AuthenticatedRevierCenterRoute,
+  AuthenticatedSchluesselbuchRoute: AuthenticatedSchluesselbuchRoute,
+  AuthenticatedSchluesseluebergabeRoute: AuthenticatedSchluesseluebergabeRoute,
+  AuthenticatedServiceCenterRoute: AuthenticatedServiceCenterRoute,
+  AuthenticatedNotdienstBudekoRoute: AuthenticatedNotdienstBudekoRoute,
+  AuthenticatedNotdienstLutzRoute: AuthenticatedNotdienstLutzRoute,
+  AuthenticatedNotdienstRohrserviceRoute:
+    AuthenticatedNotdienstRohrserviceRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
