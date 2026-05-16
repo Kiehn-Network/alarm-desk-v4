@@ -2,46 +2,77 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { requireEffectiveDomainId } from "@/lib/tenant.server";
+import { requireEffectiveDomainId, getEffectiveDomainId } from "@/lib/tenant.server";
 
-const ROLES = ["admin", "dispatcher", "fahrer"] as const;
+const ROLES = ["admin", "dispatcher", "fahrer", "user"] as const;
 const roleEnum = z.enum(ROLES);
 
-async function assertAdmin(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
+// Returns the effective domain for the caller. Throws for non-admin callers
+// or superadmins that are not currently impersonating any domain.
+async function requireDomainAdmin(userId: string): Promise<string> {
+  const { data: roles, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role, domain_id")
+    .eq("user_id", userId);
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Nur Administratoren dürfen diese Aktion ausführen");
+  const isSuper = (roles ?? []).some((r: any) => r.role === "superadmin");
+  const domainId = await getEffectiveDomainId(supabaseAdmin, userId);
+  if (isSuper) {
+    if (!domainId) throw new Error("Bitte zuerst in eine Domäne wechseln (Impersonation).");
+    return domainId;
+  }
+  const isAdmin = (roles ?? []).some(
+    (r: any) => r.role === "admin" && r.domain_id && r.domain_id === domainId,
+  );
+  if (!isAdmin) throw new Error("Nur Administratoren dürfen diese Aktion ausführen");
+  if (!domainId) throw new Error("Keine Domäne zugewiesen");
+  return domainId;
+}
+
+// Ensures the target user belongs to the admin's domain (or is unassigned).
+async function assertUserInDomain(userId: string, domainId: string) {
+  const { data } = await supabaseAdmin
+    .from("profiles").select("domain_id").eq("id", userId).maybeSingle();
+  if (!data || data.domain_id !== domainId) {
+    throw new Error("Nutzer gehört nicht zu deiner Domäne");
+  }
 }
 
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
-    const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
-    if (authErr) throw new Error(authErr.message);
-    const users = authData.users ?? [];
-    const ids = users.map((u) => u.id);
+    const domainId = await requireDomainAdmin(context.userId);
+    // Only profiles within this domain.
     const { data: profiles } = await supabaseAdmin
-      .from("profiles").select("id, display_name, avatar_url").in("id", ids);
+      .from("profiles").select("id, display_name, avatar_url").eq("domain_id", domainId);
+    const ids = (profiles ?? []).map((p: any) => p.id);
+    if (ids.length === 0) return { users: [] };
     const { data: roles } = await supabaseAdmin
-      .from("user_roles").select("user_id, role").in("user_id", ids);
+      .from("user_roles").select("user_id, role, domain_id").in("user_id", ids);
+    const { data: authData } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const authMap = Object.fromEntries((authData?.users ?? []).map((u: any) => [u.id, u]));
     const profMap = Object.fromEntries((profiles ?? []).map((p: any) => [p.id, p]));
     const roleMap: Record<string, string[]> = {};
     (roles ?? []).forEach((r: any) => {
-      (roleMap[r.user_id] ||= []).push(r.role);
+      // Only surface roles tied to this domain.
+      if (!r.domain_id || r.domain_id === domainId) {
+        (roleMap[r.user_id] ||= []).push(r.role);
+      }
     });
     return {
-      users: users.map((u) => ({
-        id: u.id,
-        email: u.email ?? "",
-        created_at: u.created_at,
-        last_sign_in_at: u.last_sign_in_at,
-        banned_until: (u as any).banned_until ?? null,
-        display_name: profMap[u.id]?.display_name ?? null,
-        avatar_url: profMap[u.id]?.avatar_url ?? null,
-        roles: roleMap[u.id] ?? [],
-      })),
+      users: ids.map((id) => {
+        const u: any = authMap[id] ?? {};
+        return {
+          id,
+          email: u.email ?? "",
+          created_at: u.created_at ?? null,
+          last_sign_in_at: u.last_sign_in_at ?? null,
+          banned_until: u.banned_until ?? null,
+          display_name: profMap[id]?.display_name ?? null,
+          avatar_url: profMap[id]?.avatar_url ?? null,
+          roles: roleMap[id] ?? [],
+        };
+      }),
     };
   });
 
@@ -56,7 +87,7 @@ export const createUser = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
@@ -65,11 +96,15 @@ export const createUser = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     const uid = created.user!.id;
-    // handle_new_user trigger inserts a default role; replace it with the chosen one.
+    // Bind user to caller's domain and replace default trigger role.
+    await supabaseAdmin.from("profiles").update({
+      display_name: data.display_name, domain_id: domainId,
+    }).eq("id", uid);
     await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
-    const { error: rErr } = await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: data.role });
+    const { error: rErr } = await supabaseAdmin.from("user_roles").insert({
+      user_id: uid, role: data.role, domain_id: domainId,
+    });
     if (rErr) throw new Error(rErr.message);
-    await supabaseAdmin.from("profiles").update({ display_name: data.display_name }).eq("id", uid);
     return { id: uid };
   });
 
@@ -77,9 +112,13 @@ export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ user_id: z.string().uuid(), role: roleEnum }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
+    await assertUserInDomain(data.user_id, domainId);
+    // Never let a domain admin grant superadmin via this endpoint.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
-    const { error } = await supabaseAdmin.from("user_roles").insert({ user_id: data.user_id, role: data.role });
+    const { error } = await supabaseAdmin.from("user_roles").insert({
+      user_id: data.user_id, role: data.role, domain_id: domainId,
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -93,7 +132,8 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
+    await assertUserInDomain(data.user_id, domainId);
     const { error } = await supabaseAdmin
       .from("profiles").update({ display_name: data.display_name }).eq("id", data.user_id);
     if (error) throw new Error(error.message);
@@ -106,7 +146,8 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     z.object({ user_id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
+    await assertUserInDomain(data.user_id, domainId);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, { password: data.password });
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -116,8 +157,9 @@ export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
     if (data.user_id === context.userId) throw new Error("Du kannst dich nicht selbst löschen");
+    await assertUserInDomain(data.user_id, domainId);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -127,17 +169,13 @@ export const impersonateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
-    if (data.user_id === context.userId) {
-      throw new Error("Du bist bereits angemeldet");
-    }
+    const domainId = await requireDomainAdmin(context.userId);
+    if (data.user_id === context.userId) throw new Error("Du bist bereits angemeldet");
+    await assertUserInDomain(data.user_id, domainId);
     const { data: target, error: uErr } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
-    if (uErr || !target.user?.email) {
-      throw new Error(uErr?.message ?? "Benutzer nicht gefunden");
-    }
+    if (uErr || !target.user?.email) throw new Error(uErr?.message ?? "Benutzer nicht gefunden");
     const { data: link, error: lErr } = await supabaseAdmin.auth.admin.generateLink({
-      type: "magiclink",
-      email: target.user.email,
+      type: "magiclink", email: target.user.email,
     });
     if (lErr) throw new Error(lErr.message);
     const hashed = (link as any)?.properties?.hashed_token;
@@ -145,13 +183,13 @@ export const impersonateUser = createServerFn({ method: "POST" })
     return { token_hash: hashed as string, email: target.user.email };
   });
 
-// Einsatzgründe management
+// Einsatzgründe management — strictly scoped to caller's domain.
 export const listAllGruende = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
     const { data, error } = await supabaseAdmin
-      .from("einsatz_gruende").select("*").order("name");
+      .from("einsatz_gruende").select("*").eq("domain_id", domainId).order("name");
     if (error) throw new Error(error.message);
     return { gruende: data ?? [] };
   });
@@ -166,15 +204,22 @@ export const upsertGrund = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
     if (data.id) {
+      // Verify the Grund belongs to caller's domain before updating.
+      const { data: existing } = await supabaseAdmin
+        .from("einsatz_gruende").select("domain_id").eq("id", data.id).maybeSingle();
+      if (!existing || existing.domain_id !== domainId) {
+        throw new Error("Eintrag gehört nicht zu deiner Domäne");
+      }
       const { error } = await supabaseAdmin
         .from("einsatz_gruende").update({ name: data.name, aktiv: data.aktiv }).eq("id", data.id);
       if (error) throw new Error(error.message);
     } else {
-      const domainId = await requireEffectiveDomainId(supabaseAdmin, context.userId);
       const { error } = await supabaseAdmin
-        .from("einsatz_gruende").insert({ name: data.name, aktiv: data.aktiv, created_by: context.userId, domain_id: domainId });
+        .from("einsatz_gruende").insert({
+          name: data.name, aktiv: data.aktiv, created_by: context.userId, domain_id: domainId,
+        });
       if (error) throw new Error(error.message);
     }
     return { ok: true };
@@ -184,30 +229,35 @@ export const deleteGrund = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId);
+    const { data: existing } = await supabaseAdmin
+      .from("einsatz_gruende").select("domain_id").eq("id", data.id).maybeSingle();
+    if (!existing || existing.domain_id !== domainId) {
+      throw new Error("Eintrag gehört nicht zu deiner Domäne");
+    }
     const { error } = await supabaseAdmin.from("einsatz_gruende").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-// Stats
+// Stats — scoped to caller's domain.
 export const adminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
-    const [usersR, rolesR, dateienR, einsaetzeR, gruendeR] = await Promise.all([
-      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1 }),
-      supabaseAdmin.from("user_roles").select("role"),
-      supabaseAdmin.from("dateien").select("id", { count: "exact", head: true }).is("deleted_at", null),
-      supabaseAdmin.from("einsaetze").select("status"),
-      supabaseAdmin.from("einsatz_gruende").select("id", { count: "exact", head: true }),
+    const domainId = await requireDomainAdmin(context.userId);
+    const [profilesR, rolesR, dateienR, einsaetzeR, gruendeR] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("domain_id", domainId),
+      supabaseAdmin.from("user_roles").select("role, domain_id").eq("domain_id", domainId),
+      supabaseAdmin.from("dateien").select("id", { count: "exact", head: true }).eq("domain_id", domainId).is("deleted_at", null),
+      supabaseAdmin.from("einsaetze").select("status").eq("domain_id", domainId),
+      supabaseAdmin.from("einsatz_gruende").select("id", { count: "exact", head: true }).eq("domain_id", domainId),
     ]);
-    const byRole: Record<string, number> = { admin: 0, dispatcher: 0, fahrer: 0 };
+    const byRole: Record<string, number> = { admin: 0, dispatcher: 0, fahrer: 0, user: 0 };
     (rolesR.data ?? []).forEach((r: any) => { byRole[r.role] = (byRole[r.role] ?? 0) + 1; });
     const byStatus: Record<string, number> = {};
     (einsaetzeR.data ?? []).forEach((e: any) => { byStatus[e.status] = (byStatus[e.status] ?? 0) + 1; });
     return {
-      totalUsers: (usersR.data as any)?.total ?? (usersR.data?.users?.length ?? 0),
+      totalUsers: profilesR.count ?? 0,
       byRole,
       dateienCount: dateienR.count ?? 0,
       einsaetzeTotal: (einsaetzeR.data ?? []).length,
