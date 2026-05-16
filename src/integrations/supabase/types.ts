@@ -56,6 +56,8 @@ export type Database = {
           domain_id: string
           firmenname: string
           logo_url: string | null
+          rohrservice_notiz: string | null
+          rohrservice_variante: string
           updated_at: string
           updated_by: string | null
           wartung_aktiv: boolean
@@ -67,6 +69,8 @@ export type Database = {
           domain_id: string
           firmenname?: string
           logo_url?: string | null
+          rohrservice_notiz?: string | null
+          rohrservice_variante?: string
           updated_at?: string
           updated_by?: string | null
           wartung_aktiv?: boolean
@@ -78,6 +82,8 @@ export type Database = {
           domain_id?: string
           firmenname?: string
           logo_url?: string | null
+          rohrservice_notiz?: string | null
+          rohrservice_variante?: string
           updated_at?: string
           updated_by?: string | null
           wartung_aktiv?: boolean
@@ -990,6 +996,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      rohrservice_notiz_dateien: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          label: string
+          mime_type: string | null
+          size_bytes: number | null
+          sort_order: number
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          label: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          label?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       superadmin_impersonation: {
         Row: {
