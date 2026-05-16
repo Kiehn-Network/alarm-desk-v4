@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginSlugRouteImport } from './routes/login.$slug'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
 import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
@@ -31,6 +32,7 @@ import { Route as AuthenticatedNotdienstRohrserviceRouteImport } from './routes/
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedNotdienstBudekoRouteImport } from './routes/_authenticated/notdienst/budeko'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicDomainSlugRouteImport } from './routes/api/public/domain.$slug'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -45,6 +47,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const LoginSlugRoute = LoginSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => LoginRoute,
 } as any)
 const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
   id: '/superadmin',
@@ -153,10 +160,15 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDomainSlugRoute = ApiPublicDomainSlugRouteImport.update({
+  id: '/api/public/domain/$slug',
+  path: '/api/public/domain/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -171,15 +183,17 @@ export interface FileRoutesByFullPath {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
+  '/login/$slug': typeof LoginSlugRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/domain/$slug': typeof ApiPublicDomainSlugRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -194,17 +208,19 @@ export interface FileRoutesByTo {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
+  '/login/$slug': typeof LoginSlugRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/domain/$slug': typeof ApiPublicDomainSlugRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
+  '/login': typeof LoginRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -219,10 +235,12 @@ export interface FileRoutesById {
   '/_authenticated/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
+  '/login/$slug': typeof LoginSlugRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/api/public/domain/$slug': typeof ApiPublicDomainSlugRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
@@ -244,10 +262,12 @@ export interface FileRouteTypes {
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
+    | '/login/$slug'
     | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/notdienst/rohrservice'
     | '/api/public/version'
+    | '/api/public/domain/$slug'
     | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -267,10 +287,12 @@ export interface FileRouteTypes {
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
+    | '/login/$slug'
     | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/notdienst/rohrservice'
     | '/api/public/version'
+    | '/api/public/domain/$slug'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
@@ -291,18 +313,21 @@ export interface FileRouteTypes {
     | '/_authenticated/schluesseluebergabe'
     | '/_authenticated/service-center'
     | '/_authenticated/superadmin'
+    | '/login/$slug'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/lutz'
     | '/_authenticated/notdienst/rohrservice'
     | '/api/public/version'
+    | '/api/public/domain/$slug'
     | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  LoginRoute: typeof LoginRoute
+  LoginRoute: typeof LoginRouteWithChildren
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
+  ApiPublicDomainSlugRoute: typeof ApiPublicDomainSlugRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -328,6 +353,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/login/$slug': {
+      id: '/login/$slug'
+      path: '/$slug'
+      fullPath: '/login/$slug'
+      preLoaderRoute: typeof LoginSlugRouteImport
+      parentRoute: typeof LoginRoute
     }
     '/_authenticated/superadmin': {
       id: '/_authenticated/superadmin'
@@ -462,6 +494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/domain/$slug': {
+      id: '/api/public/domain/$slug'
+      path: '/api/public/domain/$slug'
+      fullPath: '/api/public/domain/$slug'
+      preLoaderRoute: typeof ApiPublicDomainSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -510,11 +549,22 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface LoginRouteChildren {
+  LoginSlugRoute: typeof LoginSlugRoute
+}
+
+const LoginRouteChildren: LoginRouteChildren = {
+  LoginSlugRoute: LoginSlugRoute,
+}
+
+const LoginRouteWithChildren = LoginRoute._addFileChildren(LoginRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LoginRoute: LoginRoute,
+  LoginRoute: LoginRouteWithChildren,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
+  ApiPublicDomainSlugRoute: ApiPublicDomainSlugRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
