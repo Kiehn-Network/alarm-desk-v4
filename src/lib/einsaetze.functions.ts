@@ -218,6 +218,33 @@ export const listFahrer = createServerFn({ method: "GET" })
     return { fahrer: profiles ?? [] };
   });
 
+export const searchKundenDateien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ q: z.string().trim().min(1).max(200) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const q = data.q.replace(/[%_]/g, "");
+    const pattern = `%${q}%`;
+    const { data: rows, error } = await supabase
+      .from("dateien")
+      .select("id, kunden_name, address, key_number, anlagen_nr, teilnehmer_id, filename")
+      .is("deleted_at", null)
+      .or(
+        [
+          `kunden_name.ilike.${pattern}`,
+          `address.ilike.${pattern}`,
+          `key_number.ilike.${pattern}`,
+          `anlagen_nr.ilike.${pattern}`,
+          `teilnehmer_id.ilike.${pattern}`,
+          `filename.ilike.${pattern}`,
+        ].join(","),
+      )
+      .order("kunden_name", { ascending: true, nullsFirst: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return { results: rows ?? [] };
+  });
+
 export const listEinsatzHistorie = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ einsatz_id: z.string().uuid() }).parse(i))
