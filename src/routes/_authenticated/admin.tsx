@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Users, ShieldCheck, FileText, Siren, Tag, Plus, Pencil, Trash2,
-  KeyRound, Search, Shield, Truck, Radio, Lock, LogIn,
+  KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
+import { SystemSettingsPanel } from "@/components/admin/system-settings-panel";
 import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
   resetUserPassword, deleteUser, impersonateUser,
@@ -87,10 +88,12 @@ function AdminPage() {
         <TabsList>
           <TabsTrigger value="users"><Users className="size-4 mr-2" />Benutzer</TabsTrigger>
           <TabsTrigger value="gruende"><Tag className="size-4 mr-2" />Einsatzgründe</TabsTrigger>
+          <TabsTrigger value="system"><SettingsIcon className="size-4 mr-2" />System</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersPanel /></TabsContent>
         <TabsContent value="gruende"><GruendePanel /></TabsContent>
+        <TabsContent value="system"><SystemSettingsPanel /></TabsContent>
       </Tabs>
     </div>
   );

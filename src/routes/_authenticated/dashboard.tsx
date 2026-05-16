@@ -9,6 +9,8 @@ import { getDashboardStats } from "@/lib/dashboard.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
+import { useAppSettings } from "@/hooks/use-app-settings";
+import { Info } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -36,6 +38,7 @@ function DashboardContent() {
   const { user } = useAuth();
   const fetch = useServerFn(getDashboardStats);
   const qc = useQueryClient();
+  const { data: settings } = useAppSettings();
   const { data } = useSuspenseQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch(),
@@ -77,6 +80,13 @@ function DashboardContent() {
           className="h-10 px-4 rounded-lg bg-card hover:bg-accent border border-border text-sm transition"
         >Aktualisieren</button>
       </div>
+
+      {settings?.dashboard_hinweis && (
+        <div className="rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm flex gap-2">
+          <Info className="size-4 mt-0.5 shrink-0 text-primary" />
+          <p className="whitespace-pre-wrap">{settings.dashboard_hinweis}</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {cards.map((c) => <StatCard key={c.label} {...c} />)}

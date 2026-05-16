@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
+import { MaintenanceBanner } from "@/components/layout/maintenance-banner";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -27,6 +28,7 @@ function AuthLayout() {
       <Sidebar displayName={name} />
       <div className="flex-1 flex flex-col min-w-0">
         <Topbar displayName={name} />
+        <MaintenanceBanner />
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>

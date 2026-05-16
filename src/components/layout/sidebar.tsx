@@ -6,6 +6,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useRole, type AppRole } from "@/hooks/use-role";
+import { useAppSettings } from "@/hooks/use-app-settings";
 
 type Item = { to: string; label: string; icon: React.ComponentType<{ className?: string }>; roles?: AppRole[] };
 type Section = { label: string; items: Item[] };
@@ -42,6 +43,7 @@ const sections: Section[] = [
 export function SidebarContent({ displayName, onNavigate }: { displayName: string; onNavigate?: () => void }) {
   const { location } = useRouterState();
   const { role } = useRole();
+  const { data: settings } = useAppSettings();
   const visibleSections = sections
     .map((s) => ({ ...s, items: s.items.filter((i) => !i.roles || (role && i.roles.includes(role))) }))
     .filter((s) => s.items.length > 0);
@@ -49,13 +51,20 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
       <div className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border">
         <div className="relative">
-          <div className="size-10 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-            <Radio className="size-5 text-primary-foreground" />
-          </div>
+          {settings?.logo_url ? (
+            <div className="size-10 rounded-xl overflow-hidden bg-sidebar-accent grid place-items-center" style={{ boxShadow: "var(--shadow-glow)" }}>
+              <img src={settings.logo_url} alt="Logo" className="size-full object-contain" />
+            </div>
+          ) : (
+            <div className="size-10 rounded-xl grid place-items-center" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
+              <Radio className="size-5 text-primary-foreground" />
+            </div>
+          )}
           <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-success border-2 border-sidebar" />
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-semibold truncate">{displayName}</div>
+          <div className="text-sm font-semibold truncate">{settings?.firmenname ?? "AlarmDesk"}</div>
+          <div className="text-xs text-muted-foreground truncate">{displayName}</div>
           <div className="text-xs text-success flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-success animate-pulse" /> online
           </div>
