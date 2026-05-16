@@ -94,6 +94,33 @@ export type Database = {
           },
         ]
       }
+      app_versions: {
+        Row: {
+          changelog: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          released_at: string
+          version: string
+        }
+        Insert: {
+          changelog?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          released_at?: string
+          version: string
+        }
+        Update: {
+          changelog?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          released_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       datei_historie: {
         Row: {
           changed_at: string
@@ -695,6 +722,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_settings: {
+        Row: {
+          current_version: string
+          id: number
+          updated_at: string
+          updated_by: string | null
+          wartung_aktiv: boolean
+          wartung_farbe: string
+          wartung_nachricht: string | null
+        }
+        Insert: {
+          current_version?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+          wartung_aktiv?: boolean
+          wartung_farbe?: string
+          wartung_nachricht?: string | null
+        }
+        Update: {
+          current_version?: string
+          id?: number
+          updated_at?: string
+          updated_by?: string | null
+          wartung_aktiv?: boolean
+          wartung_farbe?: string
+          wartung_nachricht?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
