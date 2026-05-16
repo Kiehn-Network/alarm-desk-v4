@@ -69,6 +69,28 @@ export const listEinsaetze = createServerFn({ method: "GET" })
     return { einsaetze: data ?? [], profiles };
   });
 
+export const listMeineEinsaetze = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("einsaetze").select("*")
+      .eq("assigned_to", userId)
+      .order("created_at", { ascending: false }).limit(200);
+    if (error) throw new Error(error.message);
+    const ids = new Set<string>();
+    (data ?? []).forEach((e: any) => {
+      if (e.created_by) ids.add(e.created_by);
+    });
+    let profiles: Record<string, string> = {};
+    if (ids.size > 0) {
+      const { data: ps } = await supabase
+        .from("profiles").select("id, display_name").in("id", Array.from(ids));
+      profiles = Object.fromEntries((ps ?? []).map((p: any) => [p.id, p.display_name ?? ""]));
+    }
+    return { einsaetze: data ?? [], profiles };
+  });
+
 export const listEinsatzGruende = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
