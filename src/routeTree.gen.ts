@@ -27,10 +27,14 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
-import { Route as AuthenticatedNotdienstRohrserviceRouteImport } from './routes/_authenticated/notdienst/rohrservice'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedNotdienstBudekoRouteImport } from './routes/_authenticated/notdienst/budeko'
+import { Route as AuthenticatedNotdienstRohrserviceRouteRouteImport } from './routes/_authenticated/notdienst/rohrservice/route'
+import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
+import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
+import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from './routes/_authenticated/notdienst/rohrservice/mitarbeiter'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -129,12 +133,6 @@ const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
   path: '/api/public/version',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedNotdienstRohrserviceRoute =
-  AuthenticatedNotdienstRohrserviceRouteImport.update({
-    id: '/notdienst/rohrservice',
-    path: '/notdienst/rohrservice',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedNotdienstLutzRoute =
   AuthenticatedNotdienstLutzRouteImport.update({
     id: '/notdienst/lutz',
@@ -147,11 +145,41 @@ const AuthenticatedNotdienstBudekoRoute =
     path: '/notdienst/budeko',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedNotdienstRohrserviceRouteRoute =
+  AuthenticatedNotdienstRohrserviceRouteRouteImport.update({
+    id: '/notdienst/rohrservice',
+    path: '/notdienst/rohrservice',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceIndexRoute =
+  AuthenticatedNotdienstRohrserviceIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedNotdienstRohrserviceNeuRoute =
+  AuthenticatedNotdienstRohrserviceNeuRouteImport.update({
+    id: '/neu',
+    path: '/neu',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceNachbearbeitungRoute =
+  AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport.update({
+    id: '/nachbearbeitung',
+    path: '/nachbearbeitung',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceMitarbeiterRoute =
+  AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport.update({
+    id: '/mitarbeiter',
+    path: '/mitarbeiter',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -171,11 +199,15 @@ export interface FileRoutesByFullPath {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
+  '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
-  '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
+  '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
+  '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -196,9 +228,12 @@ export interface FileRoutesByTo {
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
-  '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
+  '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
+  '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -219,11 +254,15 @@ export interface FileRoutesById {
   '/_authenticated/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
+  '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
-  '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/_authenticated/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
+  '/_authenticated/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
+  '/_authenticated/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/_authenticated/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -244,11 +283,15 @@ export interface FileRouteTypes {
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
+    | '/notdienst/rohrservice'
     | '/notdienst/budeko'
     | '/notdienst/lutz'
-    | '/notdienst/rohrservice'
     | '/api/public/version'
+    | '/notdienst/rohrservice/mitarbeiter'
+    | '/notdienst/rohrservice/nachbearbeitung'
+    | '/notdienst/rohrservice/neu'
     | '/lovable/email/queue/process'
+    | '/notdienst/rohrservice/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -269,9 +312,12 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/notdienst/budeko'
     | '/notdienst/lutz'
-    | '/notdienst/rohrservice'
     | '/api/public/version'
+    | '/notdienst/rohrservice/mitarbeiter'
+    | '/notdienst/rohrservice/nachbearbeitung'
+    | '/notdienst/rohrservice/neu'
     | '/lovable/email/queue/process'
+    | '/notdienst/rohrservice'
   id:
     | '__root__'
     | '/'
@@ -291,11 +337,15 @@ export interface FileRouteTypes {
     | '/_authenticated/schluesseluebergabe'
     | '/_authenticated/service-center'
     | '/_authenticated/superadmin'
+    | '/_authenticated/notdienst/rohrservice'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/lutz'
-    | '/_authenticated/notdienst/rohrservice'
     | '/api/public/version'
+    | '/_authenticated/notdienst/rohrservice/mitarbeiter'
+    | '/_authenticated/notdienst/rohrservice/nachbearbeitung'
+    | '/_authenticated/notdienst/rohrservice/neu'
     | '/lovable/email/queue/process'
+    | '/_authenticated/notdienst/rohrservice/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -434,13 +484,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicVersionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/notdienst/rohrservice': {
-      id: '/_authenticated/notdienst/rohrservice'
-      path: '/notdienst/rohrservice'
-      fullPath: '/notdienst/rohrservice'
-      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/notdienst/lutz': {
       id: '/_authenticated/notdienst/lutz'
       path: '/notdienst/lutz'
@@ -455,6 +498,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstBudekoRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/notdienst/rohrservice': {
+      id: '/_authenticated/notdienst/rohrservice'
+      path: '/notdienst/rohrservice'
+      fullPath: '/notdienst/rohrservice'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notdienst/rohrservice/': {
+      id: '/_authenticated/notdienst/rohrservice/'
+      path: '/'
+      fullPath: '/notdienst/rohrservice/'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceIndexRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
       path: '/lovable/email/queue/process'
@@ -462,8 +519,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/notdienst/rohrservice/neu': {
+      id: '/_authenticated/notdienst/rohrservice/neu'
+      path: '/neu'
+      fullPath: '/notdienst/rohrservice/neu'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceNeuRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
+    '/_authenticated/notdienst/rohrservice/nachbearbeitung': {
+      id: '/_authenticated/notdienst/rohrservice/nachbearbeitung'
+      path: '/nachbearbeitung'
+      fullPath: '/notdienst/rohrservice/nachbearbeitung'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
+    '/_authenticated/notdienst/rohrservice/mitarbeiter': {
+      id: '/_authenticated/notdienst/rohrservice/mitarbeiter'
+      path: '/mitarbeiter'
+      fullPath: '/notdienst/rohrservice/mitarbeiter'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
   }
 }
+
+interface AuthenticatedNotdienstRohrserviceRouteRouteChildren {
+  AuthenticatedNotdienstRohrserviceMitarbeiterRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
+  AuthenticatedNotdienstRohrserviceNachbearbeitungRoute: typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
+  AuthenticatedNotdienstRohrserviceNeuRoute: typeof AuthenticatedNotdienstRohrserviceNeuRoute
+  AuthenticatedNotdienstRohrserviceIndexRoute: typeof AuthenticatedNotdienstRohrserviceIndexRoute
+}
+
+const AuthenticatedNotdienstRohrserviceRouteRouteChildren: AuthenticatedNotdienstRohrserviceRouteRouteChildren =
+  {
+    AuthenticatedNotdienstRohrserviceMitarbeiterRoute:
+      AuthenticatedNotdienstRohrserviceMitarbeiterRoute,
+    AuthenticatedNotdienstRohrserviceNachbearbeitungRoute:
+      AuthenticatedNotdienstRohrserviceNachbearbeitungRoute,
+    AuthenticatedNotdienstRohrserviceNeuRoute:
+      AuthenticatedNotdienstRohrserviceNeuRoute,
+    AuthenticatedNotdienstRohrserviceIndexRoute:
+      AuthenticatedNotdienstRohrserviceIndexRoute,
+  }
+
+const AuthenticatedNotdienstRohrserviceRouteRouteWithChildren =
+  AuthenticatedNotdienstRohrserviceRouteRoute._addFileChildren(
+    AuthenticatedNotdienstRohrserviceRouteRouteChildren,
+  )
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
@@ -480,9 +582,9 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSchluesseluebergabeRoute: typeof AuthenticatedSchluesseluebergabeRoute
   AuthenticatedServiceCenterRoute: typeof AuthenticatedServiceCenterRoute
   AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
+  AuthenticatedNotdienstRohrserviceRouteRoute: typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   AuthenticatedNotdienstBudekoRoute: typeof AuthenticatedNotdienstBudekoRoute
   AuthenticatedNotdienstLutzRoute: typeof AuthenticatedNotdienstLutzRoute
-  AuthenticatedNotdienstRohrserviceRoute: typeof AuthenticatedNotdienstRohrserviceRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -500,10 +602,10 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSchluesseluebergabeRoute: AuthenticatedSchluesseluebergabeRoute,
   AuthenticatedServiceCenterRoute: AuthenticatedServiceCenterRoute,
   AuthenticatedSuperadminRoute: AuthenticatedSuperadminRoute,
+  AuthenticatedNotdienstRohrserviceRouteRoute:
+    AuthenticatedNotdienstRohrserviceRouteRouteWithChildren,
   AuthenticatedNotdienstBudekoRoute: AuthenticatedNotdienstBudekoRoute,
   AuthenticatedNotdienstLutzRoute: AuthenticatedNotdienstLutzRoute,
-  AuthenticatedNotdienstRohrserviceRoute:
-    AuthenticatedNotdienstRohrserviceRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -520,13 +622,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
