@@ -55,12 +55,55 @@ export const updateDatei = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => updateSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { id, ...patch } = data;
+    const { data: before, error: beforeErr } = await supabase
+      .from("dateien").select("*").eq("id", id).single();
+    if (beforeErr) throw new Error(beforeErr.message);
     const { data: row, error } = await supabase
       .from("dateien").update(patch).eq("id", id).select().single();
     if (error) throw new Error(error.message);
+
+    const trackable = [
+      "filename","address","key_number","folder","kunden_name",
+      "notiz","teilnehmer_id","anlagen_nr",
+    ] as const;
+    const entries = trackable
+      .filter((k) => k in patch)
+      .map((k) => ({
+        datei_id: id,
+        field_name: k,
+        old_value: (before as any)?.[k] ?? null,
+        new_value: (patch as any)[k] ?? null,
+        changed_by: userId,
+      }))
+      .filter((e) => (e.old_value ?? null) !== (e.new_value ?? null));
+    if (entries.length > 0) {
+      await supabase.from("datei_historie").insert(entries);
+    }
     return row;
+  });
+
+export const listDateiHistorie = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ datei_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: entries, error } = await supabase
+      .from("datei_historie")
+      .select("*")
+      .eq("datei_id", data.datei_id)
+      .order("changed_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    const userIds = Array.from(new Set((entries ?? []).map((e) => e.changed_by).filter(Boolean))) as string[];
+    let profiles: Record<string, string> = {};
+    if (userIds.length > 0) {
+      const { data: ps } = await supabase
+        .from("profiles").select("id, display_name").in("id", userIds);
+      profiles = Object.fromEntries((ps ?? []).map((p) => [p.id, p.display_name ?? ""]));
+    }
+    return { entries: (entries ?? []).map((e) => ({ ...e, changed_by_name: e.changed_by ? profiles[e.changed_by] ?? null : null })) };
   });
 
 export const softDeleteDatei = createServerFn({ method: "POST" })
