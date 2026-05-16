@@ -50,73 +50,92 @@ function Dashboard() {
   const aktiv = current?.eintrag as any;
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-3xl md:text-4xl font-bold text-primary">Willkommen beim Rohrservice</h1>
-        <p className="text-muted-foreground mt-2">
-          Hier können Sie neue Berichte erfassen, bestehende Einsätze bearbeiten oder verwalten.
-        </p>
-      </div>
-
-      <div className="grid sm:grid-cols-2 gap-5">
-        <Tile
-          icon={<FileText className="size-5 text-primary" />}
-          title="Neuer Bericht"
-          desc="Erfassen Sie ein neues Einsatzformular schnell und unkompliziert."
-          cta={<Link to="/notdienst/rohrservice/neu"><Button>Bericht erstellen</Button></Link>}
-        />
-        <Tile
-          icon={<Wrench className="size-5 text-primary" />}
-          title="Nachbearbeitung"
-          desc="Anzeigen, bearbeiten oder löschen Sie bestehende Berichte."
-          cta={<Link to="/notdienst/rohrservice/nachbearbeitung"><Button>Berichte verwalten</Button></Link>}
-        />
-        <Tile
-          icon={<Phone className="size-5 text-rose-500" />}
-          title="Notdienst"
-          desc={
-            aktiv ? (
-              <div className="text-sm space-y-0.5">
-                <div><b>Zuständig:</b> {aktiv.mitarbeiter?.name ?? "–"}</div>
-                {aktiv.mitarbeiter?.telefon_1 && (
-                  <div><b>Telefon:</b> {aktiv.mitarbeiter.telefon_1}</div>
-                )}
-                <div><b>Zeitraum:</b> {fmtDe(aktiv.von)} – {fmtDe(aktiv.bis)}</div>
-              </div>
-            ) : (
-              <span className="text-sm text-muted-foreground">Aktuell kein aktiver Notdienst hinterlegt.</span>
-            )
-          }
-          cta={<NotdienstDialog />}
-        />
-        <Tile
-          icon={<StickyNote className="size-5 text-amber-500" />}
-          title="Notizen"
-          desc={
-            <div className="text-sm space-y-2">
-              <div className="text-rose-600 font-semibold">Achtung!</div>
-              <div>
-                Es wird erst der Bericht versendet wenn wir die <b>Endzeit</b> haben!!
-              </div>
+    <div className="grid sm:grid-cols-2 gap-4">
+      <Tile
+        icon={FileText}
+        tone="info"
+        title="Neuer Bericht"
+        desc="Erfassen Sie ein neues Einsatzformular schnell und unkompliziert."
+        cta={<Link to="/notdienst/rohrservice/neu"><Button>Bericht erstellen</Button></Link>}
+      />
+      <Tile
+        icon={Wrench}
+        tone="success"
+        title="Nachbearbeitung"
+        desc="Anzeigen, bearbeiten oder löschen Sie bestehende Berichte."
+        cta={<Link to="/notdienst/rohrservice/nachbearbeitung"><Button variant="secondary">Berichte verwalten</Button></Link>}
+      />
+      <Tile
+        icon={Phone}
+        tone="destructive"
+        title="Notdienst"
+        desc={
+          aktiv ? (
+            <div className="text-sm space-y-1">
+              <KV label="Zuständig" value={aktiv.mitarbeiter?.name ?? "–"} />
+              {aktiv.mitarbeiter?.telefon_1 && (
+                <KV label="Telefon" value={aktiv.mitarbeiter.telefon_1} />
+              )}
+              <KV label="Zeitraum" value={`${fmtDe(aktiv.von)} – ${fmtDe(aktiv.bis)}`} />
             </div>
-          }
-        />
-      </div>
+          ) : (
+            <span className="text-sm text-muted-foreground">Aktuell kein aktiver Notdienst hinterlegt.</span>
+          )
+        }
+        cta={<NotdienstDialog />}
+      />
+      <Tile
+        icon={StickyNote}
+        tone="warning"
+        title="Notizen"
+        desc={
+          <div className="text-sm space-y-2">
+            <div className="inline-flex px-2 py-0.5 rounded-full bg-destructive/15 text-destructive text-xs font-medium">
+              Achtung
+            </div>
+            <div className="text-foreground">
+              Es wird erst der Bericht versendet, wenn wir die <b>Endzeit</b> haben.
+            </div>
+          </div>
+        }
+      />
     </div>
   );
 }
 
+const TONE_MAP: Record<string, string> = {
+  info: "bg-info/15 text-info",
+  success: "bg-success/15 text-success",
+  warning: "bg-warning/15 text-warning",
+  destructive: "bg-destructive/15 text-destructive",
+  muted: "bg-muted text-muted-foreground",
+};
+
 function Tile({
-  icon, title, desc, cta,
-}: { icon: React.ReactNode; title: string; desc: React.ReactNode; cta?: React.ReactNode }) {
+  icon: Icon, tone, title, desc, cta,
+}: { icon: any; tone: string; title: string; desc: React.ReactNode; cta?: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex items-center gap-2 mb-3">
-        {icon}
-        <h3 className="text-lg font-semibold text-primary">{title}</h3>
+    <div
+      className="rounded-xl border border-border bg-card p-6 transition hover:border-primary/40 flex flex-col"
+      style={{ boxShadow: "var(--shadow-card)" }}
+    >
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`size-10 rounded-lg grid place-items-center ${TONE_MAP[tone]}`}>
+          <Icon className="size-5" />
+        </div>
+        <h3 className="text-base font-semibold">{title}</h3>
       </div>
-      <div className="text-muted-foreground mb-4">{desc}</div>
-      {cta}
+      <div className="text-sm text-muted-foreground mb-5 flex-1">{desc}</div>
+      {cta && <div>{cta}</div>}
+    </div>
+  );
+}
+
+function KV({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground text-right">{value}</span>
     </div>
   );
 }
