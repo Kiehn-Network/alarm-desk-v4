@@ -342,11 +342,6 @@ function LinkDialog({
 
   const linked = links.filter((l) => l.datei_a_id === datei.id || l.datei_b_id === datei.id);
   const linkedIds = new Set(linked.map((l) => (l.datei_a_id === datei.id ? l.datei_b_id : l.datei_a_id)));
-  const findLinkId = (otherId: string) =>
-    linked.find((l) =>
-      (l.datei_a_id === datei.id && l.datei_b_id === otherId) ||
-      (l.datei_b_id === datei.id && l.datei_a_id === otherId),
-    )?.id;
 
   const s = search.trim().toLowerCase();
   const candidates = all
@@ -424,8 +419,6 @@ function LinkDialog({
                   <LinkIcon className="size-4 text-muted-foreground shrink-0" />
                 </button>
               ))}
-              {/* unused id to silence lint if any */}
-              <input type="hidden" value={findLinkId("") ?? ""} readOnly />
             </div>
           </div>
         </div>
