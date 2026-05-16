@@ -27,6 +27,8 @@ import {
   linkDateien, unlinkDateien, getDateiSignedUrl,
   updateDatei, listDateiHistorie,
 } from "@/lib/dateien.functions";
+import { useRole } from "@/hooks/use-role";
+import { AccessDenied } from "@/components/layout/access-denied";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
@@ -43,12 +45,17 @@ function formatSize(bytes: number | null) {
 }
 
 function DateienPage() {
+  const { isFahrer, loading: roleLoading } = useRole();
   const qc = useQueryClient();
   const list = useServerFn(listDateien);
   const { data, isLoading } = useQuery({
     queryKey: ["dateien"],
     queryFn: () => list(),
+    enabled: !isFahrer,
   });
+
+  if (roleLoading) return <div className="p-6 lg:p-8 text-sm text-muted-foreground">Lade…</div>;
+  if (isFahrer) return <AccessDenied title="Kein Zugriff" message="Die Datei-Verwaltung ist nicht für Fahrer freigegeben." />;
 
   const [search, setSearch] = useState("");
   const [uploadOpen, setUploadOpen] = useState(false);
