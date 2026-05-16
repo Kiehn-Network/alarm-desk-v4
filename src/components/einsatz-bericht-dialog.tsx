@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { updateEinsatzBericht } from "@/lib/einsaetze.functions";
+import { useRole } from "@/hooks/use-role";
 
 type Einsatz = any;
 type BerichtTyp = "hausnotruf" | "av_einsatz";
@@ -27,7 +28,8 @@ export function EinsatzBerichtDialog({
 }: { einsatz: Einsatz | null; open: boolean; onClose: () => void }) {
   const save = useServerFn(updateEinsatzBericht);
   const qc = useQueryClient();
-  const readonly = einsatz?.status === "abgeschlossen";
+  const { canManage } = useRole();
+  const readonly = einsatz?.status === "abgeschlossen" && !canManage;
   const [typ, setTyp] = useState<BerichtTyp>("av_einsatz");
   const [hnProblem, setHnProblem] = useState("");
   const [hnLoesung, setHnLoesung] = useState("");
