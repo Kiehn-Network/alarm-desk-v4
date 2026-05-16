@@ -13,10 +13,9 @@ const createSchema = z.object({
   key_number: z.string().max(100).optional().nullable(),
   anlagen_nr: z.string().max(100).optional().nullable(),
   teilnehmer_id: z.string().max(100).optional().nullable(),
-  prioritaet: prioritaet.default("normal"),
   beschreibung: z.string().max(4000).optional().nullable(),
-  geplant_am: z.string().optional().nullable(),
-  status: z.enum(["entwurf", "wartet_freigabe"]).default("wartet_freigabe"),
+  assigned_to: z.string().uuid(),
+  datei_id: z.string().uuid().optional().nullable(),
 });
 
 const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
@@ -98,8 +97,23 @@ export const createEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => createSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const payload: any = { ...data, created_by: userId };
-    if (!payload.geplant_am) delete payload.geplant_am;
+    const payload: any = {
+      einsatzgrund: data.einsatzgrund,
+      einsatzgrund_id: data.einsatzgrund_id ?? null,
+      kunden_name: data.kunden_name ?? null,
+      address: data.address ?? null,
+      key_number: data.key_number ?? null,
+      anlagen_nr: data.anlagen_nr ?? null,
+      teilnehmer_id: data.teilnehmer_id ?? null,
+      beschreibung: data.beschreibung ?? null,
+      prioritaet: "normal",
+      status: "in_bearbeitung",
+      created_by: userId,
+      assigned_to: data.assigned_to,
+      assigned_at: new Date().toISOString(),
+      approved_by: userId,
+      approved_at: new Date().toISOString(),
+    };
     const { data: row, error } = await supabase
       .from("einsaetze").insert(payload).select().single();
     if (error) throw new Error(error.message);
@@ -202,6 +216,33 @@ export const listFahrer = createServerFn({ method: "GET" })
     const { data: profiles } = await supabaseAdmin
       .from("profiles").select("id, display_name").in("id", ids);
     return { fahrer: profiles ?? [] };
+  });
+
+export const searchKundenDateien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ q: z.string().trim().min(1).max(200) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const q = data.q.replace(/[%_]/g, "");
+    const pattern = `%${q}%`;
+    const { data: rows, error } = await supabase
+      .from("dateien")
+      .select("id, kunden_name, address, key_number, anlagen_nr, teilnehmer_id, filename")
+      .is("deleted_at", null)
+      .or(
+        [
+          `kunden_name.ilike.${pattern}`,
+          `address.ilike.${pattern}`,
+          `key_number.ilike.${pattern}`,
+          `anlagen_nr.ilike.${pattern}`,
+          `teilnehmer_id.ilike.${pattern}`,
+          `filename.ilike.${pattern}`,
+        ].join(","),
+      )
+      .order("kunden_name", { ascending: true, nullsFirst: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return { results: rows ?? [] };
   });
 
 export const listEinsatzHistorie = createServerFn({ method: "GET" })

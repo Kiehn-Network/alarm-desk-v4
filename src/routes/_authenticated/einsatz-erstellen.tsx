@@ -3,42 +3,66 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Plus, Save, Send } from "lucide-react";
+import { AlertTriangle, Search, Send, User, MapPin, KeyRound, Hash, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRole } from "@/hooks/use-role";
-import { createEinsatz, listEinsatzGruende, createEinsatzGrund } from "@/lib/einsaetze.functions";
+import {
+  createEinsatz, listEinsatzGruende, listFahrer, searchKundenDateien,
+} from "@/lib/einsaetze.functions";
 
 export const Route = createFileRoute("/_authenticated/einsatz-erstellen")({
   component: EinsatzErstellenPage,
 });
 
-const CUSTOM = "__custom__";
+type DateiHit = {
+  id: string;
+  kunden_name: string | null;
+  address: string | null;
+  key_number: string | null;
+  anlagen_nr: string | null;
+  teilnehmer_id: string | null;
+  filename: string;
+};
 
 function EinsatzErstellenPage() {
   const navigate = useNavigate();
   const { canManage, loading: roleLoading } = useRole();
-  const list = useServerFn(listEinsatzGruende);
+
+  const searchFn = useServerFn(searchKundenDateien);
+  const listG = useServerFn(listEinsatzGruende);
+  const listF = useServerFn(listFahrer);
   const create = useServerFn(createEinsatz);
-  const addGrund = useServerFn(createEinsatzGrund);
 
-  const { data, refetch } = useQuery({ queryKey: ["einsatz-gruende"], queryFn: () => list() });
-  const gruende = data?.gruende ?? [];
-
-  const [grundId, setGrundId] = useState<string>("");
-  const [customGrund, setCustomGrund] = useState("");
-  const [form, setForm] = useState({
-    kunden_name: "", address: "", key_number: "", anlagen_nr: "",
-    teilnehmer_id: "", prioritaet: "normal", beschreibung: "", geplant_am: "",
-  });
+  const [query, setQuery] = useState("");
+  const [activeQuery, setActiveQuery] = useState("");
+  const [picked, setPicked] = useState<DateiHit | null>(null);
+  const [grund, setGrund] = useState("");
+  const [grundId, setGrundId] = useState<string | null>(null);
+  const [fahrerId, setFahrerId] = useState("");
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    if (!grundId && gruende.length > 0) setGrundId(gruende[0].id);
-  }, [gruende, grundId]);
+  const { data: searchData, isFetching } = useQuery({
+    queryKey: ["kunden-search", activeQuery],
+    queryFn: () => searchFn({ data: { q: activeQuery } }),
+    enabled: activeQuery.length >= 2 && !picked,
+  });
+  const results: DateiHit[] = searchData?.results ?? [];
+
+  const { data: gData } = useQuery({ queryKey: ["einsatz-gruende"], queryFn: () => listG() });
+  const gruende = gData?.gruende ?? [];
+
+  const { data: fData } = useQuery({ queryKey: ["fahrer"], queryFn: () => listF() });
+  const fahrer = (fData?.fahrer ?? []) as Array<{ id: string; display_name: string | null }>;
+
+  useEffect(() => { setActiveQuery(query.trim()); }, [query]);
+
+  function pickGrund(name: string, id: string | null) {
+    setGrund(name); setGrundId(id);
+  }
 
   if (!roleLoading && !canManage) {
     return (
@@ -56,115 +80,206 @@ function EinsatzErstellenPage() {
     );
   }
 
-  async function submit(asEntwurf: boolean) {
-    const isCustom = grundId === CUSTOM;
-    const grundName = isCustom ? customGrund.trim() : (gruende.find((g: any) => g.id === grundId)?.name ?? "");
-    if (!grundName) { toast.error("Bitte Einsatzgrund angeben"); return; }
+  async function submit() {
+    if (!picked) { toast.error("Bitte zuerst einen Kunden suchen und auswählen"); return; }
+    if (!grund.trim()) { toast.error("Bitte Einsatzgrund eingeben oder auswählen"); return; }
+    if (!fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
     setSaving(true);
     try {
-      let einsatzgrund_id: string | null = isCustom ? null : grundId || null;
-      if (isCustom) {
-        try {
-          const r: any = await addGrund({ data: { name: grundName } });
-          einsatzgrund_id = r?.id ?? null;
-          await refetch();
-        } catch {/* duplicate ok */}
-      }
       await create({ data: {
-        einsatzgrund: grundName,
-        einsatzgrund_id,
-        kunden_name: form.kunden_name || null,
-        address: form.address || null,
-        key_number: form.key_number || null,
-        anlagen_nr: form.anlagen_nr || null,
-        teilnehmer_id: form.teilnehmer_id || null,
-        prioritaet: form.prioritaet as any,
-        beschreibung: form.beschreibung || null,
-        geplant_am: form.geplant_am ? new Date(form.geplant_am).toISOString() : null,
-        status: asEntwurf ? "entwurf" : "wartet_freigabe",
+        einsatzgrund: grund.trim(),
+        einsatzgrund_id: grundId,
+        kunden_name: picked.kunden_name,
+        address: picked.address,
+        key_number: picked.key_number,
+        anlagen_nr: picked.anlagen_nr,
+        teilnehmer_id: picked.teilnehmer_id,
+        beschreibung: null,
+        assigned_to: fahrerId,
+        datei_id: picked.id,
       }});
-      toast.success(asEntwurf ? "Als Entwurf gespeichert" : "Einsatz zur Freigabe eingereicht");
+      const f = fahrer.find((x) => x.id === fahrerId);
+      toast.success(`Einsatz an ${f?.display_name ?? "Fahrer"} übergeben`);
       navigate({ to: "/alarmierung" });
     } catch (e: any) {
-      toast.error(e.message ?? "Fehler beim Speichern");
+      toast.error(e.message ?? "Fehler beim Erstellen");
     } finally { setSaving(false); }
   }
 
-  const set = (k: keyof typeof form) => (e: any) => setForm((p) => ({ ...p, [k]: e.target.value }));
-
   return (
-    <div className="p-6 lg:p-8 max-w-4xl">
-      <div className="mb-6">
+    <div className="p-6 lg:p-8 max-w-4xl space-y-6">
+      <div>
         <h1 className="text-3xl font-bold">Einsatz erstellen</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Neuer Einsatz – wird nach dem Einreichen vom Dispatcher/Admin freigegeben.
+          Kunde suchen, Einsatzgrund festlegen, Fahrer zuweisen.
         </p>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-6 space-y-6" style={{ boxShadow: "var(--shadow-card)" }}>
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Einsatzgrund</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>Grund auswählen</Label>
-              <Select value={grundId} onValueChange={setGrundId}>
-                <SelectTrigger><SelectValue placeholder="Grund wählen" /></SelectTrigger>
-                <SelectContent>
-                  {gruende.map((g: any) => (<SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>))}
-                  <SelectItem value={CUSTOM}>+ Eigenen Grund eingeben</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Schritt 1: Suche */}
+      <section className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="flex items-center gap-2">
+          <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">1</span>
+          <h2 className="font-semibold">Kunde / Objekt suchen</h2>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setPicked(null); }}
+            placeholder="Kunde, Straße, Schlüssel-Nr., Anlagen-Nr., Teilnehmer-ID..."
+            className="pl-9"
+            autoFocus
+          />
+        </div>
+
+        {picked ? (
+          <div className="rounded-lg border border-primary/40 bg-primary/5 p-4 flex items-start gap-3">
+            <Check className="size-5 text-primary mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold">{picked.kunden_name || "Ohne Kundennamen"}</div>
+              <div className="text-sm text-muted-foreground mt-0.5 flex flex-wrap gap-x-4 gap-y-1">
+                {picked.address && <span className="inline-flex items-center gap-1"><MapPin className="size-3" /> {picked.address}</span>}
+                {picked.key_number && <span className="inline-flex items-center gap-1"><KeyRound className="size-3" /> {picked.key_number}</span>}
+                {picked.anlagen_nr && <span className="inline-flex items-center gap-1"><Hash className="size-3" /> {picked.anlagen_nr}</span>}
+                {picked.teilnehmer_id && <span>TN: {picked.teilnehmer_id}</span>}
+              </div>
             </div>
-            <div>
-              <Label>Priorität</Label>
-              <Select value={form.prioritaet} onValueChange={(v) => setForm((p) => ({ ...p, prioritaet: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="niedrig">Niedrig</SelectItem>
-                  <SelectItem value="normal">Normal</SelectItem>
-                  <SelectItem value="hoch">Hoch</SelectItem>
-                  <SelectItem value="kritisch">Kritisch</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Button size="sm" variant="ghost" onClick={() => { setPicked(null); setQuery(""); }}>
+              <X className="size-4" /> Ändern
+            </Button>
           </div>
-          {grundId === CUSTOM && (
-            <div>
-              <Label>Eigener Einsatzgrund</Label>
-              <Input value={customGrund} onChange={(e) => setCustomGrund(e.target.value)} placeholder="z.B. Wartungseinsatz Sensor" maxLength={200} />
-              <p className="text-xs text-muted-foreground mt-1">Wird auch in die Grund-Liste übernommen.</p>
+        ) : activeQuery.length < 2 ? (
+          <p className="text-xs text-muted-foreground">Mindestens 2 Zeichen eingeben.</p>
+        ) : isFetching ? (
+          <p className="text-xs text-muted-foreground">Suche läuft...</p>
+        ) : results.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+            Keine Treffer. Lege die Datei zuerst unter <b>Datei-Verwaltung</b> an.
+          </div>
+        ) : (
+          <ul className="rounded-lg border border-border divide-y divide-border max-h-80 overflow-y-auto">
+            {results.map((r) => (
+              <li key={r.id}>
+                <button
+                  type="button"
+                  onClick={() => setPicked(r)}
+                  className="w-full text-left p-3 hover:bg-muted/40 transition-colors"
+                >
+                  <div className="flex items-center gap-2 font-medium">
+                    <User className="size-4 text-muted-foreground" />
+                    {r.kunden_name || <span className="text-muted-foreground">Ohne Kundennamen</span>}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
+                    {r.address && <span>📍 {r.address}</span>}
+                    {r.key_number && <span>🔑 {r.key_number}</span>}
+                    {r.anlagen_nr && <span>🏷️ {r.anlagen_nr}</span>}
+                    {r.teilnehmer_id && <span>TN: {r.teilnehmer_id}</span>}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Schritt 2: Objektdaten (read-only autofill) */}
+      {picked && (
+        <section className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="flex items-center gap-2">
+            <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">2</span>
+            <h2 className="font-semibold">Objektdaten</h2>
+            <span className="text-xs text-muted-foreground">automatisch ausgefüllt</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ReadField label="Kunde" value={picked.kunden_name} />
+            <ReadField label="Adresse" value={picked.address} />
+            <ReadField label="Schlüssel-Nr." value={picked.key_number} />
+            <ReadField label="Anlagen-Nr." value={picked.anlagen_nr} />
+            <ReadField label="Teilnehmer-ID" value={picked.teilnehmer_id} />
+          </div>
+        </section>
+      )}
+
+      {/* Schritt 3: Einsatzgrund */}
+      {picked && (
+        <section className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="flex items-center gap-2">
+            <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">3</span>
+            <h2 className="font-semibold">Einsatzgrund</h2>
+          </div>
+          <Textarea
+            value={grund}
+            onChange={(e) => { setGrund(e.target.value); setGrundId(null); }}
+            rows={3}
+            maxLength={200}
+            placeholder="Einsatzgrund eingeben..."
+          />
+          {gruende.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {gruende.map((g: any) => (
+                <button
+                  key={g.id}
+                  type="button"
+                  onClick={() => pickGrund(g.name, g.id)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    grundId === g.id
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-muted/40 hover:bg-muted border-border text-foreground/80"
+                  }`}
+                >
+                  {g.name}
+                </button>
+              ))}
             </div>
           )}
         </section>
+      )}
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Objektdaten</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><Label>Kunde</Label><Input value={form.kunden_name} onChange={set("kunden_name")} maxLength={200} /></div>
-            <div><Label>Adresse</Label><Input value={form.address} onChange={set("address")} maxLength={255} /></div>
-            <div><Label>Schlüssel-Nr.</Label><Input value={form.key_number} onChange={set("key_number")} maxLength={100} /></div>
-            <div><Label>Anlagen-Nr.</Label><Input value={form.anlagen_nr} onChange={set("anlagen_nr")} maxLength={100} /></div>
-            <div><Label>Teilnehmer-ID</Label><Input value={form.teilnehmer_id} onChange={set("teilnehmer_id")} maxLength={100} /></div>
-            <div><Label>Geplant am</Label><Input type="datetime-local" value={form.geplant_am} onChange={set("geplant_am")} /></div>
+      {/* Schritt 4: Fahrer */}
+      {picked && (
+        <section className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="flex items-center gap-2">
+            <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">4</span>
+            <h2 className="font-semibold">Fahrer zuweisen</h2>
+          </div>
+          {fahrer.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Keine Nutzer mit Rolle "Fahrer" gefunden. Rollen können im Admin Center vergeben werden.
+            </p>
+          ) : (
+            <div>
+              <Label>Fahrer</Label>
+              <Select value={fahrerId} onValueChange={setFahrerId}>
+                <SelectTrigger><SelectValue placeholder="Fahrer wählen" /></SelectTrigger>
+                <SelectContent>
+                  {fahrer.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>{f.display_name ?? f.id.slice(0, 8)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
+            <Button onClick={submit} disabled={saving || !fahrerId || !grund.trim()} className="gap-2">
+              <Send className="size-4" /> Einsatz an Fahrer übergeben
+            </Button>
+            <Button onClick={() => navigate({ to: "/alarmierung" })} variant="ghost" className="ml-auto">
+              Abbrechen
+            </Button>
           </div>
         </section>
+      )}
+    </div>
+  );
+}
 
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Beschreibung</h2>
-          <Textarea value={form.beschreibung} onChange={set("beschreibung")} rows={5} maxLength={4000} placeholder="Details zum Einsatz..." />
-        </section>
-
-        <div className="flex flex-wrap gap-3 pt-2 border-t border-border">
-          <Button onClick={() => submit(false)} disabled={saving} className="gap-2">
-            <Send className="size-4" /> Zur Freigabe einreichen
-          </Button>
-          <Button onClick={() => submit(true)} disabled={saving} variant="secondary" className="gap-2">
-            <Save className="size-4" /> Als Entwurf speichern
-          </Button>
-          <Button onClick={() => navigate({ to: "/alarmierung" })} variant="ghost" className="ml-auto">
-            Abbrechen
-          </Button>
-        </div>
+function ReadField({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <div className="mt-1 px-3 py-2 rounded-md border border-border bg-muted/30 text-sm min-h-[2.25rem]">
+        {value || <span className="text-muted-foreground italic">—</span>}
       </div>
     </div>
   );
