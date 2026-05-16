@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 const inputSchema = z.object({
   einsatz_id: z.string().uuid(),
@@ -15,6 +16,7 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
   .inputValidator((i) => inputSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
 
     // Berechtigung: Admin oder Disponent
     const { data: roles } = await supabaseAdmin
@@ -100,6 +102,7 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
       status,
       error_message: errorMessage,
       sent_by: userId,
+      domain_id: domainId,
     });
 
     if (status === "failed") {
