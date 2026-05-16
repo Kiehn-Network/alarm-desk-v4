@@ -136,6 +136,18 @@ function AlarmierungPage() {
                       {e.assigned_to && <span>Fahrer: <b className="text-foreground/80">{profiles[e.assigned_to] ?? "–"}</b></span>}
                       {e.abgeschlossen_am && <span>Abgeschlossen: {fmt(e.abgeschlossen_am)}</span>}
                     </div>
+                    {(e.vor_ort_am || e.abfahrt_am || e.einsatz_ende_am) && (
+                      <div className="mt-2 text-xs flex flex-wrap gap-x-4 gap-y-1">
+                        {e.vor_ort_am && <span>📍 Vor Ort: <b className="text-foreground/80">{fmt(e.vor_ort_am)}</b></span>}
+                        {e.abfahrt_am && <span>🚗 Abfahrt: <b className="text-foreground/80">{fmt(e.abfahrt_am)}</b></span>}
+                        {e.einsatz_ende_am && <span>🏁 Ende: <b className="text-foreground/80">{fmt(e.einsatz_ende_am)}</b></span>}
+                      </div>
+                    )}
+                    {e.bericht_typ && (
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        📝 Bericht: <span className="text-foreground/80">{e.bericht_typ === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 shrink-0">
@@ -179,6 +191,9 @@ const FIELD_LABELS: Record<string, string> = {
   address: "Adresse", key_number: "Schlüssel-Nr.", anlagen_nr: "Anlagen-Nr.",
   teilnehmer_id: "Teilnehmer-ID", beschreibung: "Beschreibung",
   assigned_to: "Fahrer", abgeschlossen_am: "Abgeschlossen am",
+  vor_ort_am: "Vor Ort", abfahrt_am: "Abfahrt", einsatz_ende_am: "Einsatz Ende",
+  bericht: "Bericht", bericht_typ: "Berichtstyp",
+  hausnotruf_problem: "Hausnotruf-Problem", hausnotruf_loesung: "Hausnotruf-Lösung",
 };
 
 function HistoryDialog({ einsatz, onClose }: { einsatz: Einsatz | null; onClose: () => void }) {
