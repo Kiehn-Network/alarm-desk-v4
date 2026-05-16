@@ -7,6 +7,7 @@ import {
   listDomains, createDomain, setDomainStatus,
   createLicense, revokeLicense, toggleDomainModule,
   listAllTenantUsers, assignUserToDomain,
+  createTenantUser,
   startImpersonation, stopImpersonation, getImpersonation,
   getPlatformSettings, updatePlatformMaintenance,
   listAppVersions, createAppVersion, deleteAppVersion,
@@ -66,11 +67,20 @@ function SuperAdminPage() {
   const revokeLic = useServerFn(revokeLicense);
   const toggleMod = useServerFn(toggleDomainModule);
   const assign = useServerFn(assignUserToDomain);
+  const createUserFn = useServerFn(createTenantUser);
   const startImp = useServerFn(startImpersonation);
   const stopImp = useServerFn(stopImpersonation);
 
   const [newSlug, setNewSlug] = useState("");
   const [newName, setNewName] = useState("");
+
+  // New user form state
+  const [nuEmail, setNuEmail] = useState("");
+  const [nuName, setNuName] = useState("");
+  const [nuPassword, setNuPassword] = useState("");
+  const [nuDomain, setNuDomain] = useState<string>("none");
+  const [nuRole, setNuRole] = useState<"superadmin" | "admin" | "user">("user");
+  const [nuPending, setNuPending] = useState(false);
 
   // System tab state
   const [newVersion, setNewVersion] = useState("");
@@ -220,6 +230,76 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-2">
+          <Card>
+            <CardHeader><CardTitle>Neuen Nutzer anlegen</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Name</Label>
+                  <Input value={nuName} onChange={(e) => setNuName(e.target.value)} placeholder="Max Mustermann" />
+                </div>
+                <div>
+                  <Label>E-Mail</Label>
+                  <Input type="email" value={nuEmail} onChange={(e) => setNuEmail(e.target.value)} placeholder="max@firma.de" />
+                </div>
+                <div>
+                  <Label>Passwort (min. 8 Zeichen)</Label>
+                  <Input type="text" value={nuPassword} onChange={(e) => setNuPassword(e.target.value)} placeholder="Passwort vergeben" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Domäne</Label>
+                    <Select value={nuDomain} onValueChange={setNuDomain}>
+                      <SelectTrigger><SelectValue placeholder="Domain" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— keine —</SelectItem>
+                        {domains.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Rolle</Label>
+                    <Select value={nuRole} onValueChange={(v) => setNuRole(v as any)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="superadmin">SuperAdmin</SelectItem>
+                        <SelectItem value="admin">Domain-Admin</SelectItem>
+                        <SelectItem value="user">User</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              <Button
+                disabled={
+                  nuPending ||
+                  !nuEmail || !nuName || nuPassword.length < 8 ||
+                  (nuRole !== "superadmin" && nuDomain === "none")
+                }
+                onClick={async () => {
+                  setNuPending(true);
+                  try {
+                    await createUserFn({ data: {
+                      email: nuEmail.trim(),
+                      password: nuPassword,
+                      display_name: nuName.trim(),
+                      domain_id: nuDomain === "none" ? null : nuDomain,
+                      role: nuRole,
+                    }});
+                    toast.success("Nutzer angelegt");
+                    setNuEmail(""); setNuName(""); setNuPassword("");
+                    setNuDomain("none"); setNuRole("user");
+                    invalidateAll();
+                  } catch (e: any) {
+                    toast.error(e?.message ?? "Fehler beim Anlegen");
+                  } finally {
+                    setNuPending(false);
+                  }
+                }}
+              >Anlegen</Button>
+            </CardContent>
+          </Card>
+
           {users.map((u: any) => {
             const r = u.roles[0];
             return (
