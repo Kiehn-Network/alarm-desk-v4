@@ -25,6 +25,14 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [info, setInfo] = useState<VersionInfo | null>(null);
+
+  useEffect(() => {
+    fetch("/api/public/version")
+      .then((r) => r.json())
+      .then((d) => setInfo(d))
+      .catch(() => {});
+  }, []);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
