@@ -28,7 +28,6 @@ import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
-import { Route as AuthenticatedNotdienstBudekoRouteImport } from './routes/_authenticated/notdienst/budeko'
 import { Route as AuthenticatedNotdienstRohrserviceRouteRouteImport } from './routes/_authenticated/notdienst/rohrservice/route'
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -139,12 +138,6 @@ const AuthenticatedNotdienstLutzRoute =
     path: '/notdienst/lutz',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedNotdienstBudekoRoute =
-  AuthenticatedNotdienstBudekoRouteImport.update({
-    id: '/notdienst/budeko',
-    path: '/notdienst/budeko',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedNotdienstRohrserviceRouteRoute =
   AuthenticatedNotdienstRohrserviceRouteRouteImport.update({
     id: '/notdienst/rohrservice',
@@ -200,7 +193,6 @@ export interface FileRoutesByFullPath {
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
-  '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
@@ -226,7 +218,6 @@ export interface FileRoutesByTo {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
-  '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
@@ -255,7 +246,6 @@ export interface FileRoutesById {
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
-  '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRoute
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/_authenticated/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
@@ -284,7 +274,6 @@ export interface FileRouteTypes {
     | '/service-center'
     | '/superadmin'
     | '/notdienst/rohrservice'
-    | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/api/public/version'
     | '/notdienst/rohrservice/mitarbeiter'
@@ -310,7 +299,6 @@ export interface FileRouteTypes {
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
-    | '/notdienst/budeko'
     | '/notdienst/lutz'
     | '/api/public/version'
     | '/notdienst/rohrservice/mitarbeiter'
@@ -338,7 +326,6 @@ export interface FileRouteTypes {
     | '/_authenticated/service-center'
     | '/_authenticated/superadmin'
     | '/_authenticated/notdienst/rohrservice'
-    | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/version'
     | '/_authenticated/notdienst/rohrservice/mitarbeiter'
@@ -491,13 +478,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstLutzRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/notdienst/budeko': {
-      id: '/_authenticated/notdienst/budeko'
-      path: '/notdienst/budeko'
-      fullPath: '/notdienst/budeko'
-      preLoaderRoute: typeof AuthenticatedNotdienstBudekoRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/notdienst/rohrservice': {
       id: '/_authenticated/notdienst/rohrservice'
       path: '/notdienst/rohrservice'
@@ -583,7 +563,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedServiceCenterRoute: typeof AuthenticatedServiceCenterRoute
   AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
   AuthenticatedNotdienstRohrserviceRouteRoute: typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
-  AuthenticatedNotdienstBudekoRoute: typeof AuthenticatedNotdienstBudekoRoute
   AuthenticatedNotdienstLutzRoute: typeof AuthenticatedNotdienstLutzRoute
 }
 
@@ -604,7 +583,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperadminRoute: AuthenticatedSuperadminRoute,
   AuthenticatedNotdienstRohrserviceRouteRoute:
     AuthenticatedNotdienstRohrserviceRouteRouteWithChildren,
-  AuthenticatedNotdienstBudekoRoute: AuthenticatedNotdienstBudekoRoute,
   AuthenticatedNotdienstLutzRoute: AuthenticatedNotdienstLutzRoute,
 }
 
