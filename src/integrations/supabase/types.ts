@@ -52,6 +52,7 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          budeko_notiz: string | null
           dashboard_hinweis: string | null
           domain_id: string
           firmenname: string
@@ -65,6 +66,7 @@ export type Database = {
           wartung_nachricht: string | null
         }
         Insert: {
+          budeko_notiz?: string | null
           dashboard_hinweis?: string | null
           domain_id: string
           firmenname?: string
@@ -78,6 +80,7 @@ export type Database = {
           wartung_nachricht?: string | null
         }
         Update: {
+          budeko_notiz?: string | null
           dashboard_hinweis?: string | null
           domain_id?: string
           firmenname?: string
@@ -124,6 +127,200 @@ export type Database = {
           id?: string
           released_at?: string
           version?: string
+        }
+        Relationships: []
+      }
+      budeko_berichte: {
+        Row: {
+          anrufer_adresse: string | null
+          anrufer_firma: string | null
+          anrufer_name: string | null
+          anrufer_telefon: string | null
+          bericht_nr: number
+          created_at: string
+          created_by: string | null
+          diensthabender_alarmzentrale: string | null
+          domain_id: string
+          id: string
+          mieter_name: string | null
+          mieter_ort: string | null
+          mieter_strasse: string | null
+          mieter_telefon: string | null
+          monteur_weitergabe: string | null
+          stoerungsart: string | null
+          updated_at: string
+          versendet: boolean
+          versendet_am: string | null
+          versendet_an: string | null
+          weiterleitung: string | null
+          zeit_kundenanruf: string | null
+          zeit_weitergabe: string | null
+        }
+        Insert: {
+          anrufer_adresse?: string | null
+          anrufer_firma?: string | null
+          anrufer_name?: string | null
+          anrufer_telefon?: string | null
+          bericht_nr?: number
+          created_at?: string
+          created_by?: string | null
+          diensthabender_alarmzentrale?: string | null
+          domain_id: string
+          id?: string
+          mieter_name?: string | null
+          mieter_ort?: string | null
+          mieter_strasse?: string | null
+          mieter_telefon?: string | null
+          monteur_weitergabe?: string | null
+          stoerungsart?: string | null
+          updated_at?: string
+          versendet?: boolean
+          versendet_am?: string | null
+          versendet_an?: string | null
+          weiterleitung?: string | null
+          zeit_kundenanruf?: string | null
+          zeit_weitergabe?: string | null
+        }
+        Update: {
+          anrufer_adresse?: string | null
+          anrufer_firma?: string | null
+          anrufer_name?: string | null
+          anrufer_telefon?: string | null
+          bericht_nr?: number
+          created_at?: string
+          created_by?: string | null
+          diensthabender_alarmzentrale?: string | null
+          domain_id?: string
+          id?: string
+          mieter_name?: string | null
+          mieter_ort?: string | null
+          mieter_strasse?: string | null
+          mieter_telefon?: string | null
+          monteur_weitergabe?: string | null
+          stoerungsart?: string | null
+          updated_at?: string
+          versendet?: boolean
+          versendet_am?: string | null
+          versendet_an?: string | null
+          weiterleitung?: string | null
+          zeit_kundenanruf?: string | null
+          zeit_weitergabe?: string | null
+        }
+        Relationships: []
+      }
+      budeko_mitarbeiter: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          name: string
+          telefon_1: string | null
+          telefon_2: string | null
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          name: string
+          telefon_1?: string | null
+          telefon_2?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          name?: string
+          telefon_1?: string | null
+          telefon_2?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      budeko_notdienst: {
+        Row: {
+          bis: string
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          mitarbeiter_id: string
+          updated_at: string
+          von: string
+        }
+        Insert: {
+          bis: string
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          mitarbeiter_id: string
+          updated_at?: string
+          von: string
+        }
+        Update: {
+          bis?: string
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          mitarbeiter_id?: string
+          updated_at?: string
+          von?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budeko_notdienst_mitarbeiter_id_fkey"
+            columns: ["mitarbeiter_id"]
+            isOneToOne: false
+            referencedRelation: "budeko_mitarbeiter"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budeko_notiz_dateien: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          label: string
+          mime_type: string | null
+          size_bytes: number | null
+          sort_order: number
+          storage_path: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          label: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          label?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          sort_order?: number
+          storage_path?: string
+          updated_at?: string
         }
         Relationships: []
       }
