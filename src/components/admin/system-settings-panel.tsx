@@ -242,3 +242,87 @@ function MaintenanceSettings() {
   );
 }
 
+
+// ============ Theme (per-domain) ============
+
+const THEMES = [
+  { value: "midnight", label: "Midnight Blue", swatches: ["#1a1f3a", "#3b6fff", "#0f1226"] },
+  { value: "emerald",  label: "Emerald Pro",  swatches: ["#0f2a22", "#22c08c", "#d4a84c"] },
+  { value: "slate",    label: "Slate Mono",   swatches: ["#1c1e22", "#cfd2d7", "#2a2d33"] },
+  { value: "sunset",   label: "Sunset Warm",  swatches: ["#2a1410", "#ff7a3a", "#e23a55"] },
+] as const;
+
+function ThemeSettings() {
+  const qc = useQueryClient();
+  const fetchFn = useServerFn(getAppSettings);
+  const updateFn = useServerFn(updateAppSettings);
+  const { data } = useQuery({ queryKey: ["app-settings"], queryFn: () => fetchFn() });
+
+  const current = ((data as any)?.theme as string) ?? "midnight";
+  const [theme, setTheme] = useState<string>("midnight");
+
+  useEffect(() => { setTheme(current); }, [current]);
+
+  const save = useMutation({
+    mutationFn: async () => updateFn({
+      data: {
+        firmenname: data?.firmenname ?? "AlarmDesk",
+        logo_url: data?.logo_url ?? null,
+        dashboard_hinweis: data?.dashboard_hinweis ?? null,
+        wartung_aktiv: data?.wartung_aktiv ?? false,
+        wartung_nachricht: data?.wartung_nachricht ?? null,
+        wartung_farbe: (data?.wartung_farbe as any) ?? "info",
+        theme: theme as any,
+      },
+    }),
+    onSuccess: () => {
+      toast.success("Design aktualisiert – gilt für alle Nutzer der Domäne.");
+      qc.invalidateQueries({ queryKey: ["app-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler beim Speichern"),
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <header className="flex items-center gap-2 pb-4 border-b border-border mb-5">
+        <Palette className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold uppercase tracking-wide">Design / Theme</h3>
+      </header>
+      <p className="text-sm text-muted-foreground mb-4">
+        Wähle ein Theme für deine Domäne. Light/Dark-Modus können Nutzer weiterhin individuell einstellen.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {THEMES.map((t) => {
+          const active = theme === t.value;
+          return (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => setTheme(t.value)}
+              className={`group relative text-left rounded-xl border p-4 transition-all ${
+                active
+                  ? "border-primary ring-2 ring-ring bg-accent/30"
+                  : "border-border hover:border-primary/60 hover:bg-accent/20"
+              }`}
+            >
+              <div className="flex gap-1.5 mb-3">
+                {t.swatches.map((c) => (
+                  <span key={c} className="size-6 rounded-md border border-border" style={{ background: c }} />
+                ))}
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">{t.label}</div>
+                {active && <Check className="size-4 text-primary" />}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex justify-end mt-5">
+        <Button onClick={() => save.mutate()} disabled={save.isPending || theme === current}>
+          <Save className="size-4 mr-2" />{save.isPending ? "Speichere…" : "Speichern"}
+        </Button>
+      </div>
+    </section>
+  );
+}
