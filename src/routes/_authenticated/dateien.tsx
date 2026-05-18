@@ -183,7 +183,7 @@ function DateienPage() {
       {detailFor && (
         <DetailDialog
           datei={detailFor} all={dateien} links={links}
-          onClose={() => setDetailFor(null)}
+          onClose={() => setDetailFor(null)} onDone={refresh}
         />
       )}
       {editFor && (
