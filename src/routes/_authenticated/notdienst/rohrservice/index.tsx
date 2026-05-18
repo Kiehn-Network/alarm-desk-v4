@@ -29,6 +29,7 @@ import {
 import { toast } from "sonner";
 import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
+import DOMPurify from "isomorphic-dompurify";
 
 export const Route = createFileRoute("/_authenticated/notdienst/rohrservice/")({
   component: Dashboard,
@@ -124,7 +125,7 @@ function NotizContent({
       {html ? (
         <div
           className="text-sm prose-sm max-w-none [&_a]:text-primary [&_a]:underline whitespace-pre-wrap"
-          dangerouslySetInnerHTML={{ __html: html }}
+          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }}
         />
       ) : (
         <span className="text-sm text-muted-foreground">Noch keine Notiz hinterlegt.</span>
