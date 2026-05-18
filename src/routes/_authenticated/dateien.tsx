@@ -193,9 +193,10 @@ function DateienPage() {
   );
 }
 
-function DownloadBtn({ path, filename }: { path: string; filename: string }) {
+function DownloadBtn({ path, filename }: { path: string | null; filename: string }) {
   const sign = useServerFn(getDateiSignedUrl);
   const [busy, setBusy] = useState(false);
+  if (!path) return null;
   return (
     <Button
       size="sm" variant="ghost" title="Herunterladen" disabled={busy}
