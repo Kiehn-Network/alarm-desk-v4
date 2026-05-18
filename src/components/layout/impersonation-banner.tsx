@@ -28,6 +28,7 @@ export function ImpersonationBanner() {
           try {
             await stopFn();
             await qc.invalidateQueries();
+            window.dispatchEvent(new Event("impersonation-changed"));
             toast.success("Impersonation beendet");
           } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
         }}

@@ -14,7 +14,7 @@ export function useRole() {
   useEffect(() => {
     if (!user) { setRole(null); setDomainId(null); setIsImpersonating(false); setLoading(false); return; }
     let cancel = false;
-    (async () => {
+    const run = async () => {
       const [{ data: roles }, { data: prof }, { data: imp }] = await Promise.all([
         supabase.from("user_roles").select("role,domain_id").eq("user_id", user.id),
         supabase.from("profiles").select("domain_id").eq("id", user.id).maybeSingle(),
@@ -29,8 +29,11 @@ export function useRole() {
       setDomainId(impersonatedDomain ?? (prof as any)?.domain_id ?? null);
       setIsImpersonating(Boolean(impersonatedDomain));
       setLoading(false);
-    })();
-    return () => { cancel = true; };
+    };
+    run();
+    const onChange = () => { run(); };
+    window.addEventListener("impersonation-changed", onChange);
+    return () => { cancel = true; window.removeEventListener("impersonation-changed", onChange); };
   }, [user]);
 
   // When a superadmin is impersonating a domain, treat them as a domain admin

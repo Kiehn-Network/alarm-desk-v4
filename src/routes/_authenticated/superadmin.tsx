@@ -59,6 +59,8 @@ function SuperAdminPage() {
     qc.invalidateQueries({ queryKey: ["sa-domains"] });
     qc.invalidateQueries({ queryKey: ["sa-users"] });
     qc.invalidateQueries({ queryKey: ["sa-imp"] });
+    qc.invalidateQueries({ queryKey: ["impersonation"] });
+    window.dispatchEvent(new Event("impersonation-changed"));
   };
 
   const createDom = useServerFn(createDomain);
