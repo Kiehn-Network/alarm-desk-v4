@@ -18,6 +18,7 @@ export function SystemSettingsPanel() {
   return (
     <div className="space-y-6">
       <GeneralSettings />
+      <ThemeSettings />
       <MaintenanceSettings />
     </div>
   );
@@ -53,6 +54,7 @@ function GeneralSettings() {
         wartung_aktiv: data?.wartung_aktiv ?? false,
         wartung_nachricht: data?.wartung_nachricht ?? null,
         wartung_farbe: (data?.wartung_farbe as any) ?? "info",
+        theme: ((data as any)?.theme as any) ?? "midnight",
       },
     }),
     onSuccess: () => {
@@ -175,6 +177,7 @@ function MaintenanceSettings() {
         wartung_aktiv: aktiv,
         wartung_nachricht: nachricht || null,
         wartung_farbe: farbe,
+        theme: ((data as any)?.theme as any) ?? "midnight",
       },
     }),
     onSuccess: () => {
