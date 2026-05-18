@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Clock, Users, History as HistoryIcon } from "lucide-react";
+import { Search, Clock, Users, History as HistoryIcon, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ function KundenPage() {
   const [to, setTo] = useState("");
   const [submitted, setSubmitted] = useState({ q: "", from: "" as string, to: "" as string });
   const [historyFor, setHistoryFor] = useState<any | null>(null);
+  const [infoFor, setInfoFor] = useState<any | null>(null);
 
   const { data, isFetching } = useQuery({
     queryKey: ["kunden-einsaetze", submitted],
@@ -156,6 +157,9 @@ function KundenPage() {
                         <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => setHistoryFor(e)}>
                           <HistoryIcon className="size-4" /> Verlauf
                         </Button>
+                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setInfoFor(e)}>
+                          <Info className="size-4" /> Info
+                        </Button>
                       </div>
                     </li>
                   ))}
@@ -167,7 +171,111 @@ function KundenPage() {
       </div>
 
       <HistorieDialog einsatz={historyFor} onClose={() => setHistoryFor(null)} />
+      <InfoDialog einsatz={infoFor} profiles={profiles} onClose={() => setInfoFor(null)} />
     </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-3 gap-3 py-1.5 border-b border-border/50 last:border-0 text-sm">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="col-span-2 break-words">{value ?? "–"}</div>
+    </div>
+  );
+}
+
+function InfoDialog({ einsatz, profiles, onClose }: { einsatz: any | null; profiles: Record<string, string>; onClose: () => void }) {
+  if (!einsatz) return null;
+  const e = einsatz;
+  const bericht = e.bericht_data ?? null;
+  return (
+    <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Info className="size-4 text-primary" /> Einsatz-Details
+          </DialogTitle>
+          <DialogDescription>
+            <span className="font-mono text-xs">#{String(e.id).slice(0, 8)}</span> · {e.einsatzgrund}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          <section>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Kunde</h4>
+            <Row label="Name" value={e.kunden_name} />
+            <Row label="Adresse" value={e.address} />
+            <Row label="Schlüssel-Nr." value={e.key_number} />
+            <Row label="Anlagen-Nr." value={e.anlagen_nr} />
+            <Row label="Teilnehmer-ID" value={e.teilnehmer_id} />
+            <Row label="E-Mail" value={e.kunden_email} />
+          </section>
+
+          <section>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Status & Beteiligte</h4>
+            <Row label="Status" value={STATUS_META[e.status]?.label ?? e.status} />
+            <Row label="Priorität" value={e.prioritaet} />
+            <Row label="Erstellt" value={`${fmt(e.created_at)} · ${profiles[e.created_by] ?? "–"}`} />
+            <Row label="Fahrer" value={e.assigned_to ? `${profiles[e.assigned_to] ?? "–"} · zugewiesen ${fmt(e.assigned_at)}` : "–"} />
+            {e.approved_by && <Row label="Freigegeben" value={`${fmt(e.approved_at)} · ${profiles[e.approved_by] ?? "–"}`} />}
+            {e.ablehnung_grund && <Row label="Ablehnungsgrund" value={e.ablehnung_grund} />}
+          </section>
+
+          <section>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Zeiten</h4>
+            <Row label="Geplant" value={e.geplant_am ? fmt(e.geplant_am) : "–"} />
+            <Row label="Vor Ort" value={fmt(e.vor_ort_am)} />
+            <Row label="Abfahrt" value={fmt(e.abfahrt_am)} />
+            <Row label="Einsatz-Ende" value={fmt(e.einsatz_ende_am)} />
+            <Row label="Abgeschlossen" value={fmt(e.abgeschlossen_am)} />
+          </section>
+
+          {e.beschreibung && (
+            <section>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Beschreibung</h4>
+              <p className="text-sm whitespace-pre-wrap rounded-md border border-border bg-muted/30 p-3">{e.beschreibung}</p>
+            </section>
+          )}
+
+          {e.status === "storniert" && (
+            <section className="rounded-md border border-red-500/30 bg-red-500/5 p-3 text-sm">
+              <div className="font-semibold text-red-400 mb-1">Storniert</div>
+              <Row label="Am" value={fmt(e.storniert_at)} />
+              <Row label="Von" value={profiles[e.storniert_by] ?? "–"} />
+              {e.storniert_grund && <Row label="Grund" value={e.storniert_grund} />}
+            </section>
+          )}
+
+          {e.bericht_typ && (
+            <section>
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                Bericht – {e.bericht_typ === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"}
+              </h4>
+              {e.bericht_typ === "hausnotruf" ? (
+                <>
+                  <Row label="Problem" value={<span className="whitespace-pre-wrap">{e.hausnotruf_problem || "–"}</span>} />
+                  <Row label="Lösung" value={<span className="whitespace-pre-wrap">{e.hausnotruf_loesung || "–"}</span>} />
+                </>
+              ) : bericht && typeof bericht === "object" ? (
+                <div className="rounded-md border border-border bg-muted/30 p-3 space-y-1">
+                  {Object.entries(bericht).map(([k, v]) => (
+                    <Row key={k} label={k} value={
+                      typeof v === "boolean" ? (v ? "Ja" : "Nein")
+                      : v == null || v === "" ? "–"
+                      : typeof v === "object" ? <pre className="text-xs whitespace-pre-wrap">{JSON.stringify(v, null, 2)}</pre>
+                      : String(v)
+                    } />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Keine Bericht-Daten.</p>
+              )}
+            </section>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
