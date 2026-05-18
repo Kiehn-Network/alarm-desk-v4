@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
-  History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square,
+  History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
 import { HoldButton } from "@/components/hold-button";
 import { EinsatzDateienDialog } from "@/components/einsatz-dateien-dialog";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
+import { KundenInfoDialog } from "@/components/kunden-info-dialog";
 
 export const Route = createFileRoute("/_authenticated/meine-einsaetze")({
   component: MeineEinsaetzePage,
@@ -81,6 +82,7 @@ function MeineEinsaetzePage() {
   const [busy, setBusy] = useState<string | null>(null);
   const [dateienFor, setDateienFor] = useState<string | null>(null);
   const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
+  const [infoFor, setInfoFor] = useState<string | null>(null);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -239,6 +241,9 @@ function MeineEinsaetzePage() {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setDateienFor(e.id)}>
                     <FolderOpen className="size-4" /> Dateien
                   </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setInfoFor(e.id)}>
+                    <Info className="size-4" /> Infos
+                  </Button>
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBerichtFor(e)}>
                     <ClipboardList className="size-4" /> Bericht
                   </Button>
@@ -265,6 +270,7 @@ function MeineEinsaetzePage() {
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
       <EinsatzDateienDialog einsatzId={dateienFor} open={!!dateienFor} onClose={() => setDateienFor(null)} />
       <EinsatzBerichtDialog einsatz={berichtFor} open={!!berichtFor} onClose={() => setBerichtFor(null)} />
+      <KundenInfoDialog einsatzId={infoFor} open={!!infoFor} onClose={() => setInfoFor(null)} />
     </div>
   );
 }
