@@ -240,35 +240,47 @@ function UploadDialog({
   const create = useServerFn(createDatei);
   const [file, setFile] = useState<File | null>(null);
   const [form, setForm] = useState({
-    address: "", key_number: "", folder: "", kunden_name: "",
+    title: "", address: "", key_number: "", folder: "", kunden_name: "",
     notiz: "", teilnehmer_id: "", anlagen_nr: "",
   });
   const [busy, setBusy] = useState(false);
 
   const reset = () => {
     setFile(null);
-    setForm({ address: "", key_number: "", folder: "", kunden_name: "", notiz: "", teilnehmer_id: "", anlagen_nr: "" });
+    setForm({ title: "", address: "", key_number: "", folder: "", kunden_name: "", notiz: "", teilnehmer_id: "", anlagen_nr: "" });
   };
 
   const upload = async () => {
-    if (!file) return toast.error("Bitte eine Datei auswählen");
+    const fallbackName = form.title.trim() || form.kunden_name.trim() || form.address.trim();
+    if (!file && !fallbackName) {
+      return toast.error("Bitte eine Datei auswählen oder einen Titel angeben.");
+    }
     setBusy(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Nicht angemeldet");
-      const ext = file.name.split(".").pop() ?? "bin";
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-      const up = await supabase.storage.from("dateien").upload(path, file, {
-        contentType: file.type || "application/octet-stream",
-      });
-      if (up.error) throw up.error;
+      let path: string | null = null;
+      let mime: string | null = null;
+      let size: number | null = null;
+      let filename = fallbackName || "Eintrag";
+      if (file) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Nicht angemeldet");
+        const ext = file.name.split(".").pop() ?? "bin";
+        path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        const up = await supabase.storage.from("dateien").upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+        });
+        if (up.error) throw up.error;
+        filename = file.name;
+        mime = file.type || null;
+        size = file.size;
+      }
 
       await create({
         data: {
-          filename: file.name,
+          filename,
           storage_path: path,
-          mime_type: file.type || null,
-          size_bytes: file.size,
+          mime_type: mime,
+          size_bytes: size,
           address: form.address || null,
           key_number: form.key_number || null,
           folder: form.folder || null,
@@ -278,7 +290,7 @@ function UploadDialog({
           anlagen_nr: form.anlagen_nr || null,
         },
       });
-      toast.success("Datei hochgeladen");
+      toast.success(file ? "Datei hochgeladen" : "Eintrag angelegt – Datei kann später ergänzt werden");
       reset(); onOpenChange(false); onDone();
     } catch (e: any) {
       toast.error(e.message ?? "Upload fehlgeschlagen");
@@ -289,8 +301,8 @@ function UploadDialog({
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Datei hochladen</DialogTitle>
-          <DialogDescription>Ergänze Metadaten zur besseren Auffindbarkeit.</DialogDescription>
+          <DialogTitle>Neuer Eintrag</DialogTitle>
+          <DialogDescription>Datei optional – kann auch später ergänzt werden.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 p-6 text-center">
@@ -305,7 +317,7 @@ function UploadDialog({
             ) : (
               <label className="cursor-pointer block">
                 <Upload className="size-6 mx-auto text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">Klicken zum Auswählen</p>
+                <p className="mt-2 text-sm text-muted-foreground">Klicken zum Auswählen (optional)</p>
                 <input
                   type="file" className="hidden"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -313,6 +325,9 @@ function UploadDialog({
               </label>
             )}
           </div>
+          {!file && (
+            <Field label="Titel / Bezeichnung" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
+          )}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Kunde" value={form.kunden_name} onChange={(v) => setForm({ ...form, kunden_name: v })} />
             <Field label="Adresse" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
@@ -331,9 +346,9 @@ function UploadDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Abbrechen</Button>
-          <Button onClick={upload} disabled={busy || !file} className="gap-2">
+          <Button onClick={upload} disabled={busy} className="gap-2">
             {busy && <Loader2 className="size-4 animate-spin" />}
-            Hochladen
+            Speichern
           </Button>
         </DialogFooter>
       </DialogContent>
