@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { User as UserIcon, Upload, Save, Lock } from "lucide-react";
+import { User as UserIcon, Upload, Save, Lock, Sun, Moon, Palette } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useThemeMode } from "@/hooks/use-theme-mode";
+import { useAppSettings } from "@/hooks/use-app-settings";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   component: ProfilPage,
@@ -11,6 +13,10 @@ export const Route = createFileRoute("/_authenticated/profil")({
 
 function ProfilPage() {
   const { user } = useAuth();
+  const { mode, setMode } = useThemeMode();
+  const { data: settings } = useAppSettings();
+  const theme = ((settings as any)?.theme as string) ?? "midnight";
+  const themeLabel = ({ midnight: "Midnight Blue", emerald: "Emerald Pro", slate: "Slate Mono", sunset: "Sunset Warm" } as Record<string,string>)[theme] ?? theme;
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -122,6 +128,35 @@ function ProfilPage() {
           Bearbeite deinen Namen, dein Profilbild und dein Passwort.
         </p>
       </div>
+
+      <section className="rounded-xl border border-border bg-card p-5 md:p-6 space-y-5">
+        <h2 className="text-base font-semibold flex items-center gap-2">
+          <Palette className="size-4 text-primary" /> Darstellung
+        </h2>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="text-sm">
+            <div className="font-medium">Modus</div>
+            <p className="text-xs text-muted-foreground">Persönliche Einstellung – nur für dich gespeichert.</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-border p-1 bg-muted/30">
+            <button type="button" onClick={() => setMode("light")}
+              className={`inline-flex items-center gap-2 px-3 h-8 rounded-md text-sm transition ${mode === "light" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <Sun className="size-4" /> Light
+            </button>
+            <button type="button" onClick={() => setMode("dark")}
+              className={`inline-flex items-center gap-2 px-3 h-8 rounded-md text-sm transition ${mode === "dark" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <Moon className="size-4" /> Dark
+            </button>
+          </div>
+        </div>
+        <div className="flex items-center justify-between gap-4 flex-wrap pt-2 border-t border-border">
+          <div className="text-sm">
+            <div className="font-medium">Theme</div>
+            <p className="text-xs text-muted-foreground">Wird vom Administrator deiner Domäne festgelegt.</p>
+          </div>
+          <span className="text-sm px-3 h-8 inline-flex items-center rounded-md bg-muted text-muted-foreground">{themeLabel}</span>
+        </div>
+      </section>
 
       <section className="rounded-xl border border-border bg-card p-5 md:p-6 space-y-5">
         <h2 className="text-base font-semibold flex items-center gap-2">

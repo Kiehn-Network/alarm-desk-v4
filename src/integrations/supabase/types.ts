@@ -59,6 +59,7 @@ export type Database = {
           logo_url: string | null
           rohrservice_notiz: string | null
           rohrservice_variante: string
+          theme: string
           updated_at: string
           updated_by: string | null
           wartung_aktiv: boolean
@@ -73,6 +74,7 @@ export type Database = {
           logo_url?: string | null
           rohrservice_notiz?: string | null
           rohrservice_variante?: string
+          theme?: string
           updated_at?: string
           updated_by?: string | null
           wartung_aktiv?: boolean
@@ -87,6 +89,7 @@ export type Database = {
           logo_url?: string | null
           rohrservice_notiz?: string | null
           rohrservice_variante?: string
+          theme?: string
           updated_at?: string
           updated_by?: string | null
           wartung_aktiv?: boolean
