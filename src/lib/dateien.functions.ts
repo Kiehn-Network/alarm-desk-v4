@@ -5,7 +5,7 @@ import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 const createSchema = z.object({
   filename: z.string().min(1).max(255),
-  storage_path: z.string().min(1).max(500),
+  storage_path: z.string().min(1).max(500).optional().nullable(),
   mime_type: z.string().max(150).optional().nullable(),
   size_bytes: z.number().int().nonnegative().optional().nullable(),
   address: z.string().max(255).optional().nullable(),

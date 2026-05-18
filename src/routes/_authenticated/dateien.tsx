@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Upload, Search, Link2, Trash2, Download, FileText, Loader2,
-  X, Eye, Link as LinkIcon, Pencil, History, ArrowRight,
+  X, Eye, Link as LinkIcon, Pencil, History, ArrowRight, Paperclip,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -183,7 +183,7 @@ function DateienPage() {
       {detailFor && (
         <DetailDialog
           datei={detailFor} all={dateien} links={links}
-          onClose={() => setDetailFor(null)}
+          onClose={() => setDetailFor(null)} onDone={refresh}
         />
       )}
       {editFor && (
@@ -193,9 +193,10 @@ function DateienPage() {
   );
 }
 
-function DownloadBtn({ path, filename }: { path: string; filename: string }) {
+function DownloadBtn({ path, filename }: { path: string | null; filename: string }) {
   const sign = useServerFn(getDateiSignedUrl);
   const [busy, setBusy] = useState(false);
+  if (!path) return null;
   return (
     <Button
       size="sm" variant="ghost" title="Herunterladen" disabled={busy}
@@ -239,35 +240,47 @@ function UploadDialog({
   const create = useServerFn(createDatei);
   const [file, setFile] = useState<File | null>(null);
   const [form, setForm] = useState({
-    address: "", key_number: "", folder: "", kunden_name: "",
+    title: "", address: "", key_number: "", folder: "", kunden_name: "",
     notiz: "", teilnehmer_id: "", anlagen_nr: "",
   });
   const [busy, setBusy] = useState(false);
 
   const reset = () => {
     setFile(null);
-    setForm({ address: "", key_number: "", folder: "", kunden_name: "", notiz: "", teilnehmer_id: "", anlagen_nr: "" });
+    setForm({ title: "", address: "", key_number: "", folder: "", kunden_name: "", notiz: "", teilnehmer_id: "", anlagen_nr: "" });
   };
 
   const upload = async () => {
-    if (!file) return toast.error("Bitte eine Datei auswählen");
+    const fallbackName = form.title.trim() || form.kunden_name.trim() || form.address.trim();
+    if (!file && !fallbackName) {
+      return toast.error("Bitte eine Datei auswählen oder einen Titel angeben.");
+    }
     setBusy(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Nicht angemeldet");
-      const ext = file.name.split(".").pop() ?? "bin";
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-      const up = await supabase.storage.from("dateien").upload(path, file, {
-        contentType: file.type || "application/octet-stream",
-      });
-      if (up.error) throw up.error;
+      let path: string | null = null;
+      let mime: string | null = null;
+      let size: number | null = null;
+      let filename = fallbackName || "Eintrag";
+      if (file) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Nicht angemeldet");
+        const ext = file.name.split(".").pop() ?? "bin";
+        path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        const up = await supabase.storage.from("dateien").upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+        });
+        if (up.error) throw up.error;
+        filename = file.name;
+        mime = file.type || null;
+        size = file.size;
+      }
 
       await create({
         data: {
-          filename: file.name,
+          filename,
           storage_path: path,
-          mime_type: file.type || null,
-          size_bytes: file.size,
+          mime_type: mime,
+          size_bytes: size,
           address: form.address || null,
           key_number: form.key_number || null,
           folder: form.folder || null,
@@ -277,7 +290,7 @@ function UploadDialog({
           anlagen_nr: form.anlagen_nr || null,
         },
       });
-      toast.success("Datei hochgeladen");
+      toast.success(file ? "Datei hochgeladen" : "Eintrag angelegt – Datei kann später ergänzt werden");
       reset(); onOpenChange(false); onDone();
     } catch (e: any) {
       toast.error(e.message ?? "Upload fehlgeschlagen");
@@ -288,8 +301,8 @@ function UploadDialog({
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset(); }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Datei hochladen</DialogTitle>
-          <DialogDescription>Ergänze Metadaten zur besseren Auffindbarkeit.</DialogDescription>
+          <DialogTitle>Neuer Eintrag</DialogTitle>
+          <DialogDescription>Datei optional – kann auch später ergänzt werden.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 p-6 text-center">
@@ -304,7 +317,7 @@ function UploadDialog({
             ) : (
               <label className="cursor-pointer block">
                 <Upload className="size-6 mx-auto text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">Klicken zum Auswählen</p>
+                <p className="mt-2 text-sm text-muted-foreground">Klicken zum Auswählen (optional)</p>
                 <input
                   type="file" className="hidden"
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -312,6 +325,9 @@ function UploadDialog({
               </label>
             )}
           </div>
+          {!file && (
+            <Field label="Titel / Bezeichnung" value={form.title} onChange={(v) => setForm({ ...form, title: v })} />
+          )}
           <div className="grid grid-cols-2 gap-4">
             <Field label="Kunde" value={form.kunden_name} onChange={(v) => setForm({ ...form, kunden_name: v })} />
             <Field label="Adresse" value={form.address} onChange={(v) => setForm({ ...form, address: v })} />
@@ -330,9 +346,9 @@ function UploadDialog({
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Abbrechen</Button>
-          <Button onClick={upload} disabled={busy || !file} className="gap-2">
+          <Button onClick={upload} disabled={busy} className="gap-2">
             {busy && <Loader2 className="size-4 animate-spin" />}
-            Hochladen
+            Speichern
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -446,13 +462,43 @@ function LinkDialog({
 }
 
 function DetailDialog({
-  datei, all, links, onClose,
-}: { datei: Datei; all: Datei[]; links: Link[]; onClose: () => void }) {
+  datei, all, links, onClose, onDone,
+}: { datei: Datei; all: Datei[]; links: Link[]; onClose: () => void; onDone: () => void }) {
   const sign = useServerFn(getDateiSignedUrl);
+  const update = useServerFn(updateDatei);
+  const [attaching, setAttaching] = useState(false);
   const linkedItems = links
     .filter((l) => l.datei_a_id === datei.id || l.datei_b_id === datei.id)
     .map((l) => all.find((d) => d.id === (l.datei_a_id === datei.id ? l.datei_b_id : l.datei_a_id)))
     .filter((d): d is Datei => !!d);
+
+  const attach = async (file: File) => {
+    setAttaching(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Nicht angemeldet");
+      const ext = file.name.split(".").pop() ?? "bin";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("dateien").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+      });
+      if (up.error) throw up.error;
+      await update({
+        data: {
+          id: datei.id,
+          filename: file.name,
+          storage_path: path,
+          mime_type: file.type || null,
+          size_bytes: file.size,
+        } as any,
+      });
+      toast.success("Datei angehängt");
+      onDone();
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message ?? "Anhängen fehlgeschlagen");
+    } finally { setAttaching(false); }
+  };
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -461,7 +507,11 @@ function DetailDialog({
           <DialogTitle className="flex items-center gap-2">
             <FileText className="size-5 text-primary" /> {datei.filename}
           </DialogTitle>
-          <DialogDescription>{formatSize(datei.size_bytes)} · {datei.mime_type ?? "unbekannter Typ"}</DialogDescription>
+          <DialogDescription>
+            {datei.storage_path
+              ? `${formatSize(datei.size_bytes)} · ${datei.mime_type ?? "unbekannter Typ"}`
+              : "Noch keine Datei angehängt"}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <Info label="Kunde" value={datei.kunden_name} />
@@ -491,17 +541,28 @@ function DetailDialog({
           </div>
         )}
         <DialogFooter>
-          <Button
-            variant="outline" className="gap-2"
-            onClick={async () => {
-              try {
-                const { url } = await sign({ data: { storage_path: datei.storage_path } });
-                window.open(url, "_blank");
-              } catch (e: any) { toast.error(e.message); }
-            }}
-          >
-            <Eye className="size-4" /> Öffnen
-          </Button>
+          {datei.storage_path ? (
+            <Button
+              variant="outline" className="gap-2"
+              onClick={async () => {
+                try {
+                  const { url } = await sign({ data: { storage_path: datei.storage_path! } });
+                  window.open(url, "_blank");
+                } catch (e: any) { toast.error(e.message); }
+              }}
+            >
+              <Eye className="size-4" /> Öffnen
+            </Button>
+          ) : (
+            <label className={`inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border bg-secondary text-secondary-foreground text-sm font-medium cursor-pointer hover:opacity-90 transition ${attaching ? "opacity-50 pointer-events-none" : ""}`}>
+              {attaching ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}
+              Datei anhängen
+              <input type="file" className="hidden" onChange={(e) => {
+                const f = e.target.files?.[0]; e.target.value = "";
+                if (f) attach(f);
+              }} />
+            </label>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
