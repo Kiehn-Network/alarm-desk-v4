@@ -556,7 +556,7 @@ export type Database = {
           mime_type: string | null
           notiz: string | null
           size_bytes: number | null
-          storage_path: string
+          storage_path: string | null
           teilnehmer_id: string | null
           updated_at: string
           uploaded_by: string | null
@@ -577,7 +577,7 @@ export type Database = {
           mime_type?: string | null
           notiz?: string | null
           size_bytes?: number | null
-          storage_path: string
+          storage_path?: string | null
           teilnehmer_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
@@ -598,7 +598,7 @@ export type Database = {
           mime_type?: string | null
           notiz?: string | null
           size_bytes?: number | null
-          storage_path?: string
+          storage_path?: string | null
           teilnehmer_id?: string | null
           updated_at?: string
           uploaded_by?: string | null
