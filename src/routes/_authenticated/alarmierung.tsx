@@ -194,7 +194,6 @@ function AlarmierungPage() {
                         <CheckSquare className="size-4" /> Abschließen
                       </Button>
                     )}
-                    {isAdmin && (
                     {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
                       <Button size="sm" variant="ghost" className="gap-1.5 text-red-400 hover:text-red-300"
                         onClick={() => { setStornoFor(e); setStornoGrund(""); }}>
