@@ -1,7 +1,7 @@
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Download, FileText, Loader2 } from "lucide-react";
+import { Download, FileText, Loader2, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { listDateienForEinsatz } from "@/lib/einsaetze.functions";
@@ -42,18 +42,28 @@ export function EinsatzDateienDialog({
         ) : (
           <ul className="max-h-[60vh] overflow-y-auto divide-y divide-border">
             {dateien.map((d) => (
-              <li key={d.id} className="py-2 flex items-center gap-3">
-                <FileText className="size-4 text-muted-foreground shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{d.filename}</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {[d.kunden_name, d.address, d.key_number && `🔑 ${d.key_number}`, d.anlagen_nr && `🏷️ ${d.anlagen_nr}`]
-                      .filter(Boolean).join(" · ")}
+              <li key={d.id} className="py-2.5 space-y-1.5">
+                <div className="flex items-center gap-3">
+                  <FileText className="size-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{d.filename}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {[d.kunden_name, d.address, d.key_number && `🔑 ${d.key_number}`, d.anlagen_nr && `🏷️ ${d.anlagen_nr}`]
+                        .filter(Boolean).join(" · ")}
+                    </div>
                   </div>
+                  {d.storage_path && (
+                    <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => openDatei(d)}>
+                      <Download className="size-4" /> Öffnen
+                    </Button>
+                  )}
                 </div>
-                <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => openDatei(d)}>
-                  <Download className="size-4" /> Öffnen
-                </Button>
+                {d.notiz && (
+                  <div className="ml-7 rounded-md border border-amber-500/30 bg-amber-500/5 p-2.5 flex gap-2">
+                    <Info className="size-3.5 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-xs whitespace-pre-wrap text-foreground/90">{d.notiz}</p>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
