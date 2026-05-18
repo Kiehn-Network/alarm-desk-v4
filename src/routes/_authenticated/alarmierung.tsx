@@ -44,7 +44,7 @@ function fmt(d?: string | null) {
 }
 
 function AlarmierungPage() {
-  const { canManage, isAdmin } = useRole();
+  const { canManage } = useRole();
   const list = useServerFn(listEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const stornieren = useServerFn(stornierenEinsatz);
