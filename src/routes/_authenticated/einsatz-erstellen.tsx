@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, Search, Send, User, MapPin, KeyRound, Hash, Check, X } from "lucide-react";
+import { AlertTriangle, Search, Send, User, MapPin, KeyRound, Hash, Check, X, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ type DateiHit = {
   key_number: string | null;
   anlagen_nr: string | null;
   teilnehmer_id: string | null;
+  notiz: string | null;
   filename: string;
 };
 
@@ -197,6 +198,15 @@ function EinsatzErstellenPage() {
             <ReadField label="Anlagen-Nr." value={picked.anlagen_nr} />
             <ReadField label="Teilnehmer-ID" value={picked.teilnehmer_id} />
           </div>
+          {picked.notiz && (
+            <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-3 flex gap-2">
+              <Info className="size-4 text-amber-500 shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-amber-500 mb-0.5">Hinweis zum Kunden</div>
+                <p className="text-sm whitespace-pre-wrap text-foreground/90">{picked.notiz}</p>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
