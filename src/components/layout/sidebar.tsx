@@ -1,7 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
-  Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown,
+  Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -75,7 +75,11 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
     .filter((s) => s.items.length > 0);
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
-      <div className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border">
+      <Link
+        to="/profil"
+        onClick={onNavigate}
+        className="px-5 py-5 flex items-center gap-3 border-b border-sidebar-border hover:bg-sidebar-accent/40 transition-colors"
+      >
         <div className="relative">
           {settings?.logo_url ? (
             <div className="size-10 rounded-xl overflow-hidden bg-sidebar-accent grid place-items-center" style={{ boxShadow: "var(--shadow-glow)" }}>
@@ -95,7 +99,8 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
             <span className="size-1.5 rounded-full bg-success animate-pulse" /> online
           </div>
         </div>
-      </div>
+        <UserCog className="size-4 ml-auto text-muted-foreground" />
+      </Link>
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6 scrollbar-thin">
         {visibleSections.map((s) => (
           <div key={s.label}>
