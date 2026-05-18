@@ -462,13 +462,43 @@ function LinkDialog({
 }
 
 function DetailDialog({
-  datei, all, links, onClose,
-}: { datei: Datei; all: Datei[]; links: Link[]; onClose: () => void }) {
+  datei, all, links, onClose, onDone,
+}: { datei: Datei; all: Datei[]; links: Link[]; onClose: () => void; onDone: () => void }) {
   const sign = useServerFn(getDateiSignedUrl);
+  const update = useServerFn(updateDatei);
+  const [attaching, setAttaching] = useState(false);
   const linkedItems = links
     .filter((l) => l.datei_a_id === datei.id || l.datei_b_id === datei.id)
     .map((l) => all.find((d) => d.id === (l.datei_a_id === datei.id ? l.datei_b_id : l.datei_a_id)))
     .filter((d): d is Datei => !!d);
+
+  const attach = async (file: File) => {
+    setAttaching(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Nicht angemeldet");
+      const ext = file.name.split(".").pop() ?? "bin";
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("dateien").upload(path, file, {
+        contentType: file.type || "application/octet-stream",
+      });
+      if (up.error) throw up.error;
+      await update({
+        data: {
+          id: datei.id,
+          filename: file.name,
+          storage_path: path,
+          mime_type: file.type || null,
+          size_bytes: file.size,
+        } as any,
+      });
+      toast.success("Datei angehängt");
+      onDone();
+      onClose();
+    } catch (e: any) {
+      toast.error(e.message ?? "Anhängen fehlgeschlagen");
+    } finally { setAttaching(false); }
+  };
 
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
@@ -477,7 +507,11 @@ function DetailDialog({
           <DialogTitle className="flex items-center gap-2">
             <FileText className="size-5 text-primary" /> {datei.filename}
           </DialogTitle>
-          <DialogDescription>{formatSize(datei.size_bytes)} · {datei.mime_type ?? "unbekannter Typ"}</DialogDescription>
+          <DialogDescription>
+            {datei.storage_path
+              ? `${formatSize(datei.size_bytes)} · ${datei.mime_type ?? "unbekannter Typ"}`
+              : "Noch keine Datei angehängt"}
+          </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
           <Info label="Kunde" value={datei.kunden_name} />
@@ -507,17 +541,28 @@ function DetailDialog({
           </div>
         )}
         <DialogFooter>
-          <Button
-            variant="outline" className="gap-2"
-            onClick={async () => {
-              try {
-                const { url } = await sign({ data: { storage_path: datei.storage_path } });
-                window.open(url, "_blank");
-              } catch (e: any) { toast.error(e.message); }
-            }}
-          >
-            <Eye className="size-4" /> Öffnen
-          </Button>
+          {datei.storage_path ? (
+            <Button
+              variant="outline" className="gap-2"
+              onClick={async () => {
+                try {
+                  const { url } = await sign({ data: { storage_path: datei.storage_path! } });
+                  window.open(url, "_blank");
+                } catch (e: any) { toast.error(e.message); }
+              }}
+            >
+              <Eye className="size-4" /> Öffnen
+            </Button>
+          ) : (
+            <label className={`inline-flex items-center gap-2 h-10 px-4 rounded-lg border border-border bg-secondary text-secondary-foreground text-sm font-medium cursor-pointer hover:opacity-90 transition ${attaching ? "opacity-50 pointer-events-none" : ""}`}>
+              {attaching ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}
+              Datei anhängen
+              <input type="file" className="hidden" onChange={(e) => {
+                const f = e.target.files?.[0]; e.target.value = "";
+                if (f) attach(f);
+              }} />
+            </label>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
