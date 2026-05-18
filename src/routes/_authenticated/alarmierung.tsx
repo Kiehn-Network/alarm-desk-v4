@@ -4,17 +4,19 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  History as HistoryIcon, Plus, Search, Trash2, Clock, Flag, CheckSquare,
+  History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useRole } from "@/hooks/use-role";
 import {
-  listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, deleteEinsatz,
+  listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
 } from "@/lib/einsaetze.functions";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 import { BerichtSendDialog } from "@/components/bericht-send-dialog";
@@ -28,6 +30,7 @@ type Einsatz = any;
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   in_bearbeitung: { label: "Läuft",         cls: "bg-blue-500/15 text-blue-400 border border-blue-500/30" },
   abgeschlossen:  { label: "Abgeschlossen", cls: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30" },
+  storniert:      { label: "Storniert",     cls: "bg-red-500/15 text-red-400 border border-red-500/30" },
   // Legacy-Status (alte Datensätze)
   entwurf:        { label: "Entwurf",       cls: "bg-muted text-muted-foreground" },
   wartet_freigabe:{ label: "Offen",         cls: "bg-amber-500/15 text-amber-400 border border-amber-500/30" },
@@ -44,7 +47,7 @@ function AlarmierungPage() {
   const { canManage, isAdmin } = useRole();
   const list = useServerFn(listEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
-  const remove = useServerFn(deleteEinsatz);
+  const stornieren = useServerFn(stornierenEinsatz);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
@@ -52,12 +55,15 @@ function AlarmierungPage() {
   const [history, setHistory] = useState<Einsatz | null>(null);
   const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
   const [sendFor, setSendFor] = useState<Einsatz | null>(null);
+  const [stornoFor, setStornoFor] = useState<Einsatz | null>(null);
+  const [stornoGrund, setStornoGrund] = useState("");
+  const [stornoBusy, setStornoBusy] = useState(false);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
 
   const isAktiv = (e: Einsatz) => ["in_bearbeitung", "freigegeben", "wartet_freigabe", "entwurf"].includes(e.status);
-  const isErledigt = (e: Einsatz) => ["abgeschlossen", "abgelehnt"].includes(e.status);
+  const isErledigt = (e: Einsatz) => ["abgeschlossen", "abgelehnt", "storniert"].includes(e.status);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -148,6 +154,16 @@ function AlarmierungPage() {
                         {e.einsatz_ende_am && <span>🏁 Ende: <b className="text-foreground/80">{fmt(e.einsatz_ende_am)}</b></span>}
                       </div>
                     )}
+                    {e.status === "storniert" && (
+                      <div className="mt-2 text-xs rounded-md border border-red-500/30 bg-red-500/5 p-2">
+                        <div className="font-medium text-red-400">
+                          Storniert am {fmt(e.storniert_at)} · von {profiles[e.storniert_by] ?? "–"}
+                        </div>
+                        {e.storniert_grund && (
+                          <div className="mt-0.5 text-foreground/80 whitespace-pre-wrap">Grund: {e.storniert_grund}</div>
+                        )}
+                      </div>
+                    )}
                     {e.bericht_typ && (
                       <div className="mt-1 text-xs text-muted-foreground">
                         📝 Bericht: <span className="text-foreground/80">{e.bericht_typ === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"}</span>
@@ -179,13 +195,10 @@ function AlarmierungPage() {
                       </Button>
                     )}
                     {isAdmin && (
-                      <Button size="sm" variant="ghost" className="text-red-400 hover:text-red-300"
-                        onClick={async () => {
-                          if (!confirm("Einsatz wirklich löschen?")) return;
-                          try { await remove({ data: { id: e.id } }); toast.success("Gelöscht"); refetch(); }
-                          catch (err: any) { toast.error(err.message); }
-                        }}>
-                        <Trash2 className="size-4" />
+                    {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
+                      <Button size="sm" variant="ghost" className="gap-1.5 text-red-400 hover:text-red-300"
+                        onClick={() => { setStornoFor(e); setStornoGrund(""); }}>
+                        <Ban className="size-4" /> Stornieren
                       </Button>
                     )}
                   </div>
@@ -208,6 +221,51 @@ function AlarmierungPage() {
         open={!!sendFor}
         onClose={() => setSendFor(null)}
       />
+      <Dialog open={!!stornoFor} onOpenChange={(o) => { if (!o) { setStornoFor(null); setStornoGrund(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Einsatz stornieren</DialogTitle>
+            <DialogDescription>
+              Der Einsatz wird mit Zeitstempel und deinem Namen als storniert markiert.
+              Ein Grund ist erforderlich.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Grund</Label>
+            <Textarea
+              value={stornoGrund}
+              onChange={(e) => setStornoGrund(e.target.value)}
+              rows={4}
+              maxLength={1000}
+              placeholder="Warum wird storniert?"
+              autoFocus
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => { setStornoFor(null); setStornoGrund(""); }}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={stornoBusy || stornoGrund.trim().length === 0}
+              onClick={async () => {
+                if (!stornoFor) return;
+                setStornoBusy(true);
+                try {
+                  await stornieren({ data: { id: stornoFor.id, grund: stornoGrund.trim() } });
+                  toast.success("Einsatz storniert");
+                  setStornoFor(null); setStornoGrund("");
+                  refetch();
+                } catch (err: any) {
+                  toast.error(err.message ?? "Fehler");
+                } finally { setStornoBusy(false); }
+              }}
+            >
+              <Ban className="size-4 mr-1.5" /> Stornieren
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
