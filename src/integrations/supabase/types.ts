@@ -1039,6 +1039,39 @@ export type Database = {
         }
         Relationships: []
       }
+      intrahub_posts: {
+        Row: {
+          attachments: Json
+          content: string
+          created_at: string
+          created_by: string
+          domain_id: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          content?: string
+          created_at?: string
+          created_by: string
+          domain_id: string
+          id?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          content?: string
+          created_at?: string
+          created_by?: string
+          domain_id?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       licenses: {
         Row: {
           created_at: string
