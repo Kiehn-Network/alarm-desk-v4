@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Upload, Search, Link2, Trash2, Download, FileText, Loader2,
-  X, Eye, Link as LinkIcon, Pencil, History, ArrowRight,
+  X, Eye, Link as LinkIcon, Pencil, History, ArrowRight, Paperclip,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
