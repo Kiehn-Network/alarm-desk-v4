@@ -337,7 +337,7 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
     if (ors.length === 0) return { dateien: [] };
     const { data: rows, error } = await supabase
       .from("dateien")
-      .select("id,filename,kunden_name,address,key_number,anlagen_nr,teilnehmer_id,storage_path,mime_type,size_bytes,created_at")
+      .select("id,filename,kunden_name,address,key_number,anlagen_nr,teilnehmer_id,notiz,storage_path,mime_type,size_bytes,created_at")
       .is("deleted_at", null)
       .or(ors.join(","))
       .order("created_at", { ascending: false })
@@ -373,7 +373,7 @@ export const searchKundenDateien = createServerFn({ method: "POST" })
     const pattern = `%${q}%`;
     const { data: rows, error } = await supabase
       .from("dateien")
-      .select("id, kunden_name, address, key_number, anlagen_nr, teilnehmer_id, filename")
+      .select("id, kunden_name, address, key_number, anlagen_nr, teilnehmer_id, notiz, filename")
       .is("deleted_at", null)
       .or(
         [
