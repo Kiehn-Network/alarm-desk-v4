@@ -21,7 +21,6 @@ import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
 import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authenticated/meine-einsaetze'
 import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated/kunden'
-import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
 import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticated/dateien'
@@ -104,11 +103,6 @@ const AuthenticatedMeineEinsaetzeRoute =
 const AuthenticatedKundenRoute = AuthenticatedKundenRouteImport.update({
   id: '/kunden',
   path: '/kunden',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedIntrahubRoute = AuthenticatedIntrahubRouteImport.update({
-  id: '/intrahub',
-  path: '/intrahub',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEinsatzErstellenRoute =
@@ -231,7 +225,6 @@ export interface FileRoutesByFullPath {
   '/dateien': typeof AuthenticatedDateienRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
-  '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
@@ -264,7 +257,6 @@ export interface FileRoutesByTo {
   '/dateien': typeof AuthenticatedDateienRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
-  '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
@@ -297,7 +289,6 @@ export interface FileRoutesById {
   '/_authenticated/dateien': typeof AuthenticatedDateienRoute
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
-  '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
   '/_authenticated/kunden': typeof AuthenticatedKundenRoute
   '/_authenticated/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/_authenticated/monitor': typeof AuthenticatedMonitorRoute
@@ -332,7 +323,6 @@ export interface FileRouteTypes {
     | '/dateien'
     | '/dienstplaene'
     | '/einsatz-erstellen'
-    | '/intrahub'
     | '/kunden'
     | '/meine-einsaetze'
     | '/monitor'
@@ -365,7 +355,6 @@ export interface FileRouteTypes {
     | '/dateien'
     | '/dienstplaene'
     | '/einsatz-erstellen'
-    | '/intrahub'
     | '/kunden'
     | '/meine-einsaetze'
     | '/monitor'
@@ -397,7 +386,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dateien'
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
-    | '/_authenticated/intrahub'
     | '/_authenticated/kunden'
     | '/_authenticated/meine-einsaetze'
     | '/_authenticated/monitor'
@@ -514,13 +502,6 @@ declare module '@tanstack/react-router' {
       path: '/kunden'
       fullPath: '/kunden'
       preLoaderRoute: typeof AuthenticatedKundenRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/intrahub': {
-      id: '/_authenticated/intrahub'
-      path: '/intrahub'
-      fullPath: '/intrahub'
-      preLoaderRoute: typeof AuthenticatedIntrahubRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/einsatz-erstellen': {
@@ -713,7 +694,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDateienRoute: typeof AuthenticatedDateienRoute
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
-  AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
   AuthenticatedKundenRoute: typeof AuthenticatedKundenRoute
   AuthenticatedMeineEinsaetzeRoute: typeof AuthenticatedMeineEinsaetzeRoute
   AuthenticatedMonitorRoute: typeof AuthenticatedMonitorRoute
@@ -735,7 +715,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDateienRoute: AuthenticatedDateienRoute,
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
-  AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,
   AuthenticatedKundenRoute: AuthenticatedKundenRoute,
   AuthenticatedMeineEinsaetzeRoute: AuthenticatedMeineEinsaetzeRoute,
   AuthenticatedMonitorRoute: AuthenticatedMonitorRoute,
@@ -766,3 +745,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
