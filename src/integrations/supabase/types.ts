@@ -734,6 +734,9 @@ export type Database = {
           kunden_name: string | null
           prioritaet: Database["public"]["Enums"]["einsatz_prioritaet"]
           status: Database["public"]["Enums"]["einsatz_status"]
+          storniert_at: string | null
+          storniert_by: string | null
+          storniert_grund: string | null
           teilnehmer_id: string | null
           updated_at: string
           vor_ort_am: string | null
@@ -766,6 +769,9 @@ export type Database = {
           kunden_name?: string | null
           prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
           status?: Database["public"]["Enums"]["einsatz_status"]
+          storniert_at?: string | null
+          storniert_by?: string | null
+          storniert_grund?: string | null
           teilnehmer_id?: string | null
           updated_at?: string
           vor_ort_am?: string | null
@@ -798,6 +804,9 @@ export type Database = {
           kunden_name?: string | null
           prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
           status?: Database["public"]["Enums"]["einsatz_status"]
+          storniert_at?: string | null
+          storniert_by?: string | null
+          storniert_grund?: string | null
           teilnehmer_id?: string | null
           updated_at?: string
           vor_ort_am?: string | null
@@ -1489,6 +1498,7 @@ export type Database = {
         | "abgelehnt"
         | "in_bearbeitung"
         | "abgeschlossen"
+        | "storniert"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1625,6 +1635,7 @@ export const Constants = {
         "abgelehnt",
         "in_bearbeitung",
         "abgeschlossen",
+        "storniert",
       ],
     },
   },
