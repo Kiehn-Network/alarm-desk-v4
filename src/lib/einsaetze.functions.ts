@@ -410,14 +410,30 @@ export const listEinsatzHistorie = createServerFn({ method: "GET" })
     return { entries: (entries ?? []).map((e: any) => ({ ...e, changed_by_name: e.changed_by ? names[e.changed_by] ?? null : null })) };
   });
 
-export const deleteEinsatz = createServerFn({ method: "POST" })
+export const stornierenEinsatz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      grund: z.string().trim().min(1).max(1000),
+    }).parse(i),
+  )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
-    const { error } = await supabase.from("einsaetze").delete().eq("id", data.id);
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { data: before } = await supabase
+      .from("einsaetze").select("*").eq("id", data.id).single();
+    const patch = {
+      status: "storniert" as const,
+      storniert_at: new Date().toISOString(),
+      storniert_by: userId,
+      storniert_grund: data.grund,
+    };
+    const { data: row, error } = await supabase
+      .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
-    return { ok: true };
+    await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
+    return row;
   });
 
 export const updateKundenEmail = createServerFn({ method: "POST" })
