@@ -449,3 +449,55 @@ export const updateKundenEmail = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const searchKundenEinsaetze = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      q: z.string().trim().max(200).optional().nullable(),
+      from: z.string().datetime().optional().nullable(),
+      to: z.string().datetime().optional().nullable(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    let query = supabase
+      .from("einsaetze")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (data.from) query = query.gte("created_at", data.from);
+    if (data.to) query = query.lte("created_at", data.to);
+    const q = (data.q ?? "").trim();
+    if (q.length > 0) {
+      const safe = q.replace(/[%_,()]/g, "");
+      const pattern = `%${safe}%`;
+      // UUID-Suche zusätzlich, wenn es wie eine ID aussieht
+      const ors = [
+        `kunden_name.ilike.${pattern}`,
+        `address.ilike.${pattern}`,
+        `key_number.ilike.${pattern}`,
+        `anlagen_nr.ilike.${pattern}`,
+        `teilnehmer_id.ilike.${pattern}`,
+        `einsatzgrund.ilike.${pattern}`,
+      ];
+      if (/^[0-9a-f-]{4,}$/i.test(safe)) {
+        ors.push(`id::text.ilike.${pattern}`);
+      }
+      query = query.or(ors.join(","));
+    }
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+    const ids = new Set<string>();
+    (rows ?? []).forEach((e: any) => {
+      if (e.assigned_to) ids.add(e.assigned_to);
+      if (e.created_by) ids.add(e.created_by);
+    });
+    let profiles: Record<string, string> = {};
+    if (ids.size > 0) {
+      const { data: ps } = await supabase
+        .from("profiles").select("id, display_name").in("id", Array.from(ids));
+      profiles = Object.fromEntries((ps ?? []).map((p: any) => [p.id, p.display_name ?? ""]));
+    }
+    return { einsaetze: rows ?? [], profiles };
+  });
