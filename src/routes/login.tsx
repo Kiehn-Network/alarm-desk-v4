@@ -20,10 +20,8 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<VersionInfo | null>(null);
 
@@ -35,23 +33,10 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (mode === "login") {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        toast.success("Willkommen!");
-        navigate({ to: "/dashboard" });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/login`,
-            data: { display_name: name || email.split("@")[0] },
-          },
-        });
-        if (error) throw error;
-        toast.success("Account erstellt. Bitte E-Mail bestätigen.");
-      }
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      toast.success("Willkommen!");
+      navigate({ to: "/dashboard" });
     } catch (err: any) {
       toast.error(err.message ?? "Fehler beim Anmelden");
     } finally {
@@ -92,17 +77,10 @@ function LoginPage() {
             <div className="font-semibold">AlarmDesk</div>
           </div>
 
-          <h2 className="text-2xl font-bold">{mode === "login" ? "Anmelden" : "Konto erstellen"}</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            {mode === "login" ? "Willkommen zurück" : "Neuen Zugang anlegen"}
-          </p>
+          <h2 className="text-2xl font-bold">Anmelden</h2>
+          <p className="text-sm text-muted-foreground mt-1">Willkommen zurück</p>
 
           <form onSubmit={submit} className="mt-8 space-y-4">
-            {mode === "signup" && (
-              <Field label="Name">
-                <input value={name} onChange={(e) => setName(e.target.value)} className="input" placeholder="Max Mustermann" />
-              </Field>
-            )}
             <Field label="E-Mail">
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input" placeholder="du@firma.de" />
             </Field>
@@ -110,14 +88,11 @@ function LoginPage() {
               <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="input" placeholder="••••••••" />
             </Field>
             <button disabled={loading} className="w-full h-11 rounded-lg font-medium text-primary-foreground transition disabled:opacity-50" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-              {loading ? "Bitte warten…" : mode === "login" ? "Anmelden" : "Konto erstellen"}
+              {loading ? "Bitte warten…" : "Anmelden"}
             </button>
           </form>
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "login" ? "Noch kein Konto?" : "Bereits registriert?"}{" "}
-            <button onClick={() => setMode(mode === "login" ? "signup" : "login")} className="text-primary hover:underline font-medium">
-              {mode === "login" ? "Registrieren" : "Anmelden"}
-            </button>
+          <div className="mt-6 text-center text-xs text-muted-foreground">
+            Zugänge werden durch den Administrator angelegt.
           </div>
           <div className="mt-8 text-center lg:hidden">
             <VersionBadge info={info} />
