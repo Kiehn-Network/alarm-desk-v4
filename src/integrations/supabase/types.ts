@@ -1473,6 +1473,75 @@ export type Database = {
         }
         Relationships: []
       }
+      schluessel_buch: {
+        Row: {
+          address: string | null
+          ausgegeben_at: string
+          ausgegeben_by: string
+          created_at: string
+          domain_id: string
+          einsatz_id: string
+          id: string
+          key_number: string
+          kunden_name: string | null
+          notiz: string | null
+          rueckgabe_angefragt_at: string | null
+          rueckgabe_angefragt_by: string | null
+          status: Database["public"]["Enums"]["schluessel_status"]
+          traeger_name: string
+          traeger_user_id: string | null
+          uebernommen_at: string | null
+          uebernommen_by: string | null
+          updated_at: string
+          zurueck_at: string | null
+          zurueck_by: string | null
+        }
+        Insert: {
+          address?: string | null
+          ausgegeben_at?: string
+          ausgegeben_by: string
+          created_at?: string
+          domain_id: string
+          einsatz_id: string
+          id?: string
+          key_number: string
+          kunden_name?: string | null
+          notiz?: string | null
+          rueckgabe_angefragt_at?: string | null
+          rueckgabe_angefragt_by?: string | null
+          status?: Database["public"]["Enums"]["schluessel_status"]
+          traeger_name: string
+          traeger_user_id?: string | null
+          uebernommen_at?: string | null
+          uebernommen_by?: string | null
+          updated_at?: string
+          zurueck_at?: string | null
+          zurueck_by?: string | null
+        }
+        Update: {
+          address?: string | null
+          ausgegeben_at?: string
+          ausgegeben_by?: string
+          created_at?: string
+          domain_id?: string
+          einsatz_id?: string
+          id?: string
+          key_number?: string
+          kunden_name?: string | null
+          notiz?: string | null
+          rueckgabe_angefragt_at?: string | null
+          rueckgabe_angefragt_by?: string | null
+          status?: Database["public"]["Enums"]["schluessel_status"]
+          traeger_name?: string
+          traeger_user_id?: string | null
+          uebernommen_at?: string | null
+          uebernommen_by?: string | null
+          updated_at?: string
+          zurueck_at?: string | null
+          zurueck_by?: string | null
+        }
+        Relationships: []
+      }
       superadmin_impersonation: {
         Row: {
           started_at: string
@@ -1616,6 +1685,11 @@ export type Database = {
         | "in_bearbeitung"
         | "abgeschlossen"
         | "storniert"
+      schluessel_status:
+        | "ausgegeben"
+        | "uebernommen"
+        | "rueckgabe_offen"
+        | "zurueck"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1753,6 +1827,12 @@ export const Constants = {
         "in_bearbeitung",
         "abgeschlossen",
         "storniert",
+      ],
+      schluessel_status: [
+        "ausgegeben",
+        "uebernommen",
+        "rueckgabe_offen",
+        "zurueck",
       ],
     },
   },
