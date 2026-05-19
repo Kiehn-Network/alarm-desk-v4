@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Upload, Search, Link2, Trash2, Download, FileText, Loader2,
   X, Eye, Link as LinkIcon, Pencil, History, ArrowRight, Paperclip,
+  Users, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/dateien.functions";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
+import { DateiEditDialog } from "@/components/datei-edit-dialog";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
@@ -65,6 +67,7 @@ function DateienPage() {
   const [linkFor, setLinkFor] = useState<Datei | null>(null);
   const [detailFor, setDetailFor] = useState<Datei | null>(null);
   const [editFor, setEditFor] = useState<Datei | null>(null);
+  const [tab, setTab] = useState<"dateien" | "kunden">("dateien");
 
   const dateien = data?.dateien ?? [];
   const links = data?.links ?? [];
@@ -97,7 +100,7 @@ function DateienPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche nach Datei, Adresse, Kunde…"
+              placeholder={tab === "kunden" ? "Kunde, Adresse, Schlüssel-Nr.…" : "Suche nach Datei, Adresse, Kunde…"}
               className="pl-9 w-[320px]"
             />
           </div>
@@ -107,6 +110,24 @@ function DateienPage() {
         </div>
       </div>
 
+      <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
+        <button
+          onClick={() => setTab("dateien")}
+          className={`px-3 py-1.5 text-sm rounded-md inline-flex items-center gap-2 transition ${tab === "dateien" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          <FileText className="size-4" /> Dateien
+        </button>
+        <button
+          onClick={() => setTab("kunden")}
+          className={`px-3 py-1.5 text-sm rounded-md inline-flex items-center gap-2 transition ${tab === "kunden" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          <Users className="size-4" /> Kunden
+        </button>
+      </div>
+
+      {tab === "kunden" ? (
+        <KundenListe dateien={dateien} search={search} onEdit={(d) => setEditFor(d)} />
+      ) : (
       <div className="rounded-xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
         {isLoading ? (
           <div className="p-12 text-center text-muted-foreground">
@@ -172,6 +193,7 @@ function DateienPage() {
           </Table>
         )}
       </div>
+      )}
 
       <UploadDialog open={uploadOpen} onOpenChange={setUploadOpen} onDone={refresh} />
       {linkFor && (
@@ -187,7 +209,7 @@ function DateienPage() {
         />
       )}
       {editFor && (
-        <EditDialog datei={editFor} onClose={() => setEditFor(null)} onDone={refresh} />
+        <DateiEditDialog datei={editFor} onClose={() => setEditFor(null)} onDone={refresh} />
       )}
     </div>
   );
