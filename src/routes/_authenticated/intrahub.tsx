@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { Plus, FileText, Image as ImageIcon, Trash2, Pencil, Loader2, Paperclip, X, Download } from "lucide-react";
+import { Plus, FileText, Image as ImageIcon, Trash2, Pencil, Loader2, Paperclip, X, Download, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +46,25 @@ function IntraHubPage() {
 
   const [editing, setEditing] = useState<Post | null>(null);
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? posts.filter((p) =>
+        p.title.toLowerCase().includes(q) ||
+        (p.content ?? "").toLowerCase().includes(q) ||
+        (p.author?.display_name ?? "").toLowerCase().includes(q),
+      )
+    : posts;
+
+  function toggle(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
 
   const del = useServerFn(deleteIntrahubPost);
   const delMut = useMutation({
@@ -66,46 +85,74 @@ function IntraHubPage() {
         </Button>
       </div>
 
+      <div className="relative mb-4">
+        <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Beiträge durchsuchen…"
+          className="pl-9"
+        />
+      </div>
+
       {isLoading ? (
         <div className="p-12 text-center text-muted-foreground flex items-center justify-center gap-2">
           <Loader2 className="size-4 animate-spin" /> Lade…
         </div>
-      ) : posts.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-          <p className="text-sm text-muted-foreground">Noch keine Beiträge. Erstelle den ersten Wissensbeitrag.</p>
+          <p className="text-sm text-muted-foreground">
+            {posts.length === 0 ? "Noch keine Beiträge. Erstelle den ersten Wissensbeitrag." : "Keine Treffer für deine Suche."}
+          </p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {posts.map((p) => {
+        <div className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
+          {filtered.map((p) => {
             const canEdit = isAdmin || p.created_by === user?.id;
+            const isOpen = expanded.has(p.id);
+            const attachCount = p.attachments?.length ?? 0;
             return (
-              <article key={p.id} className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-lg font-semibold">{p.title}</h2>
-                    <div className="text-xs text-muted-foreground mt-0.5">
-                      {p.author?.display_name ?? "Unbekannt"} · {new Date(p.created_at).toLocaleString("de-DE")}
+              <article key={p.id} className="bg-card">
+                <button
+                  type="button"
+                  onClick={() => toggle(p.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 transition-colors"
+                >
+                  {isOpen ? <ChevronDown className="size-4 text-muted-foreground shrink-0" /> : <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-sm font-medium truncate">{p.title}</h2>
+                      {attachCount > 0 && (
+                        <Badge variant="secondary" className="text-[10px] gap-1">
+                          <Paperclip className="size-3" />{attachCount}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {p.author?.display_name ?? "Unbekannt"} · {new Date(p.created_at).toLocaleDateString("de-DE")}
                       {p.updated_at !== p.created_at && <span> · bearbeitet</span>}
                     </div>
                   </div>
                   {canEdit && (
-                    <div className="flex gap-1 shrink-0">
-                      <Button size="icon" variant="ghost" onClick={() => { setEditing(p); setOpen(true); }}>
+                    <div className="flex gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                      <Button size="icon" variant="ghost" className="size-8" onClick={() => { setEditing(p); setOpen(true); }}>
                         <Pencil className="size-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => {
+                      <Button size="icon" variant="ghost" className="size-8" onClick={() => {
                         if (confirm("Beitrag wirklich löschen?")) delMut.mutate(p.id);
                       }}>
                         <Trash2 className="size-4 text-destructive" />
                       </Button>
                     </div>
                   )}
-                </div>
-                {p.content && (
-                  <p className="mt-3 text-sm whitespace-pre-wrap text-foreground/90">{p.content}</p>
-                )}
-                {p.attachments?.length > 0 && (
-                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                </button>
+                {isOpen && (
+                  <div className="px-4 pb-4 pl-11">
+                    {p.content && (
+                      <p className="text-sm whitespace-pre-wrap text-foreground/90">{p.content}</p>
+                    )}
+                    {attachCount > 0 && (
+                      <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {p.attachments.map((a) => {
                       const url = publicUrl(a.path);
                       const isImg = (a.mime ?? "").startsWith("image/");
@@ -122,6 +169,8 @@ function IntraHubPage() {
                         </a>
                       );
                     })}
+                      </div>
+                    )}
                   </div>
                 )}
               </article>
