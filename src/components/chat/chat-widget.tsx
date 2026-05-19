@@ -56,19 +56,34 @@ export function ChatWidget() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [lastReadAt, setLastReadAt] = useState<string | null>(null);
   const [unread, setUnread] = useState(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || !domainId || !chatEnabled) return;
     let cancel = false;
+    setLoadError(null);
     (async () => {
-      const { data: cid } = await supabase.rpc("get_or_create_domain_channel");
-      if (cancel || !cid) return;
-      const { data: c } = await supabase
+      const rpc = await supabase.rpc("get_or_create_domain_channel");
+      if (cancel) return;
+      if (rpc.error || !rpc.data) {
+        const msg = rpc.error?.message ?? "Kanal konnte nicht geladen werden";
+        console.error("[chat] get_or_create_domain_channel:", rpc.error);
+        setLoadError(msg);
+        return;
+      }
+      const cid = rpc.data as string;
+      const { data: c, error: cErr } = await supabase
         .from("chat_conversations")
         .select("id,kind,title,domain_id")
-        .eq("id", cid as string)
+        .eq("id", cid)
         .maybeSingle();
-      if (cancel || !c) return;
+      if (cancel) return;
+      if (cErr || !c) {
+        const msg = cErr?.message ?? "Kanal nicht gefunden";
+        console.error("[chat] load conversation:", cErr);
+        setLoadError(msg);
+        return;
+      }
       setConv(c as any);
 
       const { data: profs } = await supabase
@@ -82,7 +97,7 @@ export function ChatWidget() {
       const { data: part } = await supabase
         .from("chat_participants")
         .select("last_read_at")
-        .eq("conversation_id", cid as string)
+        .eq("conversation_id", cid)
         .eq("user_id", user.id)
         .maybeSingle();
       const since = (part as any)?.last_read_at ?? null;
@@ -91,7 +106,7 @@ export function ChatWidget() {
         const { count } = await supabase
           .from("chat_messages")
           .select("id", { count: "exact", head: true })
-          .eq("conversation_id", cid as string)
+          .eq("conversation_id", cid)
           .neq("sender_id", user.id)
           .is("deleted_at", null)
           .gt("created_at", since);
@@ -180,6 +195,11 @@ export function ChatWidget() {
               profiles={profiles}
               onNewLastMsg={() => {}}
             />
+          ) : loadError ? (
+            <div className="flex-1 grid place-items-center text-sm text-destructive p-4 text-center">
+              Chat konnte nicht geladen werden:<br />
+              <span className="text-xs text-muted-foreground mt-1">{loadError}</span>
+            </div>
           ) : (
             <div className="flex-1 grid place-items-center text-sm text-muted-foreground">Lade Chat…</div>
           )}
