@@ -303,6 +303,7 @@ function AlarmierungPage() {
       </div>
 
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
+      <InfoDialog einsatz={infoFor} profiles={profiles} hausnotrufEnabled={hausnotrufEnabled} onClose={() => setInfoFor(null)} />
       <EinsatzBerichtDialog
         einsatz={berichtFor}
         open={!!berichtFor}
