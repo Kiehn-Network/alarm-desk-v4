@@ -139,6 +139,10 @@ function InfoDialog({
           {e.key_number && <InfoRow icon={<Key className="size-4" />} label="Schlüssel-Nr." value={e.key_number} />}
           {e.anlagen_nr && <InfoRow icon={<Tag className="size-4" />} label="Anlagen-Nr." value={e.anlagen_nr} />}
           {e.teilnehmer_id && <InfoRow icon={<Hash className="size-4" />} label="Teilnehmer-ID" value={e.teilnehmer_id} />}
+          {isHausnotruf && e.hausnotruf_provider && (
+            <InfoRow icon={<Tag className="size-4" />} label="Subprovider"
+              value={PROVIDER_LABEL[e.hausnotruf_provider] ?? e.hausnotruf_provider} />
+          )}
           {e.assigned_to && <InfoRow icon={<Car className="size-4" />} label="Fahrer" value={profiles[e.assigned_to] ?? "–"} />}
           <InfoRow icon={<User className="size-4" />} label="Erstellt von" value={profiles[e.created_by] ?? "–"} />
           <InfoRow icon={<Clock className="size-4" />} label="Erstellt am" value={fmt(e.created_at)} />
@@ -326,6 +330,7 @@ function AlarmierungPage() {
                           <span className="font-medium text-foreground truncate" title={e.einsatzgrund}>
                             {e.einsatzgrund}
                           </span>
+                          {isHausnotruf && <ProviderChip provider={e.hausnotruf_provider} />}
                         </div>
                         {e.kunden_name && (
                           <div className="text-xs text-muted-foreground truncate mt-0.5">{e.kunden_name}</div>
