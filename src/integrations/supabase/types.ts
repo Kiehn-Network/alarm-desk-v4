@@ -740,6 +740,7 @@ export type Database = {
           geplant_am: string | null
           hausnotruf_loesung: string | null
           hausnotruf_problem: string | null
+          hausnotruf_provider: string | null
           id: string
           key_number: string | null
           kunden_email: string | null
@@ -776,6 +777,7 @@ export type Database = {
           geplant_am?: string | null
           hausnotruf_loesung?: string | null
           hausnotruf_problem?: string | null
+          hausnotruf_provider?: string | null
           id?: string
           key_number?: string | null
           kunden_email?: string | null
@@ -812,6 +814,7 @@ export type Database = {
           geplant_am?: string | null
           hausnotruf_loesung?: string | null
           hausnotruf_problem?: string | null
+          hausnotruf_provider?: string | null
           id?: string
           key_number?: string | null
           kunden_email?: string | null
@@ -1050,6 +1053,69 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      hausnotruf_abrechnung_log: {
+        Row: {
+          domain_id: string
+          einsatz_count: number
+          error_message: string | null
+          id: string
+          period_month: string
+          provider_key: string
+          recipient_email: string
+          sent_at: string
+          sent_by: string | null
+          status: string
+        }
+        Insert: {
+          domain_id: string
+          einsatz_count?: number
+          error_message?: string | null
+          id?: string
+          period_month: string
+          provider_key: string
+          recipient_email: string
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+        }
+        Update: {
+          domain_id?: string
+          einsatz_count?: number
+          error_message?: string | null
+          id?: string
+          period_month?: string
+          provider_key?: string
+          recipient_email?: string
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      hausnotruf_provider_settings: {
+        Row: {
+          domain_id: string
+          provider_key: string
+          recipient_email: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          domain_id: string
+          provider_key: string
+          recipient_email?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          domain_id?: string
+          provider_key?: string
+          recipient_email?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
