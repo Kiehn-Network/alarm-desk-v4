@@ -35,7 +35,7 @@ const settingsSchema = z.object({
   wartung_farbe: z.enum(["info", "orange", "rot"]),
   rohrservice_variante: z.enum(["standard", "budeko"]).optional(),
   rohrservice_notiz: z.string().max(20000).nullable().optional(),
-  theme: z.enum(["midnight", "emerald", "slate", "sunset"]).optional(),
+  theme: z.enum(["midnight", "emerald", "slate", "sunset", "crimson", "violet", "ocean", "mono"]).optional(),
 });
 
 export const updateAppSettings = createServerFn({ method: "POST" })
