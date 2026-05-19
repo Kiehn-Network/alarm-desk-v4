@@ -42,6 +42,7 @@ import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from
 import { Route as AuthenticatedNotdienstBudekoNeuRouteImport } from './routes/_authenticated/notdienst/budeko/neu'
 import { Route as AuthenticatedNotdienstBudekoNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/budeko/nachbearbeitung'
 import { Route as AuthenticatedNotdienstBudekoMitarbeiterRouteImport } from './routes/_authenticated/notdienst/budeko/mitarbeiter'
+import { Route as AuthenticatedAbrechnungProviderVersandRouteImport } from './routes/_authenticated/abrechnung.$provider.versand'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -228,6 +229,12 @@ const AuthenticatedNotdienstBudekoMitarbeiterRoute =
     path: '/mitarbeiter',
     getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
   } as any)
+const AuthenticatedAbrechnungProviderVersandRoute =
+  AuthenticatedAbrechnungProviderVersandRouteImport.update({
+    id: '/versand',
+    path: '/versand',
+    getParentRoute: () => AuthenticatedAbrechnungProviderRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -250,9 +257,10 @@ export interface FileRoutesByFullPath {
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
-  '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRoute
+  '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -282,9 +290,10 @@ export interface FileRoutesByTo {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
-  '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRoute
+  '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -318,9 +327,10 @@ export interface FileRoutesById {
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
-  '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRoute
+  '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/_authenticated/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/_authenticated/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/_authenticated/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/_authenticated/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -357,6 +367,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
     | '/notdienst/budeko/neu'
@@ -389,6 +400,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
     | '/notdienst/budeko/neu'
@@ -424,6 +436,7 @@ export interface FileRouteTypes {
     | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/version'
+    | '/_authenticated/abrechnung/$provider/versand'
     | '/_authenticated/notdienst/budeko/mitarbeiter'
     | '/_authenticated/notdienst/budeko/nachbearbeitung'
     | '/_authenticated/notdienst/budeko/neu'
@@ -676,6 +689,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRouteImport
       parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
     }
+    '/_authenticated/abrechnung/$provider/versand': {
+      id: '/_authenticated/abrechnung/$provider/versand'
+      path: '/versand'
+      fullPath: '/abrechnung/$provider/versand'
+      preLoaderRoute: typeof AuthenticatedAbrechnungProviderVersandRouteImport
+      parentRoute: typeof AuthenticatedAbrechnungProviderRoute
+    }
   }
 }
 
@@ -726,6 +746,21 @@ const AuthenticatedNotdienstRohrserviceRouteRouteWithChildren =
     AuthenticatedNotdienstRohrserviceRouteRouteChildren,
   )
 
+interface AuthenticatedAbrechnungProviderRouteChildren {
+  AuthenticatedAbrechnungProviderVersandRoute: typeof AuthenticatedAbrechnungProviderVersandRoute
+}
+
+const AuthenticatedAbrechnungProviderRouteChildren: AuthenticatedAbrechnungProviderRouteChildren =
+  {
+    AuthenticatedAbrechnungProviderVersandRoute:
+      AuthenticatedAbrechnungProviderVersandRoute,
+  }
+
+const AuthenticatedAbrechnungProviderRouteWithChildren =
+  AuthenticatedAbrechnungProviderRoute._addFileChildren(
+    AuthenticatedAbrechnungProviderRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
@@ -745,7 +780,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
   AuthenticatedNotdienstBudekoRouteRoute: typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   AuthenticatedNotdienstRohrserviceRouteRoute: typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
-  AuthenticatedAbrechnungProviderRoute: typeof AuthenticatedAbrechnungProviderRoute
+  AuthenticatedAbrechnungProviderRoute: typeof AuthenticatedAbrechnungProviderRouteWithChildren
   AuthenticatedNotdienstLutzRoute: typeof AuthenticatedNotdienstLutzRoute
 }
 
@@ -770,7 +805,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedNotdienstBudekoRouteRouteWithChildren,
   AuthenticatedNotdienstRohrserviceRouteRoute:
     AuthenticatedNotdienstRohrserviceRouteRouteWithChildren,
-  AuthenticatedAbrechnungProviderRoute: AuthenticatedAbrechnungProviderRoute,
+  AuthenticatedAbrechnungProviderRoute:
+    AuthenticatedAbrechnungProviderRouteWithChildren,
   AuthenticatedNotdienstLutzRoute: AuthenticatedNotdienstLutzRoute,
 }
 
@@ -788,3 +824,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
