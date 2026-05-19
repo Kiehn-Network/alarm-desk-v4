@@ -563,3 +563,25 @@ export const searchKundenEinsaetze = createServerFn({ method: "POST" })
     }
     return { einsaetze: rows ?? [], profiles };
   });
+export const deleteEinsatz = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    // Nur Domain-Admins / Superadmins dürfen löschen
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role, domain_id").eq("user_id", userId);
+    const isAllowed = (roles ?? []).some((r: any) =>
+      r.role === "superadmin" || (r.role === "admin" && r.domain_id === domainId));
+    if (!isAllowed) throw new Error("Nur Domänen-Admins können Einsätze löschen");
+
+    // Verknüpfte Daten zuerst entfernen (keine FKs definiert, aber sauber halten)
+    await supabase.from("einsatz_historie").delete().eq("einsatz_id", data.id);
+    await supabase.from("einsatz_email_log").delete().eq("einsatz_id", data.id);
+    await supabase.from("schluessel_buch").delete().eq("einsatz_id", data.id);
+
+    const { error } = await supabase.from("einsaetze").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
