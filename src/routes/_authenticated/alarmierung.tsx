@@ -87,6 +87,7 @@ function AlarmierungPage() {
   const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
   const [sendFor, setSendFor] = useState<Einsatz | null>(null);
   const [stornoFor, setStornoFor] = useState<Einsatz | null>(null);
+  const [infoFor, setInfoFor] = useState<Einsatz | null>(null);
   const [stornoGrund, setStornoGrund] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
 
