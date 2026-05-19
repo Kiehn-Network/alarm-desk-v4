@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail, User, MapPin, Key, Hash, Tag, Car, CircleCheck,
-  MoreHorizontal, FileText, Filter,
+  MoreHorizontal, FileText, Filter, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,6 +47,16 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 function fmt(d?: string | null) {
   if (!d) return "–";
   return new Date(d).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function dauer(start?: string | null, end?: string | null) {
+  if (!start || !end) return "–";
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  if (!isFinite(ms) || ms < 0) return "–";
+  const min = Math.floor(ms / 60000);
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h} Std ${m} Min`;
 }
 
 function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
