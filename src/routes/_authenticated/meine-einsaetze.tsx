@@ -236,6 +236,8 @@ function MeineEinsaetzePage() {
                   </div>
                 )}
 
+                {schluesselbuchOn && <SchluesselBanner einsatzId={e.id} einsatzAbgeschlossen={isErledigt(e)} />}
+
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
                   {mapsUrl && (
                     <a href={mapsUrl} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none">
