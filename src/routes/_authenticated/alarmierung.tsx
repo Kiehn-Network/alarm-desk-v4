@@ -44,6 +44,22 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
   abgelehnt:      { label: "Abgelehnt",     cls: "bg-red-500/15 text-red-400 border border-red-500/30" },
 };
 
+const PROVIDER_LABEL: Record<string, string> = {
+  malteser: "Malteser",
+  johanniter: "Johanniter",
+  lgwa: "LGWA",
+};
+
+function ProviderChip({ provider }: { provider?: string | null }) {
+  if (!provider) return null;
+  const label = PROVIDER_LABEL[provider] ?? provider;
+  return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-amber-500/10 text-amber-400 border-amber-500/30 whitespace-nowrap">
+      {label}
+    </span>
+  );
+}
+
 function fmt(d?: string | null) {
   if (!d) return "–";
   return new Date(d).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
