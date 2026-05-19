@@ -22,6 +22,7 @@ import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authenticated/meine-einsaetze'
 import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated/kunden'
 import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
+import { Route as AuthenticatedHilfeRouteImport } from './routes/_authenticated/hilfe'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
 import { Route as AuthenticatedDatenImportRouteImport } from './routes/_authenticated/daten-import'
@@ -112,6 +113,11 @@ const AuthenticatedKundenRoute = AuthenticatedKundenRouteImport.update({
 const AuthenticatedIntrahubRoute = AuthenticatedIntrahubRouteImport.update({
   id: '/intrahub',
   path: '/intrahub',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedHilfeRoute = AuthenticatedHilfeRouteImport.update({
+  id: '/hilfe',
+  path: '/hilfe',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEinsatzErstellenRoute =
@@ -253,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/hilfe': typeof AuthenticatedHilfeRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/hilfe': typeof AuthenticatedHilfeRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   '/_authenticated/daten-import': typeof AuthenticatedDatenImportRoute
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/_authenticated/hilfe': typeof AuthenticatedHilfeRoute
   '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
   '/_authenticated/kunden': typeof AuthenticatedKundenRoute
   '/_authenticated/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
@@ -363,6 +372,7 @@ export interface FileRouteTypes {
     | '/daten-import'
     | '/dienstplaene'
     | '/einsatz-erstellen'
+    | '/hilfe'
     | '/intrahub'
     | '/kunden'
     | '/meine-einsaetze'
@@ -399,6 +409,7 @@ export interface FileRouteTypes {
     | '/daten-import'
     | '/dienstplaene'
     | '/einsatz-erstellen'
+    | '/hilfe'
     | '/intrahub'
     | '/kunden'
     | '/meine-einsaetze'
@@ -434,6 +445,7 @@ export interface FileRouteTypes {
     | '/_authenticated/daten-import'
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
+    | '/_authenticated/hilfe'
     | '/_authenticated/intrahub'
     | '/_authenticated/kunden'
     | '/_authenticated/meine-einsaetze'
@@ -560,6 +572,13 @@ declare module '@tanstack/react-router' {
       path: '/intrahub'
       fullPath: '/intrahub'
       preLoaderRoute: typeof AuthenticatedIntrahubRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/hilfe': {
+      id: '/_authenticated/hilfe'
+      path: '/hilfe'
+      fullPath: '/hilfe'
+      preLoaderRoute: typeof AuthenticatedHilfeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/einsatz-erstellen': {
@@ -789,6 +808,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDatenImportRoute: typeof AuthenticatedDatenImportRoute
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
+  AuthenticatedHilfeRoute: typeof AuthenticatedHilfeRoute
   AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
   AuthenticatedKundenRoute: typeof AuthenticatedKundenRoute
   AuthenticatedMeineEinsaetzeRoute: typeof AuthenticatedMeineEinsaetzeRoute
@@ -813,6 +833,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDatenImportRoute: AuthenticatedDatenImportRoute,
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
+  AuthenticatedHilfeRoute: AuthenticatedHilfeRoute,
   AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,
   AuthenticatedKundenRoute: AuthenticatedKundenRoute,
   AuthenticatedMeineEinsaetzeRoute: AuthenticatedMeineEinsaetzeRoute,
