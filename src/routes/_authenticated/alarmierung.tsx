@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail, User, MapPin, Key, Hash, Tag, Car, CircleCheck,
-  MoreHorizontal, FileText, Filter, Info, Pencil,
+  MoreHorizontal, FileText, Filter, Info, Pencil, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import { useRole } from "@/hooks/use-role";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
-  editEinsatzFull,
+  editEinsatzFull, deleteEinsatz,
 } from "@/lib/einsaetze.functions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
@@ -177,13 +177,14 @@ function InfoDialog({
 }
 
 function AlarmierungPage() {
-  const { canManage } = useRole();
+  const { canManage, isAdmin } = useRole();
   const { data: modules } = useDomainModules();
   const hausnotrufEnabled = modules?.has("hausnotruf") ?? false;
   const list = useServerFn(listEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const stornieren = useServerFn(stornierenEinsatz);
   const editFull = useServerFn(editEinsatzFull);
+  const loeschen = useServerFn(deleteEinsatz);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
@@ -197,6 +198,8 @@ function AlarmierungPage() {
   const [stornoGrund, setStornoGrund] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
   const [editFor, setEditFor] = useState<Einsatz | null>(null);
+  const [deleteFor, setDeleteFor] = useState<Einsatz | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -402,6 +405,17 @@ function AlarmierungPage() {
                                   </DropdownMenuItem>
                                 </>
                               )}
+                              {isAdmin && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-400 focus:text-red-300"
+                                    onClick={() => setDeleteFor(e)}
+                                  >
+                                    <Trash2 className="size-4 mr-2" /> Löschen
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -427,6 +441,49 @@ function AlarmierungPage() {
           refetch();
         }}
       />
+      <Dialog open={!!deleteFor} onOpenChange={(o) => { if (!o) setDeleteFor(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Einsatz endgültig löschen?</DialogTitle>
+            <DialogDescription>
+              Der Einsatz wird unwiderruflich entfernt, inklusive Verlauf und
+              Schlüsselbuch-Einträgen. Diese Aktion kann nicht rückgängig gemacht
+              werden.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteFor && (
+            <div className="text-sm rounded-md border border-border bg-muted/30 p-3">
+              <div className="font-medium">{deleteFor.einsatzgrund}</div>
+              {deleteFor.kunden_name && (
+                <div className="text-muted-foreground mt-0.5">{deleteFor.kunden_name}</div>
+              )}
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setDeleteFor(null)} disabled={deleteBusy}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteBusy}
+              onClick={async () => {
+                if (!deleteFor) return;
+                setDeleteBusy(true);
+                try {
+                  await loeschen({ data: { id: deleteFor.id } });
+                  toast.success("Einsatz gelöscht");
+                  setDeleteFor(null);
+                  refetch();
+                } catch (err: any) {
+                  toast.error(err.message ?? "Fehler");
+                } finally { setDeleteBusy(false); }
+              }}
+            >
+              <Trash2 className="size-4 mr-1.5" /> Endgültig löschen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <EinsatzBerichtDialog
         einsatz={berichtFor}
         open={!!berichtFor}
