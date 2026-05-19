@@ -183,6 +183,7 @@ function AlarmierungPage() {
   const list = useServerFn(listEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const stornieren = useServerFn(stornierenEinsatz);
+  const editFull = useServerFn(editEinsatzFull);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
@@ -195,6 +196,7 @@ function AlarmierungPage() {
   const [infoFor, setInfoFor] = useState<Einsatz | null>(null);
   const [stornoGrund, setStornoGrund] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
+  const [editFor, setEditFor] = useState<Einsatz | null>(null);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -384,6 +386,11 @@ function AlarmierungPage() {
                               <DropdownMenuItem onClick={() => setHistory(e)}>
                                 <HistoryIcon className="size-4 mr-2" /> Verlauf
                               </DropdownMenuItem>
+                              {canManage && (
+                                <DropdownMenuItem onClick={() => setEditFor(e)}>
+                                  <Pencil className="size-4 mr-2" /> Bearbeiten
+                                </DropdownMenuItem>
+                              )}
                               {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -410,6 +417,16 @@ function AlarmierungPage() {
 
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
       <InfoDialog einsatz={infoFor} profiles={profiles} hausnotrufEnabled={hausnotrufEnabled} onClose={() => setInfoFor(null)} />
+      <EditDialog
+        einsatz={editFor}
+        onClose={() => setEditFor(null)}
+        onSave={async (patch) => {
+          await editFull({ data: patch });
+          toast.success("Gespeichert");
+          setEditFor(null);
+          refetch();
+        }}
+      />
       <EinsatzBerichtDialog
         einsatz={berichtFor}
         open={!!berichtFor}
