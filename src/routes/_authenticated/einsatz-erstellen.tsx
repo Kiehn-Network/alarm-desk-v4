@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRole } from "@/hooks/use-role";
+import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   createEinsatz, listEinsatzGruende, listFahrer, searchKundenDateien,
 } from "@/lib/einsaetze.functions";
@@ -32,6 +33,8 @@ type DateiHit = {
 function EinsatzErstellenPage() {
   const navigate = useNavigate();
   const { canManage, loading: roleLoading } = useRole();
+  const { data: modules } = useDomainModules();
+  const hausnotrufEnabled = modules?.has("hausnotruf") ?? false;
 
   const searchFn = useServerFn(searchKundenDateien);
   const listG = useServerFn(listEinsatzGruende);
@@ -44,6 +47,7 @@ function EinsatzErstellenPage() {
   const [grund, setGrund] = useState("");
   const [grundId, setGrundId] = useState<string | null>(null);
   const [fahrerId, setFahrerId] = useState("");
+  const [einsatzTyp, setEinsatzTyp] = useState<"av_einsatz" | "hausnotruf">("av_einsatz");
   const [saving, setSaving] = useState(false);
 
   const { data: searchData, isFetching } = useQuery({
@@ -90,6 +94,7 @@ function EinsatzErstellenPage() {
       await create({ data: {
         einsatzgrund: grund.trim(),
         einsatzgrund_id: grundId,
+        einsatz_typ: hausnotrufEnabled ? einsatzTyp : "av_einsatz",
         kunden_name: picked.kunden_name,
         address: picked.address,
         key_number: picked.key_number,
@@ -184,6 +189,43 @@ function EinsatzErstellenPage() {
       </section>
 
       {/* Schritt 2: Objektdaten (read-only autofill) */}
+      {picked && (
+        hausnotrufEnabled && (
+          <section className="rounded-xl border border-border bg-card p-6 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
+            <div className="flex items-center gap-2">
+              <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">2</span>
+              <h2 className="font-semibold">Einsatz-Typ</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setEinsatzTyp("av_einsatz")}
+                className={`rounded-lg border p-4 text-left transition-colors ${
+                  einsatzTyp === "av_einsatz"
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-muted/30 hover:bg-muted/50"
+                }`}
+              >
+                <div className="font-medium">AV-Einsatz</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Alarm-/Wachdienst-Einsatz</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setEinsatzTyp("hausnotruf")}
+                className={`rounded-lg border p-4 text-left transition-colors ${
+                  einsatzTyp === "hausnotruf"
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-muted/30 hover:bg-muted/50"
+                }`}
+              >
+                <div className="font-medium">Hausnotruf</div>
+                <div className="text-xs text-muted-foreground mt-0.5">Hausnotruf-Einsatz</div>
+              </button>
+            </div>
+          </section>
+        )
+      )}
+
       {picked && (
         <section className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
           <div className="flex items-center gap-2">

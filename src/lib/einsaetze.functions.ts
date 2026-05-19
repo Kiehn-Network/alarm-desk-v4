@@ -9,6 +9,7 @@ const prioritaet = z.enum(["niedrig", "normal", "hoch", "kritisch"]);
 const createSchema = z.object({
   einsatzgrund: z.string().trim().min(1).max(200),
   einsatzgrund_id: z.string().uuid().optional().nullable(),
+  einsatz_typ: z.enum(["av_einsatz", "hausnotruf"]).optional(),
   kunden_name: z.string().max(200).optional().nullable(),
   address: z.string().max(255).optional().nullable(),
   key_number: z.string().max(100).optional().nullable(),
@@ -129,6 +130,7 @@ export const createEinsatz = createServerFn({ method: "POST" })
     const payload: any = {
       einsatzgrund: data.einsatzgrund,
       einsatzgrund_id: data.einsatzgrund_id ?? null,
+      einsatz_typ: data.einsatz_typ ?? "av_einsatz",
       kunden_name: data.kunden_name ?? null,
       address: data.address ?? null,
       key_number: data.key_number ?? null,

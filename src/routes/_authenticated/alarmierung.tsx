@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useRole } from "@/hooks/use-role";
+import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
 } from "@/lib/einsaetze.functions";
@@ -45,6 +46,8 @@ function fmt(d?: string | null) {
 
 function AlarmierungPage() {
   const { canManage } = useRole();
+  const { data: modules } = useDomainModules();
+  const hausnotrufEnabled = modules?.has("hausnotruf") ?? false;
   const list = useServerFn(listEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const stornieren = useServerFn(stornierenEinsatz);
@@ -52,6 +55,7 @@ function AlarmierungPage() {
 
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState<string>("aktiv");
+  const [typFilter, setTypFilter] = useState<string>("alle");
   const [history, setHistory] = useState<Einsatz | null>(null);
   const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
   const [sendFor, setSendFor] = useState<Einsatz | null>(null);
@@ -67,14 +71,25 @@ function AlarmierungPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return einsaetze.filter((e) => {
+    const list = einsaetze.filter((e) => {
       if (tab === "aktiv" && !isAktiv(e)) return false;
       if (tab === "erledigt" && !isErledigt(e)) return false;
+      if (hausnotrufEnabled && typFilter !== "alle" && (e.einsatz_typ ?? "av_einsatz") !== typFilter) return false;
       if (!q) return true;
       return [e.einsatzgrund, e.kunden_name, e.address, e.key_number, e.anlagen_nr, e.teilnehmer_id]
         .filter(Boolean).join(" ").toLowerCase().includes(q);
     });
-  }, [einsaetze, search, tab]);
+    // Sort: Hausnotruf zuerst, dann AV-Einsatz, innerhalb nach created_at desc
+    if (hausnotrufEnabled) {
+      const rank = (t: string) => (t === "hausnotruf" ? 0 : 1);
+      list.sort((a, b) => {
+        const r = rank(a.einsatz_typ ?? "av_einsatz") - rank(b.einsatz_typ ?? "av_einsatz");
+        if (r !== 0) return r;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+    }
+    return list;
+  }, [einsaetze, search, tab, typFilter, hausnotrufEnabled]);
 
   const counts = useMemo(() => ({
     aktiv: einsaetze.filter(isAktiv).length,
@@ -100,6 +115,16 @@ function AlarmierungPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Suche Kunde, Adresse, Grund..." className="pl-9" />
         </div>
+        {hausnotrufEnabled && (
+          <Tabs value={typFilter} onValueChange={setTypFilter}>
+            <TabsList>
+              <TabsTrigger value="alle">Alle Typen</TabsTrigger>
+              <TabsTrigger value="hausnotruf">Hausnotruf</TabsTrigger>
+              <TabsTrigger value="av_einsatz">AV-Einsatz</TabsTrigger>
+            </TabsList>
+            <TabsContent value={typFilter} />
+          </Tabs>
+        )}
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="aktiv" className="gap-2">Aktiv <Badge variant="secondary" className="ml-1">{counts.aktiv}</Badge></TabsTrigger>
@@ -130,6 +155,15 @@ function AlarmierungPage() {
                       <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${STATUS_META[e.status]?.cls ?? ""}`}>
                         {STATUS_META[e.status]?.label ?? e.status}
                       </span>
+                      {hausnotrufEnabled && (
+                        <span className={`text-xs px-2 py-0.5 rounded-md font-medium border ${
+                          (e.einsatz_typ ?? "av_einsatz") === "hausnotruf"
+                            ? "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/30"
+                            : "bg-slate-500/15 text-slate-300 border-slate-500/30"
+                        }`}>
+                          {(e.einsatz_typ ?? "av_einsatz") === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"}
+                        </span>
+                      )}
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="size-3" /> {fmt(e.created_at)}
                       </span>
