@@ -10,7 +10,7 @@ import { TourDialog } from "./tour-dialog";
 export function TourLauncher() {
   const { session } = useAuth();
   const fn = useServerFn(getMyTourSettings);
-  const { data } = useQuery({
+  const { data, isFetched } = useQuery({
     queryKey: ["my-tour"],
     queryFn: () => fn(),
     enabled: !!session,
@@ -19,11 +19,11 @@ export function TourLauncher() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!data && data !== null) return;
-    // data === null → noch nie gesehen → zeigen
-    if (data === null) { setOpen(true); return; }
+    if (!isFetched) return;
+    // null → noch nie gesehen → zeigen
+    if (data == null) { setOpen(true); return; }
     if (data.tour_enabled && !data.completed_at) setOpen(true);
-  }, [data]);
+  }, [data, isFetched]);
 
   // global Listener: erlaubt anderen Komponenten, die Tour zu öffnen
   useEffect(() => {
