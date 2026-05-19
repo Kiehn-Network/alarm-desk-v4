@@ -627,7 +627,7 @@ function KundenListe({
   dateien, search, onEdit,
 }: { dateien: Datei[]; search: string; onEdit: (d: Datei) => void }) {
   const [page, setPage] = useState(1);
-  const pageSize = 25;
+  const pageSize = 10;
 
   const grouped = useMemo(() => {
     const map = new Map<string, Datei[]>();
