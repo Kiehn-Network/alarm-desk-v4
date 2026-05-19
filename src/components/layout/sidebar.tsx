@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users,
+  Receipt,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +38,11 @@ const sections: Section[] = [
     { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice" },
     { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko" },
     { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz" },
+  ]},
+  { label: "Abrechnung Hausnotruf", items: [
+    { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser" },
+    { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter" },
+    { to: "/abrechnung/lgwa",       label: "LGWA",        icon: Receipt, module: "lgwa" },
   ]},
   { label: "Tools", items: [
     { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"] },
