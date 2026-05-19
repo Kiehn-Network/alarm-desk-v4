@@ -9,11 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useRole } from "@/hooks/use-role";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   createEinsatz, listEinsatzGruende, listFahrer, searchKundenDateien,
 } from "@/lib/einsaetze.functions";
+import { ausgebenSchluessel } from "@/lib/schluesselbuch.functions";
 
 export const Route = createFileRoute("/_authenticated/einsatz-erstellen")({
   component: EinsatzErstellenPage,
@@ -40,6 +42,8 @@ function EinsatzErstellenPage() {
   const listG = useServerFn(listEinsatzGruende);
   const listF = useServerFn(listFahrer);
   const create = useServerFn(createEinsatz);
+  const ausgeben = useServerFn(ausgebenSchluessel);
+  const schluesselbuchOn = modules?.has("schluesselbuch") ?? false;
 
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
@@ -50,6 +54,19 @@ function EinsatzErstellenPage() {
   const [einsatzTyp, setEinsatzTyp] = useState<"av_einsatz" | "hausnotruf">("av_einsatz");
   const [hausnotrufProvider, setHausnotrufProvider] = useState<"malteser" | "johanniter" | "lgwa" | "">("");
   const [saving, setSaving] = useState(false);
+
+  // Schlüsselübergabe nach Einsatz-Erstellung
+  const [handover, setHandover] = useState<null | {
+    einsatzId: string;
+    keyNumber: string;
+    fahrerId: string;
+    fahrerName: string;
+  }>(null);
+  const [traegerMode, setTraegerMode] = useState<"fahrer" | "andere">("fahrer");
+  const [traegerName, setTraegerName] = useState("");
+  const [traegerUserId, setTraegerUserId] = useState<string>("");
+  const [handoverNote, setHandoverNote] = useState("");
+  const [handoverBusy, setHandoverBusy] = useState(false);
 
   const malteserOn = modules?.has("malteser") ?? false;
   const johanniterOn = modules?.has("johanniter") ?? false;
@@ -104,7 +121,7 @@ function EinsatzErstellenPage() {
     }
     setSaving(true);
     try {
-      await create({ data: {
+      const created: any = await create({ data: {
         einsatzgrund: grund.trim(),
         einsatzgrund_id: grundId,
         einsatz_typ: hausnotrufEnabled ? einsatzTyp : "av_einsatz",
@@ -120,10 +137,50 @@ function EinsatzErstellenPage() {
       }});
       const f = fahrer.find((x) => x.id === fahrerId);
       toast.success(`Einsatz an ${f?.display_name ?? "Fahrer"} übergeben`);
-      navigate({ to: "/alarmierung" });
+      // Wenn Schlüsselbuch aktiv und Schlüssel-Nr. vorhanden → Übergabe-Dialog öffnen
+      if (schluesselbuchOn && picked.key_number && created?.id) {
+        setHandover({
+          einsatzId: created.id,
+          keyNumber: picked.key_number,
+          fahrerId,
+          fahrerName: f?.display_name ?? "Fahrer",
+        });
+        setTraegerMode("fahrer");
+        setTraegerUserId(fahrerId);
+        setTraegerName(f?.display_name ?? "");
+        setHandoverNote("");
+      } else {
+        navigate({ to: "/alarmierung" });
+      }
     } catch (e: any) {
       toast.error(e.message ?? "Fehler beim Erstellen");
     } finally { setSaving(false); }
+  }
+
+  async function submitHandover() {
+    if (!handover) return;
+    const name = traegerMode === "fahrer" ? handover.fahrerName : traegerName.trim();
+    if (!name) { toast.error("Bitte Träger-Namen angeben"); return; }
+    setHandoverBusy(true);
+    try {
+      await ausgeben({ data: {
+        einsatz_id: handover.einsatzId,
+        key_number: handover.keyNumber,
+        traeger_user_id: traegerMode === "fahrer" ? handover.fahrerId : (traegerUserId || null),
+        traeger_name: name,
+        notiz: handoverNote.trim() || null,
+      }});
+      toast.success("Schlüssel ins Schlüsselbuch eingetragen");
+      setHandover(null);
+      navigate({ to: "/alarmierung" });
+    } catch (e: any) {
+      toast.error(e.message ?? "Fehler beim Eintragen");
+    } finally { setHandoverBusy(false); }
+  }
+
+  function skipHandover() {
+    setHandover(null);
+    navigate({ to: "/alarmierung" });
   }
 
   return (
