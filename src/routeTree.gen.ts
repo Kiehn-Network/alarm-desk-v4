@@ -24,6 +24,7 @@ import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
+import { Route as AuthenticatedDatenImportRouteImport } from './routes/_authenticated/daten-import'
 import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticated/dateien'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
@@ -123,6 +124,12 @@ const AuthenticatedDienstplaeneRoute =
   AuthenticatedDienstplaeneRouteImport.update({
     id: '/dienstplaene',
     path: '/dienstplaene',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDatenImportRoute =
+  AuthenticatedDatenImportRouteImport.update({
+    id: '/daten-import',
+    path: '/daten-import',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedDateienRoute = AuthenticatedDateienRouteImport.update({
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dateien': typeof AuthenticatedDateienRoute
+  '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
@@ -278,6 +286,7 @@ export interface FileRoutesByTo {
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dateien': typeof AuthenticatedDateienRoute
+  '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
@@ -313,6 +322,7 @@ export interface FileRoutesById {
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dateien': typeof AuthenticatedDateienRoute
+  '/_authenticated/daten-import': typeof AuthenticatedDatenImportRoute
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
@@ -350,6 +360,7 @@ export interface FileRouteTypes {
     | '/alarmierung'
     | '/dashboard'
     | '/dateien'
+    | '/daten-import'
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/intrahub'
@@ -385,6 +396,7 @@ export interface FileRouteTypes {
     | '/alarmierung'
     | '/dashboard'
     | '/dateien'
+    | '/daten-import'
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/intrahub'
@@ -419,6 +431,7 @@ export interface FileRouteTypes {
     | '/_authenticated/alarmierung'
     | '/_authenticated/dashboard'
     | '/_authenticated/dateien'
+    | '/_authenticated/daten-import'
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
     | '/_authenticated/intrahub'
@@ -561,6 +574,13 @@ declare module '@tanstack/react-router' {
       path: '/dienstplaene'
       fullPath: '/dienstplaene'
       preLoaderRoute: typeof AuthenticatedDienstplaeneRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/daten-import': {
+      id: '/_authenticated/daten-import'
+      path: '/daten-import'
+      fullPath: '/daten-import'
+      preLoaderRoute: typeof AuthenticatedDatenImportRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dateien': {
@@ -766,6 +786,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDateienRoute: typeof AuthenticatedDateienRoute
+  AuthenticatedDatenImportRoute: typeof AuthenticatedDatenImportRoute
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
   AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
@@ -789,6 +810,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAlarmierungRoute: AuthenticatedAlarmierungRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDateienRoute: AuthenticatedDateienRoute,
+  AuthenticatedDatenImportRoute: AuthenticatedDatenImportRoute,
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
   AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,
