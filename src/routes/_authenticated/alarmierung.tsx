@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail, User, MapPin, Key, Hash, Tag, Car, CircleCheck,
-  MoreHorizontal, FileText, Filter, Info,
+  MoreHorizontal, FileText, Filter, Info, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,9 @@ import { useRole } from "@/hooks/use-role";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
+  editEinsatzFull,
 } from "@/lib/einsaetze.functions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 import { BerichtSendDialog } from "@/components/bericht-send-dialog";
 
