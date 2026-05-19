@@ -109,13 +109,18 @@ function ModulesPanel() {
     queryKey: ["admin-enabled-modules"],
     queryFn: async () => {
       const [mods, dmods] = await Promise.all([
-        supabase.from("app_modules").select("key,name,beschreibung,sort_order").order("sort_order").order("name"),
+        supabase.from("app_modules").select("key,name,beschreibung,sort_order,parent_key").order("sort_order").order("name"),
         supabase.from("domain_modules").select("module_key,enabled"),
       ]);
       if (mods.error) throw mods.error;
       if (dmods.error) throw dmods.error;
       const enabledSet = new Set((dmods.data ?? []).filter((m: any) => m.enabled).map((m: any) => m.module_key));
-      return (mods.data ?? []).filter((m: any) => enabledSet.has(m.key));
+      // A sub-module is only effectively enabled if its parent is also enabled
+      return (mods.data ?? []).filter((m: any) => {
+        if (!enabledSet.has(m.key)) return false;
+        if (m.parent_key && !enabledSet.has(m.parent_key)) return false;
+        return true;
+      });
     },
   });
 
@@ -136,10 +141,13 @@ function ModulesPanel() {
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {list.map((m: any) => (
-            <div key={m.key} className="rounded-lg border border-border bg-background p-4">
+            <div key={m.key} className={`rounded-lg border border-border bg-background p-4 ${m.parent_key ? "ml-4 border-l-2 border-l-primary/40" : ""}`}>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
-                <div className="font-medium text-sm truncate">{m.name}</div>
+                <div className="font-medium text-sm truncate">
+                  {m.parent_key && <span className="text-muted-foreground mr-1">└</span>}
+                  {m.name}
+                </div>
               </div>
               {m.beschreibung && (
                 <p className="text-xs text-muted-foreground mt-1.5">{m.beschreibung}</p>
