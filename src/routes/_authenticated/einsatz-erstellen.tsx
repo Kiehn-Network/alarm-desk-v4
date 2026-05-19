@@ -236,6 +236,27 @@ function EinsatzErstellenPage() {
                 <div className="text-xs text-muted-foreground mt-0.5">Hausnotruf-Einsatz</div>
               </button>
             </div>
+            {einsatzTyp === "hausnotruf" && providerOptions.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border">
+                <Label className="text-xs">Anbieter</Label>
+                <div className="flex flex-wrap gap-2">
+                  {providerOptions.map((p) => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => setHausnotrufProvider(p.key)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                        hausnotrufProvider === p.key
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted/40 hover:bg-muted border-border text-foreground/80"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </section>
         )
       )}
