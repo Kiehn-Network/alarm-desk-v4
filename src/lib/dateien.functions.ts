@@ -23,13 +23,24 @@ export const listDateien = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
-    const { data: dateien, error } = await supabase
-      .from("dateien")
-      .select("*")
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (error) throw new Error(error.message);
+    // Paginierte Abfrage, um den Supabase-Default von 1000 Zeilen zu umgehen
+    const pageSize = 1000;
+    let from = 0;
+    const all: any[] = [];
+    while (true) {
+      const { data, error } = await supabase
+        .from("dateien")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false })
+        .range(from, from + pageSize - 1);
+      if (error) throw new Error(error.message);
+      if (!data || data.length === 0) break;
+      all.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    const dateien = all;
 
     const { data: links } = await supabase
       .from("datei_verknuepfungen")
