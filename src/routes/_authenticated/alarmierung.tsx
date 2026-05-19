@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -521,7 +521,7 @@ function EditDialog({
   const [form, setForm] = useState<any>({});
   const [busy, setBusy] = useState(false);
 
-  useMemo(() => {
+  useEffect(() => {
     if (einsatz) {
       setForm({
         einsatzgrund: einsatz.einsatzgrund ?? "",
