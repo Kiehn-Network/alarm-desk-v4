@@ -229,6 +229,74 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: nu
   );
 }
 
+function SchluesselCard({ entries }: { entries: Array<any> }) {
+  const count = entries.length;
+  const statusLabel: Record<string, string> = {
+    ausgegeben: "Ausgegeben",
+    uebernommen: "Übernommen",
+    rueckgabe_offen: "Rückgabe offen",
+  };
+  const statusTone: Record<string, string> = {
+    ausgegeben: "bg-warning/15 text-warning",
+    uebernommen: "bg-info/15 text-info",
+    rueckgabe_offen: "bg-destructive/15 text-destructive",
+  };
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 transition hover:border-primary/40" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-start justify-between">
+        <div className="size-10 rounded-lg grid place-items-center bg-warning/15 text-warning">
+          <KeyRound className="size-5" />
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="size-7 rounded-full grid place-items-center text-muted-foreground hover:bg-accent hover:text-foreground transition"
+              aria-label="Schlüssel-Details anzeigen"
+            >
+              <Info className="size-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-96 p-0">
+            <div className="px-4 py-3 border-b border-border">
+              <div className="text-sm font-semibold">Schlüssel unterwegs</div>
+              <div className="text-xs text-muted-foreground">{count} aktuell nicht in der Zentrale</div>
+            </div>
+            <div className="max-h-80 overflow-y-auto divide-y divide-border">
+              {count === 0 ? (
+                <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+                  Alle Schlüssel sind in der Zentrale.
+                </div>
+              ) : (
+                entries.map((e) => (
+                  <div key={e.id} className="px-4 py-3 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-mono font-semibold">#{e.key_number}</div>
+                      <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${statusTone[e.status] ?? "bg-muted text-muted-foreground"}`}>
+                        {statusLabel[e.status] ?? e.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Träger: <span className="text-foreground">{e.traeger_name || "—"}</span>
+                    </div>
+                    {(e.kunden_name || e.address) && (
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {[e.kunden_name, e.address].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <div className="mt-4 text-3xl font-bold tabular-nums">{count}</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Schlüssel unterwegs</div>
+    </div>
+  );
+}
+
 function KV({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-sm">
