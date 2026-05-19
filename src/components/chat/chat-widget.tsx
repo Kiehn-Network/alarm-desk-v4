@@ -189,15 +189,6 @@ export function ChatWidget() {
   );
 }
 
-function ConvList({
-  convs, unread, lastMsg, titleOf, onPick,
-}: {
-  convs: Conversation[];
-  unread: Record<string, number>;
-  lastMsg: Record<string, Message | null>;
-  titleOf: (c: Conversation) => string;
-  onPick: (c: Conversation) => void;
-}) {
 function Avatar({ p, size = 40 }: { p?: Profile; size?: number }) {
   return (
     <div
