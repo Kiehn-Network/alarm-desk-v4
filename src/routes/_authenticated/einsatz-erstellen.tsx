@@ -48,7 +48,17 @@ function EinsatzErstellenPage() {
   const [grundId, setGrundId] = useState<string | null>(null);
   const [fahrerId, setFahrerId] = useState("");
   const [einsatzTyp, setEinsatzTyp] = useState<"av_einsatz" | "hausnotruf">("av_einsatz");
+  const [hausnotrufProvider, setHausnotrufProvider] = useState<"malteser" | "johanniter" | "lgwa" | "">("");
   const [saving, setSaving] = useState(false);
+
+  const malteserOn = modules?.has("malteser") ?? false;
+  const johanniterOn = modules?.has("johanniter") ?? false;
+  const lgwaOn = modules?.has("lgwa") ?? false;
+  const providerOptions = [
+    malteserOn && { key: "malteser" as const, label: "Malteser" },
+    johanniterOn && { key: "johanniter" as const, label: "Johanniter" },
+    lgwaOn && { key: "lgwa" as const, label: "LGWA" },
+  ].filter(Boolean) as { key: "malteser" | "johanniter" | "lgwa"; label: string }[];
 
   const { data: searchData, isFetching } = useQuery({
     queryKey: ["kunden-search", activeQuery],
@@ -89,12 +99,16 @@ function EinsatzErstellenPage() {
     if (!picked) { toast.error("Bitte zuerst einen Kunden suchen und auswählen"); return; }
     if (!grund.trim()) { toast.error("Bitte Einsatzgrund eingeben oder auswählen"); return; }
     if (!fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
+    if (hausnotrufEnabled && einsatzTyp === "hausnotruf" && providerOptions.length > 0 && !hausnotrufProvider) {
+      toast.error("Bitte einen Hausnotruf-Anbieter wählen"); return;
+    }
     setSaving(true);
     try {
       await create({ data: {
         einsatzgrund: grund.trim(),
         einsatzgrund_id: grundId,
         einsatz_typ: hausnotrufEnabled ? einsatzTyp : "av_einsatz",
+        hausnotruf_provider: einsatzTyp === "hausnotruf" ? (hausnotrufProvider || null) : null,
         kunden_name: picked.kunden_name,
         address: picked.address,
         key_number: picked.key_number,
