@@ -1515,6 +1515,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_chat_participant: {
+        Args: { _conversation_id: string; _user_id?: string }
+        Returns: boolean
+      }
       is_domain_admin: { Args: { _domain_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       move_to_dlq: {
