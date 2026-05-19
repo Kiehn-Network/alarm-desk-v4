@@ -6,6 +6,7 @@ import { MaintenanceBanner } from "@/components/layout/maintenance-banner";
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { ThemeApplier } from "@/components/theme-applier";
 import { ChatWidget } from "@/components/chat/chat-widget";
+import { TourLauncher } from "@/components/tour/tour-launcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocationTracker } from "@/hooks/use-location-tracker";
 
@@ -41,6 +42,7 @@ function AuthLayout() {
         </main>
       </div>
       <ChatWidget />
+      <TourLauncher />
     </div>
   );
 }

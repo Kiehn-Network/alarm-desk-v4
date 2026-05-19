@@ -1624,6 +1624,39 @@ export type Database = {
           },
         ]
       }
+      user_tour_settings: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          domain_id: string
+          enabled_steps: string[]
+          tour_enabled: boolean
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          domain_id: string
+          enabled_steps?: string[]
+          tour_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          domain_id?: string
+          enabled_steps?: string[]
+          tour_enabled?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

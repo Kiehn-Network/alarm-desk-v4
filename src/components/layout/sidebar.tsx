@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users,
-  Receipt, Upload,
+  Receipt, Upload, HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +54,9 @@ const sections: Section[] = [
     { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher"] },
     { to: "/admin", label: "Admin Center", icon: Settings, roles: ["admin"] },
     { to: "/superadmin", label: "SuperAdmin", icon: Crown, roles: ["superadmin"] },
+  ]},
+  { label: "Hilfe", items: [
+    { to: "/hilfe", label: "Hilfe & Anleitung", icon: HelpCircle },
   ]},
 ];
 
