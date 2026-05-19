@@ -103,6 +103,24 @@ export const toggleDomainModule = createServerFn({ method: "POST" })
       domain_id: data.domain_id, module_key: data.module_key, enabled: data.enabled,
     }, { onConflict: "domain_id,module_key" });
     if (error) throw new Error(error.message);
+
+    // Cascade: if a parent module is disabled, also disable all its sub-modules
+    if (!data.enabled) {
+      const { data: children } = await supabaseAdmin
+        .from("app_modules")
+        .select("key")
+        .eq("parent_key", data.module_key);
+      if (children && children.length > 0) {
+        await supabaseAdmin.from("domain_modules").upsert(
+          children.map((c: any) => ({
+            domain_id: data.domain_id,
+            module_key: c.key,
+            enabled: false,
+          })),
+          { onConflict: "domain_id,module_key" },
+        );
+      }
+    }
     return { ok: true };
   });
 
