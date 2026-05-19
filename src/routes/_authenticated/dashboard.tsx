@@ -1,9 +1,9 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, useEffect } from "react";
 import {
-  BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users,
+  BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
 } from "lucide-react";
 import { getDashboardStats } from "@/lib/dashboard.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,6 +11,8 @@ import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { Info } from "lucide-react";
+import { useDomainModules } from "@/hooks/use-domain-modules";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -39,6 +41,35 @@ function DashboardContent() {
   const fetch = useServerFn(getDashboardStats);
   const qc = useQueryClient();
   const { data: settings } = useAppSettings();
+  const { data: modules } = useDomainModules();
+  const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
+
+  const { data: schluessel } = useQuery({
+    queryKey: ["dashboard-schluessel-unterwegs"],
+    enabled: schluesselbuchAktiv,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("schluessel_buch")
+        .select("id, key_number, traeger_name, kunden_name, address, status, ausgegeben_at")
+        .in("status", ["ausgegeben", "uebernommen", "rueckgabe_offen"])
+        .order("ausgegeben_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data ?? [];
+    },
+    refetchInterval: 30000,
+  });
+
+  useEffect(() => {
+    if (!schluesselbuchAktiv) return;
+    const ch = supabase
+      .channel("dashboard-schluessel-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "schluessel_buch" },
+        () => qc.invalidateQueries({ queryKey: ["dashboard-schluessel-unterwegs"] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc, schluesselbuchAktiv]);
+
   const { data } = useSuspenseQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch(),
@@ -107,6 +138,9 @@ function DashboardContent() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {cards.map((c) => <StatCard key={c.label} {...c} />)}
+        {schluesselbuchAktiv && (
+          <SchluesselCard entries={schluessel ?? []} />
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -191,6 +225,74 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: nu
       </div>
       <div className="mt-4 text-3xl font-bold tabular-nums">{value}</div>
       <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">{label}</div>
+    </div>
+  );
+}
+
+function SchluesselCard({ entries }: { entries: Array<any> }) {
+  const count = entries.length;
+  const statusLabel: Record<string, string> = {
+    ausgegeben: "Ausgegeben",
+    uebernommen: "Übernommen",
+    rueckgabe_offen: "Rückgabe offen",
+  };
+  const statusTone: Record<string, string> = {
+    ausgegeben: "bg-warning/15 text-warning",
+    uebernommen: "bg-info/15 text-info",
+    rueckgabe_offen: "bg-destructive/15 text-destructive",
+  };
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 transition hover:border-primary/40" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-start justify-between">
+        <div className="size-10 rounded-lg grid place-items-center bg-warning/15 text-warning">
+          <KeyRound className="size-5" />
+        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="size-7 rounded-full grid place-items-center text-muted-foreground hover:bg-accent hover:text-foreground transition"
+              aria-label="Schlüssel-Details anzeigen"
+            >
+              <Info className="size-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-96 p-0">
+            <div className="px-4 py-3 border-b border-border">
+              <div className="text-sm font-semibold">Schlüssel unterwegs</div>
+              <div className="text-xs text-muted-foreground">{count} aktuell nicht in der Zentrale</div>
+            </div>
+            <div className="max-h-80 overflow-y-auto divide-y divide-border">
+              {count === 0 ? (
+                <div className="px-4 py-6 text-sm text-muted-foreground text-center">
+                  Alle Schlüssel sind in der Zentrale.
+                </div>
+              ) : (
+                entries.map((e) => (
+                  <div key={e.id} className="px-4 py-3 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="font-mono font-semibold">#{e.key_number}</div>
+                      <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full ${statusTone[e.status] ?? "bg-muted text-muted-foreground"}`}>
+                        {statusLabel[e.status] ?? e.status}
+                      </span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Träger: <span className="text-foreground">{e.traeger_name || "—"}</span>
+                    </div>
+                    {(e.kunden_name || e.address) && (
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {[e.kunden_name, e.address].filter(Boolean).join(" · ")}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+      <div className="mt-4 text-3xl font-bold tabular-nums">{count}</div>
+      <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Schlüssel unterwegs</div>
     </div>
   );
 }
