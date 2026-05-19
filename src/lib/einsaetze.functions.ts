@@ -23,6 +23,25 @@ const createSchema = z.object({
 
 const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
 
+const isoOrNull = z.union([z.string().datetime({ offset: true }), z.literal("")]).optional().nullable();
+
+const editSchema = z.object({
+  id: z.string().uuid(),
+  einsatzgrund: z.string().trim().min(1).max(200).optional(),
+  kunden_name: z.string().max(200).optional().nullable(),
+  address: z.string().max(255).optional().nullable(),
+  key_number: z.string().max(100).optional().nullable(),
+  anlagen_nr: z.string().max(100).optional().nullable(),
+  teilnehmer_id: z.string().max(100).optional().nullable(),
+  beschreibung: z.string().max(4000).optional().nullable(),
+  assigned_to: z.string().uuid().optional().nullable(),
+  status: z.enum(["in_bearbeitung", "abgeschlossen"]).optional(),
+  vor_ort_am: isoOrNull,
+  abfahrt_am: isoOrNull,
+  einsatz_ende_am: isoOrNull,
+  abgeschlossen_am: isoOrNull,
+});
+
 const TRACKABLE = [
   "einsatzgrund","kunden_name","address","key_number","anlagen_nr",
   "teilnehmer_id","prioritaet","beschreibung","geplant_am","status",
@@ -175,6 +194,45 @@ export const updateEinsatz = createServerFn({ method: "POST" })
       .from("einsaetze").update(cleanPatch).eq("id", id).select().single();
     if (error) throw new Error(error.message);
     await logHistory(supabase, userId, id, before, cleanPatch, domainId);
+    return row;
+  });
+
+export const editEinsatzFull = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => editSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    // Nur Admin/Dispatcher/Superadmin dürfen Einsätze vollständig bearbeiten
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", userId);
+    const canEdit = (roles ?? []).some((r: any) =>
+      r.role === "admin" || r.role === "dispatcher" || r.role === "superadmin");
+    if (!canEdit) throw new Error("Keine Berechtigung");
+
+    const { id, ...rest } = data;
+    const { data: before, error: bErr } = await supabase
+      .from("einsaetze").select("*").eq("id", id).single();
+    if (bErr) throw new Error(bErr.message);
+
+    const patch: any = {};
+    for (const [k, v] of Object.entries(rest)) {
+      if (v === undefined) continue;
+      patch[k] = v === "" ? null : v;
+    }
+    // Status-bezogene Zeitfelder automatisch pflegen
+    if (patch.status === "abgeschlossen" && !patch.abgeschlossen_am && !before?.abgeschlossen_am) {
+      patch.abgeschlossen_am = new Date().toISOString();
+    }
+    if (patch.status === "in_bearbeitung" && before?.status === "abgeschlossen") {
+      // Reaktivieren: Abschluss-Zeitstempel entfernen, wenn nicht explizit gesetzt
+      if (patch.abgeschlossen_am === undefined) patch.abgeschlossen_am = null;
+    }
+
+    const { data: row, error } = await supabase
+      .from("einsaetze").update(patch).eq("id", id).select().single();
+    if (error) throw new Error(error.message);
+    await logHistory(supabase, userId, id, before ?? {}, patch, domainId);
     return row;
   });
 
