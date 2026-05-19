@@ -250,6 +250,10 @@ const THEMES = [
   { value: "emerald",  label: "Emerald Pro",  swatches: ["#0f2a22", "#22c08c", "#d4a84c"] },
   { value: "slate",    label: "Slate Mono",   swatches: ["#1c1e22", "#cfd2d7", "#2a2d33"] },
   { value: "sunset",   label: "Sunset Warm",  swatches: ["#2a1410", "#ff7a3a", "#e23a55"] },
+  { value: "crimson",  label: "Crimson Red",  swatches: ["#2a1014", "#e23a4a", "#c4488a"] },
+  { value: "violet",   label: "Royal Violet", swatches: ["#1e1530", "#8b5cf6", "#d946ef"] },
+  { value: "ocean",    label: "Deep Ocean",   swatches: ["#0c1f2a", "#3aa8d6", "#5cd2c8"] },
+  { value: "mono",     label: "Pure Mono",    swatches: ["#0a0a0a", "#ffffff", "#2a2a2a"] },
 ] as const;
 
 function ThemeSettings() {
