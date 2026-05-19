@@ -723,6 +723,7 @@ export type Database = {
           created_by: string
           domain_id: string
           einsatz_ende_am: string | null
+          einsatz_typ: string
           einsatzgrund: string
           einsatzgrund_id: string | null
           geplant_am: string | null
@@ -758,6 +759,7 @@ export type Database = {
           created_by: string
           domain_id: string
           einsatz_ende_am?: string | null
+          einsatz_typ?: string
           einsatzgrund: string
           einsatzgrund_id?: string | null
           geplant_am?: string | null
@@ -793,6 +795,7 @@ export type Database = {
           created_by?: string
           domain_id?: string
           einsatz_ende_am?: string | null
+          einsatz_typ?: string
           einsatzgrund?: string
           einsatzgrund_id?: string | null
           geplant_am?: string | null
