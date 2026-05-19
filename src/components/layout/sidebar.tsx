@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users,
-  Receipt,
+  Receipt, Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,6 +47,7 @@ const sections: Section[] = [
   { label: "Tools", items: [
     { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"] },
     { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher"] },
+    { to: "/daten-import", label: "Daten-Import", icon: Upload, roles: ["admin"] },
   ]},
   { label: "Center", items: [
     { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher"] },
