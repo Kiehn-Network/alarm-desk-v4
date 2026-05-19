@@ -1,9 +1,9 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
-import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
+import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, useEffect } from "react";
 import {
-  BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users,
+  BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
 } from "lucide-react";
 import { getDashboardStats } from "@/lib/dashboard.functions";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,6 +11,8 @@ import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { Info } from "lucide-react";
+import { useDomainModules } from "@/hooks/use-domain-modules";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -39,6 +41,35 @@ function DashboardContent() {
   const fetch = useServerFn(getDashboardStats);
   const qc = useQueryClient();
   const { data: settings } = useAppSettings();
+  const { data: modules } = useDomainModules();
+  const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
+
+  const { data: schluessel } = useQuery({
+    queryKey: ["dashboard-schluessel-unterwegs"],
+    enabled: schluesselbuchAktiv,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("schluessel_buch")
+        .select("id, key_number, traeger_name, kunden_name, address, status, ausgegeben_at")
+        .in("status", ["ausgegeben", "uebernommen", "rueckgabe_offen"])
+        .order("ausgegeben_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data ?? [];
+    },
+    refetchInterval: 30000,
+  });
+
+  useEffect(() => {
+    if (!schluesselbuchAktiv) return;
+    const ch = supabase
+      .channel("dashboard-schluessel-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "schluessel_buch" },
+        () => qc.invalidateQueries({ queryKey: ["dashboard-schluessel-unterwegs"] }))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [qc, schluesselbuchAktiv]);
+
   const { data } = useSuspenseQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch(),
@@ -107,6 +138,9 @@ function DashboardContent() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {cards.map((c) => <StatCard key={c.label} {...c} />)}
+        {schluesselbuchAktiv && (
+          <SchluesselCard entries={schluessel ?? []} />
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
