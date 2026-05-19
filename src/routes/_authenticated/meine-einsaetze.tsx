@@ -19,6 +19,10 @@ import { useRole } from "@/hooks/use-role";
 import {
   listMeineEinsaetze, abschliessenEinsatz, listEinsatzHistorie, setEinsatzZeit,
 } from "@/lib/einsaetze.functions";
+import {
+  listSchluesselForEinsatz, uebernehmenSchluessel, rueckgabeAnfragen,
+} from "@/lib/schluesselbuch.functions";
+import { useDomainModules } from "@/hooks/use-domain-modules";
 import { HoldButton } from "@/components/hold-button";
 import { EinsatzDateienDialog } from "@/components/einsatz-dateien-dialog";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
@@ -50,6 +54,8 @@ function MeineEinsaetzePage() {
   const list = useServerFn(listMeineEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const setZeit = useServerFn(setEinsatzZeit);
+  const { data: modules } = useDomainModules();
+  const schluesselbuchOn = modules?.has("schluesselbuch") ?? false;
 
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["meine-einsaetze"],
