@@ -44,6 +44,22 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
   abgelehnt:      { label: "Abgelehnt",     cls: "bg-red-500/15 text-red-400 border border-red-500/30" },
 };
 
+const PROVIDER_LABEL: Record<string, string> = {
+  malteser: "Malteser",
+  johanniter: "Johanniter",
+  lgwa: "LGWA",
+};
+
+function ProviderChip({ provider }: { provider?: string | null }) {
+  if (!provider) return null;
+  const label = PROVIDER_LABEL[provider] ?? provider;
+  return (
+    <span className="text-[10px] px-1.5 py-0.5 rounded font-medium border bg-amber-500/10 text-amber-400 border-amber-500/30 whitespace-nowrap">
+      {label}
+    </span>
+  );
+}
+
 function fmt(d?: string | null) {
   if (!d) return "–";
   return new Date(d).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -123,6 +139,10 @@ function InfoDialog({
           {e.key_number && <InfoRow icon={<Key className="size-4" />} label="Schlüssel-Nr." value={e.key_number} />}
           {e.anlagen_nr && <InfoRow icon={<Tag className="size-4" />} label="Anlagen-Nr." value={e.anlagen_nr} />}
           {e.teilnehmer_id && <InfoRow icon={<Hash className="size-4" />} label="Teilnehmer-ID" value={e.teilnehmer_id} />}
+          {isHausnotruf && e.hausnotruf_provider && (
+            <InfoRow icon={<Tag className="size-4" />} label="Subprovider"
+              value={PROVIDER_LABEL[e.hausnotruf_provider] ?? e.hausnotruf_provider} />
+          )}
           {e.assigned_to && <InfoRow icon={<Car className="size-4" />} label="Fahrer" value={profiles[e.assigned_to] ?? "–"} />}
           <InfoRow icon={<User className="size-4" />} label="Erstellt von" value={profiles[e.created_by] ?? "–"} />
           <InfoRow icon={<Clock className="size-4" />} label="Erstellt am" value={fmt(e.created_at)} />
@@ -310,6 +330,7 @@ function AlarmierungPage() {
                           <span className="font-medium text-foreground truncate" title={e.einsatzgrund}>
                             {e.einsatzgrund}
                           </span>
+                          {isHausnotruf && <ProviderChip provider={e.hausnotruf_provider} />}
                         </div>
                         {e.kunden_name && (
                           <div className="text-xs text-muted-foreground truncate mt-0.5">{e.kunden_name}</div>
