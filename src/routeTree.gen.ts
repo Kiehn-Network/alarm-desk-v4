@@ -30,6 +30,7 @@ import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenti
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
+import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
 import { Route as AuthenticatedNotdienstRohrserviceRouteRouteImport } from './routes/_authenticated/notdienst/rohrservice/route'
 import { Route as AuthenticatedNotdienstBudekoRouteRouteImport } from './routes/_authenticated/notdienst/budeko/route'
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
@@ -155,6 +156,12 @@ const AuthenticatedNotdienstLutzRoute =
     path: '/notdienst/lutz',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAbrechnungProviderRoute =
+  AuthenticatedAbrechnungProviderRouteImport.update({
+    id: '/abrechnung/$provider',
+    path: '/abrechnung/$provider',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedNotdienstRohrserviceRouteRoute =
   AuthenticatedNotdienstRohrserviceRouteRouteImport.update({
     id: '/notdienst/rohrservice',
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
+  '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
@@ -274,6 +282,7 @@ export interface FileRoutesByTo {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
+  '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRoute
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
@@ -309,6 +318,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
+  '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRoute
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/_authenticated/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
+    | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
     | '/notdienst/budeko/mitarbeiter'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
+    | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
     | '/notdienst/budeko/mitarbeiter'
@@ -409,6 +421,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/rohrservice'
+    | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/version'
     | '/_authenticated/notdienst/budeko/mitarbeiter'
@@ -579,6 +592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstLutzRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/abrechnung/$provider': {
+      id: '/_authenticated/abrechnung/$provider'
+      path: '/abrechnung/$provider'
+      fullPath: '/abrechnung/$provider'
+      preLoaderRoute: typeof AuthenticatedAbrechnungProviderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/notdienst/rohrservice': {
       id: '/_authenticated/notdienst/rohrservice'
       path: '/notdienst/rohrservice'
@@ -725,6 +745,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
   AuthenticatedNotdienstBudekoRouteRoute: typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   AuthenticatedNotdienstRohrserviceRouteRoute: typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
+  AuthenticatedAbrechnungProviderRoute: typeof AuthenticatedAbrechnungProviderRoute
   AuthenticatedNotdienstLutzRoute: typeof AuthenticatedNotdienstLutzRoute
 }
 
@@ -749,6 +770,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedNotdienstBudekoRouteRouteWithChildren,
   AuthenticatedNotdienstRohrserviceRouteRoute:
     AuthenticatedNotdienstRohrserviceRouteRouteWithChildren,
+  AuthenticatedAbrechnungProviderRoute: AuthenticatedAbrechnungProviderRoute,
   AuthenticatedNotdienstLutzRoute: AuthenticatedNotdienstLutzRoute,
 }
 
