@@ -49,6 +49,18 @@ function fmt(d?: string | null) {
   return new Date(d).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-2 min-w-0">
+      <span className="text-muted-foreground mt-0.5 shrink-0">{icon}</span>
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wide text-muted-foreground leading-none">{label}</div>
+        <div className="text-sm text-foreground/90 truncate" title={value}>{value}</div>
+      </div>
+    </div>
+  );
+}
+
 function AlarmierungPage() {
   const { canManage } = useRole();
   const { data: modules } = useDomainModules();
