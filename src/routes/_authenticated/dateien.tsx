@@ -68,6 +68,8 @@ function DateienPage() {
   const [detailFor, setDetailFor] = useState<Datei | null>(null);
   const [editFor, setEditFor] = useState<Datei | null>(null);
   const [tab, setTab] = useState<"dateien" | "kunden">("dateien");
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const dateien = data?.dateien ?? [];
   const links = data?.links ?? [];
@@ -80,6 +82,12 @@ function DateienPage() {
         .filter(Boolean).some((v) => v!.toLowerCase().includes(s)),
     );
   }, [dateien, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+  // Reset auf Seite 1 wenn Suche sich ändert
+  useEffect(() => { setPage(1); }, [search, tab]);
 
   const linkCount = (id: string) =>
     links.filter((l) => l.datei_a_id === id || l.datei_b_id === id).length;
@@ -156,7 +164,7 @@ function DateienPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((d) => (
+              {pageItems.map((d) => (
                 <TableRow key={d.id} className="cursor-pointer" onClick={() => setDetailFor(d)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
@@ -191,6 +199,21 @@ function DateienPage() {
               ))}
             </TableBody>
           </Table>
+        )}
+        {filtered.length > 0 && (
+          <div className="px-4 lg:px-5 py-3 border-t border-border flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">
+              {filtered.length} {filtered.length === 1 ? "Eintrag" : "Einträge"} · Seite {safePage} von {totalPages}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="gap-1">
+                <ChevronLeft className="size-4" /> Zurück
+              </Button>
+              <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage(safePage + 1)} className="gap-1">
+                Weiter <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          </div>
         )}
       </div>
       )}
