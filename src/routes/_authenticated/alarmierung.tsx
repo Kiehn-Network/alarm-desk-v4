@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail, User, MapPin, Key, Hash, Tag, Car, CircleCheck,
-  MoreHorizontal, FileText, Filter, Info, Pencil,
+  MoreHorizontal, FileText, Filter, Info, Pencil, Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,7 @@ import { useRole } from "@/hooks/use-role";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
-  editEinsatzFull,
+  editEinsatzFull, deleteEinsatz,
 } from "@/lib/einsaetze.functions";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
@@ -177,13 +177,14 @@ function InfoDialog({
 }
 
 function AlarmierungPage() {
-  const { canManage } = useRole();
+  const { canManage, isAdmin } = useRole();
   const { data: modules } = useDomainModules();
   const hausnotrufEnabled = modules?.has("hausnotruf") ?? false;
   const list = useServerFn(listEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const stornieren = useServerFn(stornierenEinsatz);
   const editFull = useServerFn(editEinsatzFull);
+  const loeschen = useServerFn(deleteEinsatz);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
@@ -197,6 +198,8 @@ function AlarmierungPage() {
   const [stornoGrund, setStornoGrund] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
   const [editFor, setEditFor] = useState<Einsatz | null>(null);
+  const [deleteFor, setDeleteFor] = useState<Einsatz | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -399,6 +402,17 @@ function AlarmierungPage() {
                                     onClick={() => { setStornoFor(e); setStornoGrund(""); }}
                                   >
                                     <Ban className="size-4 mr-2" /> Stornieren
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                              {isAdmin && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-red-400 focus:text-red-300"
+                                    onClick={() => setDeleteFor(e)}
+                                  >
+                                    <Trash2 className="size-4 mr-2" /> Löschen
                                   </DropdownMenuItem>
                                 </>
                               )}
