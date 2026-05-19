@@ -15,7 +15,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
 import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
-import { Route as AuthenticatedSchluesselbuchRouteImport } from './routes/_authenticated/schluesselbuch'
 import { Route as AuthenticatedRevierCenterRouteImport } from './routes/_authenticated/revier-center'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
@@ -74,12 +73,6 @@ const AuthenticatedSchluesseluebergabeRoute =
   AuthenticatedSchluesseluebergabeRouteImport.update({
     id: '/schluesseluebergabe',
     path: '/schluesseluebergabe',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSchluesselbuchRoute =
-  AuthenticatedSchluesselbuchRouteImport.update({
-    id: '/schluesselbuch',
-    path: '/schluesselbuch',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedRevierCenterRoute =
@@ -259,7 +252,6 @@ export interface FileRoutesByFullPath {
   '/monitor': typeof AuthenticatedMonitorRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/revier-center': typeof AuthenticatedRevierCenterRoute
-  '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
@@ -295,7 +287,6 @@ export interface FileRoutesByTo {
   '/monitor': typeof AuthenticatedMonitorRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/revier-center': typeof AuthenticatedRevierCenterRoute
-  '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
@@ -331,7 +322,6 @@ export interface FileRoutesById {
   '/_authenticated/monitor': typeof AuthenticatedMonitorRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRoute
-  '/_authenticated/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/_authenticated/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
@@ -369,7 +359,6 @@ export interface FileRouteTypes {
     | '/monitor'
     | '/profil'
     | '/revier-center'
-    | '/schluesselbuch'
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
@@ -405,7 +394,6 @@ export interface FileRouteTypes {
     | '/monitor'
     | '/profil'
     | '/revier-center'
-    | '/schluesselbuch'
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
@@ -440,7 +428,6 @@ export interface FileRouteTypes {
     | '/_authenticated/monitor'
     | '/_authenticated/profil'
     | '/_authenticated/revier-center'
-    | '/_authenticated/schluesselbuch'
     | '/_authenticated/schluesseluebergabe'
     | '/_authenticated/service-center'
     | '/_authenticated/superadmin'
@@ -511,13 +498,6 @@ declare module '@tanstack/react-router' {
       path: '/schluesseluebergabe'
       fullPath: '/schluesseluebergabe'
       preLoaderRoute: typeof AuthenticatedSchluesseluebergabeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/schluesselbuch': {
-      id: '/_authenticated/schluesselbuch'
-      path: '/schluesselbuch'
-      fullPath: '/schluesselbuch'
-      preLoaderRoute: typeof AuthenticatedSchluesselbuchRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/revier-center': {
@@ -795,7 +775,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMonitorRoute: typeof AuthenticatedMonitorRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedRevierCenterRoute: typeof AuthenticatedRevierCenterRoute
-  AuthenticatedSchluesselbuchRoute: typeof AuthenticatedSchluesselbuchRoute
   AuthenticatedSchluesseluebergabeRoute: typeof AuthenticatedSchluesseluebergabeRoute
   AuthenticatedServiceCenterRoute: typeof AuthenticatedServiceCenterRoute
   AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
@@ -819,7 +798,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMonitorRoute: AuthenticatedMonitorRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedRevierCenterRoute: AuthenticatedRevierCenterRoute,
-  AuthenticatedSchluesselbuchRoute: AuthenticatedSchluesselbuchRoute,
   AuthenticatedSchluesseluebergabeRoute: AuthenticatedSchluesseluebergabeRoute,
   AuthenticatedServiceCenterRoute: AuthenticatedServiceCenterRoute,
   AuthenticatedSuperadminRoute: AuthenticatedSuperadminRoute,
