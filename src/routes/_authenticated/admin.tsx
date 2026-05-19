@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Users, ShieldCheck, FileText, Siren, Tag, Plus, Pencil, Trash2,
   KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
+  Boxes, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,13 +89,65 @@ function AdminPage() {
         <TabsList>
           <TabsTrigger value="users"><Users className="size-4 mr-2" />Benutzer</TabsTrigger>
           <TabsTrigger value="gruende"><Tag className="size-4 mr-2" />Einsatzgründe</TabsTrigger>
+          <TabsTrigger value="modules"><Boxes className="size-4 mr-2" />Module</TabsTrigger>
           <TabsTrigger value="system"><SettingsIcon className="size-4 mr-2" />System</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersPanel /></TabsContent>
         <TabsContent value="gruende"><GruendePanel /></TabsContent>
+        <TabsContent value="modules"><ModulesPanel /></TabsContent>
         <TabsContent value="system"><SystemSettingsPanel /></TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ---------------- Module (read-only) ----------------
+
+function ModulesPanel() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-enabled-modules"],
+    queryFn: async () => {
+      const [mods, dmods] = await Promise.all([
+        supabase.from("app_modules").select("key,name,beschreibung,sort_order").order("sort_order").order("name"),
+        supabase.from("domain_modules").select("module_key,enabled"),
+      ]);
+      if (mods.error) throw mods.error;
+      if (dmods.error) throw dmods.error;
+      const enabledSet = new Set((dmods.data ?? []).filter((m: any) => m.enabled).map((m: any) => m.module_key));
+      return (mods.data ?? []).filter((m: any) => enabledSet.has(m.key));
+    },
+  });
+
+  if (isLoading) return <div className="text-sm text-muted-foreground">Lade…</div>;
+  const list = data ?? [];
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center gap-2 mb-4">
+        <Boxes className="size-4 text-primary" />
+        <h3 className="font-semibold">Aktivierte Module</h3>
+      </div>
+      <p className="text-xs text-muted-foreground mb-4">
+        Übersicht der für diese Domäne freigeschalteten Module. Aktivierung erfolgt durch den SuperAdmin.
+      </p>
+      {list.length === 0 ? (
+        <div className="text-sm text-muted-foreground py-6 text-center">Keine Module aktiviert.</div>
+      ) : (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {list.map((m: any) => (
+            <div key={m.key} className="rounded-lg border border-border bg-background p-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                <div className="font-medium text-sm truncate">{m.name}</div>
+              </div>
+              {m.beschreibung && (
+                <p className="text-xs text-muted-foreground mt-1.5">{m.beschreibung}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
