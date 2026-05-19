@@ -2,13 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Clock, Users, History as HistoryIcon, Info } from "lucide-react";
+import { Search, Clock, Users, History as HistoryIcon, Info, Pencil, FileText, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { searchKundenEinsaetze, listEinsatzHistorie } from "@/lib/einsaetze.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { DateiEditDialog, type DateiLike } from "@/components/datei-edit-dialog";
 
 export const Route = createFileRoute("/_authenticated/kunden")({
   component: KundenPage,
@@ -52,6 +54,8 @@ function KundenPage() {
   const [submitted, setSubmitted] = useState({ q: "", from: "" as string, to: "" as string });
   const [historyFor, setHistoryFor] = useState<any | null>(null);
   const [infoFor, setInfoFor] = useState<any | null>(null);
+  const [editKundeFor, setEditKundeFor] = useState<any | null>(null);
+  const [editDatei, setEditDatei] = useState<DateiLike | null>(null);
 
   const { data, isFetching } = useQuery({
     queryKey: ["kunden-einsaetze", submitted],
@@ -160,6 +164,9 @@ function KundenPage() {
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setInfoFor(e)}>
                           <Info className="size-4" /> Info
                         </Button>
+                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setEditKundeFor(e)}>
+                          <Pencil className="size-4" /> Bearbeiten
+                        </Button>
                       </div>
                     </li>
                   ))}
@@ -172,7 +179,84 @@ function KundenPage() {
 
       <HistorieDialog einsatz={historyFor} onClose={() => setHistoryFor(null)} />
       <InfoDialog einsatz={infoFor} profiles={profiles} onClose={() => setInfoFor(null)} />
+      <KundeDateienDialog
+        einsatz={editKundeFor}
+        onClose={() => setEditKundeFor(null)}
+        onPick={(d) => { setEditKundeFor(null); setEditDatei(d); }}
+      />
+      {editDatei && (
+        <DateiEditDialog datei={editDatei} onClose={() => setEditDatei(null)} />
+      )}
     </div>
+  );
+}
+
+function KundeDateienDialog({
+  einsatz, onClose, onPick,
+}: { einsatz: any | null; onClose: () => void; onPick: (d: DateiLike) => void }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["kunde-dateien", einsatz?.id],
+    enabled: !!einsatz,
+    queryFn: async () => {
+      const name = (einsatz!.kunden_name ?? "").trim();
+      const key = (einsatz!.key_number ?? "").trim();
+      let q = supabase.from("dateien").select("*").is("deleted_at", null).limit(100);
+      const ors: string[] = [];
+      if (name) ors.push(`kunden_name.ilike.%${name}%`);
+      if (key) ors.push(`key_number.eq.${key}`);
+      if (ors.length === 0) return [];
+      q = q.or(ors.join(","));
+      const { data, error } = await q;
+      if (error) throw new Error(error.message);
+      return (data ?? []) as DateiLike[];
+    },
+  });
+
+  if (!einsatz) return null;
+  const dateien = data ?? [];
+
+  return (
+    <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="size-4 text-primary" /> Kunden-Einstellungen
+          </DialogTitle>
+          <DialogDescription>
+            {einsatz.kunden_name || "(ohne Kunde)"} · Datei wählen, um zu bearbeiten
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="p-6 text-center"><Loader2 className="size-5 animate-spin mx-auto text-muted-foreground" /></div>
+        ) : dateien.length === 0 ? (
+          <div className="p-6 text-sm text-center text-muted-foreground">
+            Keine passenden Datei-Einträge gefunden. Lege in der Datei-Verwaltung einen Eintrag mit diesem Kundennamen oder dieser Schlüssel-Nr. an.
+          </div>
+        ) : (
+          <ul className="divide-y divide-border rounded-md border border-border max-h-[60vh] overflow-y-auto">
+            {dateien.map((d) => (
+              <li key={d.id}>
+                <button
+                  className="w-full text-left px-3 py-2.5 hover:bg-muted/50 transition flex items-center gap-3"
+                  onClick={() => onPick(d)}
+                >
+                  <FileText className="size-4 text-primary shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{d.filename}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {[d.kunden_name, d.address, d.key_number && `🔑 ${d.key_number}`]
+                        .filter(Boolean).join(" · ") || "—"}
+                    </div>
+                  </div>
+                  <Pencil className="size-4 text-muted-foreground" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

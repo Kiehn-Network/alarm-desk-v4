@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   Upload, Search, Link2, Trash2, Download, FileText, Loader2,
   X, Eye, Link as LinkIcon, Pencil, History, ArrowRight, Paperclip,
+  Users, ChevronLeft, ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
 } from "@/lib/dateien.functions";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
+import { DateiEditDialog } from "@/components/datei-edit-dialog";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
@@ -65,6 +67,7 @@ function DateienPage() {
   const [linkFor, setLinkFor] = useState<Datei | null>(null);
   const [detailFor, setDetailFor] = useState<Datei | null>(null);
   const [editFor, setEditFor] = useState<Datei | null>(null);
+  const [tab, setTab] = useState<"dateien" | "kunden">("dateien");
 
   const dateien = data?.dateien ?? [];
   const links = data?.links ?? [];
@@ -97,7 +100,7 @@ function DateienPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input
               value={search} onChange={(e) => setSearch(e.target.value)}
-              placeholder="Suche nach Datei, Adresse, Kunde…"
+              placeholder={tab === "kunden" ? "Kunde, Adresse, Schlüssel-Nr.…" : "Suche nach Datei, Adresse, Kunde…"}
               className="pl-9 w-[320px]"
             />
           </div>
@@ -107,6 +110,24 @@ function DateienPage() {
         </div>
       </div>
 
+      <div className="inline-flex rounded-lg border border-border bg-card p-1 gap-1">
+        <button
+          onClick={() => setTab("dateien")}
+          className={`px-3 py-1.5 text-sm rounded-md inline-flex items-center gap-2 transition ${tab === "dateien" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          <FileText className="size-4" /> Dateien
+        </button>
+        <button
+          onClick={() => setTab("kunden")}
+          className={`px-3 py-1.5 text-sm rounded-md inline-flex items-center gap-2 transition ${tab === "kunden" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+        >
+          <Users className="size-4" /> Kunden
+        </button>
+      </div>
+
+      {tab === "kunden" ? (
+        <KundenListe dateien={dateien} search={search} onEdit={(d) => setEditFor(d)} />
+      ) : (
       <div className="rounded-xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
         {isLoading ? (
           <div className="p-12 text-center text-muted-foreground">
@@ -172,6 +193,7 @@ function DateienPage() {
           </Table>
         )}
       </div>
+      )}
 
       <UploadDialog open={uploadOpen} onOpenChange={setUploadOpen} onDone={refresh} />
       {linkFor && (
@@ -187,7 +209,7 @@ function DateienPage() {
         />
       )}
       {editFor && (
-        <EditDialog datei={editFor} onClose={() => setEditFor(null)} onDone={refresh} />
+        <DateiEditDialog datei={editFor} onClose={() => setEditFor(null)} onDone={refresh} />
       )}
     </div>
   );
@@ -574,6 +596,99 @@ function Info({ label, value }: { label: string; value: string | null }) {
     <div>
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="font-medium">{value ?? "—"}</div>
+    </div>
+  );
+}
+
+function KundenListe({
+  dateien, search, onEdit,
+}: { dateien: Datei[]; search: string; onEdit: (d: Datei) => void }) {
+  const [page, setPage] = useState(1);
+  const pageSize = 25;
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, Datei[]>();
+    for (const d of dateien) {
+      const key = (d.kunden_name ?? "").trim() || "(ohne Kunde)";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(d);
+    }
+    return Array.from(map.entries())
+      .map(([name, items]) => ({ name, items }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [dateien]);
+
+  const filtered = useMemo(() => {
+    const s = search.trim().toLowerCase();
+    if (!s) return grouped;
+    return grouped.filter((g) =>
+      g.name.toLowerCase().includes(s) ||
+      g.items.some((d) =>
+        [d.address, d.key_number, d.anlagen_nr, d.teilnehmer_id, d.folder, d.filename]
+          .filter(Boolean).some((v) => v!.toLowerCase().includes(s)),
+      ),
+    );
+  }, [grouped, search]);
+
+  const total = filtered.length;
+  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, pages);
+  const visible = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="px-4 lg:px-5 py-2.5 text-xs text-muted-foreground border-b border-border flex items-center justify-between">
+        <span>{total} {total === 1 ? "Kunde" : "Kunden"}</span>
+        <span>Seite {safePage} / {pages}</span>
+      </div>
+      {visible.length === 0 ? (
+        <div className="p-12 text-center text-sm text-muted-foreground">Keine Kunden gefunden.</div>
+      ) : (
+        <ul className="divide-y divide-border">
+          {visible.map((g) => (
+            <li key={g.name} className="p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm truncate flex items-center gap-2">
+                    <Users className="size-4 text-primary shrink-0" /> {g.name}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {g.items.length} {g.items.length === 1 ? "Eintrag" : "Einträge"}
+                  </p>
+                </div>
+              </div>
+              <ul className="divide-y divide-border/60 rounded-md border border-border/60 bg-muted/20">
+                {g.items.map((d) => (
+                  <li key={d.id} className="px-3 py-2 flex items-center gap-3">
+                    <FileText className="size-4 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium truncate">{d.filename}</div>
+                      <div className="text-xs text-muted-foreground truncate">
+                        {[d.address, d.key_number && `🔑 ${d.key_number}`, d.anlagen_nr && `🏷️ ${d.anlagen_nr}`]
+                          .filter(Boolean).join(" · ") || "—"}
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => onEdit(d)}>
+                      <Pencil className="size-4" /> Bearbeiten
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+      {pages > 1 && (
+        <div className="px-4 lg:px-5 py-3 border-t border-border flex items-center justify-between gap-2">
+          <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage(safePage - 1)} className="gap-1">
+            <ChevronLeft className="size-4" /> Zurück
+          </Button>
+          <span className="text-xs text-muted-foreground">Seite {safePage} von {pages}</span>
+          <Button size="sm" variant="outline" disabled={safePage >= pages} onClick={() => setPage(safePage + 1)} className="gap-1">
+            Weiter <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
