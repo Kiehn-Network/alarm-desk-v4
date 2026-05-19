@@ -45,7 +45,7 @@ const sections: Section[] = [
     { to: "/abrechnung/lgwa",       label: "LGWA",        icon: Receipt, module: "lgwa" },
   ]},
   { label: "Tools", items: [
-    { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"] },
+    { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"], module: "schluesselbuch" },
     { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher"] },
     { to: "/daten-import", label: "Daten-Import", icon: Upload, roles: ["admin"] },
   ]},
