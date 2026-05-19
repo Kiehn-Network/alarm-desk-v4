@@ -71,6 +71,89 @@ function MetaItem({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 py-2 border-b border-border/40 last:border-0">
+      <span className="text-muted-foreground mt-0.5 shrink-0">{icon}</span>
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="text-sm text-foreground/90 break-words">{value}</div>
+      </div>
+    </div>
+  );
+}
+
+function InfoDialog({
+  einsatz, profiles, hausnotrufEnabled, onClose,
+}: {
+  einsatz: Einsatz | null;
+  profiles: Record<string, string>;
+  hausnotrufEnabled: boolean;
+  onClose: () => void;
+}) {
+  if (!einsatz) return (
+    <Dialog open={false} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent />
+    </Dialog>
+  );
+  const e = einsatz;
+  const typ = e.einsatz_typ ?? "av_einsatz";
+  const isHausnotruf = typ === "hausnotruf";
+  return (
+    <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {hausnotrufEnabled && (
+              <span className={`text-xs px-2 py-0.5 rounded-md font-medium border ${
+                isHausnotruf
+                  ? "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/30"
+                  : "bg-slate-500/15 text-slate-300 border-slate-500/30"
+              }`}>
+                {isHausnotruf ? "Hausnotruf" : "AV-Einsatz"}
+              </span>
+            )}
+            <span className="truncate">{e.einsatzgrund}</span>
+          </DialogTitle>
+          <DialogDescription>Alle Details zu diesem Einsatz.</DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[65vh] overflow-y-auto">
+          {e.kunden_name && <InfoRow icon={<User className="size-4" />} label="Kunde" value={e.kunden_name} />}
+          {e.address && <InfoRow icon={<MapPin className="size-4" />} label="Adresse" value={e.address} />}
+          {e.key_number && <InfoRow icon={<Key className="size-4" />} label="Schlüssel-Nr." value={e.key_number} />}
+          {e.anlagen_nr && <InfoRow icon={<Tag className="size-4" />} label="Anlagen-Nr." value={e.anlagen_nr} />}
+          {e.teilnehmer_id && <InfoRow icon={<Hash className="size-4" />} label="Teilnehmer-ID" value={e.teilnehmer_id} />}
+          {e.assigned_to && <InfoRow icon={<Car className="size-4" />} label="Fahrer" value={profiles[e.assigned_to] ?? "–"} />}
+          <InfoRow icon={<User className="size-4" />} label="Erstellt von" value={profiles[e.created_by] ?? "–"} />
+          <InfoRow icon={<Clock className="size-4" />} label="Erstellt am" value={fmt(e.created_at)} />
+          {e.vor_ort_am && <InfoRow icon={<MapPin className="size-4" />} label="Vor Ort" value={fmt(e.vor_ort_am)} />}
+          {e.abfahrt_am && <InfoRow icon={<Car className="size-4" />} label="Abfahrt" value={fmt(e.abfahrt_am)} />}
+          {e.einsatz_ende_am && <InfoRow icon={<Flag className="size-4" />} label="Einsatz-Ende" value={fmt(e.einsatz_ende_am)} />}
+          {e.abgeschlossen_am && <InfoRow icon={<CheckSquare className="size-4" />} label="Abgeschlossen am" value={fmt(e.abgeschlossen_am)} />}
+          {e.bericht_typ && (
+            <InfoRow icon={<FileText className="size-4" />} label="Berichtstyp"
+              value={e.bericht_typ === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"} />
+          )}
+          {e.beschreibung && (
+            <InfoRow icon={<ClipboardList className="size-4" />} label="Beschreibung"
+              value={<div className="whitespace-pre-wrap">{e.beschreibung}</div>} />
+          )}
+          {e.status === "storniert" && (
+            <div className="mt-3 text-sm rounded-md border border-red-500/30 bg-red-500/5 p-3">
+              <div className="font-medium text-red-400">
+                Storniert am {fmt(e.storniert_at)} · von {profiles[e.storniert_by] ?? "–"}
+              </div>
+              {e.storniert_grund && (
+                <div className="mt-1 text-foreground/80 whitespace-pre-wrap">Grund: {e.storniert_grund}</div>
+              )}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AlarmierungPage() {
   const { canManage } = useRole();
   const { data: modules } = useDomainModules();
