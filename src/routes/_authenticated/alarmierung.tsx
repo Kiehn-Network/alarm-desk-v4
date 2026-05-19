@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail, User, MapPin, Key, Hash, Tag, Car, CircleCheck,
-  MoreHorizontal, FileText, Filter, Info,
+  MoreHorizontal, FileText, Filter, Info, Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,9 @@ import { useRole } from "@/hooks/use-role";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
+  editEinsatzFull,
 } from "@/lib/einsaetze.functions";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 import { BerichtSendDialog } from "@/components/bericht-send-dialog";
 
@@ -181,6 +183,7 @@ function AlarmierungPage() {
   const list = useServerFn(listEinsaetze);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const stornieren = useServerFn(stornierenEinsatz);
+  const editFull = useServerFn(editEinsatzFull);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
@@ -193,6 +196,7 @@ function AlarmierungPage() {
   const [infoFor, setInfoFor] = useState<Einsatz | null>(null);
   const [stornoGrund, setStornoGrund] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
+  const [editFor, setEditFor] = useState<Einsatz | null>(null);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -382,6 +386,11 @@ function AlarmierungPage() {
                               <DropdownMenuItem onClick={() => setHistory(e)}>
                                 <HistoryIcon className="size-4 mr-2" /> Verlauf
                               </DropdownMenuItem>
+                              {canManage && (
+                                <DropdownMenuItem onClick={() => setEditFor(e)}>
+                                  <Pencil className="size-4 mr-2" /> Bearbeiten
+                                </DropdownMenuItem>
+                              )}
                               {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -408,6 +417,16 @@ function AlarmierungPage() {
 
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
       <InfoDialog einsatz={infoFor} profiles={profiles} hausnotrufEnabled={hausnotrufEnabled} onClose={() => setInfoFor(null)} />
+      <EditDialog
+        einsatz={editFor}
+        onClose={() => setEditFor(null)}
+        onSave={async (patch) => {
+          await editFull({ data: patch });
+          toast.success("Gespeichert");
+          setEditFor(null);
+          refetch();
+        }}
+      />
       <EinsatzBerichtDialog
         einsatz={berichtFor}
         open={!!berichtFor}
@@ -477,6 +496,146 @@ const FIELD_LABELS: Record<string, string> = {
   bericht: "Bericht", bericht_typ: "Berichtstyp",
   hausnotruf_problem: "Hausnotruf-Problem", hausnotruf_loesung: "Hausnotruf-Lösung",
 };
+
+function toLocalInput(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fromLocalInput(v: string): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+function EditDialog({
+  einsatz, onClose, onSave,
+}: {
+  einsatz: Einsatz | null;
+  onClose: () => void;
+  onSave: (patch: any) => Promise<void>;
+}) {
+  const [form, setForm] = useState<any>({});
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (einsatz) {
+      setForm({
+        einsatzgrund: einsatz.einsatzgrund ?? "",
+        kunden_name: einsatz.kunden_name ?? "",
+        address: einsatz.address ?? "",
+        beschreibung: einsatz.beschreibung ?? "",
+        status: einsatz.status === "abgeschlossen" ? "abgeschlossen" : "in_bearbeitung",
+        vor_ort_am: toLocalInput(einsatz.vor_ort_am),
+        abfahrt_am: toLocalInput(einsatz.abfahrt_am),
+        einsatz_ende_am: toLocalInput(einsatz.einsatz_ende_am),
+        abgeschlossen_am: toLocalInput(einsatz.abgeschlossen_am),
+      });
+    }
+  }, [einsatz?.id]);
+
+  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
+  if (!einsatz) {
+    return (
+      <Dialog open={false} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <DialogContent />
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Einsatz bearbeiten</DialogTitle>
+          <DialogDescription>Zeiten, Status und Stammdaten anpassen.</DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[70vh] overflow-y-auto space-y-4 pr-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Einsatzgrund</Label>
+              <Input value={form.einsatzgrund ?? ""} onChange={(e) => set("einsatzgrund", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Status</Label>
+              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="in_bearbeitung">Aktiv (Läuft)</SelectItem>
+                  <SelectItem value="abgeschlossen">Abgeschlossen</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Kunde</Label>
+              <Input value={form.kunden_name ?? ""} onChange={(e) => set("kunden_name", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Adresse</Label>
+              <Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label>Beschreibung</Label>
+            <Textarea rows={3} value={form.beschreibung ?? ""} onChange={(e) => set("beschreibung", e.target.value)} />
+          </div>
+
+          <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+            <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Zeiten</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label>Vor Ort</Label>
+                <Input type="datetime-local" value={form.vor_ort_am ?? ""} onChange={(e) => set("vor_ort_am", e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Abfahrt</Label>
+                <Input type="datetime-local" value={form.abfahrt_am ?? ""} onChange={(e) => set("abfahrt_am", e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Einsatz-Ende</Label>
+                <Input type="datetime-local" value={form.einsatz_ende_am ?? ""} onChange={(e) => set("einsatz_ende_am", e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Abgeschlossen am</Label>
+                <Input type="datetime-local" value={form.abgeschlossen_am ?? ""} onChange={(e) => set("abgeschlossen_am", e.target.value)} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={onClose} disabled={busy}>Abbrechen</Button>
+          <Button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await onSave({
+                  id: einsatz.id,
+                  einsatzgrund: form.einsatzgrund?.trim() || undefined,
+                  kunden_name: form.kunden_name ?? null,
+                  address: form.address ?? null,
+                  beschreibung: form.beschreibung ?? null,
+                  status: form.status,
+                  vor_ort_am: fromLocalInput(form.vor_ort_am ?? ""),
+                  abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
+                  einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
+                  abgeschlossen_am: fromLocalInput(form.abgeschlossen_am ?? ""),
+                });
+              } catch (err: any) {
+                toast.error(err.message ?? "Fehler");
+              } finally { setBusy(false); }
+            }}
+          >Speichern</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 function HistoryDialog({ einsatz, onClose }: { einsatz: Einsatz | null; onClose: () => void }) {
   const list = useServerFn(listEinsatzHistorie);
