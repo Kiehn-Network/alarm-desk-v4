@@ -23,6 +23,7 @@ export type Database = {
           is_global: boolean
           key: string
           name: string
+          parent_key: string | null
           sort_order: number
           updated_at: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           is_global?: boolean
           key: string
           name: string
+          parent_key?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -45,10 +47,19 @@ export type Database = {
           is_global?: boolean
           key?: string
           name?: string
+          parent_key?: string | null
           sort_order?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "app_modules_parent_key_fkey"
+            columns: ["parent_key"]
+            isOneToOne: false
+            referencedRelation: "app_modules"
+            referencedColumns: ["key"]
+          },
+        ]
       }
       app_settings: {
         Row: {
