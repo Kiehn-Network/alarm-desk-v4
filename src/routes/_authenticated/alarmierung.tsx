@@ -441,6 +441,49 @@ function AlarmierungPage() {
           refetch();
         }}
       />
+      <Dialog open={!!deleteFor} onOpenChange={(o) => { if (!o) setDeleteFor(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Einsatz endgültig löschen?</DialogTitle>
+            <DialogDescription>
+              Der Einsatz wird unwiderruflich entfernt, inklusive Verlauf und
+              Schlüsselbuch-Einträgen. Diese Aktion kann nicht rückgängig gemacht
+              werden.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteFor && (
+            <div className="text-sm rounded-md border border-border bg-muted/30 p-3">
+              <div className="font-medium">{deleteFor.einsatzgrund}</div>
+              {deleteFor.kunden_name && (
+                <div className="text-muted-foreground mt-0.5">{deleteFor.kunden_name}</div>
+              )}
+            </div>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setDeleteFor(null)} disabled={deleteBusy}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteBusy}
+              onClick={async () => {
+                if (!deleteFor) return;
+                setDeleteBusy(true);
+                try {
+                  await loeschen({ data: { id: deleteFor.id } });
+                  toast.success("Einsatz gelöscht");
+                  setDeleteFor(null);
+                  refetch();
+                } catch (err: any) {
+                  toast.error(err.message ?? "Fehler");
+                } finally { setDeleteBusy(false); }
+              }}
+            >
+              <Trash2 className="size-4 mr-1.5" /> Endgültig löschen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <EinsatzBerichtDialog
         einsatz={berichtFor}
         open={!!berichtFor}
