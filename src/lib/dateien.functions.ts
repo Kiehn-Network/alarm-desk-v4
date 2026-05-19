@@ -28,7 +28,7 @@ export const listDateien = createServerFn({ method: "GET" })
       .select("*")
       .is("deleted_at", null)
       .order("created_at", { ascending: false })
-      .limit(500);
+      .limit(10000);
     if (error) throw new Error(error.message);
 
     const { data: links } = await supabase
