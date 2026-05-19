@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  MessageCircle, X, Send, Paperclip, ArrowLeft, Hash, User as UserIcon,
-  Pencil, Trash2, Check, Download, Plus,
+  MessageCircle, X, Send, Paperclip, Hash,
+  Pencil, Trash2, Check, Download,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
+import { useDomainModules } from "@/hooks/use-domain-modules";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -48,29 +49,28 @@ function playPing() {
 export function ChatWidget() {
   const { user } = useAuth();
   const { domainId } = useRole();
+  const { data: modules } = useDomainModules();
+  const chatEnabled = modules?.has("chat") ?? false;
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<"list" | "thread" | "newDm">("list");
-  const [activeConv, setActiveConv] = useState<Conversation | null>(null);
-  const [convs, setConvs] = useState<Conversation[]>([]);
+  const [conv, setConv] = useState<Conversation | null>(null);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
-  const [participants, setParticipants] = useState<Record<string, string[]>>({});
-  const [lastRead, setLastRead] = useState<Record<string, string>>({});
-  const [lastMsg, setLastMsg] = useState<Record<string, Message | null>>({});
-  const [unread, setUnread] = useState<Record<string, number>>({});
+  const [lastReadAt, setLastReadAt] = useState<string | null>(null);
+  const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    if (!user || !domainId) return;
+    if (!user || !domainId || !chatEnabled) return;
     let cancel = false;
     (async () => {
-      await supabase.rpc("get_or_create_domain_channel");
-      const { data: cs } = await supabase
+      const { data: cid } = await supabase.rpc("get_or_create_domain_channel");
+      if (cancel || !cid) return;
+      const { data: c } = await supabase
         .from("chat_conversations")
         .select("id,kind,title,domain_id")
-        .order("updated_at", { ascending: false });
-      if (cancel || !cs) return;
-      setConvs(cs as any);
+        .eq("id", cid as string)
+        .maybeSingle();
+      if (cancel || !c) return;
+      setConv(c as any);
 
-      const ids = cs.map((c) => c.id);
       const { data: profs } = await supabase
         .from("profiles")
         .select("id,display_name,avatar_url")
@@ -79,57 +79,37 @@ export function ChatWidget() {
       (profs ?? []).forEach((p: any) => { pmap[p.id] = p; });
       setProfiles(pmap);
 
-      if (ids.length) {
-        const { data: parts } = await supabase
-          .from("chat_participants")
-          .select("conversation_id,user_id,last_read_at")
-          .in("conversation_id", ids);
-        const partsMap: Record<string, string[]> = {};
-        const lr: Record<string, string> = {};
-        (parts ?? []).forEach((p: any) => {
-          (partsMap[p.conversation_id] ||= []).push(p.user_id);
-          if (p.user_id === user.id) lr[p.conversation_id] = p.last_read_at;
-        });
-        setParticipants(partsMap);
-        setLastRead(lr);
-
-        await Promise.all(ids.map(async (cid) => {
-          const { data: lm } = await supabase
-            .from("chat_messages")
-            .select("*")
-            .eq("conversation_id", cid)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          setLastMsg((m) => ({ ...m, [cid]: (lm as any) ?? null }));
-          const since = lr[cid];
-          if (since) {
-            const { count } = await supabase
-              .from("chat_messages")
-              .select("id", { count: "exact", head: true })
-              .eq("conversation_id", cid)
-              .neq("sender_id", user.id)
-              .is("deleted_at", null)
-              .gt("created_at", since);
-            setUnread((u) => ({ ...u, [cid]: count ?? 0 }));
-          }
-        }));
+      const { data: part } = await supabase
+        .from("chat_participants")
+        .select("last_read_at")
+        .eq("conversation_id", cid as string)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const since = (part as any)?.last_read_at ?? null;
+      setLastReadAt(since);
+      if (since) {
+        const { count } = await supabase
+          .from("chat_messages")
+          .select("id", { count: "exact", head: true })
+          .eq("conversation_id", cid as string)
+          .neq("sender_id", user.id)
+          .is("deleted_at", null)
+          .gt("created_at", since);
+        setUnread(count ?? 0);
       }
     })();
     return () => { cancel = true; };
-  }, [user, domainId]);
+  }, [user, domainId, chatEnabled]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !conv) return;
     const ch = supabase
       .channel("chat-global")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages" }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `conversation_id=eq.${conv.id}` }, (payload) => {
         const m = payload.new as Message;
-        setLastMsg((prev) => ({ ...prev, [m.conversation_id]: m }));
         if (m.sender_id !== user.id) {
-          const isOpenThread = open && activeConv?.id === m.conversation_id;
-          if (!isOpenThread) {
-            setUnread((u) => ({ ...u, [m.conversation_id]: (u[m.conversation_id] ?? 0) + 1 }));
+          if (!open) {
+            setUnread((u) => u + 1);
             playPing();
             if ("Notification" in window && Notification.permission === "granted") {
               const sender = profiles[m.sender_id]?.display_name ?? "Neue Nachricht";
@@ -140,7 +120,7 @@ export function ChatWidget() {
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user, open, activeConv?.id, profiles]);
+  }, [user, open, conv, profiles]);
 
   useEffect(() => {
     if (open && "Notification" in window && Notification.permission === "default") {
@@ -148,43 +128,34 @@ export function ChatWidget() {
     }
   }, [open]);
 
-  const totalUnread = useMemo(() => Object.values(unread).reduce((a, b) => a + b, 0), [unread]);
-
-  function convTitle(c: Conversation): string {
-    if (c.kind === "channel") return c.title ?? "Allgemein";
-    const other = (participants[c.id] ?? []).find((u) => u !== user?.id);
-    return (other && profiles[other]?.display_name) || "Direktnachricht";
-  }
-
-  async function openConversation(c: Conversation) {
-    setActiveConv(c);
-    setView("thread");
-    setUnread((u) => ({ ...u, [c.id]: 0 }));
-    const now = new Date().toISOString();
-    setLastRead((l) => ({ ...l, [c.id]: now }));
-    if (user) {
+  async function openChat() {
+    setOpen(true);
+    setUnread(0);
+    if (user && conv) {
+      const now = new Date().toISOString();
+      setLastReadAt(now);
       await supabase.from("chat_participants").upsert(
-        { conversation_id: c.id, user_id: user.id, domain_id: c.domain_id, last_read_at: now },
+        { conversation_id: conv.id, user_id: user.id, domain_id: conv.domain_id, last_read_at: now },
         { onConflict: "conversation_id,user_id" }
       );
     }
   }
 
-  if (!user || !domainId) return null;
+  if (!user || !domainId || !chatEnabled) return null;
 
   return (
     <>
       {!open && (
         <button
-          onClick={() => setOpen(true)}
+          onClick={openChat}
           aria-label="Chat öffnen"
           className="fixed bottom-4 right-4 z-50 size-14 rounded-full grid place-items-center text-primary-foreground shadow-lg hover:scale-105 transition"
           style={{ background: "var(--gradient-primary)" }}
         >
           <MessageCircle className="size-6" />
-          {totalUnread > 0 && (
+          {unread > 0 && (
             <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold grid place-items-center">
-              {totalUnread > 99 ? "99+" : totalUnread}
+              {unread > 99 ? "99+" : unread}
             </span>
           )}
         </button>
@@ -193,169 +164,28 @@ export function ChatWidget() {
       {open && (
         <div className="fixed bottom-4 right-4 z-50 w-[calc(100vw-2rem)] sm:w-96 h-[600px] max-h-[calc(100vh-2rem)] rounded-xl border border-border bg-card shadow-2xl flex flex-col overflow-hidden">
           <header className="h-12 shrink-0 border-b border-border flex items-center gap-2 px-3 bg-card">
-            {view === "thread" || view === "newDm" ? (
-              <button onClick={() => { setView("list"); setActiveConv(null); }} className="p-1.5 rounded hover:bg-muted">
-                <ArrowLeft className="size-4" />
-              </button>
-            ) : (
-              <MessageCircle className="size-4 text-primary" />
-            )}
+            <Hash className="size-4 text-primary" />
             <div className="font-semibold text-sm truncate flex-1">
-              {view === "thread" && activeConv ? convTitle(activeConv) : view === "newDm" ? "Neue Direktnachricht" : "Chat"}
+              {conv?.title ?? "Allgemein"}
             </div>
-            {view === "list" && (
-              <button onClick={() => setView("newDm")} className="p-1.5 rounded hover:bg-muted" title="Neue DM">
-                <Plus className="size-4" />
-              </button>
-            )}
             <button onClick={() => setOpen(false)} className="p-1.5 rounded hover:bg-muted">
               <X className="size-4" />
             </button>
           </header>
 
-          {view === "list" && (
-            <ConvList
-              convs={convs}
-              unread={unread}
-              lastMsg={lastMsg}
-              titleOf={convTitle}
-              onPick={openConversation}
-            />
-          )}
-          {view === "newDm" && (
-            <NewDm
-              domainId={domainId}
-              meId={user.id}
-              onCreated={async (convId) => {
-                const existing = convs.find((x) => x.id === convId);
-                if (existing) { openConversation(existing); return; }
-                const { data } = await supabase.from("chat_conversations")
-                  .select("id,kind,title,domain_id").eq("id", convId).maybeSingle();
-                if (data) {
-                  setConvs((prev) => [data as any, ...prev]);
-                  // also reload participants
-                  const { data: parts } = await supabase.from("chat_participants")
-                    .select("conversation_id,user_id").eq("conversation_id", convId);
-                  setParticipants((p) => ({ ...p, [convId]: (parts ?? []).map((x: any) => x.user_id) }));
-                  openConversation(data as any);
-                }
-              }}
-            />
-          )}
-          {view === "thread" && activeConv && (
+          {conv ? (
             <Thread
-              conv={activeConv}
+              conv={conv}
               meId={user.id}
               profiles={profiles}
-              onNewLastMsg={(m) => setLastMsg((prev) => ({ ...prev, [activeConv.id]: m }))}
+              onNewLastMsg={() => {}}
             />
+          ) : (
+            <div className="flex-1 grid place-items-center text-sm text-muted-foreground">Lade Chat…</div>
           )}
         </div>
       )}
     </>
-  );
-}
-
-function ConvList({
-  convs, unread, lastMsg, titleOf, onPick,
-}: {
-  convs: Conversation[];
-  unread: Record<string, number>;
-  lastMsg: Record<string, Message | null>;
-  titleOf: (c: Conversation) => string;
-  onPick: (c: Conversation) => void;
-}) {
-  const sorted = [...convs].sort((a, b) => {
-    const ta = lastMsg[a.id]?.created_at ?? "";
-    const tb = lastMsg[b.id]?.created_at ?? "";
-    return tb.localeCompare(ta);
-  });
-  return (
-    <div className="flex-1 overflow-y-auto divide-y divide-border">
-      {sorted.length === 0 && (
-        <div className="p-6 text-sm text-muted-foreground text-center">Keine Konversationen.</div>
-      )}
-      {sorted.map((c) => {
-        const u = unread[c.id] ?? 0;
-        const lm = lastMsg[c.id];
-        return (
-          <button
-            key={c.id}
-            onClick={() => onPick(c)}
-            className="w-full px-3 py-3 flex items-center gap-3 hover:bg-muted/50 text-left"
-          >
-            <div className={cn(
-              "size-10 rounded-full grid place-items-center shrink-0",
-              c.kind === "channel" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-            )}>
-              {c.kind === "channel" ? <Hash className="size-5" /> : <UserIcon className="size-5" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="font-medium text-sm truncate flex-1">{titleOf(c)}</div>
-                {lm && (
-                  <div className="text-[10px] text-muted-foreground shrink-0">
-                    {new Date(lm.created_at).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })}
-                  </div>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground truncate">
-                {lm?.deleted_at ? <em>gelöscht</em> : lm?.body || (lm?.attachment_name ? `📎 ${lm.attachment_name}` : "Noch keine Nachrichten")}
-              </div>
-            </div>
-            {u > 0 && (
-              <span className="min-w-5 h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold grid place-items-center">
-                {u > 99 ? "99+" : u}
-              </span>
-            )}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function NewDm({
-  domainId, meId, onCreated,
-}: { domainId: string; meId: string; onCreated: (id: string) => void }) {
-  const [q, setQ] = useState("");
-  const [users, setUsers] = useState<Profile[]>([]);
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("profiles").select("id,display_name,avatar_url")
-        .eq("domain_id", domainId).neq("id", meId).order("display_name");
-      setUsers((data ?? []) as any);
-    })();
-  }, [domainId, meId]);
-  const filtered = users.filter((u) => (u.display_name ?? "").toLowerCase().includes(q.toLowerCase()));
-  return (
-    <div className="flex-1 flex flex-col min-h-0">
-      <div className="p-3 border-b border-border">
-        <input
-          autoFocus value={q} onChange={(e) => setQ(e.target.value)}
-          placeholder="Nutzer suchen…"
-          className="w-full h-9 px-3 rounded-md bg-input/60 border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-        />
-      </div>
-      <div className="flex-1 overflow-y-auto divide-y divide-border">
-        {filtered.length === 0 && <div className="p-6 text-sm text-muted-foreground text-center">Keine Nutzer.</div>}
-        {filtered.map((u) => (
-          <button
-            key={u.id}
-            onClick={async () => {
-              const { data, error } = await supabase.rpc("get_or_create_dm", { _other_user: u.id });
-              if (error) { toast.error(error.message); return; }
-              onCreated(data as string);
-            }}
-            className="w-full px-3 py-3 flex items-center gap-3 hover:bg-muted/50 text-left"
-          >
-            <Avatar p={u} />
-            <div className="text-sm font-medium">{u.display_name ?? "Unbekannt"}</div>
-          </button>
-        ))}
-      </div>
-    </div>
   );
 }
 
