@@ -103,10 +103,13 @@ function AlarmierungPage() {
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Alarmierung</h1>
-          <p className="text-sm text-muted-foreground mt-1">Laufende und abgeschlossene Einsätze.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Alarmierung</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {counts.aktiv} aktiv · {counts.erledigt} erledigt
+          </p>
         </div>
         {canManage && (
           <Link to="/einsatz-erstellen">
@@ -115,29 +118,47 @@ function AlarmierungPage() {
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[260px] max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Suche Kunde, Adresse, Grund..." className="pl-9" />
-        </div>
-        {hausnotrufEnabled && (
-          <Tabs value={typFilter} onValueChange={setTypFilter}>
-            <TabsList>
-              <TabsTrigger value="alle">Alle Typen</TabsTrigger>
-              <TabsTrigger value="hausnotruf">Hausnotruf</TabsTrigger>
-              <TabsTrigger value="av_einsatz">AV-Einsatz</TabsTrigger>
-            </TabsList>
-            <TabsContent value={typFilter} />
-          </Tabs>
-        )}
+      {/* Toolbar */}
+      <div className="rounded-xl border border-border bg-card p-3 flex flex-wrap items-center gap-3"
+           style={{ boxShadow: "var(--shadow-card)" }}>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
-            <TabsTrigger value="aktiv" className="gap-2">Aktiv <Badge variant="secondary" className="ml-1">{counts.aktiv}</Badge></TabsTrigger>
-            <TabsTrigger value="erledigt" className="gap-2">Erledigt <Badge variant="secondary" className="ml-1">{counts.erledigt}</Badge></TabsTrigger>
+            <TabsTrigger value="aktiv" className="gap-1.5">
+              Aktiv <Badge variant="secondary" className="h-5 px-1.5">{counts.aktiv}</Badge>
+            </TabsTrigger>
+            <TabsTrigger value="erledigt" className="gap-1.5">
+              Erledigt <Badge variant="secondary" className="h-5 px-1.5">{counts.erledigt}</Badge>
+            </TabsTrigger>
             <TabsTrigger value="alle">Alle</TabsTrigger>
           </TabsList>
           <TabsContent value={tab} />
         </Tabs>
+
+        <div className="h-6 w-px bg-border hidden sm:block" />
+
+        <div className="relative flex-1 min-w-[220px] max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Suche Kunde, Adresse, Grund..."
+            className="pl-9 h-9"
+          />
+        </div>
+
+        {hausnotrufEnabled && (
+          <div className="flex items-center gap-2">
+            <Filter className="size-4 text-muted-foreground" />
+            <Tabs value={typFilter} onValueChange={setTypFilter}>
+              <TabsList className="h-9">
+                <TabsTrigger value="alle">Alle</TabsTrigger>
+                <TabsTrigger value="hausnotruf">Hausnotruf</TabsTrigger>
+                <TabsTrigger value="av_einsatz">AV</TabsTrigger>
+              </TabsList>
+              <TabsContent value={typFilter} />
+            </Tabs>
+          </div>
+        )}
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -152,97 +173,139 @@ function AlarmierungPage() {
           </div>
         ) : (
           <ul className="divide-y divide-border">
-            {filtered.map((e) => (
-              <li key={e.id} className="p-4 lg:p-5 hover:bg-muted/30 transition-colors">
-                <div className="flex flex-wrap items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${STATUS_META[e.status]?.cls ?? ""}`}>
-                        {STATUS_META[e.status]?.label ?? e.status}
-                      </span>
-                      {hausnotrufEnabled && (
-                        <span className={`text-xs px-2 py-0.5 rounded-md font-medium border ${
-                          (e.einsatz_typ ?? "av_einsatz") === "hausnotruf"
-                            ? "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/30"
-                            : "bg-slate-500/15 text-slate-300 border-slate-500/30"
-                        }`}>
-                          {(e.einsatz_typ ?? "av_einsatz") === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"}
+            {filtered.map((e) => {
+              const typ = e.einsatz_typ ?? "av_einsatz";
+              const isHausnotruf = typ === "hausnotruf";
+              const aktiv = isAktiv(e);
+              return (
+                <li key={e.id} className="p-4 lg:p-5 hover:bg-muted/30 transition-colors">
+                  <div className="flex items-start gap-4">
+                    {/* Typ-Indikator-Stripe */}
+                    <div className={`mt-1 w-1 self-stretch rounded-full shrink-0 ${
+                      isHausnotruf ? "bg-fuchsia-500/60" : "bg-slate-500/40"
+                    }`} />
+
+                    <div className="flex-1 min-w-0 space-y-2.5">
+                      {/* Zeile 1: Status, Typ, Zeit */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${STATUS_META[e.status]?.cls ?? ""}`}>
+                          {STATUS_META[e.status]?.label ?? e.status}
                         </span>
-                      )}
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="size-3" /> {fmt(e.created_at)}
-                      </span>
-                    </div>
-                    <h3 className="mt-1.5 font-semibold text-base truncate">{e.einsatzgrund}</h3>
-                    <div className="mt-1 text-sm text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-                      {e.kunden_name && <span>👤 {e.kunden_name}</span>}
-                      {e.address && <span>📍 {e.address}</span>}
-                      {e.key_number && <span>🔑 {e.key_number}</span>}
-                      {e.anlagen_nr && <span>🏷️ {e.anlagen_nr}</span>}
-                      {e.teilnehmer_id && <span>#️⃣ {e.teilnehmer_id}</span>}
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-x-4 gap-y-1">
-                      <span>Erstellt von <b className="text-foreground/80">{profiles[e.created_by] ?? "–"}</b></span>
-                      {e.assigned_to && <span>Fahrer: <b className="text-foreground/80">{profiles[e.assigned_to] ?? "–"}</b></span>}
-                      {e.abgeschlossen_am && <span>Abgeschlossen: {fmt(e.abgeschlossen_am)}</span>}
-                    </div>
-                    {(e.vor_ort_am || e.abfahrt_am || e.einsatz_ende_am) && (
-                      <div className="mt-2 text-xs flex flex-wrap gap-x-4 gap-y-1">
-                        {e.vor_ort_am && <span>📍 Vor Ort: <b className="text-foreground/80">{fmt(e.vor_ort_am)}</b></span>}
-                        {e.abfahrt_am && <span>🚗 Abfahrt: <b className="text-foreground/80">{fmt(e.abfahrt_am)}</b></span>}
-                        {e.einsatz_ende_am && <span>🏁 Ende: <b className="text-foreground/80">{fmt(e.einsatz_ende_am)}</b></span>}
+                        {hausnotrufEnabled && (
+                          <span className={`text-xs px-2 py-0.5 rounded-md font-medium border ${
+                            isHausnotruf
+                              ? "bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-500/30"
+                              : "bg-slate-500/15 text-slate-300 border-slate-500/30"
+                          }`}>
+                            {isHausnotruf ? "Hausnotruf" : "AV-Einsatz"}
+                          </span>
+                        )}
+                        <span className="text-xs text-muted-foreground inline-flex items-center gap-1 ml-auto">
+                          <Clock className="size-3" /> {fmt(e.created_at)}
+                        </span>
                       </div>
-                    )}
-                    {e.status === "storniert" && (
-                      <div className="mt-2 text-xs rounded-md border border-red-500/30 bg-red-500/5 p-2">
-                        <div className="font-medium text-red-400">
-                          Storniert am {fmt(e.storniert_at)} · von {profiles[e.storniert_by] ?? "–"}
-                        </div>
-                        {e.storniert_grund && (
-                          <div className="mt-0.5 text-foreground/80 whitespace-pre-wrap">Grund: {e.storniert_grund}</div>
+
+                      {/* Titel */}
+                      <h3 className="font-semibold text-base leading-snug truncate">{e.einsatzgrund}</h3>
+
+                      {/* Meta-Grid: Kunde/Adresse/IDs */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-1.5 text-sm">
+                        {e.kunden_name && (
+                          <MetaItem icon={<User className="size-3.5" />} label="Kunde" value={e.kunden_name} />
+                        )}
+                        {e.address && (
+                          <MetaItem icon={<MapPin className="size-3.5" />} label="Adresse" value={e.address} />
+                        )}
+                        {e.assigned_to && (
+                          <MetaItem icon={<Car className="size-3.5" />} label="Fahrer" value={profiles[e.assigned_to] ?? "–"} />
+                        )}
+                        {e.key_number && (
+                          <MetaItem icon={<Key className="size-3.5" />} label="Schlüssel" value={e.key_number} />
+                        )}
+                        {e.anlagen_nr && (
+                          <MetaItem icon={<Tag className="size-3.5" />} label="Anlage" value={e.anlagen_nr} />
+                        )}
+                        {e.teilnehmer_id && (
+                          <MetaItem icon={<Hash className="size-3.5" />} label="Teilnehmer" value={e.teilnehmer_id} />
                         )}
                       </div>
-                    )}
-                    {e.bericht_typ && (
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        📝 Bericht: <span className="text-foreground/80">{e.bericht_typ === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"}</span>
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="flex flex-wrap items-center gap-2 shrink-0">
-                    <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => setHistory(e)}>
-                      <HistoryIcon className="size-4" /> Verlauf
-                    </Button>
-                    {canManage && (
-                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setBerichtFor(e)}>
-                        <ClipboardList className="size-4" /> Bericht
-                      </Button>
-                    )}
-                    {canManage && (
-                      <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setSendFor(e)}>
-                        <Mail className="size-4" /> Senden
-                      </Button>
-                    )}
-                    {canManage && isAktiv(e) && (
-                      <Button size="sm" className="gap-1.5"
-                        onClick={async () => {
-                          try { await abschliessen({ data: { id: e.id } }); toast.success("Abgeschlossen"); refetch(); }
-                          catch (err: any) { toast.error(err.message); }
-                        }}>
-                        <CheckSquare className="size-4" /> Abschließen
-                      </Button>
-                    )}
-                    {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
-                      <Button size="sm" variant="ghost" className="gap-1.5 text-red-400 hover:text-red-300"
-                        onClick={() => { setStornoFor(e); setStornoGrund(""); }}>
-                        <Ban className="size-4" /> Stornieren
-                      </Button>
-                    )}
+                      {/* Footer-Zeile: Ersteller / Zeitstempel */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1 border-t border-border/50">
+                        <span>Erstellt von <span className="text-foreground/80 font-medium">{profiles[e.created_by] ?? "–"}</span></span>
+                        {e.vor_ort_am && <span>Vor Ort: <span className="text-foreground/80">{fmt(e.vor_ort_am)}</span></span>}
+                        {e.abfahrt_am && <span>Abfahrt: <span className="text-foreground/80">{fmt(e.abfahrt_am)}</span></span>}
+                        {e.einsatz_ende_am && <span>Ende: <span className="text-foreground/80">{fmt(e.einsatz_ende_am)}</span></span>}
+                        {e.abgeschlossen_am && <span>Abgeschlossen: <span className="text-foreground/80">{fmt(e.abgeschlossen_am)}</span></span>}
+                        {e.bericht_typ && (
+                          <span className="inline-flex items-center gap-1">
+                            <FileText className="size-3" /> Bericht: <span className="text-foreground/80">{e.bericht_typ === "hausnotruf" ? "Hausnotruf" : "AV-Einsatz"}</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Storno-Hinweis */}
+                      {e.status === "storniert" && (
+                        <div className="text-xs rounded-md border border-red-500/30 bg-red-500/5 p-2">
+                          <div className="font-medium text-red-400">
+                            Storniert am {fmt(e.storniert_at)} · von {profiles[e.storniert_by] ?? "–"}
+                          </div>
+                          {e.storniert_grund && (
+                            <div className="mt-0.5 text-foreground/80 whitespace-pre-wrap">Grund: {e.storniert_grund}</div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Aktionen */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      {canManage && aktiv && (
+                        <Button size="sm" className="gap-1.5"
+                          onClick={async () => {
+                            try { await abschliessen({ data: { id: e.id } }); toast.success("Abgeschlossen"); refetch(); }
+                            catch (err: any) { toast.error(err.message); }
+                          }}>
+                          <CircleCheck className="size-4" /> Abschließen
+                        </Button>
+                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="size-8">
+                            <MoreHorizontal className="size-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          {canManage && (
+                            <DropdownMenuItem onClick={() => setBerichtFor(e)}>
+                              <ClipboardList className="size-4 mr-2" /> Bericht
+                            </DropdownMenuItem>
+                          )}
+                          {canManage && (
+                            <DropdownMenuItem onClick={() => setSendFor(e)}>
+                              <Mail className="size-4 mr-2" /> Senden
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => setHistory(e)}>
+                            <HistoryIcon className="size-4 mr-2" /> Verlauf
+                          </DropdownMenuItem>
+                          {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-400 focus:text-red-300"
+                                onClick={() => { setStornoFor(e); setStornoGrund(""); }}
+                              >
+                                <Ban className="size-4 mr-2" /> Stornieren
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
