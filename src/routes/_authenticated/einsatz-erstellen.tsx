@@ -414,6 +414,74 @@ function EinsatzErstellenPage() {
           </div>
         </section>
       )}
+
+      {/* Schlüsselübergabe-Dialog */}
+      <Dialog open={!!handover} onOpenChange={(o) => { if (!o) skipHandover(); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="size-5 text-primary" /> Schlüsselübergabe
+            </DialogTitle>
+            <DialogDescription>
+              Trag den Schlüssel ins Schlüsselbuch ein. Der Träger bestätigt die Übernahme.
+            </DialogDescription>
+          </DialogHeader>
+          {handover && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-primary/40 bg-primary/5 p-3 flex items-center gap-3">
+                <KeyRound className="size-5 text-primary" />
+                <div>
+                  <div className="text-xs text-muted-foreground">Schlüssel-Nr.</div>
+                  <div className="text-lg font-bold tabular-nums">{handover.keyNumber}</div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Träger</Label>
+                <div className="flex gap-2">
+                  <Button type="button" size="sm" variant={traegerMode === "fahrer" ? "default" : "outline"}
+                    onClick={() => { setTraegerMode("fahrer"); setTraegerUserId(handover.fahrerId); setTraegerName(handover.fahrerName); }}
+                  >Fahrer ({handover.fahrerName})</Button>
+                  <Button type="button" size="sm" variant={traegerMode === "andere" ? "default" : "outline"}
+                    onClick={() => { setTraegerMode("andere"); setTraegerUserId(""); setTraegerName(""); }}
+                  >Anderer Mitarbeiter</Button>
+                </div>
+              </div>
+
+              {traegerMode === "andere" && (
+                <div className="space-y-2">
+                  <Label>Aus Team wählen (optional)</Label>
+                  <Select value={traegerUserId} onValueChange={(v) => {
+                    setTraegerUserId(v);
+                    const f = fahrer.find((x) => x.id === v);
+                    if (f?.display_name) setTraegerName(f.display_name);
+                  }}>
+                    <SelectTrigger><SelectValue placeholder="Mitarbeiter wählen" /></SelectTrigger>
+                    <SelectContent>
+                      {fahrer.map((f) => (
+                        <SelectItem key={f.id} value={f.id}>{f.display_name ?? f.id.slice(0, 8)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Label className="mt-2">Name (frei eintragbar)</Label>
+                  <Input value={traegerName} onChange={(e) => setTraegerName(e.target.value)} placeholder="z.B. externer Subunternehmer" />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Notiz (optional)</Label>
+                <Textarea value={handoverNote} onChange={(e) => setHandoverNote(e.target.value)} rows={2} placeholder="…" />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={skipHandover} disabled={handoverBusy}>Überspringen</Button>
+            <Button onClick={submitHandover} disabled={handoverBusy} className="gap-2">
+              <Check className="size-4" /> Schlüssel ausgeben
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
