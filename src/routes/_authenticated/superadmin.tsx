@@ -132,6 +132,7 @@ function SuperAdminPage() {
           <TabsTrigger value="modules">Module</TabsTrigger>
           <TabsTrigger value="users">Nutzer</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="selfhost">Self-Hosting</TabsTrigger>
         </TabsList>
 
         <TabsContent value="domains" className="space-y-4">
