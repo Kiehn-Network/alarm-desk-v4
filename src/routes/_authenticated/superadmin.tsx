@@ -12,6 +12,7 @@ import {
   getPlatformSettings, updatePlatformMaintenance,
   listAppVersions, createAppVersion, deleteAppVersion,
 } from "@/lib/superadmin.functions";
+import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
