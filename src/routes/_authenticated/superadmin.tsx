@@ -460,7 +460,6 @@ function SuperAdminPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        </TabsContent>
 
         <TabsContent value="selfhost" className="space-y-4">
           <SelfHostGuide />
