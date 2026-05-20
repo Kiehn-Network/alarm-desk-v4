@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Server, Database, Globe, Shield, Terminal, Package, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Server, Database, Globe, Shield, Terminal, Package, AlertTriangle, CheckCircle2, BarChart3 } from "lucide-react";
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
@@ -37,14 +37,27 @@ export function SelfHostGuide() {
             <li><b>Frontend + Backend (TanStack Start):</b> React + Server Functions, läuft als Node.js / Cloudflare Worker-kompatibler Server.</li>
             <li><b>Datenbank + Auth + Storage (Supabase Self-Hosted):</b> PostgreSQL, GoTrue (Auth), Storage-API, Realtime, PostgREST.</li>
             <li><b>Reverse Proxy (Nginx / Caddy / Traefik):</b> TLS-Terminierung und Routing.</li>
+            <li><b>MySQL (optional, nur zur Visualisierung):</b> Read-Only-Spiegel der Postgres-Daten für BI- und Reporting-Tools wie phpMyAdmin, MySQL Workbench, DBeaver oder Metabase.</li>
           </ul>
           <div className="flex flex-wrap gap-2 pt-2">
             <Badge variant="secondary">Node.js 20+</Badge>
             <Badge variant="secondary">Docker + Docker Compose</Badge>
             <Badge variant="secondary">PostgreSQL 15</Badge>
+            <Badge variant="secondary">MySQL 8 (optional)</Badge>
             <Badge variant="secondary">≥ 4 GB RAM</Badge>
             <Badge variant="secondary">≥ 40 GB SSD</Badge>
           </div>
+          <Alert className="mt-3">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Warum nicht MySQL als Hauptdatenbank?</AlertTitle>
+            <AlertDescription>
+              Die Anwendung nutzt Supabase-Funktionen, die zwingend PostgreSQL voraussetzen: Row-Level-Security
+              (RLS), <code>auth</code>-/<code>storage</code>-Schemas, Realtime über logische Replikation, Triggers
+              und SQL-Funktionen mit <code>pgcrypto</code>. Ein Wechsel auf MySQL würde Auth, Dateispeicher und
+              Live-Updates brechen. MySQL kann jedoch problemlos <b>parallel</b> betrieben werden — als
+              schreibgeschützter Spiegel für Auswertungen (siehe Schritt 9).
+            </AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
@@ -207,6 +220,101 @@ api.deine-domain.de {
               <li>Neue PDF erstellen (z.B. Einsatzbericht) → Upload landet im lokalen Storage.</li>
               <li>Chat-Funktion + Realtime testen (zwei Browser-Fenster).</li>
             </ol>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="step-9" className="border rounded-lg px-4">
+          <AccordionTrigger>
+            <span className="flex items-center gap-2"><BarChart3 className="h-4 w-4" /> 9. MySQL-Spiegelung zur Visualisierung</span>
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 text-sm">
+            <p>
+              Für Reporting, Dashboards oder Anbindung bestehender BI-Tools kann eine <b>MySQL-Instanz</b>
+              parallel betrieben werden, die regelmäßig aus PostgreSQL befüllt wird. Die App selbst bleibt
+              auf PostgreSQL — MySQL ist <b>read-only Visualisierungsschicht</b>.
+            </p>
+
+            <p><b>a) MySQL + phpMyAdmin via Docker:</b></p>
+            <Code>{`# docker-compose.mysql.yml
+services:
+  mysql:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: \${MYSQL_ROOT_PWD}
+      MYSQL_DATABASE: alarmdesk_view
+      MYSQL_USER: alarmdesk
+      MYSQL_PASSWORD: \${MYSQL_PWD}
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+    ports:
+      - "127.0.0.1:8081:80"
+    depends_on: [mysql]
+
+# Starten:
+docker compose -f docker-compose.mysql.yml up -d`}</Code>
+
+            <p><b>b) Sync von PostgreSQL → MySQL (täglich via Cron):</b></p>
+            <p className="text-muted-foreground">
+              Mit <code>pgloader</code> lassen sich Schema + Daten automatisch konvertieren
+              (UUID → CHAR(36), JSONB → JSON, Arrays → JSON, Booleans → TINYINT(1)).
+            </p>
+            <Code>{`# /etc/alarmdesk/sync.load
+LOAD DATABASE
+  FROM postgresql://postgres:PG_PWD@localhost:5432/postgres
+  INTO mysql://alarmdesk:MYSQL_PWD@localhost:3306/alarmdesk_view
+
+  WITH include drop, create tables, create indexes, reset sequences,
+       data only when matches,
+       workers = 4, concurrency = 2
+
+  INCLUDING ONLY TABLE NAMES MATCHING ~/^(profiles|domains|einsaetze|kunden|dateien|schluessel|user_roles|licenses)$/
+    IN SCHEMA 'public'
+
+  SET MySQL PARAMETERS net_read_timeout = '120', net_write_timeout = '120'
+
+  ALTER SCHEMA 'public' RENAME TO 'alarmdesk_view'
+
+  CAST type uuid to char(36) drop typemod,
+       type jsonb to json drop typemod,
+       type timestamptz to datetime drop typemod;
+
+# Cron (alle 15 Min)
+*/15 * * * * pgloader /etc/alarmdesk/sync.load >> /var/log/alarmdesk-sync.log 2>&1`}</Code>
+
+            <p><b>c) Alternative: Metabase direkt auf PostgreSQL</b></p>
+            <p className="text-muted-foreground">
+              Falls keine MySQL-Pflicht besteht, ist <b>Metabase</b> einfacher: liest direkt aus Postgres,
+              keine Sync-Pipeline nötig.
+            </p>
+            <Code>{`docker run -d -p 127.0.0.1:3001:3000 --name metabase metabase/metabase`}</Code>
+
+            <p><b>d) Zugriff absichern</b> – niemals MySQL/phpMyAdmin/Metabase öffentlich exponieren:</p>
+            <Code>{`# Caddyfile – mit Basic-Auth + TLS
+mysql.deine-domain.de {
+    basicauth {
+        admin $2a$14$<bcrypt-hash>
+    }
+    reverse_proxy localhost:8081
+}`}</Code>
+
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Wichtig</AlertTitle>
+              <AlertDescription>
+                Schreibzugriffe auf den MySQL-Spiegel werden beim nächsten Sync überschrieben.
+                Änderungen <b>immer</b> in der App bzw. PostgreSQL vornehmen.
+              </AlertDescription>
+            </Alert>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
