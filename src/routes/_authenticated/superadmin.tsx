@@ -12,6 +12,7 @@ import {
   getPlatformSettings, updatePlatformMaintenance,
   listAppVersions, createAppVersion, deleteAppVersion,
 } from "@/lib/superadmin.functions";
+import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -131,6 +132,7 @@ function SuperAdminPage() {
           <TabsTrigger value="modules">Module</TabsTrigger>
           <TabsTrigger value="users">Nutzer</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="selfhost">Self-Hosting</TabsTrigger>
         </TabsList>
 
         <TabsContent value="domains" className="space-y-4">
@@ -457,6 +459,10 @@ function SuperAdminPage() {
               }}>Speichern</Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="selfhost" className="space-y-4">
+          <SelfHostGuide />
         </TabsContent>
       </Tabs>
     </div>
