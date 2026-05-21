@@ -5,17 +5,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 export const createSuperadmin = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({
-      token: z.string().min(1).max(200),
       email: z.string().email().max(255),
       password: z.string().min(8).max(72),
       display_name: z.string().trim().min(1).max(120),
     }).parse(i),
   )
   .handler(async ({ data }) => {
-    const expected = process.env.SUPERADMIN_SETUP_TOKEN;
-    if (!expected) throw new Error("Setup-Token nicht konfiguriert");
-    if (data.token !== expected) throw new Error("Ungültiger Setup-Token");
-
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,

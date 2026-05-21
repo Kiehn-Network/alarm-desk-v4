@@ -20,7 +20,6 @@ export const Route = createFileRoute("/kiehn-systeme-login")({
 
 function KiehnSystemeLogin() {
   const create = useServerFn(createSuperadmin);
-  const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -30,9 +29,9 @@ function KiehnSystemeLogin() {
     e.preventDefault();
     setLoading(true);
     try {
-      await create({ data: { token, email, password, display_name: displayName } });
+      await create({ data: { email, password, display_name: displayName } });
       toast.success("SuperAdmin wurde angelegt. Du kannst dich jetzt einloggen.");
-      setToken(""); setEmail(""); setDisplayName(""); setPassword("");
+      setEmail(""); setDisplayName(""); setPassword("");
     } catch (err: any) {
       toast.error(err?.message ?? "Fehler beim Anlegen");
     } finally {
@@ -46,16 +45,11 @@ function KiehnSystemeLogin() {
         <CardHeader>
           <CardTitle>Kiehn Systeme — SuperAdmin anlegen</CardTitle>
           <CardDescription>
-            Geschützter Bereich. Setup-Token erforderlich.
+            Geschützter Bereich.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="token">Setup-Token</Label>
-              <Input id="token" type="password" autoComplete="off" value={token}
-                onChange={(e) => setToken(e.target.value)} required />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="name">Anzeigename</Label>
               <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required />
