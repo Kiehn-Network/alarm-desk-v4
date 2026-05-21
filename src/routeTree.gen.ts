@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
@@ -49,6 +50,11 @@ import { Route as AuthenticatedAbrechnungProviderVersandRouteImport } from './ro
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
+  id: '/kiehn-systeme-login',
+  path: '/kiehn-systeme-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -251,6 +257,7 @@ const AuthenticatedAbrechnungProviderVersandRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -325,6 +333,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -364,6 +373,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/kiehn-systeme-login'
     | '/login'
     | '/admin'
     | '/alarmierung'
@@ -401,6 +411,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/kiehn-systeme-login'
     | '/login'
     | '/admin'
     | '/alarmierung'
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/kiehn-systeme-login'
     | '/login'
     | '/_authenticated/admin'
     | '/_authenticated/alarmierung'
@@ -476,6 +488,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -488,6 +501,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kiehn-systeme-login': {
+      id: '/kiehn-systeme-login'
+      path: '/kiehn-systeme-login'
+      fullPath: '/kiehn-systeme-login'
+      preLoaderRoute: typeof KiehnSystemeLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -860,6 +880,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
