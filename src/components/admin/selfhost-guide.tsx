@@ -317,6 +317,81 @@ mysql.deine-domain.de {
             </Alert>
           </AccordionContent>
         </AccordionItem>
+
+        <AccordionItem value="step-10" className="border rounded-lg px-4">
+          <AccordionTrigger>
+            <span className="flex items-center gap-2"><RefreshCw className="h-4 w-4" /> 10. AlarmDesk aktualisieren / neu deployen</span>
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 text-sm">
+            <p><b>1. In Projektordner wechseln</b></p>
+            <Code>{`cd ~/alarm-desk-v4`}</Code>
+
+            <p><b>2. Aktuelle GitHub-Version laden</b></p>
+            <Code>{`git pull origin main
+
+# Falls lokale Änderungen blockieren:
+git stash
+git pull origin main
+git stash pop`}</Code>
+
+            <p><b>3. .env prüfen</b></p>
+            <Code>{`cat .env`}</Code>
+            <p>Muss auf dein Supabase-Projekt zeigen:</p>
+            <Code>{`VITE_SUPABASE_PROJECT_ID="vmqvnckdynrhrdgwkork"
+VITE_SUPABASE_URL="https://vmqvnckdynrhrdgwkork.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY="sb_publishable_OAL_zjGcFqGBP0iTIjaxdw_qUMRhSfs"
+
+SUPABASE_URL="https://vmqvnckdynrhrdgwkork.supabase.co"
+SUPABASE_PUBLISHABLE_KEY="sb_publishable_OAL_zjGcFqGBP0iTIjaxdw_qUMRhSfs"`}</Code>
+
+            <p><b>4. Dependencies installieren</b></p>
+            <Code>{`npm install`}</Code>
+
+            <p><b>5. Supabase-Migrationen einspielen</b></p>
+            <Code>{`supabase db push
+
+# Falls gen_random_bytes Fehler kommt:
+sed -i 's/gen_random_bytes(/extensions.gen_random_bytes(/g' supabase/migrations/*.sql
+supabase db push`}</Code>
+
+            <p><b>6. TanStack-Fix prüfen</b></p>
+            <p>In <code>src/integrations/supabase/auth-middleware.ts</code> muss oben stehen:</p>
+            <Code>{`import { createMiddleware } from '@tanstack/react-start'
+import { getRequest } from '@tanstack/react-start/server'
+
+# und:
+createMiddleware().server(...)`}</Code>
+            <p>In <code>src/integrations/supabase/auth-attacher.ts</code> muss stehen:</p>
+            <Code>{`import { createMiddleware } from '@tanstack/react-start'
+
+# und:
+createMiddleware().client(...)`}</Code>
+
+            <p><b>7. Build erstellen</b></p>
+            <Code>{`NODE_OPTIONS="--max-old-space-size=2048" npm run build`}</Code>
+
+            <p><b>8. App starten / neu starten</b></p>
+            <p>Wenn PM2 schon eingerichtet ist:</p>
+            <Code>{`pm2 restart alarmdesk`}</Code>
+            <p>Wenn noch nicht:</p>
+            <Code>{`PORT=8080 HOST=0.0.0.0 pm2 start dist/server/index.js --name alarmdesk
+pm2 save
+pm2 startup`}</Code>
+
+            <p><b>9. Status prüfen</b></p>
+            <Code>{`pm2 status
+pm2 logs alarmdesk`}</Code>
+            <p>Seite öffnen: <code>http://185.129.87.14:8080</code></p>
+
+            <p><b>Komplettbefehl für Updates</b></p>
+            <Code>{`cd ~/alarm-desk-v4 \\
+&& git pull origin main \\
+&& npm install \\
+&& supabase db push \\
+&& NODE_OPTIONS="--max-old-space-size=2048" npm run build \\
+&& pm2 restart alarmdesk`}</Code>
+          </AccordionContent>
+        </AccordionItem>
       </Accordion>
 
       <Card>
