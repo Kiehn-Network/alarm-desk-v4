@@ -18,8 +18,6 @@ export const Route = createFileRoute("/kiehn-systeme-login")({
   component: KiehnSystemeLogin,
 });
 
-function KiehnSysteneLoginPlaceholder() { return null; }
-
 function KiehnSystemeLogin() {
   const create = useServerFn(createSuperadmin);
   const [token, setToken] = useState("");
@@ -81,5 +79,3 @@ function KiehnSystemeLogin() {
     </div>
   );
 }
-
-export { KiehnSysteneLoginPlaceholder };
