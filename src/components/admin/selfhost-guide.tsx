@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Server, Database, Globe, Shield, Terminal, Package, AlertTriangle, CheckCircle2, BarChart3 } from "lucide-react";
+import { Server, Database, Globe, Shield, Terminal, Package, AlertTriangle, CheckCircle2, BarChart3, RefreshCw } from "lucide-react";
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
