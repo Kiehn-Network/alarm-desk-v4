@@ -42,8 +42,12 @@ import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
+import { Route as AuthenticatedRevierCenterOwksScanRouteImport } from './routes/_authenticated/revier-center/owks/scan'
 import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
 import { Route as AuthenticatedRevierCenterOwksObjekteRouteImport } from './routes/_authenticated/revier-center/owks/objekte'
+import { Route as AuthenticatedRevierCenterOwksNfcPunkteRouteImport } from './routes/_authenticated/revier-center/owks/nfc-punkte'
+import { Route as AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport } from './routes/_authenticated/revier-center/owks/bestreifungsplaene'
 import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
 import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
 import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from './routes/_authenticated/notdienst/rohrservice/mitarbeiter'
@@ -235,6 +239,18 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedRevierCenterOwksZeitstrahlRoute =
+  AuthenticatedRevierCenterOwksZeitstrahlRouteImport.update({
+    id: '/zeitstrahl',
+    path: '/zeitstrahl',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksScanRoute =
+  AuthenticatedRevierCenterOwksScanRouteImport.update({
+    id: '/scan',
+    path: '/scan',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
 const AuthenticatedRevierCenterOwksRundgaengeRoute =
   AuthenticatedRevierCenterOwksRundgaengeRouteImport.update({
     id: '/rundgaenge',
@@ -245,6 +261,18 @@ const AuthenticatedRevierCenterOwksObjekteRoute =
   AuthenticatedRevierCenterOwksObjekteRouteImport.update({
     id: '/objekte',
     path: '/objekte',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksNfcPunkteRoute =
+  AuthenticatedRevierCenterOwksNfcPunkteRouteImport.update({
+    id: '/nfc-punkte',
+    path: '/nfc-punkte',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksBestreifungsplaeneRoute =
+  AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport.update({
+    id: '/bestreifungsplaene',
+    path: '/bestreifungsplaene',
     getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
   } as any)
 const AuthenticatedNotdienstRohrserviceNeuRoute =
@@ -326,8 +354,12 @@ export interface FileRoutesByFullPath {
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
+  '/revier-center/owks/bestreifungsplaene': typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
+  '/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
+  '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -365,8 +397,12 @@ export interface FileRoutesByTo {
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
+  '/revier-center/owks/bestreifungsplaene': typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
+  '/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
+  '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -410,8 +446,12 @@ export interface FileRoutesById {
   '/_authenticated/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/_authenticated/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/_authenticated/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
+  '/_authenticated/revier-center/owks/bestreifungsplaene': typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
+  '/_authenticated/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/_authenticated/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/_authenticated/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  '/_authenticated/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
+  '/_authenticated/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/_authenticated/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -455,8 +495,12 @@ export interface FileRouteTypes {
     | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
+    | '/revier-center/owks/bestreifungsplaene'
+    | '/revier-center/owks/nfc-punkte'
     | '/revier-center/owks/objekte'
     | '/revier-center/owks/rundgaenge'
+    | '/revier-center/owks/scan'
+    | '/revier-center/owks/zeitstrahl'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko/'
     | '/notdienst/rohrservice/'
@@ -494,8 +538,12 @@ export interface FileRouteTypes {
     | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
+    | '/revier-center/owks/bestreifungsplaene'
+    | '/revier-center/owks/nfc-punkte'
     | '/revier-center/owks/objekte'
     | '/revier-center/owks/rundgaenge'
+    | '/revier-center/owks/scan'
+    | '/revier-center/owks/zeitstrahl'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
@@ -538,8 +586,12 @@ export interface FileRouteTypes {
     | '/_authenticated/notdienst/rohrservice/mitarbeiter'
     | '/_authenticated/notdienst/rohrservice/nachbearbeitung'
     | '/_authenticated/notdienst/rohrservice/neu'
+    | '/_authenticated/revier-center/owks/bestreifungsplaene'
+    | '/_authenticated/revier-center/owks/nfc-punkte'
     | '/_authenticated/revier-center/owks/objekte'
     | '/_authenticated/revier-center/owks/rundgaenge'
+    | '/_authenticated/revier-center/owks/scan'
+    | '/_authenticated/revier-center/owks/zeitstrahl'
     | '/lovable/email/queue/process'
     | '/_authenticated/notdienst/budeko/'
     | '/_authenticated/notdienst/rohrservice/'
@@ -788,6 +840,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/revier-center/owks/zeitstrahl': {
+      id: '/_authenticated/revier-center/owks/zeitstrahl'
+      path: '/zeitstrahl'
+      fullPath: '/revier-center/owks/zeitstrahl'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksZeitstrahlRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/scan': {
+      id: '/_authenticated/revier-center/owks/scan'
+      path: '/scan'
+      fullPath: '/revier-center/owks/scan'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksScanRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
     '/_authenticated/revier-center/owks/rundgaenge': {
       id: '/_authenticated/revier-center/owks/rundgaenge'
       path: '/rundgaenge'
@@ -800,6 +866,20 @@ declare module '@tanstack/react-router' {
       path: '/objekte'
       fullPath: '/revier-center/owks/objekte'
       preLoaderRoute: typeof AuthenticatedRevierCenterOwksObjekteRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/nfc-punkte': {
+      id: '/_authenticated/revier-center/owks/nfc-punkte'
+      path: '/nfc-punkte'
+      fullPath: '/revier-center/owks/nfc-punkte'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/bestreifungsplaene': {
+      id: '/_authenticated/revier-center/owks/bestreifungsplaene'
+      path: '/bestreifungsplaene'
+      fullPath: '/revier-center/owks/bestreifungsplaene'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport
       parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
     }
     '/_authenticated/notdienst/rohrservice/neu': {
@@ -855,17 +935,29 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRevierCenterOwksRouteRouteChildren {
+  AuthenticatedRevierCenterOwksBestreifungsplaeneRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
+  AuthenticatedRevierCenterOwksNfcPunkteRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   AuthenticatedRevierCenterOwksObjekteRoute: typeof AuthenticatedRevierCenterOwksObjekteRoute
   AuthenticatedRevierCenterOwksRundgaengeRoute: typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  AuthenticatedRevierCenterOwksScanRoute: typeof AuthenticatedRevierCenterOwksScanRoute
+  AuthenticatedRevierCenterOwksZeitstrahlRoute: typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   AuthenticatedRevierCenterOwksIndexRoute: typeof AuthenticatedRevierCenterOwksIndexRoute
 }
 
 const AuthenticatedRevierCenterOwksRouteRouteChildren: AuthenticatedRevierCenterOwksRouteRouteChildren =
   {
+    AuthenticatedRevierCenterOwksBestreifungsplaeneRoute:
+      AuthenticatedRevierCenterOwksBestreifungsplaeneRoute,
+    AuthenticatedRevierCenterOwksNfcPunkteRoute:
+      AuthenticatedRevierCenterOwksNfcPunkteRoute,
     AuthenticatedRevierCenterOwksObjekteRoute:
       AuthenticatedRevierCenterOwksObjekteRoute,
     AuthenticatedRevierCenterOwksRundgaengeRoute:
       AuthenticatedRevierCenterOwksRundgaengeRoute,
+    AuthenticatedRevierCenterOwksScanRoute:
+      AuthenticatedRevierCenterOwksScanRoute,
+    AuthenticatedRevierCenterOwksZeitstrahlRoute:
+      AuthenticatedRevierCenterOwksZeitstrahlRoute,
     AuthenticatedRevierCenterOwksIndexRoute:
       AuthenticatedRevierCenterOwksIndexRoute,
   }
