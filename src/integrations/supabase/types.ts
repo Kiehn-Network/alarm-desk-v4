@@ -1199,6 +1199,516 @@ export type Database = {
           },
         ]
       }
+      owks_bestreifungen: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          datum: string
+          domain_id: string
+          durchgaenge_ist: number
+          durchgaenge_soll: number
+          id: string
+          notizen: string | null
+          objekt_id: string | null
+          plan_id: string | null
+          rundgang_id: string
+          status: Database["public"]["Enums"]["owks_bestreifung_status"]
+          updated_at: string
+          zeit_bis: string
+          zeit_von: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          datum: string
+          domain_id: string
+          durchgaenge_ist?: number
+          durchgaenge_soll?: number
+          id?: string
+          notizen?: string | null
+          objekt_id?: string | null
+          plan_id?: string | null
+          rundgang_id: string
+          status?: Database["public"]["Enums"]["owks_bestreifung_status"]
+          updated_at?: string
+          zeit_bis: string
+          zeit_von: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          datum?: string
+          domain_id?: string
+          durchgaenge_ist?: number
+          durchgaenge_soll?: number
+          id?: string
+          notizen?: string | null
+          objekt_id?: string | null
+          plan_id?: string | null
+          rundgang_id?: string
+          status?: Database["public"]["Enums"]["owks_bestreifung_status"]
+          updated_at?: string
+          zeit_bis?: string
+          zeit_von?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owks_bestreifungen_objekt_id_fkey"
+            columns: ["objekt_id"]
+            isOneToOne: false
+            referencedRelation: "owks_objekte"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owks_bestreifungen_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "owks_bestreifungsplaene"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owks_bestreifungen_rundgang_id_fkey"
+            columns: ["rundgang_id"]
+            isOneToOne: false
+            referencedRelation: "owks_rundgaenge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owks_bestreifungsplaene: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          durchgaenge: number
+          ferien_modus: string
+          gueltig_ab: string
+          gueltig_bis: string | null
+          id: string
+          intervall_wochen: number
+          manuell_buchen: boolean
+          max_dauer_minuten: number | null
+          min_dauer_minuten: number | null
+          objekt_id: string | null
+          reihenfolge_modus: Database["public"]["Enums"]["owks_reihenfolge_modus"]
+          rundgang_id: string
+          soll_zeit_bis: string | null
+          soll_zeit_von: string | null
+          unterschreitung_unzulaessig: boolean
+          updated_at: string
+          wochentage: number[]
+          zeit_bis: string
+          zeit_von: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          durchgaenge?: number
+          ferien_modus?: string
+          gueltig_ab?: string
+          gueltig_bis?: string | null
+          id?: string
+          intervall_wochen?: number
+          manuell_buchen?: boolean
+          max_dauer_minuten?: number | null
+          min_dauer_minuten?: number | null
+          objekt_id?: string | null
+          reihenfolge_modus?: Database["public"]["Enums"]["owks_reihenfolge_modus"]
+          rundgang_id: string
+          soll_zeit_bis?: string | null
+          soll_zeit_von?: string | null
+          unterschreitung_unzulaessig?: boolean
+          updated_at?: string
+          wochentage?: number[]
+          zeit_bis?: string
+          zeit_von?: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          durchgaenge?: number
+          ferien_modus?: string
+          gueltig_ab?: string
+          gueltig_bis?: string | null
+          id?: string
+          intervall_wochen?: number
+          manuell_buchen?: boolean
+          max_dauer_minuten?: number | null
+          min_dauer_minuten?: number | null
+          objekt_id?: string | null
+          reihenfolge_modus?: Database["public"]["Enums"]["owks_reihenfolge_modus"]
+          rundgang_id?: string
+          soll_zeit_bis?: string | null
+          soll_zeit_von?: string | null
+          unterschreitung_unzulaessig?: boolean
+          updated_at?: string
+          wochentage?: number[]
+          zeit_bis?: string
+          zeit_von?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owks_bestreifungsplaene_objekt_id_fkey"
+            columns: ["objekt_id"]
+            isOneToOne: false
+            referencedRelation: "owks_objekte"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owks_bestreifungsplaene_rundgang_id_fkey"
+            columns: ["rundgang_id"]
+            isOneToOne: false
+            referencedRelation: "owks_rundgaenge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owks_durchgaenge: {
+        Row: {
+          bestreifung_id: string
+          created_at: string
+          domain_id: string
+          ende_at: string | null
+          fahrer_id: string | null
+          id: string
+          nummer: number
+          start_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          bestreifung_id: string
+          created_at?: string
+          domain_id: string
+          ende_at?: string | null
+          fahrer_id?: string | null
+          id?: string
+          nummer?: number
+          start_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          bestreifung_id?: string
+          created_at?: string
+          domain_id?: string
+          ende_at?: string | null
+          fahrer_id?: string | null
+          id?: string
+          nummer?: number
+          start_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owks_durchgaenge_bestreifung_id_fkey"
+            columns: ["bestreifung_id"]
+            isOneToOne: false
+            referencedRelation: "owks_bestreifungen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owks_ereignisse: {
+        Row: {
+          beschreibung: string | null
+          bestreifung_id: string | null
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          durchgang_id: string | null
+          foto_url: string | null
+          id: string
+          kontrollpunkt_id: string | null
+          titel: string
+          typ: Database["public"]["Enums"]["owks_ereignis_typ"]
+        }
+        Insert: {
+          beschreibung?: string | null
+          bestreifung_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          durchgang_id?: string | null
+          foto_url?: string | null
+          id?: string
+          kontrollpunkt_id?: string | null
+          titel: string
+          typ?: Database["public"]["Enums"]["owks_ereignis_typ"]
+        }
+        Update: {
+          beschreibung?: string | null
+          bestreifung_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          durchgang_id?: string | null
+          foto_url?: string | null
+          id?: string
+          kontrollpunkt_id?: string | null
+          titel?: string
+          typ?: Database["public"]["Enums"]["owks_ereignis_typ"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owks_ereignisse_bestreifung_id_fkey"
+            columns: ["bestreifung_id"]
+            isOneToOne: false
+            referencedRelation: "owks_bestreifungen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owks_ereignisse_durchgang_id_fkey"
+            columns: ["durchgang_id"]
+            isOneToOne: false
+            referencedRelation: "owks_durchgaenge"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owks_ereignisse_kontrollpunkt_id_fkey"
+            columns: ["kontrollpunkt_id"]
+            isOneToOne: false
+            referencedRelation: "owks_kontrollpunkte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owks_kontrollpunkte: {
+        Row: {
+          aktiv: boolean
+          bezeichnung: string
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          lat: number | null
+          lng: number | null
+          nfc_tag_typ: Database["public"]["Enums"]["owks_tag_typ"]
+          nfc_uid: string | null
+          notizen: string | null
+          objekt_id: string | null
+          raum: string | null
+          reihenfolge: number
+          rundgang_id: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          bezeichnung: string
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          nfc_tag_typ?: Database["public"]["Enums"]["owks_tag_typ"]
+          nfc_uid?: string | null
+          notizen?: string | null
+          objekt_id?: string | null
+          raum?: string | null
+          reihenfolge?: number
+          rundgang_id: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          bezeichnung?: string
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          nfc_tag_typ?: Database["public"]["Enums"]["owks_tag_typ"]
+          nfc_uid?: string | null
+          notizen?: string | null
+          objekt_id?: string | null
+          raum?: string | null
+          reihenfolge?: number
+          rundgang_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owks_kontrollpunkte_objekt_id_fkey"
+            columns: ["objekt_id"]
+            isOneToOne: false
+            referencedRelation: "owks_objekte"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owks_kontrollpunkte_rundgang_id_fkey"
+            columns: ["rundgang_id"]
+            isOneToOne: false
+            referencedRelation: "owks_rundgaenge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owks_objekte: {
+        Row: {
+          adresse: string | null
+          aktiv: boolean
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          kunden_id: string | null
+          kunden_name: string | null
+          lat: number | null
+          lng: number | null
+          name: string
+          notizen: string | null
+          ort: string | null
+          plz: string | null
+          updated_at: string
+        }
+        Insert: {
+          adresse?: string | null
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          kunden_id?: string | null
+          kunden_name?: string | null
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notizen?: string | null
+          ort?: string | null
+          plz?: string | null
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string | null
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          kunden_id?: string | null
+          kunden_name?: string | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notizen?: string | null
+          ort?: string | null
+          plz?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      owks_rundgaenge: {
+        Row: {
+          aktiv: boolean
+          beschreibung: string | null
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          name: string
+          objekt_id: string | null
+          rundgang_nr: string | null
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          name: string
+          objekt_id?: string | null
+          rundgang_nr?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          beschreibung?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          name?: string
+          objekt_id?: string | null
+          rundgang_nr?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owks_rundgaenge_objekt_id_fkey"
+            columns: ["objekt_id"]
+            isOneToOne: false
+            referencedRelation: "owks_objekte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      owks_scans: {
+        Row: {
+          created_at: string
+          domain_id: string
+          durchgang_id: string
+          fahrer_id: string | null
+          gescannt_at: string
+          id: string
+          kontrollpunkt_id: string | null
+          lat: number | null
+          lng: number | null
+          nfc_uid: string | null
+          notiz: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          durchgang_id: string
+          fahrer_id?: string | null
+          gescannt_at?: string
+          id?: string
+          kontrollpunkt_id?: string | null
+          lat?: number | null
+          lng?: number | null
+          nfc_uid?: string | null
+          notiz?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          durchgang_id?: string
+          fahrer_id?: string | null
+          gescannt_at?: string
+          id?: string
+          kontrollpunkt_id?: string | null
+          lat?: number | null
+          lng?: number | null
+          nfc_uid?: string | null
+          notiz?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owks_scans_durchgang_id_fkey"
+            columns: ["durchgang_id"]
+            isOneToOne: false
+            referencedRelation: "owks_durchgaenge"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owks_scans_kontrollpunkt_id_fkey"
+            columns: ["kontrollpunkt_id"]
+            isOneToOne: false
+            referencedRelation: "owks_kontrollpunkte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_settings: {
         Row: {
           current_version: string
@@ -1718,6 +2228,27 @@ export type Database = {
         | "in_bearbeitung"
         | "abgeschlossen"
         | "storniert"
+      owks_bestreifung_status:
+        | "geplant"
+        | "aktiv"
+        | "erledigt"
+        | "versaeumt"
+        | "storniert"
+      owks_ereignis_typ:
+        | "hinweis"
+        | "warnung"
+        | "vorfall"
+        | "schaden"
+        | "sonstige"
+      owks_reihenfolge_modus: "ignorieren" | "warnen" | "strikt"
+      owks_tag_typ:
+        | "ntag213"
+        | "ntag215"
+        | "ntag216"
+        | "mifare_classic"
+        | "mifare_ultralight"
+        | "desfire"
+        | "sonstige"
       schluessel_status:
         | "ausgegeben"
         | "uebernommen"
@@ -1860,6 +2391,30 @@ export const Constants = {
         "in_bearbeitung",
         "abgeschlossen",
         "storniert",
+      ],
+      owks_bestreifung_status: [
+        "geplant",
+        "aktiv",
+        "erledigt",
+        "versaeumt",
+        "storniert",
+      ],
+      owks_ereignis_typ: [
+        "hinweis",
+        "warnung",
+        "vorfall",
+        "schaden",
+        "sonstige",
+      ],
+      owks_reihenfolge_modus: ["ignorieren", "warnen", "strikt"],
+      owks_tag_typ: [
+        "ntag213",
+        "ntag215",
+        "ntag216",
+        "mifare_classic",
+        "mifare_ultralight",
+        "desfire",
+        "sonstige",
       ],
       schluessel_status: [
         "ausgegeben",
