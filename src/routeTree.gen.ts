@@ -35,8 +35,10 @@ import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_au
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
+import { Route as AuthenticatedRevierCenterOwksRouteRouteImport } from './routes/_authenticated/revier-center/owks/route'
 import { Route as AuthenticatedNotdienstRohrserviceRouteRouteImport } from './routes/_authenticated/notdienst/rohrservice/route'
 import { Route as AuthenticatedNotdienstBudekoRouteRouteImport } from './routes/_authenticated/notdienst/budeko/route'
+import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes/_authenticated/revier-center/owks/index'
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -189,6 +191,12 @@ const AuthenticatedAbrechnungProviderRoute =
     path: '/abrechnung/$provider',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRevierCenterOwksRouteRoute =
+  AuthenticatedRevierCenterOwksRouteRouteImport.update({
+    id: '/owks',
+    path: '/owks',
+    getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
+  } as any)
 const AuthenticatedNotdienstRohrserviceRouteRoute =
   AuthenticatedNotdienstRohrserviceRouteRouteImport.update({
     id: '/notdienst/rohrservice',
@@ -200,6 +208,12 @@ const AuthenticatedNotdienstBudekoRouteRoute =
     id: '/notdienst/budeko',
     path: '/notdienst/budeko',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksIndexRoute =
+  AuthenticatedRevierCenterOwksIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
   } as any)
 const AuthenticatedNotdienstRohrserviceIndexRoute =
   AuthenticatedNotdienstRohrserviceIndexRouteImport.update({
@@ -286,6 +300,7 @@ export interface FileRoutesByFullPath {
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
+  '/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
@@ -300,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
+  '/revier-center/owks/': typeof AuthenticatedRevierCenterOwksIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -336,6 +352,7 @@ export interface FileRoutesByTo {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceIndexRoute
+  '/revier-center/owks': typeof AuthenticatedRevierCenterOwksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -363,6 +380,7 @@ export interface FileRoutesById {
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
+  '/_authenticated/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
   '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
@@ -377,6 +395,7 @@ export interface FileRoutesById {
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/_authenticated/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
+  '/_authenticated/revier-center/owks/': typeof AuthenticatedRevierCenterOwksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -404,6 +423,7 @@ export interface FileRouteTypes {
     | '/superadmin'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
+    | '/revier-center/owks'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
@@ -418,6 +438,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/notdienst/budeko/'
     | '/notdienst/rohrservice/'
+    | '/revier-center/owks/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -454,6 +475,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
+    | '/revier-center/owks'
   id:
     | '__root__'
     | '/'
@@ -480,6 +502,7 @@ export interface FileRouteTypes {
     | '/_authenticated/superadmin'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/rohrservice'
+    | '/_authenticated/revier-center/owks'
     | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/version'
@@ -494,6 +517,7 @@ export interface FileRouteTypes {
     | '/lovable/email/queue/process'
     | '/_authenticated/notdienst/budeko/'
     | '/_authenticated/notdienst/rohrservice/'
+    | '/_authenticated/revier-center/owks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -689,6 +713,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAbrechnungProviderRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/revier-center/owks': {
+      id: '/_authenticated/revier-center/owks'
+      path: '/owks'
+      fullPath: '/revier-center/owks'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksRouteRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterRouteRoute
+    }
     '/_authenticated/notdienst/rohrservice': {
       id: '/_authenticated/notdienst/rohrservice'
       path: '/notdienst/rohrservice'
@@ -702,6 +733,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/notdienst/budeko'
       preLoaderRoute: typeof AuthenticatedNotdienstBudekoRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/revier-center/owks/': {
+      id: '/_authenticated/revier-center/owks/'
+      path: '/'
+      fullPath: '/revier-center/owks/'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksIndexRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
     }
     '/_authenticated/notdienst/rohrservice/': {
       id: '/_authenticated/notdienst/rohrservice/'
@@ -776,12 +814,30 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRevierCenterOwksRouteRouteChildren {
+  AuthenticatedRevierCenterOwksIndexRoute: typeof AuthenticatedRevierCenterOwksIndexRoute
+}
+
+const AuthenticatedRevierCenterOwksRouteRouteChildren: AuthenticatedRevierCenterOwksRouteRouteChildren =
+  {
+    AuthenticatedRevierCenterOwksIndexRoute:
+      AuthenticatedRevierCenterOwksIndexRoute,
+  }
+
+const AuthenticatedRevierCenterOwksRouteRouteWithChildren =
+  AuthenticatedRevierCenterOwksRouteRoute._addFileChildren(
+    AuthenticatedRevierCenterOwksRouteRouteChildren,
+  )
+
 interface AuthenticatedRevierCenterRouteRouteChildren {
+  AuthenticatedRevierCenterOwksRouteRoute: typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
   AuthenticatedRevierCenterIndexRoute: typeof AuthenticatedRevierCenterIndexRoute
 }
 
 const AuthenticatedRevierCenterRouteRouteChildren: AuthenticatedRevierCenterRouteRouteChildren =
   {
+    AuthenticatedRevierCenterOwksRouteRoute:
+      AuthenticatedRevierCenterOwksRouteRouteWithChildren,
     AuthenticatedRevierCenterIndexRoute: AuthenticatedRevierCenterIndexRoute,
   }
 
@@ -921,3 +977,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
