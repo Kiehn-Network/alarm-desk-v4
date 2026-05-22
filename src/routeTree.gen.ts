@@ -17,7 +17,6 @@ import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authentic
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
 import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
 import { Route as AuthenticatedSchluesselbuchRouteImport } from './routes/_authenticated/schluesselbuch'
-import { Route as AuthenticatedRevierCenterRouteImport } from './routes/_authenticated/revier-center'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
 import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authenticated/meine-einsaetze'
@@ -87,12 +86,6 @@ const AuthenticatedSchluesselbuchRoute =
   AuthenticatedSchluesselbuchRouteImport.update({
     id: '/schluesselbuch',
     path: '/schluesselbuch',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedRevierCenterRoute =
-  AuthenticatedRevierCenterRouteImport.update({
-    id: '/revier-center',
-    path: '/revier-center',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
@@ -272,7 +265,6 @@ export interface FileRoutesByFullPath {
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
   '/profil': typeof AuthenticatedProfilRoute
-  '/revier-center': typeof AuthenticatedRevierCenterRoute
   '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
@@ -310,7 +302,6 @@ export interface FileRoutesByTo {
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
   '/profil': typeof AuthenticatedProfilRoute
-  '/revier-center': typeof AuthenticatedRevierCenterRoute
   '/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
@@ -348,7 +339,6 @@ export interface FileRoutesById {
   '/_authenticated/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/_authenticated/monitor': typeof AuthenticatedMonitorRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
-  '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRoute
   '/_authenticated/schluesselbuch': typeof AuthenticatedSchluesselbuchRoute
   '/_authenticated/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
@@ -388,7 +378,6 @@ export interface FileRouteTypes {
     | '/meine-einsaetze'
     | '/monitor'
     | '/profil'
-    | '/revier-center'
     | '/schluesselbuch'
     | '/schluesseluebergabe'
     | '/service-center'
@@ -426,7 +415,6 @@ export interface FileRouteTypes {
     | '/meine-einsaetze'
     | '/monitor'
     | '/profil'
-    | '/revier-center'
     | '/schluesselbuch'
     | '/schluesseluebergabe'
     | '/service-center'
@@ -463,7 +451,6 @@ export interface FileRouteTypes {
     | '/_authenticated/meine-einsaetze'
     | '/_authenticated/monitor'
     | '/_authenticated/profil'
-    | '/_authenticated/revier-center'
     | '/_authenticated/schluesselbuch'
     | '/_authenticated/schluesseluebergabe'
     | '/_authenticated/service-center'
@@ -550,13 +537,6 @@ declare module '@tanstack/react-router' {
       path: '/schluesselbuch'
       fullPath: '/schluesselbuch'
       preLoaderRoute: typeof AuthenticatedSchluesselbuchRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/revier-center': {
-      id: '/_authenticated/revier-center'
-      path: '/revier-center'
-      fullPath: '/revier-center'
-      preLoaderRoute: typeof AuthenticatedRevierCenterRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profil': {
@@ -834,7 +814,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMeineEinsaetzeRoute: typeof AuthenticatedMeineEinsaetzeRoute
   AuthenticatedMonitorRoute: typeof AuthenticatedMonitorRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
-  AuthenticatedRevierCenterRoute: typeof AuthenticatedRevierCenterRoute
   AuthenticatedSchluesselbuchRoute: typeof AuthenticatedSchluesselbuchRoute
   AuthenticatedSchluesseluebergabeRoute: typeof AuthenticatedSchluesseluebergabeRoute
   AuthenticatedServiceCenterRoute: typeof AuthenticatedServiceCenterRoute
@@ -859,7 +838,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMeineEinsaetzeRoute: AuthenticatedMeineEinsaetzeRoute,
   AuthenticatedMonitorRoute: AuthenticatedMonitorRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
-  AuthenticatedRevierCenterRoute: AuthenticatedRevierCenterRoute,
   AuthenticatedSchluesselbuchRoute: AuthenticatedSchluesselbuchRoute,
   AuthenticatedSchluesseluebergabeRoute: AuthenticatedSchluesseluebergabeRoute,
   AuthenticatedServiceCenterRoute: AuthenticatedServiceCenterRoute,
@@ -888,3 +866,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
