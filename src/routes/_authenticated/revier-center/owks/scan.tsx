@@ -68,7 +68,7 @@ function ScanSeite() {
         <div className="text-xs font-medium uppercase text-muted-foreground">Manuell</div>
         <Input placeholder="NFC-UID" value={uid} onChange={(e) => setUid(e.target.value)} />
         <Textarea placeholder="Notiz (optional)" value={notiz} onChange={(e) => setNotiz(e.target.value)} rows={2} />
-        <Button className="w-full" onClick={() => submit.mutate()} disabled={!uid || submit.isPending}>Erfassen</Button>
+        <Button className="w-full" onClick={() => submit.mutate(undefined)} disabled={!uid || submit.isPending}>Erfassen</Button>
       </div>
       {last && (
         <div className="rounded-xl border border-green-500/30 bg-green-500/10 p-4 flex items-center gap-3">
