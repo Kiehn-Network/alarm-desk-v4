@@ -42,6 +42,7 @@ import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
 import { Route as AuthenticatedRevierCenterOwksObjekteRouteImport } from './routes/_authenticated/revier-center/owks/objekte'
 import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
 import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
@@ -234,6 +235,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedRevierCenterOwksRundgaengeRoute =
+  AuthenticatedRevierCenterOwksRundgaengeRouteImport.update({
+    id: '/rundgaenge',
+    path: '/rundgaenge',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
 const AuthenticatedRevierCenterOwksObjekteRoute =
   AuthenticatedRevierCenterOwksObjekteRouteImport.update({
     id: '/objekte',
@@ -320,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
+  '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -358,6 +366,7 @@ export interface FileRoutesByTo {
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
+  '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -402,6 +411,7 @@ export interface FileRoutesById {
   '/_authenticated/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/_authenticated/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
   '/_authenticated/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
+  '/_authenticated/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/_authenticated/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
     | '/revier-center/owks/objekte'
+    | '/revier-center/owks/rundgaenge'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko/'
     | '/notdienst/rohrservice/'
@@ -484,6 +495,7 @@ export interface FileRouteTypes {
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
     | '/revier-center/owks/objekte'
+    | '/revier-center/owks/rundgaenge'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
@@ -527,6 +539,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notdienst/rohrservice/nachbearbeitung'
     | '/_authenticated/notdienst/rohrservice/neu'
     | '/_authenticated/revier-center/owks/objekte'
+    | '/_authenticated/revier-center/owks/rundgaenge'
     | '/lovable/email/queue/process'
     | '/_authenticated/notdienst/budeko/'
     | '/_authenticated/notdienst/rohrservice/'
@@ -775,6 +788,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/revier-center/owks/rundgaenge': {
+      id: '/_authenticated/revier-center/owks/rundgaenge'
+      path: '/rundgaenge'
+      fullPath: '/revier-center/owks/rundgaenge'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksRundgaengeRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
     '/_authenticated/revier-center/owks/objekte': {
       id: '/_authenticated/revier-center/owks/objekte'
       path: '/objekte'
@@ -836,6 +856,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRevierCenterOwksRouteRouteChildren {
   AuthenticatedRevierCenterOwksObjekteRoute: typeof AuthenticatedRevierCenterOwksObjekteRoute
+  AuthenticatedRevierCenterOwksRundgaengeRoute: typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   AuthenticatedRevierCenterOwksIndexRoute: typeof AuthenticatedRevierCenterOwksIndexRoute
 }
 
@@ -843,6 +864,8 @@ const AuthenticatedRevierCenterOwksRouteRouteChildren: AuthenticatedRevierCenter
   {
     AuthenticatedRevierCenterOwksObjekteRoute:
       AuthenticatedRevierCenterOwksObjekteRoute,
+    AuthenticatedRevierCenterOwksRundgaengeRoute:
+      AuthenticatedRevierCenterOwksRundgaengeRoute,
     AuthenticatedRevierCenterOwksIndexRoute:
       AuthenticatedRevierCenterOwksIndexRoute,
   }
