@@ -244,6 +244,9 @@ export const editEinsatzFull = createServerFn({ method: "POST" })
       .from("einsaetze").update(patch).eq("id", id).select().single();
     if (error) throw new Error(error.message);
     await logHistory(supabase, userId, id, before ?? {}, patch, domainId);
+    if (patch.status === "abgeschlossen" && before?.status !== "abgeschlossen") {
+      await maybeAutoErp(id, domainId, userId);
+    }
     return row;
   });
 
@@ -313,6 +316,9 @@ export const abschliessenEinsatz = createServerFn({ method: "POST" })
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
     await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
+    if (before?.status !== "abgeschlossen") {
+      await maybeAutoErp(data.id, domainId, userId);
+    }
     return row;
   });
 
