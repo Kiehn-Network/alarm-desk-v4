@@ -30,6 +30,7 @@ import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
@@ -158,6 +159,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedRevierCenterRouteRoute =
+  AuthenticatedRevierCenterRouteRouteImport.update({
+    id: '/revier-center',
+    path: '/revier-center',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
   id: '/api/public/version',
   path: '/api/public/version',
@@ -252,6 +259,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
+  '/revier-center': typeof AuthenticatedRevierCenterRouteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -289,6 +297,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
+  '/revier-center': typeof AuthenticatedRevierCenterRouteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -326,6 +335,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
+  '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/'
     | '/kiehn-systeme-login'
     | '/login'
+    | '/revier-center'
     | '/admin'
     | '/alarmierung'
     | '/dashboard'
@@ -402,6 +413,7 @@ export interface FileRouteTypes {
     | '/'
     | '/kiehn-systeme-login'
     | '/login'
+    | '/revier-center'
     | '/admin'
     | '/alarmierung'
     | '/dashboard'
@@ -438,6 +450,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/kiehn-systeme-login'
     | '/login'
+    | '/_authenticated/revier-center'
     | '/_authenticated/admin'
     | '/_authenticated/alarmierung'
     | '/_authenticated/dashboard'
@@ -630,6 +643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/revier-center': {
+      id: '/_authenticated/revier-center'
+      path: '/revier-center'
+      fullPath: '/revier-center'
+      preLoaderRoute: typeof AuthenticatedRevierCenterRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/api/public/version': {
       id: '/api/public/version'
       path: '/api/public/version'
@@ -801,6 +821,7 @@ const AuthenticatedAbrechnungProviderRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedRevierCenterRouteRoute: typeof AuthenticatedRevierCenterRouteRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -825,6 +846,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedRevierCenterRouteRoute: AuthenticatedRevierCenterRouteRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAlarmierungRoute: AuthenticatedAlarmierungRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
