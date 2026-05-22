@@ -31,6 +31,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
+import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
@@ -165,6 +166,12 @@ const AuthenticatedRevierCenterRouteRoute =
     path: '/revier-center',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedRevierCenterIndexRoute =
+  AuthenticatedRevierCenterIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
+  } as any)
 const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
   id: '/api/public/version',
   path: '/api/public/version',
@@ -259,7 +266,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
-  '/revier-center': typeof AuthenticatedRevierCenterRouteRoute
+  '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByFullPath {
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
@@ -297,7 +305,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
-  '/revier-center': typeof AuthenticatedRevierCenterRouteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -318,6 +325,7 @@ export interface FileRoutesByTo {
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/revier-center': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
@@ -335,7 +343,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
-  '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRoute
+  '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -358,6 +366,7 @@ export interface FileRoutesById {
   '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/_authenticated/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/_authenticated/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/_authenticated/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/_authenticated/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
@@ -398,6 +407,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/revier-center/'
     | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
@@ -413,7 +423,6 @@ export interface FileRouteTypes {
     | '/'
     | '/kiehn-systeme-login'
     | '/login'
-    | '/revier-center'
     | '/admin'
     | '/alarmierung'
     | '/dashboard'
@@ -434,6 +443,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/revier-center'
     | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
@@ -473,6 +483,7 @@ export interface FileRouteTypes {
     | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/version'
+    | '/_authenticated/revier-center/'
     | '/_authenticated/abrechnung/$provider/versand'
     | '/_authenticated/notdienst/budeko/mitarbeiter'
     | '/_authenticated/notdienst/budeko/nachbearbeitung'
@@ -650,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRevierCenterRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/revier-center/': {
+      id: '/_authenticated/revier-center/'
+      path: '/'
+      fullPath: '/revier-center/'
+      preLoaderRoute: typeof AuthenticatedRevierCenterIndexRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterRouteRoute
+    }
     '/api/public/version': {
       id: '/api/public/version'
       path: '/api/public/version'
@@ -758,6 +776,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedRevierCenterRouteRouteChildren {
+  AuthenticatedRevierCenterIndexRoute: typeof AuthenticatedRevierCenterIndexRoute
+}
+
+const AuthenticatedRevierCenterRouteRouteChildren: AuthenticatedRevierCenterRouteRouteChildren =
+  {
+    AuthenticatedRevierCenterIndexRoute: AuthenticatedRevierCenterIndexRoute,
+  }
+
+const AuthenticatedRevierCenterRouteRouteWithChildren =
+  AuthenticatedRevierCenterRouteRoute._addFileChildren(
+    AuthenticatedRevierCenterRouteRouteChildren,
+  )
+
 interface AuthenticatedNotdienstBudekoRouteRouteChildren {
   AuthenticatedNotdienstBudekoMitarbeiterRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   AuthenticatedNotdienstBudekoNachbearbeitungRoute: typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
@@ -821,7 +853,7 @@ const AuthenticatedAbrechnungProviderRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedRevierCenterRouteRoute: typeof AuthenticatedRevierCenterRouteRoute
+  AuthenticatedRevierCenterRouteRoute: typeof AuthenticatedRevierCenterRouteRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -846,7 +878,8 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedRevierCenterRouteRoute: AuthenticatedRevierCenterRouteRoute,
+  AuthenticatedRevierCenterRouteRoute:
+    AuthenticatedRevierCenterRouteRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAlarmierungRoute: AuthenticatedAlarmierungRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
