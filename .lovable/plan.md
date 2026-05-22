@@ -1,79 +1,68 @@
-## Ziel
 
-Ausbau des **Revier Center** um ein vollständiges **OWKS-Modul** (Objekt-Wach-Kontroll-System) mit Bestreifungsplanung, Rundgangsverwaltung, NFC-Punkten und Zeitstrahl — strikt domain-scoped.
+# ESRP-Modul (ERP-Anbindung)
 
----
+## Datenmodell (Migration)
 
-## Navigation
+**`erp_settings`** (pro Domain, Admin-only)
+- `domain_id` (PK), `api_base`, `api_user`, `api_token`, `endpoint_path` (Default `/azs-av-einsaetze`), `use_api_prefix` (bool), `aktiv` (bool), `auto_on_abschluss` (bool, Default true).
+- RLS: SELECT für eigene Domain (alle), INSERT/UPDATE nur Domain-Admin oder Superadmin. Token wird in Server-Fns nur an Admins zurückgegeben (bzw. maskiert für andere).
 
-Im Sidebar-Bereich „Center" wird `Revier Center` zum Submenü mit:
-- **Übersicht** (`/revier-center`)
-- **OWKS** (`/revier-center/owks`) — Landing/Dashboard
-  - Zeitstrahl (`/revier-center/owks/zeitstrahl`)
-  - Bestreifungspläne (`/revier-center/owks/bestreifungsplaene`)
-  - Rundgangsverwaltung (`/revier-center/owks/rundgaenge`)
-  - NFC-Punkte (`/revier-center/owks/nfc-punkte`)
-  - Kunden & Objekte (`/revier-center/owks/objekte`)
-  - Ereignisse (`/revier-center/owks/ereignisse`)
+**`erp_outbox`**
+- `id`, `domain_id`, `einsatz_id` (FK), `external_id` (z.B. `AD-{bericht_nr}`), `payload` (jsonb), `status` enum `pending|sent|failed`, `tries` int, `last_error` text, `next_retry_at`, `sent_at`, `created_by`, `created_at`, `updated_at`.
+- Index auf `(domain_id, einsatz_id)`, `(status, next_retry_at)`.
+- RLS: SELECT eigene Domain; INSERT/UPDATE/DELETE Admin+Dispatcher.
 
-Gating: Rollen `admin`, `dispatcher`, `superadmin`; Fahrer sehen nur das Scan-Interface (`/revier-center/owks/scan`).
+**App-Modul registrieren**: `app_modules` Eintrag `key='esrp'`, `name='ESRP'`.
 
----
+## Server-Funktionen — `src/lib/esrp.functions.ts`
 
-## Datenmodell (neue Tabellen, alle mit `domain_id` + RLS)
+- `getEsrpSettings()` — gibt Settings zurück; Token nur an Admin/Superadmin, sonst maskiert (`••••`).
+- `updateEsrpSettings({ api_base, api_user, api_token?, endpoint_path, use_api_prefix, aktiv, auto_on_abschluss })` — Admin-only, Zod-validiert.
+- `enqueueEinsatzToErp({ einsatz_id })` — lädt Einsatz, baut Payload, INSERT in `erp_outbox` (Status `pending`), ruft direkt `processOutboxItem` auf.
+- `processOutboxItem({ outbox_id })` — interner Worker: Holt Settings, führt `POST /login` aus, cached JWT in DB-Spalte oder pro Aufruf neu, POST an `endpoint`. Bei 200/201/409 → `sent`. Sonst `failed` mit `next_retry_at = now()+1min` (Retry-Backoff wie PHP).
+- `retryOutbox({ outbox_id })` — Admin/Dispatcher; setzt `next_retry_at=now()` und ruft `processOutboxItem` auf.
+- `listOutboxStatusForEinsaetze({ einsatz_ids })` — gibt letzten Status pro Einsatz zurück (für Lampen).
 
-- `owks_objekte` — Revier-Objekte (Name, Adresse, Kunden-Ref, Geo, aktiv). Import aus `kunden`/Stammdaten möglich.
-- `owks_kunden_link` — Verknüpfung importierter Stammdaten-Kunden mit OWKS.
-- `owks_rundgaenge` — Rundgang-Definitionen (Name, Objekt, Kunde, Notizen).
-- `owks_kontrollpunkte` — NFC-Punkte pro Rundgang (Reihenfolge, Bezeichnung, NFC-UID/Tag-Typ wie NTAG213/NTAG215/NTAG216/MIFARE Classic/Ultralight/DESFire, Raum, GPS).
-- `owks_bestreifungsplaene` — Pläne (Rundgang, Zeitfenster Start/Ende, Sollzeit, Durchgänge, Zeit-Limits Min/Max, Reihenfolge-Verhalten, manuelle Buchung, Ausführung (Wochentag/Intervall), Gültigkeit ab/bis, Ferien-Verhalten).
-- `owks_bestreifungen` — generierte/instanziierte Einzel-Bestreifungen (Plan-Ref optional für Ad-hoc, Datum, Status: geplant/aktiv/erledigt/versäumt/storniert).
-- `owks_durchgaenge` — pro Bestreifung mehrere Durchgänge mit Start/Ende, Fahrer-Ref.
-- `owks_scans` — NFC-Scans (Durchgang, Kontrollpunkt, Fahrer, Timestamp, GPS, Notiz).
-- `owks_ereignisse` — Vorkommnisse (Bestreifung, Typ, Beschreibung, Foto-URL).
+**Payload-Default** (kann später erweitert werden):
+```
+{ einsatz_id: "AD-{bericht_nr}", kunden_name, address, key_number,
+  anlagen_nr, teilnehmer_id, einsatzgrund, beschreibung,
+  geplant_am, vor_ort_am, abfahrt_am, abgeschlossen_am,
+  bericht_data }
+```
 
-RLS: alle Tabellen scopen via `current_effective_domain_id()`; Schreiben nur für `admin`/`dispatcher`/`superadmin`, Fahrer nur eigene Scans/Ereignisse.
+## Auto-Versand bei Abschluss
 
----
+In `src/lib/einsaetze.functions.ts` an der Stelle, wo `status` auf `abgeschlossen` gesetzt wird: prüfen ob `erp_settings.aktiv && auto_on_abschluss` → `enqueueEinsatzToErp` (best-effort, Fehler nicht propagieren).
 
-## UI-Komponenten
+## Cron-Worker
 
-1. **OWKS-Übersicht**: KPI-Kacheln (heute geplante Bestreifungen, offen, abgeschlossen, versäumt), Schnellzugriffe.
-2. **Zeitstrahl** (analog Screenshot): horizontale Timeline, Zeilen = Reviere/Objekte, Balken = Bestreifungen mit Status-Farben (grün=ok, rot=versäumt, gestrichelt=geplant). Klick öffnet Dialog mit Tabs **Info / Bearbeiten / Rundgang**.
-3. **Bestreifungspläne**: Tabelle gruppiert nach Revier/Rundgang, Filter, Anlegen/Bearbeiten-Dialog (Allgemein + Änderungen-Historie, Wiederholung, Gültigkeit).
-4. **Rundgangsverwaltung**: Tabelle (Rundgangname, -nr., Kontrollpunkte-Anzahl, Kunde, Objekt). Anlegen → Punkte sortierbar zuweisen.
-5. **NFC-Punkte**: Verwaltung aller Tags, Tag-Typ-Auswahl, UID-Eingabe oder Web-NFC-Scan-Button (Chrome Android), Zuordnung zu Objekt/Rundgang.
-6. **Kunden & Objekte**: Liste + Button „Aus Stammdaten importieren" (öffnet Picker auf bestehende `kunden`-Tabelle).
-7. **Fahrer-Scan-View** (`/revier-center/owks/scan`): mobile-first, große Buttons, Web-NFC-Reader (`NDEFReader`), Fallback manuelle UID-Eingabe, Live-Fortschritt Durchgang.
+`src/routes/api/public/hooks/esrp-worker.ts` — POST, holt bis zu 20 Outbox-Jobs (`pending` oder `failed` mit fälligem Retry), ruft pro Job `processOutboxItem` über `supabaseAdmin`. pg_cron Job alle 1 Minute.
 
----
+## UI
 
-## Server-Layer
+**Admin-Einstellungsseite** — `src/routes/_authenticated/esrp.tsx` (Admin/Superadmin):
+- Konfigurations-Card: API_BASE, API_USER, API_TOKEN, Endpoint, Auto-Versand bei Abschluss, Aktiv-Switch.
+- Outbox-Tabelle: letzte 50 Jobs mit Status, Fehlermeldung, Retry-Button, Payload-Preview.
+- Sidebar-Eintrag „ESRP" unter Center, sichtbar wenn Modul `esrp` für Domain aktiv ist.
 
-`createServerFn`-Module unter `src/lib/owks/`:
-- `owks-objekte.functions.ts`, `owks-rundgaenge.functions.ts`, `owks-bestreifungsplaene.functions.ts`, `owks-zeitstrahl.functions.ts`, `owks-scans.functions.ts`, `owks-nfc.functions.ts`.
-- Alle mit `requireSupabaseAuth` + Zod-Validierung; Domain-Scoping via `requireEffectiveDomainId`.
-- Job zur Bestreifungs-Materialisierung (Plan → konkrete `owks_bestreifungen` für Zeitraum) als Server-Fn, getriggert beim Öffnen des Zeitstrahls und nach Plan-Save.
+**Bericht-Versand-Dialog** — `src/components/bericht-send-dialog.tsx`:
+- Radio/Checkboxen: `Nur PDF`, `Nur ERP`, `PDF + ERP` (ERP-Optionen nur wenn ESRP aktiv).
+- Bei ERP-Versand → `enqueueEinsatzToErp`, Erfolg/Fehler-Toast.
 
----
+**Status-Lampe** — kleine Komponente `<EsrpStatusLamp einsatzId=… />` (grün=sent, orange=pending, rot=failed, grau=none). Eingebunden in Einsatz-Listen (Dashboard/Meine Einsätze) per `listOutboxStatusForEinsaetze` Batch-Query.
 
-## Umsetzungsschritte
+## Sicherheit
 
-1. **Migration** für alle OWKS-Tabellen, Enums (`owks_tag_typ`, `owks_bestreifung_status`, `owks_reihenfolge_modus`), Indizes, RLS-Policies.
-2. **Sidebar** umbauen: Untermenü-Support oder gruppierte Anzeige für Revier Center.
-3. **Routes & Server-Fns** anlegen (Stub-Komponenten zuerst, dann Inhalt).
-4. **Zeitstrahl-Komponente** (eigene leichtgewichtige Implementierung mit CSS-Grid, kein neues Heavy-Lib).
-5. **Bestreifungsplan- & Rundgang-Dialoge** mit Tabs wie in Screenshots.
-6. **NFC-Punkte-Seite** inkl. Web-NFC-Scan.
-7. **Fahrer-Scan-Route** mit `NDEFReader`.
-8. **Stammdaten-Import** für Kunden/Objekte.
+- Token verschlüsselt? Vorerst als Plaintext in DB (Lovable-Cloud Standard); RLS schützt vor anderen Domänen; SELECT der Token-Spalte in Server-Fn nur an Admins.
+- Cron-Endpunkt unter `/api/public/hooks/` — keine sensiblen Daten, idempotent durch Outbox-IDs.
 
----
+## Schritte
 
-## Hinweise
+1. Migration (Tabellen, Enums, RLS, app_modules-Eintrag).
+2. Server-Fns + Auto-Hook in `einsaetze.functions.ts`.
+3. Cron-Route + pg_cron-Insert.
+4. Sidebar + Admin-Route + Outbox-UI.
+5. Bericht-Send-Dialog erweitern + Status-Lampe.
 
-- Web-NFC funktioniert nur auf Chrome/Android über HTTPS. iOS/Desktop bekommen manuelle UID-Eingabe als Fallback.
-- Zeitstrahl wird in V1 read-mostly: Klick → Dialog (Info/Bearbeiten/Rundgang) wie in den Screenshots; Drag-Resize folgt in V2.
-- Alles strikt nach `current_effective_domain_id` getrennt; SuperAdmin sieht via Impersonation die jeweilige Domain.
-
-Soll ich so loslegen?
+Soll ich starten?

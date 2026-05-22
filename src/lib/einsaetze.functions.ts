@@ -3,6 +3,17 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
+import { enqueueErpForEinsatz } from "@/lib/esrp.server";
+
+async function maybeAutoErp(einsatzId: string, domainId: string, userId: string) {
+  try {
+    const { data: s } = await supabaseAdmin
+      .from("erp_settings").select("aktiv,auto_on_abschluss")
+      .eq("domain_id", domainId).maybeSingle();
+    if (!s?.aktiv || !s?.auto_on_abschluss) return;
+    await enqueueErpForEinsatz({ einsatz_id: einsatzId, domain_id: domainId, created_by: userId });
+  } catch { /* best effort */ }
+}
 
 const prioritaet = z.enum(["niedrig", "normal", "hoch", "kritisch"]);
 
@@ -233,6 +244,9 @@ export const editEinsatzFull = createServerFn({ method: "POST" })
       .from("einsaetze").update(patch).eq("id", id).select().single();
     if (error) throw new Error(error.message);
     await logHistory(supabase, userId, id, before ?? {}, patch, domainId);
+    if (patch.status === "abgeschlossen" && before?.status !== "abgeschlossen") {
+      await maybeAutoErp(id, domainId, userId);
+    }
     return row;
   });
 
@@ -302,6 +316,9 @@ export const abschliessenEinsatz = createServerFn({ method: "POST" })
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
     await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
+    if (before?.status !== "abgeschlossen") {
+      await maybeAutoErp(data.id, domainId, userId);
+    }
     return row;
   });
 

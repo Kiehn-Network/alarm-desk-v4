@@ -23,6 +23,7 @@ import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authe
 import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated/kunden'
 import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
 import { Route as AuthenticatedHilfeRouteImport } from './routes/_authenticated/hilfe'
+import { Route as AuthenticatedEsrpRouteImport } from './routes/_authenticated/esrp'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
 import { Route as AuthenticatedDatenImportRouteImport } from './routes/_authenticated/daten-import'
@@ -42,6 +43,7 @@ import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksEsrpWorkerRouteImport } from './routes/api/public/hooks/esrp-worker'
 import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
 import { Route as AuthenticatedRevierCenterOwksScanRouteImport } from './routes/_authenticated/revier-center/owks/scan'
 import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
@@ -127,6 +129,11 @@ const AuthenticatedIntrahubRoute = AuthenticatedIntrahubRouteImport.update({
 const AuthenticatedHilfeRoute = AuthenticatedHilfeRouteImport.update({
   id: '/hilfe',
   path: '/hilfe',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedEsrpRoute = AuthenticatedEsrpRouteImport.update({
+  id: '/esrp',
+  path: '/esrp',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEinsatzErstellenRoute =
@@ -239,6 +246,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksEsrpWorkerRoute =
+  ApiPublicHooksEsrpWorkerRouteImport.update({
+    id: '/api/public/hooks/esrp-worker',
+    path: '/api/public/hooks/esrp-worker',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedRevierCenterOwksZeitstrahlRoute =
   AuthenticatedRevierCenterOwksZeitstrahlRouteImport.update({
     id: '/zeitstrahl',
@@ -330,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/esrp': typeof AuthenticatedEsrpRoute
   '/hilfe': typeof AuthenticatedHilfeRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
@@ -360,6 +374,7 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
+  '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -376,6 +391,7 @@ export interface FileRoutesByTo {
   '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/esrp': typeof AuthenticatedEsrpRoute
   '/hilfe': typeof AuthenticatedHilfeRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
@@ -403,6 +419,7 @@ export interface FileRoutesByTo {
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
+  '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -422,6 +439,7 @@ export interface FileRoutesById {
   '/_authenticated/daten-import': typeof AuthenticatedDatenImportRoute
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
+  '/_authenticated/esrp': typeof AuthenticatedEsrpRoute
   '/_authenticated/hilfe': typeof AuthenticatedHilfeRoute
   '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
   '/_authenticated/kunden': typeof AuthenticatedKundenRoute
@@ -452,6 +470,7 @@ export interface FileRoutesById {
   '/_authenticated/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/_authenticated/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/_authenticated/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
+  '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/_authenticated/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -471,6 +490,7 @@ export interface FileRouteTypes {
     | '/daten-import'
     | '/dienstplaene'
     | '/einsatz-erstellen'
+    | '/esrp'
     | '/hilfe'
     | '/intrahub'
     | '/kunden'
@@ -501,6 +521,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/rundgaenge'
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
+    | '/api/public/hooks/esrp-worker'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko/'
     | '/notdienst/rohrservice/'
@@ -517,6 +538,7 @@ export interface FileRouteTypes {
     | '/daten-import'
     | '/dienstplaene'
     | '/einsatz-erstellen'
+    | '/esrp'
     | '/hilfe'
     | '/intrahub'
     | '/kunden'
@@ -544,6 +566,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/rundgaenge'
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
+    | '/api/public/hooks/esrp-worker'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
@@ -562,6 +585,7 @@ export interface FileRouteTypes {
     | '/_authenticated/daten-import'
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
+    | '/_authenticated/esrp'
     | '/_authenticated/hilfe'
     | '/_authenticated/intrahub'
     | '/_authenticated/kunden'
@@ -592,6 +616,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center/owks/rundgaenge'
     | '/_authenticated/revier-center/owks/scan'
     | '/_authenticated/revier-center/owks/zeitstrahl'
+    | '/api/public/hooks/esrp-worker'
     | '/lovable/email/queue/process'
     | '/_authenticated/notdienst/budeko/'
     | '/_authenticated/notdienst/rohrservice/'
@@ -604,6 +629,7 @@ export interface RootRouteChildren {
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
+  ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -705,6 +731,13 @@ declare module '@tanstack/react-router' {
       path: '/hilfe'
       fullPath: '/hilfe'
       preLoaderRoute: typeof AuthenticatedHilfeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/esrp': {
+      id: '/_authenticated/esrp'
+      path: '/esrp'
+      fullPath: '/esrp'
+      preLoaderRoute: typeof AuthenticatedEsrpRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/einsatz-erstellen': {
@@ -838,6 +871,13 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/esrp-worker': {
+      id: '/api/public/hooks/esrp-worker'
+      path: '/api/public/hooks/esrp-worker'
+      fullPath: '/api/public/hooks/esrp-worker'
+      preLoaderRoute: typeof ApiPublicHooksEsrpWorkerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/revier-center/owks/zeitstrahl': {
@@ -1055,6 +1095,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDatenImportRoute: typeof AuthenticatedDatenImportRoute
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
+  AuthenticatedEsrpRoute: typeof AuthenticatedEsrpRoute
   AuthenticatedHilfeRoute: typeof AuthenticatedHilfeRoute
   AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
   AuthenticatedKundenRoute: typeof AuthenticatedKundenRoute
@@ -1081,6 +1122,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDatenImportRoute: AuthenticatedDatenImportRoute,
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
+  AuthenticatedEsrpRoute: AuthenticatedEsrpRoute,
   AuthenticatedHilfeRoute: AuthenticatedHilfeRoute,
   AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,
   AuthenticatedKundenRoute: AuthenticatedKundenRoute,
@@ -1110,18 +1152,9 @@ const rootRouteChildren: RootRouteChildren = {
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
+  ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
