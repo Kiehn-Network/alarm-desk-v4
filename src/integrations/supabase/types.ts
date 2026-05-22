@@ -1056,6 +1056,93 @@ export type Database = {
         }
         Relationships: []
       }
+      erp_outbox: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          einsatz_id: string
+          external_id: string
+          id: string
+          last_error: string | null
+          next_retry_at: string | null
+          payload: Json
+          sent_at: string | null
+          status: Database["public"]["Enums"]["erp_outbox_status"]
+          tries: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          einsatz_id: string
+          external_id: string
+          id?: string
+          last_error?: string | null
+          next_retry_at?: string | null
+          payload: Json
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["erp_outbox_status"]
+          tries?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          einsatz_id?: string
+          external_id?: string
+          id?: string
+          last_error?: string | null
+          next_retry_at?: string | null
+          payload?: Json
+          sent_at?: string | null
+          status?: Database["public"]["Enums"]["erp_outbox_status"]
+          tries?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      erp_settings: {
+        Row: {
+          aktiv: boolean
+          api_base: string
+          api_token: string
+          api_user: string
+          auto_on_abschluss: boolean
+          domain_id: string
+          endpoint_path: string
+          updated_at: string
+          updated_by: string | null
+          use_api_prefix: boolean
+        }
+        Insert: {
+          aktiv?: boolean
+          api_base?: string
+          api_token?: string
+          api_user?: string
+          auto_on_abschluss?: boolean
+          domain_id: string
+          endpoint_path?: string
+          updated_at?: string
+          updated_by?: string | null
+          use_api_prefix?: boolean
+        }
+        Update: {
+          aktiv?: boolean
+          api_base?: string
+          api_token?: string
+          api_user?: string
+          auto_on_abschluss?: boolean
+          domain_id?: string
+          endpoint_path?: string
+          updated_at?: string
+          updated_by?: string | null
+          use_api_prefix?: boolean
+        }
+        Relationships: []
+      }
       hausnotruf_abrechnung_log: {
         Row: {
           domain_id: string
@@ -2228,6 +2315,7 @@ export type Database = {
         | "in_bearbeitung"
         | "abgeschlossen"
         | "storniert"
+      erp_outbox_status: "pending" | "sent" | "failed"
       owks_bestreifung_status:
         | "geplant"
         | "aktiv"
@@ -2392,6 +2480,7 @@ export const Constants = {
         "abgeschlossen",
         "storniert",
       ],
+      erp_outbox_status: ["pending", "sent", "failed"],
       owks_bestreifung_status: [
         "geplant",
         "aktiv",
