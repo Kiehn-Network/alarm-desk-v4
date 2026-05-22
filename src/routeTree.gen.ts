@@ -42,6 +42,7 @@ import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
 import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
 import { Route as AuthenticatedRevierCenterOwksObjekteRouteImport } from './routes/_authenticated/revier-center/owks/objekte'
 import { Route as AuthenticatedRevierCenterOwksNfcPunkteRouteImport } from './routes/_authenticated/revier-center/owks/nfc-punkte'
@@ -237,6 +238,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedRevierCenterOwksZeitstrahlRoute =
+  AuthenticatedRevierCenterOwksZeitstrahlRouteImport.update({
+    id: '/zeitstrahl',
+    path: '/zeitstrahl',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
 const AuthenticatedRevierCenterOwksRundgaengeRoute =
   AuthenticatedRevierCenterOwksRundgaengeRouteImport.update({
     id: '/rundgaenge',
@@ -344,6 +351,7 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -385,6 +393,7 @@ export interface FileRoutesByTo {
   '/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -432,6 +441,7 @@ export interface FileRoutesById {
   '/_authenticated/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/_authenticated/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/_authenticated/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  '/_authenticated/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/_authenticated/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -479,6 +489,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/nfc-punkte'
     | '/revier-center/owks/objekte'
     | '/revier-center/owks/rundgaenge'
+    | '/revier-center/owks/zeitstrahl'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko/'
     | '/notdienst/rohrservice/'
@@ -520,6 +531,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/nfc-punkte'
     | '/revier-center/owks/objekte'
     | '/revier-center/owks/rundgaenge'
+    | '/revier-center/owks/zeitstrahl'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
@@ -566,6 +578,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center/owks/nfc-punkte'
     | '/_authenticated/revier-center/owks/objekte'
     | '/_authenticated/revier-center/owks/rundgaenge'
+    | '/_authenticated/revier-center/owks/zeitstrahl'
     | '/lovable/email/queue/process'
     | '/_authenticated/notdienst/budeko/'
     | '/_authenticated/notdienst/rohrservice/'
@@ -814,6 +827,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/revier-center/owks/zeitstrahl': {
+      id: '/_authenticated/revier-center/owks/zeitstrahl'
+      path: '/zeitstrahl'
+      fullPath: '/revier-center/owks/zeitstrahl'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksZeitstrahlRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
     '/_authenticated/revier-center/owks/rundgaenge': {
       id: '/_authenticated/revier-center/owks/rundgaenge'
       path: '/rundgaenge'
@@ -899,6 +919,7 @@ interface AuthenticatedRevierCenterOwksRouteRouteChildren {
   AuthenticatedRevierCenterOwksNfcPunkteRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   AuthenticatedRevierCenterOwksObjekteRoute: typeof AuthenticatedRevierCenterOwksObjekteRoute
   AuthenticatedRevierCenterOwksRundgaengeRoute: typeof AuthenticatedRevierCenterOwksRundgaengeRoute
+  AuthenticatedRevierCenterOwksZeitstrahlRoute: typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   AuthenticatedRevierCenterOwksIndexRoute: typeof AuthenticatedRevierCenterOwksIndexRoute
 }
 
@@ -912,6 +933,8 @@ const AuthenticatedRevierCenterOwksRouteRouteChildren: AuthenticatedRevierCenter
       AuthenticatedRevierCenterOwksObjekteRoute,
     AuthenticatedRevierCenterOwksRundgaengeRoute:
       AuthenticatedRevierCenterOwksRundgaengeRoute,
+    AuthenticatedRevierCenterOwksZeitstrahlRoute:
+      AuthenticatedRevierCenterOwksZeitstrahlRoute,
     AuthenticatedRevierCenterOwksIndexRoute:
       AuthenticatedRevierCenterOwksIndexRoute,
   }
