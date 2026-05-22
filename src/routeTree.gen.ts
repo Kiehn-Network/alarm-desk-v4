@@ -45,6 +45,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
 import { Route as AuthenticatedRevierCenterOwksObjekteRouteImport } from './routes/_authenticated/revier-center/owks/objekte'
 import { Route as AuthenticatedRevierCenterOwksNfcPunkteRouteImport } from './routes/_authenticated/revier-center/owks/nfc-punkte'
+import { Route as AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport } from './routes/_authenticated/revier-center/owks/bestreifungsplaene'
 import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
 import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
 import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from './routes/_authenticated/notdienst/rohrservice/mitarbeiter'
@@ -254,6 +255,12 @@ const AuthenticatedRevierCenterOwksNfcPunkteRoute =
     path: '/nfc-punkte',
     getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
   } as any)
+const AuthenticatedRevierCenterOwksBestreifungsplaeneRoute =
+  AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport.update({
+    id: '/bestreifungsplaene',
+    path: '/bestreifungsplaene',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
 const AuthenticatedNotdienstRohrserviceNeuRoute =
   AuthenticatedNotdienstRohrserviceNeuRouteImport.update({
     id: '/neu',
@@ -333,6 +340,7 @@ export interface FileRoutesByFullPath {
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
+  '/revier-center/owks/bestreifungsplaene': typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
   '/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
@@ -373,6 +381,7 @@ export interface FileRoutesByTo {
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
+  '/revier-center/owks/bestreifungsplaene': typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
   '/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
@@ -419,6 +428,7 @@ export interface FileRoutesById {
   '/_authenticated/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/_authenticated/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/_authenticated/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
+  '/_authenticated/revier-center/owks/bestreifungsplaene': typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
   '/_authenticated/revier-center/owks/nfc-punkte': typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   '/_authenticated/revier-center/owks/objekte': typeof AuthenticatedRevierCenterOwksObjekteRoute
   '/_authenticated/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
+    | '/revier-center/owks/bestreifungsplaene'
     | '/revier-center/owks/nfc-punkte'
     | '/revier-center/owks/objekte'
     | '/revier-center/owks/rundgaenge'
@@ -505,6 +516,7 @@ export interface FileRouteTypes {
     | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
+    | '/revier-center/owks/bestreifungsplaene'
     | '/revier-center/owks/nfc-punkte'
     | '/revier-center/owks/objekte'
     | '/revier-center/owks/rundgaenge'
@@ -550,6 +562,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notdienst/rohrservice/mitarbeiter'
     | '/_authenticated/notdienst/rohrservice/nachbearbeitung'
     | '/_authenticated/notdienst/rohrservice/neu'
+    | '/_authenticated/revier-center/owks/bestreifungsplaene'
     | '/_authenticated/revier-center/owks/nfc-punkte'
     | '/_authenticated/revier-center/owks/objekte'
     | '/_authenticated/revier-center/owks/rundgaenge'
@@ -822,6 +835,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRouteImport
       parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
     }
+    '/_authenticated/revier-center/owks/bestreifungsplaene': {
+      id: '/_authenticated/revier-center/owks/bestreifungsplaene'
+      path: '/bestreifungsplaene'
+      fullPath: '/revier-center/owks/bestreifungsplaene'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
     '/_authenticated/notdienst/rohrservice/neu': {
       id: '/_authenticated/notdienst/rohrservice/neu'
       path: '/neu'
@@ -875,6 +895,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRevierCenterOwksRouteRouteChildren {
+  AuthenticatedRevierCenterOwksBestreifungsplaeneRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
   AuthenticatedRevierCenterOwksNfcPunkteRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
   AuthenticatedRevierCenterOwksObjekteRoute: typeof AuthenticatedRevierCenterOwksObjekteRoute
   AuthenticatedRevierCenterOwksRundgaengeRoute: typeof AuthenticatedRevierCenterOwksRundgaengeRoute
@@ -883,6 +904,8 @@ interface AuthenticatedRevierCenterOwksRouteRouteChildren {
 
 const AuthenticatedRevierCenterOwksRouteRouteChildren: AuthenticatedRevierCenterOwksRouteRouteChildren =
   {
+    AuthenticatedRevierCenterOwksBestreifungsplaeneRoute:
+      AuthenticatedRevierCenterOwksBestreifungsplaeneRoute,
     AuthenticatedRevierCenterOwksNfcPunkteRoute:
       AuthenticatedRevierCenterOwksNfcPunkteRoute,
     AuthenticatedRevierCenterOwksObjekteRoute:
