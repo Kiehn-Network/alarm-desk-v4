@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 const createSchema = z.object({
@@ -170,7 +171,15 @@ export const getDateiSignedUrl = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ storage_path: z.string().min(1) }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { data: signed, error } = await supabase.storage
+    // Verify the caller is permitted to see this storage_path via the
+    // RLS-protected dateien table. If no row is visible, deny.
+    const { data: row } = await supabase
+      .from("dateien")
+      .select("id")
+      .eq("storage_path", data.storage_path)
+      .maybeSingle();
+    if (!row) throw new Error("Datei nicht gefunden oder kein Zugriff");
+    const { data: signed, error } = await supabaseAdmin.storage
       .from("dateien")
       .createSignedUrl(data.storage_path, 60);
     if (error) throw new Error(error.message);
