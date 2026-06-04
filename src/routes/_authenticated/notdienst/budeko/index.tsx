@@ -16,6 +16,7 @@ import {
   updateBudekoConfig,
   uploadBudekoNotizDatei,
   deleteBudekoNotizDatei,
+  getBudekoNotizSignedUrl,
 } from "@/lib/budeko.functions";
 import { Button } from "@/components/ui/button";
 import {
@@ -122,22 +123,32 @@ function NotizContent({ html, dateien }: { html: string | null; dateien: any[] }
       {dateien.length > 0 && (
         <div className="flex flex-wrap gap-2 pt-1">
           {dateien.map((d) => {
-            const url = supabase.storage.from("budeko-notizen").getPublicUrl(d.storage_path).data.publicUrl;
-            return (
-              <a
-                key={d.id}
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border bg-muted hover:bg-accent transition-colors"
-              >
-                <Download className="size-3" /> {d.label}
-              </a>
-            );
+            return <NotizDownloadLink key={d.id} id={d.id} label={d.label} />;
           })}
         </div>
       )}
     </div>
+  );
+}
+
+function NotizDownloadLink({ id, label }: { id: string; label: string }) {
+  const sign = useServerFn(getBudekoNotizSignedUrl);
+  const open = async () => {
+    try {
+      const { url } = await sign({ data: { id } });
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Download fehlgeschlagen");
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={open}
+      className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border border-border bg-muted hover:bg-accent transition-colors"
+    >
+      <Download className="size-3" /> {label}
+    </button>
   );
 }
 
