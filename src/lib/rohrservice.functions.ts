@@ -132,6 +132,24 @@ export const deleteNotizDatei = createServerFn({ method: "POST" })
 
 // ---------- Mitarbeiter ----------
 
+export const getRohrserviceNotizSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: row } = await supabase
+      .from("rohrservice_notiz_dateien")
+      .select("storage_path")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row?.storage_path) throw new Error("Datei nicht gefunden");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("rohrservice-notizen")
+      .createSignedUrl(row.storage_path, 60 * 10);
+    if (error) throw new Error(error.message);
+    return { url: signed.signedUrl };
+  });
+
 export const listMitarbeiter = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
