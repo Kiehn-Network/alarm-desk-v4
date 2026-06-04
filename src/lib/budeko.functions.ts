@@ -127,6 +127,24 @@ export const deleteBudekoNotizDatei = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const getBudekoNotizSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: row } = await supabase
+      .from("budeko_notiz_dateien")
+      .select("storage_path")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row?.storage_path) throw new Error("Datei nicht gefunden");
+    const { data: signed, error } = await supabaseAdmin.storage
+      .from("budeko-notizen")
+      .createSignedUrl(row.storage_path, 60 * 10);
+    if (error) throw new Error(error.message);
+    return { url: signed.signedUrl };
+  });
+
 // ---------- Mitarbeiter ----------
 
 export const listBudekoMitarbeiter = createServerFn({ method: "GET" })
