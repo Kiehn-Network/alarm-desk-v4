@@ -29,7 +29,6 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRole } from "@/hooks/use-role";
-import { supabase } from "@/integrations/supabase/client";
 import DOMPurify from "isomorphic-dompurify";
 
 export const Route = createFileRoute("/_authenticated/notdienst/budeko/")({
