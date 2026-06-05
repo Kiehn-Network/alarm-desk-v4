@@ -34,6 +34,37 @@ type Profile = { id: string; display_name: string | null; avatar_url: string | n
 
 const SOUND_KEY = "chat:sound";
 
+function SignedAttachment({
+  path, name, mime,
+}: { path: string; name: string | null; mime: string | null }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase.storage
+        .from("chat-attachments")
+        .createSignedUrl(path, 60 * 60);
+      if (!cancel) setUrl(data?.signedUrl ?? null);
+    })();
+    return () => { cancel = true; };
+  }, [path]);
+  if (!url) return null;
+  const isImage = mime?.startsWith("image/");
+  if (isImage) {
+    return (
+      <a href={url} target="_blank" rel="noreferrer">
+        <img src={url} alt={name ?? ""} className="mt-1 rounded-lg max-h-48" />
+      </a>
+    );
+  }
+  return (
+    <a href={url} target="_blank" rel="noreferrer"
+      className="mt-1 inline-flex items-center gap-1.5 text-xs underline opacity-90">
+      <Download className="size-3" /> {name}
+    </a>
+  );
+}
+
 function playPing() {
   if (localStorage.getItem(SOUND_KEY) === "0") return;
   try {
