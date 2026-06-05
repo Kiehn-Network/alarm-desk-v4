@@ -362,10 +362,6 @@ function Thread({
         {messages.map((m) => {
           const mine = m.sender_id === meId;
           const sender = profiles[m.sender_id];
-          const url = m.attachment_path
-            ? supabase.storage.from("chat-attachments").getPublicUrl(m.attachment_path).data.publicUrl
-            : null;
-          const isImage = m.attachment_mime?.startsWith("image/");
           return (
             <div key={m.id} className={cn("flex gap-2", mine && "flex-row-reverse")}>
               {!mine && <Avatar p={sender} size={32} />}
@@ -391,16 +387,12 @@ function Thread({
                   ) : (
                     <>
                       {m.body && <div className="whitespace-pre-wrap">{m.body}</div>}
-                      {url && isImage && (
-                        <a href={url} target="_blank" rel="noreferrer">
-                          <img src={url} alt={m.attachment_name ?? ""} className="mt-1 rounded-lg max-h-48" />
-                        </a>
-                      )}
-                      {url && !isImage && (
-                        <a href={url} target="_blank" rel="noreferrer"
-                          className="mt-1 inline-flex items-center gap-1.5 text-xs underline opacity-90">
-                          <Download className="size-3" /> {m.attachment_name}
-                        </a>
+                      {m.attachment_path && (
+                        <SignedAttachment
+                          path={m.attachment_path}
+                          name={m.attachment_name}
+                          mime={m.attachment_mime}
+                        />
                       )}
                       {m.edited_at && <div className="text-[9px] opacity-60 mt-0.5">bearbeitet</div>}
                     </>
