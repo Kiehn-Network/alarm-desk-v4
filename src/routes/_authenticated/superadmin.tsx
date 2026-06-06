@@ -738,3 +738,92 @@ function KpiCard({ icon, label, value, sub, warn }: {
     </Card>
   );
 }
+
+type LicensePayload = { valid_until: string | null; max_users: number | null; notes: string | null };
+
+function toIsoOrNull(d: string): string | null {
+  if (!d) return null;
+  // input type="date" gives YYYY-MM-DD → end of day UTC
+  return new Date(`${d}T23:59:59.000Z`).toISOString();
+}
+function isoToDateInput(iso: string | null): string {
+  if (!iso) return "";
+  return new Date(iso).toISOString().slice(0, 10);
+}
+
+function NewLicenseForm({ onCreate }: { onCreate: (p: LicensePayload) => Promise<void> }) {
+  const [date, setDate] = useState("");
+  const [maxUsers, setMaxUsers] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className="flex flex-wrap items-end gap-2 p-2 border rounded bg-muted/30">
+      <div className="flex flex-col">
+        <Label className="text-xs mb-1">Ablaufdatum</Label>
+        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-[160px]" />
+      </div>
+      <div className="flex flex-col">
+        <Label className="text-xs mb-1">Max. Nutzer</Label>
+        <Input type="number" min={1} value={maxUsers} onChange={(e) => setMaxUsers(e.target.value)} className="w-[110px]" placeholder="∞" />
+      </div>
+      <div className="flex flex-col flex-1 min-w-[180px]">
+        <Label className="text-xs mb-1">Notiz</Label>
+        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" />
+      </div>
+      <Button size="sm" disabled={busy} onClick={async () => {
+        setBusy(true);
+        try {
+          await onCreate({
+            valid_until: toIsoOrNull(date),
+            max_users: maxUsers ? Number(maxUsers) : null,
+            notes: notes || null,
+          });
+          setDate(""); setMaxUsers(""); setNotes("");
+        } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+        finally { setBusy(false); }
+      }}>Neue Lizenz</Button>
+    </div>
+  );
+}
+
+function LicenseRow({ license, onUpdate, onRevoke }: {
+  license: any;
+  onUpdate: (p: Partial<LicensePayload>) => Promise<void>;
+  onRevoke: () => Promise<void>;
+}) {
+  const [date, setDate] = useState(isoToDateInput(license.valid_until));
+  const [busy, setBusy] = useState(false);
+  const dirty = date !== isoToDateInput(license.valid_until);
+  const expired = license.valid_until && new Date(license.valid_until) < new Date();
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2 text-sm border rounded p-2">
+      <div className="flex flex-col gap-0.5">
+        <code className="text-xs">{license.license_key}</code>
+        <span className="text-xs text-muted-foreground">
+          {license.status}
+          {license.valid_until && (
+            <span className={expired ? "text-destructive ml-1" : "ml-1"}>
+              · {expired ? "abgelaufen" : "gültig bis"} {new Date(license.valid_until).toLocaleDateString()}
+            </span>
+          )}
+          {!license.valid_until && <span className="ml-1">· unbefristet</span>}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-[150px] h-8" />
+        {date && (
+          <Button size="sm" variant="ghost" onClick={() => setDate("")}>×</Button>
+        )}
+        <Button size="sm" variant="outline" disabled={!dirty || busy} onClick={async () => {
+          setBusy(true);
+          try { await onUpdate({ valid_until: toIsoOrNull(date) }); }
+          catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+          finally { setBusy(false); }
+        }}>Speichern</Button>
+        {license.status === "active" && (
+          <Button size="sm" variant="outline" onClick={onRevoke}>Widerrufen</Button>
+        )}
+      </div>
+    </div>
+  );
+}
