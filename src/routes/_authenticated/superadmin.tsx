@@ -328,12 +328,12 @@ function SuperAdminPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-0">
+      <Tabs value={tab} onValueChange={setTab} className="space-y-0">
         <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
           <aside className="lg:sticky lg:top-24 lg:self-start">
             {/* Mobile: native dropdown for quickest navigation */}
             <div className="lg:hidden">
-              <SimpleNavSelect />
+              <SimpleNavSelect value={tab} onValueChange={setTab} />
             </div>
             {/* Desktop: vertical grouped sidebar */}
             <nav className="hidden lg:block rounded-xl border border-border/60 bg-card/40 p-2">
