@@ -345,27 +345,27 @@ function SuperAdminPage() {
             const dLic = licenses.filter((l: any) => l.domain_id === d.id);
             return (
               <Card key={d.id}>
-                <CardHeader className="flex flex-row items-center justify-between">
+                <CardHeader>
                   <CardTitle className="text-base">{d.name}</CardTitle>
-                  <Button size="sm" onClick={async () => {
-                    await createLic({ data: { domain_id: d.id, valid_until: null, max_users: null, notes: null } });
-                    invalidateAll(); toast.success("Lizenz erstellt");
-                  }}>Neue Lizenz</Button>
                 </CardHeader>
                 <CardContent className="space-y-2">
+                  <NewLicenseForm
+                    onCreate={async (payload) => {
+                      await createLic({ data: { domain_id: d.id, ...payload } });
+                      invalidateAll(); toast.success("Lizenz erstellt");
+                    }}
+                  />
                   {dLic.length === 0 && <div className="text-sm text-muted-foreground">Keine Lizenzen.</div>}
                   {dLic.map((l: any) => (
-                    <div key={l.id} className="flex items-center justify-between text-sm border rounded p-2">
-                      <div>
-                        <code className="text-xs">{l.license_key}</code>
-                        <span className="ml-3 text-muted-foreground">
-                          {l.status} {l.valid_until ? `· bis ${new Date(l.valid_until).toLocaleDateString()}` : ""}
-                        </span>
-                      </div>
-                      {l.status === "active" && (
-                        <Button size="sm" variant="outline" onClick={async () => { await revokeLic({ data: { id: l.id } }); invalidateAll(); }}>Widerrufen</Button>
-                      )}
-                    </div>
+                    <LicenseRow
+                      key={l.id}
+                      license={l}
+                      onUpdate={async (payload) => {
+                        await updateLic({ data: { id: l.id, ...payload } });
+                        invalidateAll(); toast.success("Lizenz aktualisiert");
+                      }}
+                      onRevoke={async () => { await revokeLic({ data: { id: l.id } }); invalidateAll(); }}
+                    />
                   ))}
                 </CardContent>
               </Card>
