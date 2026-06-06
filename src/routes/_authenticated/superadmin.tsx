@@ -902,10 +902,12 @@ function NewLicenseForm({ onCreate }: { onCreate: (p: LicensePayload) => Promise
   );
 }
 
-function LicenseRow({ license, onUpdate, onRevoke }: {
+function LicenseRow({ license, onUpdate, onRevoke, selected, onSelect }: {
   license: any;
   onUpdate: (p: Partial<LicensePayload>) => Promise<void>;
   onRevoke: () => Promise<void>;
+  selected?: boolean;
+  onSelect?: (v: boolean) => void;
 }) {
   const [date, setDate] = useState(isoToDateInput(license.valid_until));
   const [busy, setBusy] = useState(false);
@@ -913,7 +915,12 @@ function LicenseRow({ license, onUpdate, onRevoke }: {
   const expired = license.valid_until && new Date(license.valid_until) < new Date();
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 text-sm border rounded p-2">
-      <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-2">
+        {onSelect && (
+          <input type="checkbox" checked={!!selected} onChange={(e) => onSelect(e.target.checked)}
+            className="size-4 accent-primary" aria-label="Lizenz auswählen" />
+        )}
+        <div className="flex flex-col gap-0.5">
         <code className="text-xs">{license.license_key}</code>
         <span className="text-xs text-muted-foreground">
           {license.status}
@@ -924,6 +931,7 @@ function LicenseRow({ license, onUpdate, onRevoke }: {
           )}
           {!license.valid_until && <span className="ml-1">· unbefristet</span>}
         </span>
+        </div>
       </div>
       <div className="flex items-center gap-2">
         <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-[150px] h-8" />
