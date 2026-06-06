@@ -11,14 +11,8 @@ import hero4 from "@/assets/login-hero-4.jpg";
 
 const HERO_IMAGES = [hero1, hero2, hero3, hero4];
 
-function getRotatingHero() {
-  // Wechsel alle 6 Stunden (4 Slots pro Tag), kombiniert mit Tag-Index für Variation
-  const now = new Date();
-  const slot = Math.floor(now.getHours() / 6);
-  const dayOfYear = Math.floor(
-    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
-  );
-  return HERO_IMAGES[(dayOfYear * 4 + slot) % HERO_IMAGES.length];
+function getRandomHero() {
+  return HERO_IMAGES[Math.floor(Math.random() * HERO_IMAGES.length)];
 }
 
 type VersionInfo = {
@@ -40,7 +34,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<VersionInfo | null>(null);
-  const heroImage = getRotatingHero();
+  const [heroImage] = useState(getRandomHero);
 
   useEffect(() => {
     fetch("/api/public/version").then((r) => r.json()).then(setInfo).catch(() => {});
