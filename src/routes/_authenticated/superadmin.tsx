@@ -46,6 +46,18 @@ export const Route = createFileRoute("/_authenticated/superadmin")({
   component: SuperAdminPage,
 });
 
+function NavGroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground self-center select-none">
+      {children}
+    </span>
+  );
+}
+
+function NavDivider() {
+  return <span className="mx-1 h-5 w-px bg-border/70 self-center" aria-hidden />;
+}
+
 function SuperAdminPage() {
   const qc = useQueryClient();
   const listDomFn = useServerFn(listDomains);
