@@ -53,6 +53,9 @@ function SuperAdminPage() {
   const uq = useQuery({ queryKey: ["sa-users"], queryFn: () => listUsersFn() });
   const iq = useQuery({ queryKey: ["sa-imp"], queryFn: () => impFn() });
 
+  const statsFn = useServerFn(getSuperAdminStats);
+  const sq = useQuery({ queryKey: ["sa-stats"], queryFn: () => statsFn(), refetchInterval: 60_000 });
+
   const getPlat = useServerFn(getPlatformSettings);
   const updMaint = useServerFn(updatePlatformMaintenance);
   const listVers = useServerFn(listAppVersions);
@@ -79,9 +82,25 @@ function SuperAdminPage() {
   const createUserFn = useServerFn(createTenantUser);
   const startImp = useServerFn(startImpersonation);
   const stopImp = useServerFn(stopImpersonation);
+  const resetPwFn = useServerFn(sendPasswordReset);
+  const setDisabledFn = useServerFn(setUserDisabled);
+  const delUserFn = useServerFn(deleteTenantUser);
+  const bulkFn = useServerFn(bulkImportUsers);
 
   const [newSlug, setNewSlug] = useState("");
   const [newName, setNewName] = useState("");
+
+  // Search
+  const [domainSearch, setDomainSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [userDomainFilter, setUserDomainFilter] = useState<string>("all");
+  const [userRoleFilter, setUserRoleFilter] = useState<string>("all");
+
+  // Bulk import
+  const [bulkCsv, setBulkCsv] = useState("");
+  const [bulkDomain, setBulkDomain] = useState<string>("");
+  const [bulkRole, setBulkRole] = useState<"admin" | "user">("user");
+  const [bulkPending, setBulkPending] = useState(false);
 
   // New user form state
   const [nuEmail, setNuEmail] = useState("");
@@ -115,12 +134,86 @@ function SuperAdminPage() {
   const users = uq.data?.users ?? [];
   const imp = iq.data?.domain;
   const versions = vq.data ?? [];
+  const stats = sq.data;
+
+  const filteredDomains = useMemo(() => {
+    const q = domainSearch.trim().toLowerCase();
+    if (!q) return domains;
+    return domains.filter((d: any) =>
+      d.name?.toLowerCase().includes(q) || d.slug?.toLowerCase().includes(q));
+  }, [domains, domainSearch]);
+
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    return users.filter((u: any) => {
+      if (userDomainFilter !== "all" && (u.domain_id ?? "none") !== userDomainFilter) return false;
+      if (userRoleFilter !== "all" && u.roles?.[0]?.role !== userRoleFilter) return false;
+      if (!q) return true;
+      return (u.display_name ?? "").toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q);
+    });
+  }, [users, userSearch, userDomainFilter, userRoleFilter]);
+
+  const domainName = (id: string | null) =>
+    domains.find((d: any) => d.id === id)?.name ?? "—";
+
+  async function handleResetPw(userId: string) {
+    try {
+      const r = await resetPwFn({ data: { user_id: userId } });
+      if (r.action_link) {
+        await navigator.clipboard.writeText(r.action_link);
+        toast.success(`Reset-Link für ${r.email} kopiert`);
+      } else {
+        toast.success(`Reset-Link erstellt für ${r.email}`);
+      }
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+  }
+
+  async function handleToggleDisabled(userId: string, currentlyDisabled: boolean) {
+    try {
+      await setDisabledFn({ data: { user_id: userId, disabled: !currentlyDisabled } });
+      toast.success(currentlyDisabled ? "Nutzer aktiviert" : "Nutzer deaktiviert");
+      invalidateAll();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+  }
+
+  async function handleDeleteUser(userId: string, label: string) {
+    if (!confirm(`Nutzer "${label}" wirklich endgültig löschen?`)) return;
+    try {
+      await delUserFn({ data: { user_id: userId } });
+      toast.success("Nutzer gelöscht");
+      invalidateAll();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+  }
+
+  async function handleBulkImport() {
+    if (!bulkDomain) { toast.error("Domain wählen"); return; }
+    const rows = bulkCsv.split("\n").map(l => l.trim()).filter(Boolean);
+    const parsed = rows.map(l => {
+      const [email, name, pw] = l.split(/[,;\t]/).map(s => s?.trim());
+      return { email, display_name: name, password: pw };
+    }).filter(r => r.email && r.display_name && r.password && r.password.length >= 8);
+    if (parsed.length === 0) { toast.error("Keine gültigen Zeilen (email,name,passwort)"); return; }
+    setBulkPending(true);
+    try {
+      const r = await bulkFn({ data: { domain_id: bulkDomain, role: bulkRole, users: parsed } });
+      const ok = r.results.filter(x => x.ok).length;
+      const fail = r.results.length - ok;
+      toast.success(`Import: ${ok} ok, ${fail} Fehler`);
+      if (fail > 0) {
+        const errors = r.results.filter(x => !x.ok).map(x => `${x.email}: ${x.error}`).join("\n");
+        console.warn("Bulk import errors:\n" + errors);
+      }
+      setBulkCsv("");
+      invalidateAll();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+    finally { setBulkPending(false); }
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">SuperAdmin</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Crown className="size-6 text-primary" /> SuperAdmin</h1>
           <p className="text-muted-foreground text-sm">Mandanten, Lizenzen, Module &amp; Nutzerverwaltung</p>
         </div>
         {imp && (
@@ -131,8 +224,9 @@ function SuperAdminPage() {
         )}
       </div>
 
-      <Tabs defaultValue="domains">
+      <Tabs defaultValue="overview">
         <TabsList>
+          <TabsTrigger value="overview"><LayoutDashboard className="size-4 mr-1.5" />Übersicht</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
           <TabsTrigger value="licenses">Lizenzen</TabsTrigger>
           <TabsTrigger value="modules">Module</TabsTrigger>
@@ -141,7 +235,77 @@ function SuperAdminPage() {
           <TabsTrigger value="selfhost">Self-Hosting</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard icon={<Globe2 className="size-5" />} label="Domains aktiv"
+              value={stats?.domains_active ?? "—"} sub={`${stats?.domains_disabled ?? 0} deaktiviert`} />
+            <KpiCard icon={<ShieldCheck className="size-5" />} label="Lizenzen aktiv"
+              value={stats?.licenses_active ?? "—"}
+              sub={stats?.licenses_expiring_30d ? `${stats.licenses_expiring_30d} laufen in 30 Tagen aus` : "alles stabil"}
+              warn={!!stats?.licenses_expiring_30d} />
+            <KpiCard icon={<Users className="size-5" />} label="Nutzer gesamt"
+              value={stats?.users_total ?? "—"}
+              sub={stats ? Object.entries(stats.role_counts).map(([r, n]) => `${r}: ${n}`).join(" · ") : ""} />
+            <KpiCard icon={<Activity className="size-5" />} label="Einsätze (24h)"
+              value={stats?.einsaetze_24h ?? "—"} sub={`gesamt ${stats?.einsaetze_total ?? 0}`} />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="size-4" /> Domains</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {domains.slice(0, 6).map((d: any) => {
+                  const dLic = licenses.filter((l: any) => l.domain_id === d.id && l.status === "active");
+                  const userCount = users.filter((u: any) => u.domain_id === d.id).length;
+                  return (
+                    <div key={d.id} className="flex items-center justify-between text-sm border border-border/60 rounded-lg px-3 py-2">
+                      <div>
+                        <div className="font-medium">{d.name}</div>
+                        <div className="text-xs text-muted-foreground">{userCount} Nutzer · {dLic.length} Lizenz(en)</div>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === "active" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {d.status}
+                      </span>
+                    </div>
+                  );
+                })}
+                {domains.length === 0 && <div className="text-sm text-muted-foreground">Keine Domains.</div>}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><ShieldAlert className="size-4" /> Bald ablaufende Lizenzen</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {licenses
+                  .filter((l: any) => l.status === "active" && l.valid_until)
+                  .sort((a: any, b: any) => a.valid_until.localeCompare(b.valid_until))
+                  .slice(0, 6).map((l: any) => {
+                    const dleft = Math.ceil((new Date(l.valid_until).getTime() - Date.now()) / 86400000);
+                    return (
+                      <div key={l.id} className="flex items-center justify-between text-sm border border-border/60 rounded-lg px-3 py-2">
+                        <div>
+                          <div className="font-medium">{domainName(l.domain_id)}</div>
+                          <div className="text-xs text-muted-foreground"><code>{l.license_key}</code></div>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${dleft < 30 ? "bg-warning/15 text-warning-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {dleft > 0 ? `${dleft} Tage` : "abgelaufen"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                {licenses.filter((l: any) => l.status === "active" && l.valid_until).length === 0 && (
+                  <div className="text-sm text-muted-foreground">Keine Lizenzen mit Ablaufdatum.</div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="domains" className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Domain suchen…" value={domainSearch} onChange={(e) => setDomainSearch(e.target.value)} />
+          </div>
           <Card>
             <CardHeader><CardTitle>Neue Domain</CardTitle></CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-3">
@@ -151,7 +315,7 @@ function SuperAdminPage() {
             </CardContent>
           </Card>
           <div className="grid gap-3">
-            {domains.map((d: any) => (
+            {filteredDomains.map((d: any) => (
               <Card key={d.id}>
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div>
