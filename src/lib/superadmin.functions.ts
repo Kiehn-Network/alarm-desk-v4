@@ -141,6 +141,7 @@ export const listAllTenantUsers = createServerFn({ method: "GET" })
         domain_id: p.domain_id,
         email: emailMap[p.id] ?? "",
         roles: roleMap[p.id] ?? [],
+        banned_until: (auth.users ?? []).find((u) => u.id === p.id)?.banned_until ?? null,
       })),
     };
   });
@@ -219,6 +220,127 @@ export const stopImpersonation = createServerFn({ method: "POST" })
     await assertSuper(context.userId);
     await supabaseAdmin.from("superadmin_impersonation").delete().eq("superadmin_id", context.userId);
     return { ok: true };
+  });
+
+// ---------- User power-actions ----------
+
+export const sendPasswordReset = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
+    const email = u.user?.email;
+    if (!email) throw new Error("Nutzer hat keine E-Mail.");
+    const { data: link, error } = await supabaseAdmin.auth.admin.generateLink({
+      type: "recovery",
+      email,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, email, action_link: link.properties?.action_link ?? null };
+  });
+
+export const setUserDisabled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    user_id: z.string().uuid(),
+    disabled: z.boolean(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    if (data.user_id === context.userId) throw new Error("Eigener Account nicht änderbar.");
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      ban_duration: data.disabled ? "876000h" : "none",
+    } as any);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteTenantUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    if (data.user_id === context.userId) throw new Error("Eigener Account nicht löschbar.");
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
+    await supabaseAdmin.from("profiles").delete().eq("id", data.user_id);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const bulkImportUsers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    domain_id: z.string().uuid(),
+    role: z.enum(["admin", "user"]),
+    users: z.array(z.object({
+      email: z.string().email().max(255),
+      display_name: z.string().min(1).max(120),
+      password: z.string().min(8).max(72),
+    })).min(1).max(500),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const results: { email: string; ok: boolean; error?: string }[] = [];
+    for (const u of data.users) {
+      try {
+        const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+          email: u.email,
+          password: u.password,
+          email_confirm: true,
+          user_metadata: { display_name: u.display_name },
+        });
+        if (error || !created.user) throw new Error(error?.message ?? "create failed");
+        const uid = created.user.id;
+        await supabaseAdmin.from("profiles").upsert({
+          id: uid, display_name: u.display_name, domain_id: data.domain_id,
+        }, { onConflict: "id" });
+        await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+        await supabaseAdmin.from("user_roles").insert({
+          user_id: uid, role: data.role, domain_id: data.domain_id,
+        });
+        results.push({ email: u.email, ok: true });
+      } catch (e: any) {
+        results.push({ email: u.email, ok: false, error: e?.message ?? "Fehler" });
+      }
+    }
+    return { results };
+  });
+
+// ---------- SuperAdmin stats ----------
+
+export const getSuperAdminStats = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuper(context.userId);
+    const now = new Date();
+    const in30 = new Date(now.getTime() + 30 * 24 * 3600 * 1000).toISOString();
+    const [doms, lics, profs, roles, einsAll, eins24] = await Promise.all([
+      supabaseAdmin.from("domains").select("id,status"),
+      supabaseAdmin.from("licenses").select("id,status,valid_until,domain_id"),
+      supabaseAdmin.from("profiles").select("id,domain_id"),
+      supabaseAdmin.from("user_roles").select("user_id,role"),
+      supabaseAdmin.from("einsaetze").select("id", { count: "exact", head: true }),
+      supabaseAdmin.from("einsaetze").select("id", { count: "exact", head: true })
+        .gte("created_at", new Date(now.getTime() - 24 * 3600 * 1000).toISOString()),
+    ]);
+    const domains = doms.data ?? [];
+    const licenses = lics.data ?? [];
+    const expiring = licenses.filter((l: any) =>
+      l.status === "active" && l.valid_until && l.valid_until < in30 && l.valid_until > now.toISOString());
+    const roleCounts: Record<string, number> = {};
+    (roles.data ?? []).forEach((r: any) => { roleCounts[r.role] = (roleCounts[r.role] ?? 0) + 1; });
+    return {
+      domains_active: domains.filter((d: any) => d.status === "active").length,
+      domains_disabled: domains.filter((d: any) => d.status === "disabled").length,
+      licenses_active: licenses.filter((l: any) => l.status === "active").length,
+      licenses_expiring_30d: expiring.length,
+      users_total: (profs.data ?? []).length,
+      role_counts: roleCounts,
+      einsaetze_total: einsAll.count ?? 0,
+      einsaetze_24h: eins24.count ?? 0,
+    };
   });
 
 export const getImpersonation = createServerFn({ method: "GET" })

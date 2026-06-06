@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listDomains, createDomain, setDomainStatus,
@@ -11,6 +11,8 @@ import {
   startImpersonation, stopImpersonation, getImpersonation,
   getPlatformSettings, updatePlatformMaintenance,
   listAppVersions, createAppVersion, deleteAppVersion,
+  sendPasswordReset, setUserDisabled, deleteTenantUser, bulkImportUsers,
+  getSuperAdminStats,
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
@@ -23,6 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  Activity, Building2, Crown, Globe2, KeyRound, LayoutDashboard,
+  Loader2, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
   beforeLoad: async () => {
@@ -46,6 +52,9 @@ function SuperAdminPage() {
   const mq = useQuery({ queryKey: ["sa-modules"], queryFn: () => listModFn() });
   const uq = useQuery({ queryKey: ["sa-users"], queryFn: () => listUsersFn() });
   const iq = useQuery({ queryKey: ["sa-imp"], queryFn: () => impFn() });
+
+  const statsFn = useServerFn(getSuperAdminStats);
+  const sq = useQuery({ queryKey: ["sa-stats"], queryFn: () => statsFn(), refetchInterval: 60_000 });
 
   const getPlat = useServerFn(getPlatformSettings);
   const updMaint = useServerFn(updatePlatformMaintenance);
@@ -73,9 +82,25 @@ function SuperAdminPage() {
   const createUserFn = useServerFn(createTenantUser);
   const startImp = useServerFn(startImpersonation);
   const stopImp = useServerFn(stopImpersonation);
+  const resetPwFn = useServerFn(sendPasswordReset);
+  const setDisabledFn = useServerFn(setUserDisabled);
+  const delUserFn = useServerFn(deleteTenantUser);
+  const bulkFn = useServerFn(bulkImportUsers);
 
   const [newSlug, setNewSlug] = useState("");
   const [newName, setNewName] = useState("");
+
+  // Search
+  const [domainSearch, setDomainSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [userDomainFilter, setUserDomainFilter] = useState<string>("all");
+  const [userRoleFilter, setUserRoleFilter] = useState<string>("all");
+
+  // Bulk import
+  const [bulkCsv, setBulkCsv] = useState("");
+  const [bulkDomain, setBulkDomain] = useState<string>("");
+  const [bulkRole, setBulkRole] = useState<"admin" | "user">("user");
+  const [bulkPending, setBulkPending] = useState(false);
 
   // New user form state
   const [nuEmail, setNuEmail] = useState("");
@@ -109,12 +134,86 @@ function SuperAdminPage() {
   const users = uq.data?.users ?? [];
   const imp = iq.data?.domain;
   const versions = vq.data ?? [];
+  const stats = sq.data;
+
+  const filteredDomains = useMemo(() => {
+    const q = domainSearch.trim().toLowerCase();
+    if (!q) return domains;
+    return domains.filter((d: any) =>
+      d.name?.toLowerCase().includes(q) || d.slug?.toLowerCase().includes(q));
+  }, [domains, domainSearch]);
+
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    return users.filter((u: any) => {
+      if (userDomainFilter !== "all" && (u.domain_id ?? "none") !== userDomainFilter) return false;
+      if (userRoleFilter !== "all" && u.roles?.[0]?.role !== userRoleFilter) return false;
+      if (!q) return true;
+      return (u.display_name ?? "").toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q);
+    });
+  }, [users, userSearch, userDomainFilter, userRoleFilter]);
+
+  const domainName = (id: string | null) =>
+    domains.find((d: any) => d.id === id)?.name ?? "—";
+
+  async function handleResetPw(userId: string) {
+    try {
+      const r = await resetPwFn({ data: { user_id: userId } });
+      if (r.action_link) {
+        await navigator.clipboard.writeText(r.action_link);
+        toast.success(`Reset-Link für ${r.email} kopiert`);
+      } else {
+        toast.success(`Reset-Link erstellt für ${r.email}`);
+      }
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+  }
+
+  async function handleToggleDisabled(userId: string, currentlyDisabled: boolean) {
+    try {
+      await setDisabledFn({ data: { user_id: userId, disabled: !currentlyDisabled } });
+      toast.success(currentlyDisabled ? "Nutzer aktiviert" : "Nutzer deaktiviert");
+      invalidateAll();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+  }
+
+  async function handleDeleteUser(userId: string, label: string) {
+    if (!confirm(`Nutzer "${label}" wirklich endgültig löschen?`)) return;
+    try {
+      await delUserFn({ data: { user_id: userId } });
+      toast.success("Nutzer gelöscht");
+      invalidateAll();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+  }
+
+  async function handleBulkImport() {
+    if (!bulkDomain) { toast.error("Domain wählen"); return; }
+    const rows = bulkCsv.split("\n").map(l => l.trim()).filter(Boolean);
+    const parsed = rows.map(l => {
+      const [email, name, pw] = l.split(/[,;\t]/).map(s => s?.trim());
+      return { email, display_name: name, password: pw };
+    }).filter(r => r.email && r.display_name && r.password && r.password.length >= 8);
+    if (parsed.length === 0) { toast.error("Keine gültigen Zeilen (email,name,passwort)"); return; }
+    setBulkPending(true);
+    try {
+      const r = await bulkFn({ data: { domain_id: bulkDomain, role: bulkRole, users: parsed } });
+      const ok = r.results.filter(x => x.ok).length;
+      const fail = r.results.length - ok;
+      toast.success(`Import: ${ok} ok, ${fail} Fehler`);
+      if (fail > 0) {
+        const errors = r.results.filter(x => !x.ok).map(x => `${x.email}: ${x.error}`).join("\n");
+        console.warn("Bulk import errors:\n" + errors);
+      }
+      setBulkCsv("");
+      invalidateAll();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+    finally { setBulkPending(false); }
+  }
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">SuperAdmin</h1>
+          <h1 className="text-2xl font-bold flex items-center gap-2"><Crown className="size-6 text-primary" /> SuperAdmin</h1>
           <p className="text-muted-foreground text-sm">Mandanten, Lizenzen, Module &amp; Nutzerverwaltung</p>
         </div>
         {imp && (
@@ -125,8 +224,9 @@ function SuperAdminPage() {
         )}
       </div>
 
-      <Tabs defaultValue="domains">
+      <Tabs defaultValue="overview">
         <TabsList>
+          <TabsTrigger value="overview"><LayoutDashboard className="size-4 mr-1.5" />Übersicht</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
           <TabsTrigger value="licenses">Lizenzen</TabsTrigger>
           <TabsTrigger value="modules">Module</TabsTrigger>
@@ -135,7 +235,77 @@ function SuperAdminPage() {
           <TabsTrigger value="selfhost">Self-Hosting</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard icon={<Globe2 className="size-5" />} label="Domains aktiv"
+              value={stats?.domains_active ?? "—"} sub={`${stats?.domains_disabled ?? 0} deaktiviert`} />
+            <KpiCard icon={<ShieldCheck className="size-5" />} label="Lizenzen aktiv"
+              value={stats?.licenses_active ?? "—"}
+              sub={stats?.licenses_expiring_30d ? `${stats.licenses_expiring_30d} laufen in 30 Tagen aus` : "alles stabil"}
+              warn={!!stats?.licenses_expiring_30d} />
+            <KpiCard icon={<Users className="size-5" />} label="Nutzer gesamt"
+              value={stats?.users_total ?? "—"}
+              sub={stats ? Object.entries(stats.role_counts).map(([r, n]) => `${r}: ${n}`).join(" · ") : ""} />
+            <KpiCard icon={<Activity className="size-5" />} label="Einsätze (24h)"
+              value={stats?.einsaetze_24h ?? "—"} sub={`gesamt ${stats?.einsaetze_total ?? 0}`} />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Building2 className="size-4" /> Domains</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {domains.slice(0, 6).map((d: any) => {
+                  const dLic = licenses.filter((l: any) => l.domain_id === d.id && l.status === "active");
+                  const userCount = users.filter((u: any) => u.domain_id === d.id).length;
+                  return (
+                    <div key={d.id} className="flex items-center justify-between text-sm border border-border/60 rounded-lg px-3 py-2">
+                      <div>
+                        <div className="font-medium">{d.name}</div>
+                        <div className="text-xs text-muted-foreground">{userCount} Nutzer · {dLic.length} Lizenz(en)</div>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${d.status === "active" ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        {d.status}
+                      </span>
+                    </div>
+                  );
+                })}
+                {domains.length === 0 && <div className="text-sm text-muted-foreground">Keine Domains.</div>}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><ShieldAlert className="size-4" /> Bald ablaufende Lizenzen</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                {licenses
+                  .filter((l: any) => l.status === "active" && l.valid_until)
+                  .sort((a: any, b: any) => a.valid_until.localeCompare(b.valid_until))
+                  .slice(0, 6).map((l: any) => {
+                    const dleft = Math.ceil((new Date(l.valid_until).getTime() - Date.now()) / 86400000);
+                    return (
+                      <div key={l.id} className="flex items-center justify-between text-sm border border-border/60 rounded-lg px-3 py-2">
+                        <div>
+                          <div className="font-medium">{domainName(l.domain_id)}</div>
+                          <div className="text-xs text-muted-foreground"><code>{l.license_key}</code></div>
+                        </div>
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${dleft < 30 ? "bg-warning/15 text-warning-foreground" : "bg-muted text-muted-foreground"}`}>
+                          {dleft > 0 ? `${dleft} Tage` : "abgelaufen"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                {licenses.filter((l: any) => l.status === "active" && l.valid_until).length === 0 && (
+                  <div className="text-sm text-muted-foreground">Keine Lizenzen mit Ablaufdatum.</div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="domains" className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Domain suchen…" value={domainSearch} onChange={(e) => setDomainSearch(e.target.value)} />
+          </div>
           <Card>
             <CardHeader><CardTitle>Neue Domain</CardTitle></CardHeader>
             <CardContent className="flex flex-col sm:flex-row gap-3">
@@ -145,7 +315,7 @@ function SuperAdminPage() {
             </CardContent>
           </Card>
           <div className="grid gap-3">
-            {domains.map((d: any) => (
+            {filteredDomains.map((d: any) => (
               <Card key={d.id}>
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div>
@@ -241,6 +411,31 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-2">
+          <div className="flex flex-col sm:flex-row gap-2 sticky top-0 z-10 bg-background/80 backdrop-blur py-2 -mx-1 px-1">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input className="pl-9" placeholder="Nutzer suchen (Name oder E-Mail)…"
+                value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+            </div>
+            <Select value={userDomainFilter} onValueChange={setUserDomainFilter}>
+              <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Domain" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Domains</SelectItem>
+                <SelectItem value="none">— keine —</SelectItem>
+                {domains.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
+              <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Rolle" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Rollen</SelectItem>
+                <SelectItem value="superadmin">SuperAdmin</SelectItem>
+                <SelectItem value="admin">Domain-Admin</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Card>
             <CardHeader><CardTitle>Neuen Nutzer anlegen</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -311,13 +506,59 @@ function SuperAdminPage() {
             </CardContent>
           </Card>
 
-          {users.map((u: any) => {
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><Upload className="size-4" /> Bulk-Import (CSV)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-xs text-muted-foreground">
+                Eine Zeile pro Nutzer: <code>email,name,passwort</code> (Komma, Semikolon oder Tab als Trenner). Passwort min. 8 Zeichen.
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Ziel-Domain</Label>
+                  <Select value={bulkDomain} onValueChange={setBulkDomain}>
+                    <SelectTrigger><SelectValue placeholder="Domain wählen" /></SelectTrigger>
+                    <SelectContent>
+                      {domains.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Rolle</Label>
+                  <Select value={bulkRole} onValueChange={(v) => setBulkRole(v as any)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Domain-Admin</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Textarea rows={5} placeholder={"max@firma.de,Max Mustermann,Geheim123\nanna@firma.de,Anna Beispiel,StartPass99"}
+                value={bulkCsv} onChange={(e) => setBulkCsv(e.target.value)} />
+              <Button onClick={handleBulkImport} disabled={bulkPending || !bulkCsv.trim() || !bulkDomain}>
+                {bulkPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                Importieren
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="text-xs text-muted-foreground px-1">
+            {filteredUsers.length} von {users.length} Nutzern
+          </div>
+
+          {filteredUsers.map((u: any) => {
             const r = u.roles[0];
+            const disabled = !!u.banned_until && new Date(u.banned_until).getTime() > Date.now();
             return (
               <Card key={u.id}>
-                <CardContent className="p-3 flex flex-wrap items-center gap-3">
+                <CardContent className="p-3 flex flex-wrap items-center gap-2">
                   <div className="flex-1 min-w-[220px]">
-                    <div className="font-medium">{u.display_name ?? u.email}</div>
+                    <div className="font-medium flex items-center gap-2">
+                      {u.display_name ?? u.email}
+                      {disabled && <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">deaktiviert</span>}
+                    </div>
                     <div className="text-xs text-muted-foreground">{u.email}</div>
                   </div>
                   <Select defaultValue={u.domain_id ?? "none"} onValueChange={async (v) => {
@@ -335,13 +576,23 @@ function SuperAdminPage() {
                     await assign({ data: { user_id: u.id, domain_id: u.domain_id, role: v as any } });
                     invalidateAll();
                   }}>
-                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="superadmin">SuperAdmin</SelectItem>
                       <SelectItem value="admin">Domain-Admin</SelectItem>
                       <SelectItem value="user">User</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button size="sm" variant="outline" onClick={() => handleResetPw(u.id)} title="Passwort-Reset-Link erzeugen & kopieren">
+                    <KeyRound className="size-4 sm:mr-1.5" /><span className="hidden sm:inline">Reset</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleToggleDisabled(u.id, disabled)}>
+                    {disabled ? "Aktivieren" : "Deaktivieren"}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"
+                    onClick={() => handleDeleteUser(u.id, u.display_name ?? u.email)} title="Nutzer löschen">
+                    <Trash2 className="size-4" />
+                  </Button>
                 </CardContent>
               </Card>
             );
@@ -466,5 +717,22 @@ function SuperAdminPage() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function KpiCard({ icon, label, value, sub, warn }: {
+  icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string; warn?: boolean;
+}) {
+  return (
+    <Card className={warn ? "border-warning/40" : undefined}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
+          <span className={warn ? "text-warning" : "text-primary"}>{icon}</span>
+          {label}
+        </div>
+        <div className="text-3xl font-bold mt-2">{value}</div>
+        {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
+      </CardContent>
+    </Card>
   );
 }
