@@ -411,6 +411,31 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-2">
+          <div className="flex flex-col sm:flex-row gap-2 sticky top-0 z-10 bg-background/80 backdrop-blur py-2 -mx-1 px-1">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input className="pl-9" placeholder="Nutzer suchen (Name oder E-Mail)…"
+                value={userSearch} onChange={(e) => setUserSearch(e.target.value)} />
+            </div>
+            <Select value={userDomainFilter} onValueChange={setUserDomainFilter}>
+              <SelectTrigger className="w-full sm:w-56"><SelectValue placeholder="Domain" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Domains</SelectItem>
+                <SelectItem value="none">— keine —</SelectItem>
+                {domains.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
+              <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Rolle" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Alle Rollen</SelectItem>
+                <SelectItem value="superadmin">SuperAdmin</SelectItem>
+                <SelectItem value="admin">Domain-Admin</SelectItem>
+                <SelectItem value="user">User</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <Card>
             <CardHeader><CardTitle>Neuen Nutzer anlegen</CardTitle></CardHeader>
             <CardContent className="space-y-3">
@@ -481,13 +506,59 @@ function SuperAdminPage() {
             </CardContent>
           </Card>
 
-          {users.map((u: any) => {
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><Upload className="size-4" /> Bulk-Import (CSV)</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-xs text-muted-foreground">
+                Eine Zeile pro Nutzer: <code>email,name,passwort</code> (Komma, Semikolon oder Tab als Trenner). Passwort min. 8 Zeichen.
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <Label>Ziel-Domain</Label>
+                  <Select value={bulkDomain} onValueChange={setBulkDomain}>
+                    <SelectTrigger><SelectValue placeholder="Domain wählen" /></SelectTrigger>
+                    <SelectContent>
+                      {domains.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Rolle</Label>
+                  <Select value={bulkRole} onValueChange={(v) => setBulkRole(v as any)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Domain-Admin</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Textarea rows={5} placeholder={"max@firma.de,Max Mustermann,Geheim123\nanna@firma.de,Anna Beispiel,StartPass99"}
+                value={bulkCsv} onChange={(e) => setBulkCsv(e.target.value)} />
+              <Button onClick={handleBulkImport} disabled={bulkPending || !bulkCsv.trim() || !bulkDomain}>
+                {bulkPending && <Loader2 className="size-4 mr-2 animate-spin" />}
+                Importieren
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="text-xs text-muted-foreground px-1">
+            {filteredUsers.length} von {users.length} Nutzern
+          </div>
+
+          {filteredUsers.map((u: any) => {
             const r = u.roles[0];
+            const disabled = !!(u as any).banned_until;
             return (
               <Card key={u.id}>
-                <CardContent className="p-3 flex flex-wrap items-center gap-3">
+                <CardContent className="p-3 flex flex-wrap items-center gap-2">
                   <div className="flex-1 min-w-[220px]">
-                    <div className="font-medium">{u.display_name ?? u.email}</div>
+                    <div className="font-medium flex items-center gap-2">
+                      {u.display_name ?? u.email}
+                      {disabled && <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/15 text-destructive">deaktiviert</span>}
+                    </div>
                     <div className="text-xs text-muted-foreground">{u.email}</div>
                   </div>
                   <Select defaultValue={u.domain_id ?? "none"} onValueChange={async (v) => {
@@ -505,13 +576,23 @@ function SuperAdminPage() {
                     await assign({ data: { user_id: u.id, domain_id: u.domain_id, role: v as any } });
                     invalidateAll();
                   }}>
-                    <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="superadmin">SuperAdmin</SelectItem>
                       <SelectItem value="admin">Domain-Admin</SelectItem>
                       <SelectItem value="user">User</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button size="sm" variant="outline" onClick={() => handleResetPw(u.id)} title="Passwort-Reset-Link erzeugen & kopieren">
+                    <KeyRound className="size-4 sm:mr-1.5" /><span className="hidden sm:inline">Reset</span>
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleToggleDisabled(u.id, disabled)}>
+                    {disabled ? "Aktivieren" : "Deaktivieren"}
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive"
+                    onClick={() => handleDeleteUser(u.id, u.display_name ?? u.email)} title="Nutzer löschen">
+                    <Trash2 className="size-4" />
+                  </Button>
                 </CardContent>
               </Card>
             );
