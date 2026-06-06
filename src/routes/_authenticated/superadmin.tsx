@@ -225,6 +225,8 @@ function SuperAdminPage() {
 
   const statsFn = useServerFn(getSuperAdminStats);
   const sq = useQuery({ queryKey: ["sa-stats"], queryFn: () => statsFn(), refetchInterval: 60_000 });
+  const openTicketsFn = useServerFn(getOpenTicketsCount);
+  const otq = useQuery({ queryKey: ["sa-open-tickets"], queryFn: () => openTicketsFn(), refetchInterval: 60_000 });
 
   const getPlat = useServerFn(getPlatformSettings);
   const updMaint = useServerFn(updatePlatformMaintenance);
@@ -469,6 +471,10 @@ function SuperAdminPage() {
                 <div className="hidden sm:flex flex-col gap-2">
                   <Button size="sm" onClick={() => setTab("onboard")}><Rocket className="size-4 mr-1.5" /> Mandant onboarden</Button>
                   <Button size="sm" variant="outline" onClick={() => setTab("search")}><Search className="size-4 mr-1.5" /> Globale Suche</Button>
+                  <Button size="sm" variant="outline" onClick={() => setTab("tickets")}>
+                    <LifeBuoy className="size-4 mr-1.5" />
+                    Tickets {otq.data?.count ? <span className="ml-1.5 rounded bg-destructive text-destructive-foreground px-1.5 text-[10px]">{otq.data.count}</span> : null}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
