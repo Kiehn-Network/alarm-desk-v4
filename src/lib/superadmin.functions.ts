@@ -535,10 +535,10 @@ export const getHealthSnapshot = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await assertSuper(context.userId);
     const started = Date.now();
-    const { data: health, error } = await supabaseAdmin.rpc("superadmin_health");
+    const { data: health, error } = await context.supabase.rpc("superadmin_health");
     const dbLatencyMs = Date.now() - started;
     if (error) throw new Error(error.message);
-    const { data: jobs } = await supabaseAdmin.rpc("superadmin_cron_jobs");
+    const { data: jobs } = await context.supabase.rpc("superadmin_cron_jobs");
     return { health, db_latency_ms: dbLatencyMs, cron_jobs: jobs ?? [] };
   });
 
