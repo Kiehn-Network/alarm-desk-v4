@@ -34,6 +34,23 @@ function PrioBadge({ p }: { p: string }) {
 }
 
 function SupportPage() {
+  return (
+    <div className="p-6 lg:p-8 space-y-6 max-w-6xl">
+      <header>
+        <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+          <LifeBuoy className="size-3.5" /> Support
+        </div>
+        <h1 className="text-3xl font-bold mt-1">Hilfe anfordern</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Stelle eine Anfrage an die SuperAdmins. Du siehst hier alle Tickets deines Mandanten.
+        </p>
+      </header>
+      <SupportPanel />
+    </div>
+  );
+}
+
+export function SupportPanel() {
   const qc = useQueryClient();
   const listFn = useServerFn(listSupportTickets);
   const createFn = useServerFn(createSupportTicket);
@@ -57,17 +74,8 @@ function SupportPage() {
   });
 
   return (
-    <div className="p-6 lg:p-8 space-y-6 max-w-6xl">
-      <header className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-            <LifeBuoy className="size-3.5" /> Support
-          </div>
-          <h1 className="text-3xl font-bold mt-1">Hilfe anfordern</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Stelle eine Anfrage an die SuperAdmins. Du siehst hier alle Tickets deines Mandanten.
-          </p>
-        </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-end">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button><Plus className="size-4 mr-2" />Neues Ticket</Button>
@@ -103,10 +111,10 @@ function SupportPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </header>
+      </div>
 
       <Card>
-        <CardHeader><CardTitle>Meine Tickets</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Tickets meines Mandanten</CardTitle></CardHeader>
         <CardContent>
           {lq.isLoading ? <div className="text-sm text-muted-foreground">Lädt …</div> :
             (lq.data ?? []).length === 0 ? (
