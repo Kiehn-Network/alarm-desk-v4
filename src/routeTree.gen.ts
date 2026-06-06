@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as HomepageRouteImport } from './routes/homepage'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -67,6 +68,11 @@ const LoginRoute = LoginRouteImport.update({
 const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
   id: '/kiehn-systeme-login',
   path: '/kiehn-systeme-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HomepageRoute = HomepageRouteImport.update({
@@ -340,6 +346,7 @@ const AuthenticatedAbrechnungProviderVersandRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/homepage': typeof HomepageRoute
+  '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -390,6 +397,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/homepage': typeof HomepageRoute
+  '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -438,6 +446,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/homepage': typeof HomepageRoute
+  '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -490,6 +499,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/homepage'
+    | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
     | '/revier-center'
@@ -540,6 +550,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/homepage'
+    | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
     | '/admin'
@@ -587,6 +598,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/homepage'
+    | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
     | '/_authenticated/revier-center'
@@ -639,6 +651,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   HomepageRoute: typeof HomepageRoute
+  ImpressumRoute: typeof ImpressumRoute
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
@@ -660,6 +673,13 @@ declare module '@tanstack/react-router' {
       path: '/kiehn-systeme-login'
       fullPath: '/kiehn-systeme-login'
       preLoaderRoute: typeof KiehnSystemeLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/homepage': {
@@ -1170,6 +1190,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   HomepageRoute: HomepageRoute,
+  ImpressumRoute: ImpressumRoute,
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
