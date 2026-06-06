@@ -47,6 +47,8 @@ import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes
 import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
 import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksEsrpWorkerRouteImport } from './routes/api/public/hooks/esrp-worker'
 import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
 import { Route as AuthenticatedRevierCenterOwksScanRouteImport } from './routes/_authenticated/revier-center/owks/scan'
@@ -270,6 +272,16 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksEsrpWorkerRoute =
   ApiPublicHooksEsrpWorkerRouteImport.update({
     id: '/api/public/hooks/esrp-worker',
@@ -403,6 +415,8 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -452,6 +466,8 @@ export interface FileRoutesByTo {
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -507,6 +523,8 @@ export interface FileRoutesById {
   '/_authenticated/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/_authenticated/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/notdienst/budeko/': typeof AuthenticatedNotdienstBudekoIndexRoute
   '/_authenticated/notdienst/rohrservice/': typeof AuthenticatedNotdienstRohrserviceIndexRoute
@@ -562,6 +580,8 @@ export interface FileRouteTypes {
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
     | '/api/public/hooks/esrp-worker'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko/'
     | '/notdienst/rohrservice/'
@@ -611,6 +631,8 @@ export interface FileRouteTypes {
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
     | '/api/public/hooks/esrp-worker'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
@@ -665,6 +687,8 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center/owks/scan'
     | '/_authenticated/revier-center/owks/zeitstrahl'
     | '/api/public/hooks/esrp-worker'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/notdienst/budeko/'
     | '/_authenticated/notdienst/rohrservice/'
@@ -682,6 +706,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -951,6 +977,20 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/esrp-worker': {
@@ -1237,6 +1277,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
