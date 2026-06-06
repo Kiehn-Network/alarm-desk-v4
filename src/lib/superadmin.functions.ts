@@ -592,3 +592,272 @@ export const retryDlqEmail = createServerFn({ method: "POST" })
       targetType: "email_log", targetId: data.log_id, metadata: { queue: queueName } });
     return { ok: true };
   });
+
+// ---------- Welle 2 · Paket B: Lizenz-Power + Onboarding ----------
+
+export const extendLicenses = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    ids: z.array(z.string().uuid()).min(1).max(500),
+    days: z.number().int().positive().max(3650),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: rows } = await supabaseAdmin.from("licenses")
+      .select("id, valid_until, status").in("id", data.ids);
+    const now = new Date();
+    let updated = 0;
+    for (const r of rows ?? []) {
+      const base = (r as any).valid_until ? new Date((r as any).valid_until) : now;
+      const startFrom = base.getTime() > now.getTime() ? base : now;
+      const next = new Date(startFrom.getTime() + data.days * 86400000).toISOString();
+      const patch: { valid_until: string; status?: string } = { valid_until: next };
+      if ((r as any).status === "expired") patch.status = "active";
+      const { error } = await supabaseAdmin.from("licenses").update(patch).eq("id", (r as any).id);
+      if (!error) updated++;
+    }
+    await logAudit({ actorId: context.userId, action: "license.bulk_extend",
+      targetType: "license", metadata: { count: updated, days: data.days } });
+    return { ok: true, updated };
+  });
+
+export const onboardDomain = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
+    name: z.string().min(1).max(200),
+    admin: z.object({
+      email: z.string().email().max(255),
+      password: z.string().min(8).max(72),
+      display_name: z.string().min(1).max(120),
+    }),
+    license: z.object({
+      valid_until: z.string().datetime().nullable().optional(),
+      max_users: z.number().int().positive().max(10000).nullable().optional(),
+      notes: z.string().max(500).nullable().optional(),
+    }).optional(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: dom, error: derr } = await supabaseAdmin.from("domains")
+      .insert({ slug: data.slug, name: data.name }).select().single();
+    if (derr) throw new Error(derr.message);
+    const { data: mods } = await supabaseAdmin.from("app_modules").select("key, enabled");
+    if (mods && mods.length > 0) {
+      await supabaseAdmin.from("domain_modules").insert(
+        mods.map((m: any) => ({ domain_id: dom.id, module_key: m.key, enabled: m.enabled })),
+      );
+    }
+    const { data: license, error: lerr } = await supabaseAdmin.from("licenses").insert({
+      domain_id: dom.id,
+      license_key: genLicenseKey(),
+      valid_until: data.license?.valid_until ?? null,
+      max_users: data.license?.max_users ?? null,
+      notes: data.license?.notes ?? null,
+      status: "active",
+    }).select().single();
+    if (lerr) throw new Error(lerr.message);
+    const { data: created, error: uerr } = await supabaseAdmin.auth.admin.createUser({
+      email: data.admin.email,
+      password: data.admin.password,
+      email_confirm: true,
+      user_metadata: { display_name: data.admin.display_name },
+    });
+    if (uerr || !created.user) throw new Error(uerr?.message ?? "Konnte Admin nicht anlegen.");
+    const uid = created.user.id;
+    await supabaseAdmin.from("profiles").upsert({
+      id: uid, display_name: data.admin.display_name, domain_id: dom.id,
+    }, { onConflict: "id" });
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", uid);
+    await supabaseAdmin.from("user_roles").insert({ user_id: uid, role: "admin", domain_id: dom.id });
+    await logAudit({ actorId: context.userId, action: "domain.onboard",
+      targetType: "domain", targetId: dom.id, targetLabel: dom.name,
+      metadata: { slug: data.slug, admin_email: data.admin.email, license_id: license.id } });
+    return { ok: true, domain: dom, license, admin_user_id: uid };
+  });
+
+export const cloneDomain = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    source_id: z.string().uuid(),
+    new_slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
+    new_name: z.string().min(1).max(200),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: src } = await supabaseAdmin.from("domains").select("*").eq("id", data.source_id).maybeSingle();
+    if (!src) throw new Error("Quell-Domain nicht gefunden");
+    const { data: dom, error: derr } = await supabaseAdmin.from("domains")
+      .insert({ slug: data.new_slug, name: data.new_name }).select().single();
+    if (derr) throw new Error(derr.message);
+    const { data: srcMods } = await supabaseAdmin.from("domain_modules")
+      .select("module_key, enabled").eq("domain_id", data.source_id);
+    if (srcMods && srcMods.length > 0) {
+      await supabaseAdmin.from("domain_modules").insert(
+        srcMods.map((m: any) => ({ domain_id: dom.id, module_key: m.module_key, enabled: m.enabled })),
+      );
+    }
+    await logAudit({ actorId: context.userId, action: "domain.clone",
+      targetType: "domain", targetId: dom.id, targetLabel: dom.name,
+      metadata: { source_id: data.source_id, modules: srcMods?.length ?? 0 } });
+    return { ok: true, domain: dom };
+  });
+
+export const sendLicenseExpiryNotices = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuper(context.userId);
+    return await runExpiryNotices();
+  });
+
+// Shared worker used by both the manual server-fn trigger and the public cron route.
+export async function runExpiryNotices() {
+  const now = new Date();
+  const horizonDays = [14, 7, 1];
+  const horizonMs = horizonDays.map((d) => d * 86400000);
+  const maxMs = Math.max(...horizonMs) + 86400000;
+  const { data: lics } = await supabaseAdmin.from("licenses")
+    .select("id, domain_id, valid_until, status")
+    .eq("status", "active")
+    .not("valid_until", "is", null)
+    .lt("valid_until", new Date(now.getTime() + maxMs).toISOString())
+    .gt("valid_until", now.toISOString());
+  if (!lics || lics.length === 0) return { ok: true, sent: 0, checked: 0 };
+  let sent = 0;
+  for (const l of lics) {
+    const left = Math.ceil((new Date((l as any).valid_until).getTime() - now.getTime()) / 86400000);
+    const bucket = horizonDays.find((d) => left <= d);
+    if (!bucket) continue;
+    const tag = `license_expiry_${bucket}d`;
+    // de-dupe: skip if we already logged this bucket for this license today
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const { data: dupe } = await supabaseAdmin.from("email_send_log")
+      .select("id").eq("template_name", tag)
+      .gte("created_at", todayStart)
+      .contains("metadata", { license_id: (l as any).id })
+      .limit(1).maybeSingle();
+    if (dupe) continue;
+    // recipients = all admins of the domain
+    const { data: roles } = await supabaseAdmin.from("user_roles")
+      .select("user_id").eq("domain_id", (l as any).domain_id).eq("role", "admin");
+    const userIds = (roles ?? []).map((r: any) => r.user_id);
+    if (userIds.length === 0) continue;
+    const { data: auth } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    const emails = (auth.users ?? []).filter((u) => userIds.includes(u.id)).map((u) => u.email).filter(Boolean) as string[];
+    const { data: dom } = await supabaseAdmin.from("domains").select("name").eq("id", (l as any).domain_id).maybeSingle();
+    for (const recipient of emails) {
+      const payload = {
+        recipient,
+        template: tag,
+        subject: `Lizenz läuft in ${bucket} Tag(en) ab — ${dom?.name ?? ""}`,
+        data: {
+          domain: dom?.name,
+          license_id: (l as any).id,
+          valid_until: (l as any).valid_until,
+          days_left: bucket,
+        },
+      };
+      const { error: enqErr } = await supabaseAdmin.rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload,
+      });
+      // log so we don't resend within the same day
+      await supabaseAdmin.from("email_send_log").insert({
+        template_name: tag,
+        recipient_email: recipient,
+        status: enqErr ? "failed" : "pending",
+        error_message: enqErr?.message ?? null,
+        metadata: { license_id: (l as any).id, domain_id: (l as any).domain_id, days_left: bucket, queue_name: "transactional_emails", payload },
+      });
+      if (!enqErr) sent++;
+    }
+  }
+  return { ok: true, sent, checked: lics.length };
+}
+
+// ---------- Welle 2 · Paket C: Daten-Operationen ----------
+
+export const setDomainArchived = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    id: z.string().uuid(),
+    archived: z.boolean(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const newStatus = data.archived ? "archived" : "active";
+    const { error } = await supabaseAdmin.from("domains").update({ status: newStatus }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: data.archived ? "domain.archive" : "domain.unarchive",
+      targetType: "domain", targetId: data.id });
+    return { ok: true };
+  });
+
+export const globalSearch = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    query: z.string().min(1).max(200),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const q = data.query.trim();
+    const like = `%${q}%`;
+    const [dom, lic, prof, auth] = await Promise.all([
+      supabaseAdmin.from("domains").select("id, name, slug, status")
+        .or(`name.ilike.${like},slug.ilike.${like}`).limit(20),
+      supabaseAdmin.from("licenses").select("id, license_key, domain_id, status, valid_until")
+        .ilike("license_key", like).limit(20),
+      supabaseAdmin.from("profiles").select("id, display_name, domain_id")
+        .ilike("display_name", like).limit(20),
+      supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
+    ]);
+    const emailMatches = (auth.data.users ?? [])
+      .filter((u) => (u.email ?? "").toLowerCase().includes(q.toLowerCase()))
+      .slice(0, 20)
+      .map((u) => ({ id: u.id, email: u.email }));
+    return {
+      domains: dom.data ?? [],
+      licenses: lic.data ?? [],
+      profiles: prof.data ?? [],
+      users_by_email: emailMatches,
+    };
+  });
+
+export const getDomainStats = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ domain_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: stats, error } = await supabaseAdmin.rpc("superadmin_domain_stats", { _domain_id: data.domain_id });
+    if (error) throw new Error(error.message);
+    return stats as any;
+  });
+
+export const exportDomainData = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ domain_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const tables = [
+      "domains", "licenses", "domain_modules", "profiles", "user_roles",
+      "app_settings", "einsaetze", "einsatz_gruende", "einsatz_historie",
+      "dateien", "datei_verknuepfungen", "schluessel_buch",
+      "intrahub_posts", "chat_conversations", "chat_messages",
+    ];
+    const dump: Record<string, any[]> = {};
+    for (const t of tables) {
+      const filterCol = t === "domains" ? "id" : "domain_id";
+      try {
+        const { data: rows } = await supabaseAdmin.from(t).select("*").eq(filterCol, data.domain_id).limit(50000);
+        dump[t] = rows ?? [];
+      } catch { dump[t] = []; }
+    }
+    await logAudit({ actorId: context.userId, action: "domain.export",
+      targetType: "domain", targetId: data.domain_id,
+      metadata: { tables: tables.length } });
+    return {
+      domain_id: data.domain_id,
+      generated_at: new Date().toISOString(),
+      tables: dump,
+    };
+  });
