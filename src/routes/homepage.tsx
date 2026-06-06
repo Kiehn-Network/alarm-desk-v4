@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Shield, Radar, MapPin, FileText, Bell, Users, KeyRound, Activity,
   CheckCircle2, ArrowRight, Sparkles, Lock, Zap,
+  BarChart3, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Home,
+  ScanLine, Wrench, Bell as BellIcon, Settings,
 } from "lucide-react";
 import logo from "@/assets/alarmdesk-logo.png";
 
@@ -102,30 +104,161 @@ function Hero() {
           </div>
         </div>
 
-        <div className="mt-16 mx-auto max-w-5xl rounded-2xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-elegant, 0 30px 80px -30px rgba(0,0,0,0.4))" }}>
-          <div className="h-10 border-b border-border flex items-center gap-1.5 px-4 bg-muted/30">
-            <span className="size-2.5 rounded-full bg-destructive/60" />
-            <span className="size-2.5 rounded-full bg-warning/60" />
-            <span className="size-2.5 rounded-full bg-success/60" />
-            <span className="ml-3 text-xs text-muted-foreground">app.alarmdesk-software.de/dashboard</span>
+        <DashboardPreview />
+      </div>
+    </section>
+  );
+}
+
+function DashboardPreview() {
+  const stats = [
+    { l: "Monat Einsätze", v: 248, i: BarChart3, tone: "info" },
+    { l: "Aktive Einsätze", v: 12, i: CheckCircle2, tone: "success" },
+    { l: "Gesamt Einsätze", v: 1842, i: ListChecks, tone: "warning" },
+    { l: "Storniert", v: 7, i: XCircle, tone: "destructive" },
+    { l: "Datensätze", v: 5310, i: FolderOpen, tone: "muted" },
+    { l: "Schlüssel unterwegs", v: 31, i: KeyRound, tone: "warning" },
+  ] as const;
+  const toneMap: Record<string, string> = {
+    info: "bg-info/15 text-info",
+    success: "bg-success/15 text-success",
+    warning: "bg-warning/15 text-warning",
+    destructive: "bg-destructive/15 text-destructive",
+    muted: "bg-muted text-muted-foreground",
+  };
+  const recents = [
+    { d: "Einbruchmeldung · Müller GmbH", f: "T. Schneider", s: "vor 4 Min", du: "32m", st: "in_bearbeitung" },
+    { d: "Türöffnung · Praxis Dr. Weiß", f: "K. Bauer", s: "vor 18 Min", du: "1h 12m", st: "freigegeben" },
+    { d: "Revier-Kontrolle · Lager Ost", f: "A. Yilmaz", s: "vor 41 Min", du: "48m", st: "in_bearbeitung" },
+    { d: "Wasserschaden · Hotel Sonne", f: "M. Klein", s: "vor 1 Std", du: "2h 04m", st: "freigegeben" },
+    { d: "Alarm · Filiale Mitte", f: "S. Roth", s: "vor 2 Std", du: "27m", st: "abgelehnt" },
+  ];
+  const statusTone: Record<string, string> = {
+    in_bearbeitung: "bg-info/15 text-info",
+    freigegeben: "bg-success/15 text-success",
+    abgelehnt: "bg-destructive/15 text-destructive",
+  };
+  const nav = [
+    { i: Home, l: "Dashboard", active: true },
+    { i: BellIcon, l: "Alarmierung" },
+    { i: ListChecks, l: "Meine Einsätze" },
+    { i: Radar, l: "Revier-Center" },
+    { i: ScanLine, l: "OWKS" },
+    { i: Wrench, l: "Notdienst" },
+    { i: KeyRound, l: "Schlüsselbuch" },
+    { i: FolderOpen, l: "Dateien" },
+    { i: Users, l: "Kunden" },
+    { i: Settings, l: "Admin" },
+  ];
+  return (
+    <div className="mt-16 mx-auto max-w-6xl rounded-2xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-elegant, 0 30px 80px -30px rgba(0,0,0,0.4))" }}>
+      <div className="h-10 border-b border-border flex items-center gap-1.5 px-4 bg-muted/30">
+        <span className="size-2.5 rounded-full bg-destructive/60" />
+        <span className="size-2.5 rounded-full bg-warning/60" />
+        <span className="size-2.5 rounded-full bg-success/60" />
+        <span className="ml-3 text-xs text-muted-foreground">v4.alarmdesk-software.de/dashboard</span>
+      </div>
+      <div className="grid grid-cols-[200px_1fr]">
+        {/* Sidebar */}
+        <aside className="border-r border-border bg-muted/20 p-3 hidden sm:block">
+          <div className="flex items-center gap-2 px-2 py-2">
+            <img src={logo} alt="" className="size-6 rounded" />
+            <span className="text-sm font-semibold">AlarmDesk</span>
           </div>
-          <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { l: "Aktive Einsätze", v: "12", i: Activity, tone: "text-success" },
-              { l: "Monat", v: "248", i: Radar, tone: "text-info" },
-              { l: "Objekte", v: "84", i: MapPin, tone: "text-warning" },
-              { l: "Schlüssel", v: "31", i: KeyRound, tone: "text-primary" },
-            ].map((s) => (
-              <div key={s.l} className="rounded-xl border border-border p-4">
-                <s.i className={`size-5 ${s.tone}`} />
-                <div className="mt-3 text-2xl font-bold tabular-nums">{s.v}</div>
-                <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">{s.l}</div>
+          <nav className="mt-3 space-y-0.5">
+            {nav.map((n) => (
+              <div key={n.l} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs ${n.active ? "bg-primary/15 text-primary" : "text-muted-foreground"}`}>
+                <n.i className="size-3.5" /> {n.l}
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main */}
+        <div className="p-5 space-y-5 min-w-0">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Dashboard</div>
+            <div className="text-lg font-bold mt-0.5">Guten Tag, Tim 👋</div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {stats.map((s) => (
+              <div key={s.l} className="rounded-lg border border-border p-3">
+                <div className={`size-7 rounded-md grid place-items-center ${toneMap[s.tone]}`}>
+                  <s.i className="size-3.5" />
+                </div>
+                <div className="mt-2 text-lg font-bold tabular-nums">{s.v.toLocaleString("de-DE")}</div>
+                <div className="text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5 truncate">{s.l}</div>
               </div>
             ))}
           </div>
+
+          <div className="grid lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 rounded-xl border border-border p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-sm font-semibold">Letzte Einsätze</div>
+                  <div className="text-[10px] text-muted-foreground">Übersicht der jüngsten Aktivitäten</div>
+                </div>
+                <TrendingUp className="size-4 text-muted-foreground" />
+              </div>
+              <table className="w-full text-xs">
+                <thead className="text-[9px] uppercase tracking-wider text-muted-foreground">
+                  <tr className="border-b border-border">
+                    <th className="text-left font-medium py-1.5">Datei</th>
+                    <th className="text-left font-medium py-1.5 hidden md:table-cell">Fahrer</th>
+                    <th className="text-left font-medium py-1.5 hidden md:table-cell">Start</th>
+                    <th className="text-left font-medium py-1.5">Dauer</th>
+                    <th className="text-left font-medium py-1.5">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recents.map((r, i) => (
+                    <tr key={i} className="border-b border-border/50 last:border-0">
+                      <td className="py-2 truncate max-w-[180px]">{r.d}</td>
+                      <td className="py-2 text-muted-foreground hidden md:table-cell">{r.f}</td>
+                      <td className="py-2 text-muted-foreground hidden md:table-cell">{r.s}</td>
+                      <td className="py-2 text-muted-foreground tabular-nums">{r.du}</td>
+                      <td className="py-2">
+                        <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] ${statusTone[r.st]}`}>{r.st}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border p-4">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <Clock className="size-3" /> Durchschnitt (Monat)
+                </div>
+                <div className="mt-3 space-y-2 text-xs">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Einsatzdauer</span><span className="font-medium tabular-nums">52m</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Anfahrt</span><span className="font-medium tabular-nums">14m</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Reaktionszeit</span><span className="font-medium tabular-nums">6m</span></div>
+                </div>
+              </div>
+              <div className="rounded-xl border border-border p-4">
+                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <Users className="size-3" /> Top Teilnehmer
+                </div>
+                <div className="mt-3 space-y-2 text-xs">
+                  {[
+                    { n: "T. Schneider", v: 48 },
+                    { n: "K. Bauer", v: 36 },
+                    { n: "A. Yilmaz", v: 29 },
+                  ].map((p) => (
+                    <div key={p.n} className="flex items-center justify-between">
+                      <span>{p.n}</span>
+                      <span className="text-muted-foreground tabular-nums">{p.v}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
 
