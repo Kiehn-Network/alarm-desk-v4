@@ -234,6 +234,9 @@ function SuperAdminPage() {
           <TabsTrigger value="licenses">Lizenzen</TabsTrigger>
           <TabsTrigger value="modules">Module</TabsTrigger>
           <TabsTrigger value="users">Nutzer</TabsTrigger>
+          <TabsTrigger value="health"><Activity className="size-4 mr-1.5" />Health</TabsTrigger>
+          <TabsTrigger value="emails"><Mail className="size-4 mr-1.5" />E-Mails</TabsTrigger>
+          <TabsTrigger value="audit">Audit-Log</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
           <TabsTrigger value="selfhost">Self-Hosting</TabsTrigger>
         </TabsList>
