@@ -144,7 +144,7 @@ export const updateSupportTicket = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: { status?: z.infer<typeof StatusEnum>; priority?: z.infer<typeof PriorityEnum> } = {};
     if (data.status) patch.status = data.status;
     if (data.priority) patch.priority = data.priority;
     if (!Object.keys(patch).length) return { ok: true };
