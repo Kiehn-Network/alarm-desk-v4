@@ -503,3 +503,92 @@ export const deleteAppVersion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ---------- Audit Log ----------
+
+export const listAuditLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    limit: z.number().int().positive().max(500).optional(),
+    action: z.string().max(80).nullable().optional(),
+    actor_id: z.string().uuid().nullable().optional(),
+    since: z.string().datetime().nullable().optional(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    let q = supabaseAdmin.from("superadmin_audit_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 200);
+    if (data.action) q = q.eq("action", data.action);
+    if (data.actor_id) q = q.eq("actor_id", data.actor_id);
+    if (data.since) q = q.gte("created_at", data.since);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { rows: rows ?? [] };
+  });
+
+// ---------- Health & E-Mail Queue ----------
+
+export const getHealthSnapshot = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuper(context.userId);
+    const started = Date.now();
+    const { data: health, error } = await supabaseAdmin.rpc("superadmin_health");
+    const dbLatencyMs = Date.now() - started;
+    if (error) throw new Error(error.message);
+    const { data: jobs } = await supabaseAdmin.rpc("superadmin_cron_jobs");
+    return { health, db_latency_ms: dbLatencyMs, cron_jobs: jobs ?? [] };
+  });
+
+export const listEmailLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    limit: z.number().int().positive().max(500).optional(),
+    status: z.string().max(40).nullable().optional(),
+    template_name: z.string().max(120).nullable().optional(),
+    recipient: z.string().max(255).nullable().optional(),
+    since: z.string().datetime().nullable().optional(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    let q = supabaseAdmin.from("email_send_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 200);
+    if (data.status) q = q.eq("status", data.status);
+    if (data.template_name) q = q.eq("template_name", data.template_name);
+    if (data.recipient) q = q.ilike("recipient_email", `%${data.recipient}%`);
+    if (data.since) q = q.gte("created_at", data.since);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    // dedupe by message_id, latest wins (rows are DESC already)
+    const seen = new Set<string>();
+    const deduped: any[] = [];
+    for (const r of rows ?? []) {
+      const key = (r as any).message_id ?? (r as any).id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(r);
+    }
+    return { rows: deduped };
+  });
+
+export const retryDlqEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ log_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: row, error } = await supabaseAdmin.from("email_send_log")
+      .select("metadata, template_name, recipient_email").eq("id", data.log_id).maybeSingle();
+    if (error || !row) throw new Error("E-Mail-Eintrag nicht gefunden");
+    const queueName = ((row as any).metadata?.queue_name as string | undefined)
+      ?? ((row as any).template_name?.startsWith("auth_") ? "auth_emails" : "transactional_emails");
+    const payload = (row as any).metadata?.payload ?? { recipient: (row as any).recipient_email, template: (row as any).template_name };
+    const { error: enqErr } = await supabaseAdmin.rpc("enqueue_email", { queue_name: queueName, payload });
+    if (enqErr) throw new Error(enqErr.message);
+    await logAudit({ actorId: context.userId, action: "email.retry",
+      targetType: "email_log", targetId: data.log_id, metadata: { queue: queueName } });
+    return { ok: true };
+  });
