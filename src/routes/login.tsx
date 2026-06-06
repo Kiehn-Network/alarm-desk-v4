@@ -40,7 +40,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<VersionInfo | null>(null);
-  const heroImage = getTimeOfDayHero();
+  const heroImage = getRotatingHero();
 
   useEffect(() => {
     fetch("/api/public/version").then((r) => r.json()).then(setInfo).catch(() => {});
