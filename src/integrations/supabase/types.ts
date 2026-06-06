@@ -663,6 +663,7 @@ export type Database = {
           name: string
           slug: string
           status: string
+          support_pin: string
           updated_at: string
         }
         Insert: {
@@ -671,6 +672,7 @@ export type Database = {
           name: string
           slug: string
           status?: string
+          support_pin: string
           updated_at?: string
         }
         Update: {
@@ -679,6 +681,7 @@ export type Database = {
           name?: string
           slug?: string
           status?: string
+          support_pin?: string
           updated_at?: string
         }
         Relationships: []
@@ -2177,16 +2180,22 @@ export type Database = {
       }
       superadmin_impersonation: {
         Row: {
+          forced: boolean
+          reason: string | null
           started_at: string
           superadmin_id: string
           target_domain_id: string
         }
         Insert: {
+          forced?: boolean
+          reason?: string | null
           started_at?: string
           superadmin_id: string
           target_domain_id: string
         }
         Update: {
+          forced?: boolean
+          reason?: string | null
           started_at?: string
           superadmin_id?: string
           target_domain_id?: string
@@ -2418,6 +2427,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      regenerate_support_pin: { Args: { _domain_id: string }; Returns: string }
       superadmin_cron_jobs: {
         Args: never
         Returns: {
