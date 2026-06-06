@@ -112,7 +112,13 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
     }))
     .filter((s) => s.items.length > 0);
   return (
-    <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground">
+    <div className={cn("flex h-full w-full flex-col bg-sidebar text-sidebar-foreground", isSuperAdminMode && "ring-1 ring-primary/30")}> 
+      {isSuperAdminMode && (
+        <div className="px-4 py-1.5 bg-primary/15 border-b border-primary/30 flex items-center gap-2">
+          <Crown className="size-3.5 text-primary" />
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">SuperAdmin-Konsole</span>
+        </div>
+      )}
       <Link
         to="/profil"
         onClick={onNavigate}
