@@ -4,7 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import logo from "@/assets/alarmdesk-logo.png";
-import heroImage from "@/assets/login-hero.jpg";
+import heroSpring from "@/assets/login-hero-spring.jpg";
+import heroSummer from "@/assets/login-hero-summer.jpg";
+import heroAutumn from "@/assets/login-hero-autumn.jpg";
+import heroWinter from "@/assets/login-hero-winter.jpg";
+
+function getSeasonalHero() {
+  const m = new Date().getMonth(); // 0=Jan
+  if (m >= 2 && m <= 4) return heroSpring;   // Mär–Mai
+  if (m >= 5 && m <= 7) return heroSummer;   // Jun–Aug
+  if (m >= 8 && m <= 10) return heroAutumn;  // Sep–Nov
+  return heroWinter;                          // Dez–Feb
+}
+const heroImage = getSeasonalHero();
 
 type VersionInfo = {
   current_version: string;
