@@ -1113,6 +1113,101 @@ function NewLicenseDialog({ domains, defaultDomain, onCreate }: {
   );
 }
 
+function EditLicenseDialog({
+  license, domains, onClose, onSave,
+}: {
+  license: any | null;
+  domains: any[];
+  onClose: () => void;
+  onSave: (patch: Partial<LicenseEditPayload>) => Promise<void>;
+}) {
+  const [domainId, setDomainId] = useState<string>("");
+  const [status, setStatus] = useState<"active" | "revoked" | "expired">("active");
+  const [date, setDate] = useState("");
+  const [maxUsers, setMaxUsers] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  // Reset form when a new license is opened
+  useMemo(() => {
+    if (license) {
+      setDomainId(license.domain_id ?? "");
+      setStatus((license.status as any) ?? "active");
+      setDate(isoToDateInput(license.valid_until));
+      setMaxUsers(license.max_users != null ? String(license.max_users) : "");
+      setNotes(license.notes ?? "");
+    }
+  }, [license?.id]);
+
+  const open = !!license;
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Lizenz bearbeiten</DialogTitle>
+        </DialogHeader>
+        {license && (
+          <div className="space-y-3">
+            <div className="text-xs text-muted-foreground">
+              Key: <code className="bg-muted px-1.5 py-0.5 rounded">{license.license_key}</code>
+            </div>
+            <div>
+              <Label className="text-xs">Mandant</Label>
+              <Select value={domainId} onValueChange={setDomainId}>
+                <SelectTrigger><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
+                <SelectContent>
+                  {domains.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Status</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Aktiv</SelectItem>
+                    <SelectItem value="revoked">Widerrufen</SelectItem>
+                    <SelectItem value="expired">Abgelaufen</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Gültig bis</Label>
+                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Max. Nutzer</Label>
+              <Input type="number" min={1} value={maxUsers} onChange={(e) => setMaxUsers(e.target.value)} placeholder="∞ (unbegrenzt)" />
+            </div>
+            <div>
+              <Label className="text-xs">Notiz</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" rows={3} />
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
+          <Button disabled={busy || !domainId} onClick={async () => {
+            setBusy(true);
+            try {
+              await onSave({
+                domain_id: domainId,
+                status,
+                valid_until: toIsoOrNull(date),
+                max_users: maxUsers ? Number(maxUsers) : null,
+                notes: notes || null,
+              });
+            } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+            finally { setBusy(false); }
+          }}>Speichern</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function LicensesPanel({
   domains, licenses, selectedLics, setSelectedLics, extendDays, setExtendDays,
   onCreate, onUpdate, onRevoke, onExtend, onExpiryRun,
