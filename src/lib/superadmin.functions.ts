@@ -57,7 +57,7 @@ export const createDomain = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuper(context.userId);
     const { data: d, error } = await supabaseAdmin.from("domains")
-      .insert({ slug: data.slug, name: data.name }).select().single();
+      .insert({ slug: data.slug, name: data.name } as any).select().single();
     if (error) throw new Error(error.message);
     // seed all global app_modules as enabled for this domain
     const { data: mods } = await supabaseAdmin.from("app_modules").select("key, enabled");
@@ -650,7 +650,7 @@ export const onboardDomain = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuper(context.userId);
     const { data: dom, error: derr } = await supabaseAdmin.from("domains")
-      .insert({ slug: data.slug, name: data.name }).select().single();
+      .insert({ slug: data.slug, name: data.name } as any).select().single();
     if (derr) throw new Error(derr.message);
     const { data: mods } = await supabaseAdmin.from("app_modules").select("key, enabled");
     if (mods && mods.length > 0) {
@@ -698,7 +698,7 @@ export const cloneDomain = createServerFn({ method: "POST" })
     const { data: src } = await supabaseAdmin.from("domains").select("*").eq("id", data.source_id).maybeSingle();
     if (!src) throw new Error("Quell-Domain nicht gefunden");
     const { data: dom, error: derr } = await supabaseAdmin.from("domains")
-      .insert({ slug: data.new_slug, name: data.new_name }).select().single();
+      .insert({ slug: data.new_slug, name: data.new_name } as any).select().single();
     if (derr) throw new Error(derr.message);
     const { data: srcMods } = await supabaseAdmin.from("domain_modules")
       .select("module_key, enabled").eq("domain_id", data.source_id);
