@@ -375,17 +375,58 @@ function SuperAdminPage() {
           <div className="min-w-0 space-y-6">
 
         <TabsContent value="overview" className="space-y-6">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <KpiCard icon={<Globe2 className="size-5" />} label="Domains aktiv"
+          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+            <Card className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20">
+              <CardContent className="p-6 flex items-center justify-between gap-4">
+                <div>
+                  <div className="text-xs uppercase tracking-wider text-muted-foreground">Willkommen zurück</div>
+                  <h2 className="text-2xl font-semibold mt-1">Plattform-Übersicht</h2>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                    {stats?.domains_active ?? 0} aktive Mandanten · {stats?.users_total ?? 0} Nutzer · Stand: {new Date().toLocaleString("de-DE")}
+                  </p>
+                </div>
+                <div className="hidden sm:flex flex-col gap-2">
+                  <Button size="sm" onClick={() => setTab("onboard")}><Rocket className="size-4 mr-1.5" /> Mandant onboarden</Button>
+                  <Button size="sm" variant="outline" onClick={() => setTab("search")}><Search className="size-4 mr-1.5" /> Globale Suche</Button>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-5">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">Verteilung Rollen</div>
+                <div className="space-y-2.5">
+                  {stats && Object.entries(stats.role_counts).map(([r, n]) => {
+                    const total = Object.values(stats.role_counts).reduce((a: number, b: any) => a + Number(b), 0) || 1;
+                    const pct = Math.round((Number(n) / total) * 100);
+                    return (
+                      <div key={r}>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span className="font-medium capitalize">{r}</span>
+                          <span className="tabular-nums text-muted-foreground">{n} · {pct}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                          <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {!stats && <div className="text-xs text-muted-foreground">Lade Daten…</div>}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard tone="info" icon={<Globe2 className="size-5" />} label="Domains aktiv"
               value={stats?.domains_active ?? "—"} sub={`${stats?.domains_disabled ?? 0} deaktiviert`} />
-            <KpiCard icon={<ShieldCheck className="size-5" />} label="Lizenzen aktiv"
+            <KpiCard tone="success" icon={<ShieldCheck className="size-5" />} label="Lizenzen aktiv"
               value={stats?.licenses_active ?? "—"}
               sub={stats?.licenses_expiring_30d ? `${stats.licenses_expiring_30d} laufen in 30 Tagen aus` : "alles stabil"}
               warn={!!stats?.licenses_expiring_30d} />
-            <KpiCard icon={<Users className="size-5" />} label="Nutzer gesamt"
+            <KpiCard tone="primary" icon={<Users className="size-5" />} label="Nutzer gesamt"
               value={stats?.users_total ?? "—"}
               sub={stats ? Object.entries(stats.role_counts).map(([r, n]) => `${r}: ${n}`).join(" · ") : ""} />
-            <KpiCard icon={<Activity className="size-5" />} label="Einsätze (24h)"
+            <KpiCard tone="destructive" icon={<Activity className="size-5" />} label="Einsätze (24h)"
               value={stats?.einsaetze_24h ?? "—"} sub={`gesamt ${stats?.einsaetze_total ?? 0}`} />
           </div>
 
@@ -948,18 +989,33 @@ function SuperAdminPage() {
   );
 }
 
-function KpiCard({ icon, label, value, sub, warn }: {
-  icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string; warn?: boolean;
+function KpiCard({ icon, label, value, sub, warn, tone = "primary" }: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+  warn?: boolean;
+  tone?: "primary" | "info" | "success" | "warning" | "destructive";
 }) {
+  const toneMap: Record<string, string> = {
+    primary: "bg-primary/15 text-primary",
+    info: "bg-info/15 text-info",
+    success: "bg-success/15 text-success",
+    warning: "bg-warning/20 text-warning-foreground",
+    destructive: "bg-destructive/15 text-destructive",
+  };
+  const chip = warn ? toneMap.warning : toneMap[tone];
   return (
     <Card className={warn ? "border-warning/40" : undefined}>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
-          <span className={warn ? "text-warning" : "text-primary"}>{icon}</span>
-          {label}
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+            <div className="text-3xl font-bold mt-2 tabular-nums truncate">{value}</div>
+          </div>
+          <div className={`size-10 shrink-0 rounded-md grid place-items-center ${chip}`}>{icon}</div>
         </div>
-        <div className="text-3xl font-bold mt-2">{value}</div>
-        {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
+        {sub && <div className="text-xs text-muted-foreground mt-3 line-clamp-1">{sub}</div>}
       </CardContent>
     </Card>
   );
