@@ -231,35 +231,51 @@ function SuperAdminPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><Crown className="size-6 text-primary" /> SuperAdmin</h1>
-          <p className="text-muted-foreground text-sm">Mandanten, Lizenzen, Module &amp; Nutzerverwaltung</p>
-        </div>
-        {imp && (
-          <div className="flex items-center gap-3 px-4 py-2 rounded-lg bg-warning/10 border border-warning/30">
-            <span className="text-sm">Impersonation: <b>{imp.name}</b></span>
-            <Button size="sm" variant="outline" onClick={async () => { await stopImp({}); invalidateAll(); }}>Beenden</Button>
+    <div className="p-6 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="sticky top-0 z-20 -mx-6 px-6 py-4 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/60">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+              <Crown className="size-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold leading-tight">SuperAdmin</h1>
+              <p className="text-muted-foreground text-xs">Mandanten · Lizenzen · Module · Nutzer · Betrieb</p>
+            </div>
           </div>
-        )}
+          {imp && (
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-warning/10 border border-warning/30">
+              <span className="text-xs">Impersonation: <b>{imp.name}</b></span>
+              <Button size="sm" variant="outline" onClick={async () => { await stopImp({}); invalidateAll(); }}>Beenden</Button>
+            </div>
+          )}
+        </div>
       </div>
 
-      <Tabs defaultValue="overview">
-        <TabsList>
-          <TabsTrigger value="overview"><LayoutDashboard className="size-4 mr-1.5" />Übersicht</TabsTrigger>
-          <TabsTrigger value="onboard"><Rocket className="size-4 mr-1.5" />Onboarding</TabsTrigger>
-          <TabsTrigger value="search"><Search className="size-4 mr-1.5" />Suche</TabsTrigger>
-          <TabsTrigger value="domains">Domains</TabsTrigger>
-          <TabsTrigger value="licenses">Lizenzen</TabsTrigger>
-          <TabsTrigger value="modules">Module</TabsTrigger>
-          <TabsTrigger value="users">Nutzer</TabsTrigger>
-          <TabsTrigger value="health"><Activity className="size-4 mr-1.5" />Health</TabsTrigger>
-          <TabsTrigger value="emails"><Mail className="size-4 mr-1.5" />E-Mails</TabsTrigger>
-          <TabsTrigger value="audit">Audit-Log</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
-          <TabsTrigger value="selfhost">Self-Hosting</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="overview" className="space-y-6">
+        <div className="rounded-xl border border-border/60 bg-card/40 p-2">
+          <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 justify-start">
+            <NavGroupLabel>Start</NavGroupLabel>
+            <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="size-4" />Übersicht</TabsTrigger>
+            <TabsTrigger value="onboard" className="gap-1.5"><Rocket className="size-4" />Onboarding</TabsTrigger>
+            <TabsTrigger value="search" className="gap-1.5"><Search className="size-4" />Suche</TabsTrigger>
+            <NavDivider />
+            <NavGroupLabel>Mandanten</NavGroupLabel>
+            <TabsTrigger value="domains" className="gap-1.5"><Globe2 className="size-4" />Domains</TabsTrigger>
+            <TabsTrigger value="licenses" className="gap-1.5"><ShieldCheck className="size-4" />Lizenzen</TabsTrigger>
+            <TabsTrigger value="modules" className="gap-1.5"><KeyRound className="size-4" />Module</TabsTrigger>
+            <TabsTrigger value="users" className="gap-1.5"><Users className="size-4" />Nutzer</TabsTrigger>
+            <NavDivider />
+            <NavGroupLabel>Betrieb</NavGroupLabel>
+            <TabsTrigger value="health" className="gap-1.5"><Activity className="size-4" />Health</TabsTrigger>
+            <TabsTrigger value="emails" className="gap-1.5"><Mail className="size-4" />E-Mails</TabsTrigger>
+            <TabsTrigger value="audit" className="gap-1.5"><BarChart3 className="size-4" />Audit-Log</TabsTrigger>
+            <NavDivider />
+            <NavGroupLabel>Plattform</NavGroupLabel>
+            <TabsTrigger value="system" className="gap-1.5"><RefreshCw className="size-4" />System</TabsTrigger>
+            <TabsTrigger value="selfhost" className="gap-1.5"><Building2 className="size-4" />Self-Hosting</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
