@@ -1158,3 +1158,208 @@ function AuditLogPanel() {
     </div>
   );
 }
+
+// ====================== ONBOARDING WIZARD ======================
+
+type OnboardPayload = {
+  slug: string; name: string;
+  admin: { email: string; password: string; display_name: string };
+  license: { valid_until: string | null; max_users: number | null; notes: string | null };
+};
+
+function OnboardingWizard({ onCreate }: { onCreate: (p: OnboardPayload) => Promise<any> }) {
+  const [slug, setSlug] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [pw, setPw] = useState("");
+  const [adminName, setAdminName] = useState("");
+  const [validUntil, setValidUntil] = useState("");
+  const [maxUsers, setMaxUsers] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<any>(null);
+
+  const valid = slug && name && email && pw.length >= 8 && adminName;
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Rocket className="size-5" /> Domain in einem Schritt aufsetzen</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div><Label>Slug</Label><Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase())} placeholder="alpha-zentrale" /></div>
+          <div><Label>Anzeige-Name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Alpha Zentrale GmbH" /></div>
+        </div>
+        <div className="border-t pt-3">
+          <div className="text-sm font-medium mb-2">Erster Admin</div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div><Label>Name</Label><Input value={adminName} onChange={(e) => setAdminName(e.target.value)} placeholder="Max Mustermann" /></div>
+            <div><Label>E-Mail</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="admin@firma.de" /></div>
+            <div className="sm:col-span-2"><Label>Passwort (min. 8)</Label><Input value={pw} onChange={(e) => setPw(e.target.value)} placeholder="StartPass123" /></div>
+          </div>
+        </div>
+        <div className="border-t pt-3">
+          <div className="text-sm font-medium mb-2">Lizenz (optional)</div>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <div><Label>Ablaufdatum</Label><Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></div>
+            <div><Label>Max. Nutzer</Label><Input type="number" min={1} value={maxUsers} onChange={(e) => setMaxUsers(e.target.value)} placeholder="∞" /></div>
+            <div><Label>Notiz</Label><Input value={notes} onChange={(e) => setNotes(e.target.value)} /></div>
+          </div>
+        </div>
+        <Button disabled={!valid || busy} onClick={async () => {
+          setBusy(true);
+          try {
+            const r = await onCreate({
+              slug: slug.trim(), name: name.trim(),
+              admin: { email: email.trim(), password: pw, display_name: adminName.trim() },
+              license: {
+                valid_until: validUntil ? toIsoOrNull(validUntil) : null,
+                max_users: maxUsers ? Number(maxUsers) : null,
+                notes: notes || null,
+              },
+            });
+            setResult(r);
+            setSlug(""); setName(""); setEmail(""); setPw(""); setAdminName("");
+            setValidUntil(""); setMaxUsers(""); setNotes("");
+          } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+          finally { setBusy(false); }
+        }}>
+          {busy && <Loader2 className="size-4 mr-2 animate-spin" />}Domain anlegen
+        </Button>
+        {result && (
+          <div className="border rounded p-3 bg-success/5 text-sm space-y-1">
+            <div className="font-medium text-success">Erfolg.</div>
+            <div>Domain: <b>{result.domain?.name}</b> (<code>{result.domain?.slug}</code>)</div>
+            <div>Lizenz-Key: <code>{result.license?.license_key}</code></div>
+            <div>Admin-User-ID: <code>{result.admin_user_id}</code></div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ====================== GLOBAL SEARCH ======================
+
+function GlobalSearchPanel({ domains }: { domains: any[] }) {
+  const fn = useServerFn(globalSearch);
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [res, setRes] = useState<any>(null);
+  const dn = (id: string | null) => domains.find((d) => d.id === id)?.name ?? "—";
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input className="pl-9" value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder="Domain, Slug, Nutzer-Name, E-Mail, Lizenz-Key…"
+            onKeyDown={async (e) => {
+              if (e.key !== "Enter" || !q.trim()) return;
+              setBusy(true);
+              try { setRes(await fn({ data: { query: q.trim() } })); }
+              catch (err: any) { toast.error(err?.message ?? "Fehler"); }
+              finally { setBusy(false); }
+            }} />
+        </div>
+        <Button disabled={!q.trim() || busy} onClick={async () => {
+          setBusy(true);
+          try { setRes(await fn({ data: { query: q.trim() } })); }
+          catch (err: any) { toast.error(err?.message ?? "Fehler"); }
+          finally { setBusy(false); }
+        }}>{busy ? <Loader2 className="size-4 animate-spin" /> : "Suchen"}</Button>
+      </div>
+      {!res && <div className="text-sm text-muted-foreground">Suche über alle Domains, Nutzer und Lizenz-Keys.</div>}
+      {res && (
+        <div className="space-y-3">
+          <SearchSection title={`Domains (${res.domains.length})`} empty="Keine Treffer.">
+            {res.domains.map((d: any) => (
+              <div key={d.id} className="text-sm flex justify-between border rounded p-2">
+                <div><b>{d.name}</b> <span className="text-muted-foreground">{d.slug}</span></div>
+                <span className="text-xs text-muted-foreground">{d.status}</span>
+              </div>
+            ))}
+          </SearchSection>
+          <SearchSection title={`Lizenzen (${res.licenses.length})`} empty="Keine Treffer.">
+            {res.licenses.map((l: any) => (
+              <div key={l.id} className="text-sm flex justify-between border rounded p-2">
+                <div><code className="text-xs">{l.license_key}</code> · {dn(l.domain_id)}</div>
+                <span className="text-xs text-muted-foreground">{l.status} {l.valid_until && `· bis ${new Date(l.valid_until).toLocaleDateString()}`}</span>
+              </div>
+            ))}
+          </SearchSection>
+          <SearchSection title={`Nutzer / Name (${res.profiles.length})`} empty="Keine Treffer.">
+            {res.profiles.map((p: any) => (
+              <div key={p.id} className="text-sm flex justify-between border rounded p-2">
+                <div>{p.display_name}</div>
+                <span className="text-xs text-muted-foreground">{dn(p.domain_id)}</span>
+              </div>
+            ))}
+          </SearchSection>
+          <SearchSection title={`Nutzer / E-Mail (${res.users_by_email.length})`} empty="Keine Treffer.">
+            {res.users_by_email.map((u: any) => (
+              <div key={u.id} className="text-sm border rounded p-2">{u.email}</div>
+            ))}
+          </SearchSection>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SearchSection({ title, empty, children }: { title: string; empty: string; children: React.ReactNode }) {
+  const arr = Array.isArray(children) ? children : [children];
+  const hasItems = arr.filter(Boolean).length > 0;
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-sm">{title}</CardTitle></CardHeader>
+      <CardContent className="space-y-1">
+        {hasItems ? children : <div className="text-xs text-muted-foreground">{empty}</div>}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ====================== DOMAIN STATS DIALOG ======================
+
+function DomainStatsDialog({ domain, onClose }: { domain: any; onClose: () => void }) {
+  const fn = useServerFn(getDomainStats);
+  const q = useQuery({ queryKey: ["sa-dom-stats", domain?.id], queryFn: () => fn({ data: { domain_id: domain.id } }), enabled: !!domain?.id });
+  if (!domain) return null;
+  const s: any = q.data ?? {};
+  const mb = s.dateien_bytes ? (s.dateien_bytes / 1024 / 1024).toFixed(1) : "0";
+  return (
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <Card className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><BarChart3 className="size-5" /> {domain.name}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {q.isLoading && <div className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> lädt…</div>}
+          {q.data && (
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <StatLine label="Nutzer" v={s.users} />
+              <StatLine label="Aktive Lizenzen" v={s.licenses_active} />
+              <StatLine label="Einsätze gesamt" v={s.einsaetze_total} />
+              <StatLine label="Einsätze 24h" v={s.einsaetze_24h} />
+              <StatLine label="Dateien" v={s.dateien_count} />
+              <StatLine label="Storage" v={`${mb} MB`} />
+            </div>
+          )}
+          <div className="text-right pt-2">
+            <Button size="sm" variant="outline" onClick={onClose}>Schließen</Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function StatLine({ label, v }: { label: string; v: React.ReactNode }) {
+  return (
+    <div className="border rounded p-2">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="text-xl font-semibold">{v ?? "—"}</div>
+    </div>
+  );
+}
