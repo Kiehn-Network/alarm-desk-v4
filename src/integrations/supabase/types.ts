@@ -2350,6 +2350,7 @@ export type Database = {
           schedule: string
         }[]
       }
+      superadmin_domain_stats: { Args: { _domain_id: string }; Returns: Json }
       superadmin_health: { Args: never; Returns: Json }
     }
     Enums: {
