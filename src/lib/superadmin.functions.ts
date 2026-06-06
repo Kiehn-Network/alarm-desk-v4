@@ -141,6 +141,7 @@ export const listAllTenantUsers = createServerFn({ method: "GET" })
         domain_id: p.domain_id,
         email: emailMap[p.id] ?? "",
         roles: roleMap[p.id] ?? [],
+        banned_until: (auth.users ?? []).find((u) => u.id === p.id)?.banned_until ?? null,
       })),
     };
   });
