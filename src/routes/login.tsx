@@ -4,19 +4,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import logo from "@/assets/alarmdesk-logo.png";
-import heroSpring from "@/assets/login-hero-spring.jpg";
-import heroSummer from "@/assets/login-hero-summer.jpg";
-import heroAutumn from "@/assets/login-hero-autumn.jpg";
-import heroWinter from "@/assets/login-hero-winter.jpg";
+import heroSunrise from "@/assets/login-hero-sunrise.jpg";
+import heroDay from "@/assets/login-hero-day.jpg";
+import heroSunset from "@/assets/login-hero-sunset.jpg";
+import heroNight from "@/assets/login-hero-night.jpg";
 
-function getSeasonalHero() {
-  const m = new Date().getMonth(); // 0=Jan
-  if (m >= 2 && m <= 4) return heroSpring;   // Mär–Mai
-  if (m >= 5 && m <= 7) return heroSummer;   // Jun–Aug
-  if (m >= 8 && m <= 10) return heroAutumn;  // Sep–Nov
-  return heroWinter;                          // Dez–Feb
+function getTimeOfDayHero() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 9) return heroSunrise;   // Sonnenaufgang
+  if (h >= 9 && h < 17) return heroDay;       // Tag
+  if (h >= 17 && h < 21) return heroSunset;   // Sonnenuntergang
+  return heroNight;                            // Nacht
 }
-const heroImage = getSeasonalHero();
 
 type VersionInfo = {
   current_version: string;
@@ -37,6 +36,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<VersionInfo | null>(null);
+  const heroImage = getTimeOfDayHero();
 
   useEffect(() => {
     fetch("/api/public/version").then((r) => r.json()).then(setInfo).catch(() => {});
