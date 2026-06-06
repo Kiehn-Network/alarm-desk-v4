@@ -319,7 +319,7 @@ function SuperAdminPage() {
 
   return (
     <div className={`superadmin-theme theme-${saTheme} p-6 space-y-6 max-w-screen-2xl mx-auto`}>
-      <div className="rounded-3xl bg-sidebar text-sidebar-foreground px-6 py-5 shadow-xl border border-sidebar-border">
+      <div className="sa-header rounded-3xl bg-sidebar text-sidebar-foreground px-6 py-5 shadow-xl border border-sidebar-border">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="size-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
