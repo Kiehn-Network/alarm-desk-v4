@@ -833,7 +833,29 @@ function SuperAdminPage() {
         <TabsContent value="audit" className="space-y-4">
           <AuditLogPanel />
         </TabsContent>
+
+        <TabsContent value="onboard" className="space-y-4">
+          <OnboardingWizard
+            onCreate={async (payload) => {
+              const r = await onboardFn({ data: payload });
+              toast.success(`Domain „${(r as any).domain?.name}" angelegt — Admin-Login bereit`);
+              invalidateAll();
+              return r as any;
+            }}
+          />
+        </TabsContent>
+
+        <TabsContent value="search" className="space-y-4">
+          <GlobalSearchPanel domains={domains} />
+        </TabsContent>
       </Tabs>
+
+      {statsForDomain && (
+        <DomainStatsDialog
+          domain={domains.find((d: any) => d.id === statsForDomain)}
+          onClose={() => setStatsForDomain(null)}
+        />
+      )}
     </div>
   );
 }
