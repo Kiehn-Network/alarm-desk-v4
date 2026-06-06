@@ -1129,7 +1129,7 @@ function EditLicenseDialog({
   const [busy, setBusy] = useState(false);
 
   // Reset form when a new license is opened
-  useMemo(() => {
+  useEffect(() => {
     if (license) {
       setDomainId(license.domain_id ?? "");
       setStatus((license.status as any) ?? "active");
