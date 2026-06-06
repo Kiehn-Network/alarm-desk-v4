@@ -550,7 +550,7 @@ function SuperAdminPage() {
 
           {filteredUsers.map((u: any) => {
             const r = u.roles[0];
-            const disabled = !!(u as any).banned_until;
+            const disabled = !!u.banned_until && new Date(u.banned_until).getTime() > Date.now();
             return (
               <Card key={u.id}>
                 <CardContent className="p-3 flex flex-wrap items-center gap-2">
