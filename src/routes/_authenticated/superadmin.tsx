@@ -577,42 +577,15 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="modules">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="p-2 text-left">Modul</th>
-                  {domains.map((d: any) => <th key={d.id} className="p-2 text-center">{d.name}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {modules.map((m: any) => (
-                  <tr key={m.id} className="border-t">
-                    <td className="p-2">
-                      {m.parent_key && <span className="text-muted-foreground mr-1">└</span>}
-                      <span className={m.parent_key ? "pl-4" : "font-medium"}>{m.name}</span>{" "}
-                      <span className="text-xs text-muted-foreground">({m.key})</span>
-                    </td>
-                    {domains.map((d: any) => {
-                      const dm = dmodules.find((x: any) => x.domain_id === d.id && x.module_key === m.key);
-                      const enabled = dm?.enabled ?? false;
-                      const parentEnabled = m.parent_key
-                        ? (dmodules.find((x: any) => x.domain_id === d.id && x.module_key === m.parent_key)?.enabled ?? false)
-                        : true;
-                      return (
-                        <td key={d.id} className="p-2 text-center">
-                          <Switch checked={enabled && parentEnabled} disabled={!parentEnabled} onCheckedChange={async (v) => {
-                            await toggleMod({ data: { domain_id: d.id, module_key: m.key, enabled: v } });
-                            invalidateAll();
-                          }} />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ModuleControl
+            domains={domains}
+            modules={modules}
+            dmodules={dmodules}
+            onToggle={async (domain_id, module_key, enabled) => {
+              await toggleMod({ data: { domain_id, module_key, enabled } });
+              invalidateAll();
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-2">
