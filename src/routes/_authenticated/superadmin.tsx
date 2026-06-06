@@ -132,7 +132,11 @@ function SuperAdminPage() {
   const listModFn = useServerFn(listAppModules);
   const listUsersFn = useServerFn(listAllTenantUsers);
   const impFn = useServerFn(getImpersonation);
-  const [tab, setTab] = useState("overview");
+  const navigate = useNavigate();
+  const { tab } = Route.useSearch();
+  const setTab = (v: string) => navigate({ to: "/superadmin", search: { tab: v }, replace: true });
+  const { actualRole, isImpersonating } = useRole();
+  const superNavInGlobal = actualRole === "superadmin" && !isImpersonating;
 
   const dq = useQuery({ queryKey: ["sa-domains"], queryFn: () => listDomFn() });
   const mq = useQuery({ queryKey: ["sa-modules"], queryFn: () => listModFn() });
