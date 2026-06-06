@@ -6,10 +6,6 @@ import {
 import logo from "@/assets/alarmdesk-logo.png";
 
 export const Route = createFileRoute("/homepage")({
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getSession();
-    if (data.session) throw redirect({ to: "/dashboard" });
-  },
   head: () => ({
     meta: [
       { title: "AlarmDesk — Einsatz- & Sicherheitsmanagement der nächsten Generation" },
