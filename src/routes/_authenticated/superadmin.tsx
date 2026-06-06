@@ -58,12 +58,76 @@ function NavDivider() {
   return <span className="mx-1 h-5 w-px bg-border/70 self-center" aria-hidden />;
 }
 
+const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }[] = [
+  { label: "Start", items: [
+    { value: "overview", label: "Übersicht" },
+    { value: "onboard", label: "Onboarding" },
+    { value: "search", label: "Suche" },
+  ]},
+  { label: "Mandanten", items: [
+    { value: "domains", label: "Domains" },
+    { value: "licenses", label: "Lizenzen" },
+    { value: "modules", label: "Module" },
+    { value: "users", label: "Nutzer" },
+  ]},
+  { label: "Betrieb", items: [
+    { value: "health", label: "Health" },
+    { value: "emails", label: "E-Mails" },
+    { value: "audit", label: "Audit-Log" },
+  ]},
+  { label: "Plattform", items: [
+    { value: "system", label: "System" },
+    { value: "selfhost", label: "Self-Hosting" },
+  ]},
+];
+
+function SideSection({ label }: { label: string }) {
+  return (
+    <div className="px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground first:pt-1">
+      {label}
+    </div>
+  );
+}
+
+function SideTab({ value, icon: Icon, children }: { value: string; icon: any; children: React.ReactNode }) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="justify-start gap-2 w-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md px-3 py-2 text-sm"
+    >
+      <Icon className="size-4" />
+      <span className="truncate">{children}</span>
+    </TabsTrigger>
+  );
+}
+
+function SimpleNavSelect({ value, onValueChange }: { value: string; onValueChange: (v: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {NAV_SECTIONS.map((sec) => (
+          <div key={sec.label}>
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{sec.label}</div>
+            {sec.items.map((it) => (
+              <SelectItem key={it.value} value={it.value}>{it.label}</SelectItem>
+            ))}
+          </div>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function SuperAdminPage() {
   const qc = useQueryClient();
   const listDomFn = useServerFn(listDomains);
   const listModFn = useServerFn(listAppModules);
   const listUsersFn = useServerFn(listAllTenantUsers);
   const impFn = useServerFn(getImpersonation);
+  const [tab, setTab] = useState("overview");
 
   const dq = useQuery({ queryKey: ["sa-domains"], queryFn: () => listDomFn() });
   const mq = useQuery({ queryKey: ["sa-modules"], queryFn: () => listModFn() });
@@ -264,30 +328,37 @@ function SuperAdminPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <div className="rounded-xl border border-border/60 bg-card/40 p-2">
-          <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 justify-start">
-            <NavGroupLabel>Start</NavGroupLabel>
-            <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="size-4" />Übersicht</TabsTrigger>
-            <TabsTrigger value="onboard" className="gap-1.5"><Rocket className="size-4" />Onboarding</TabsTrigger>
-            <TabsTrigger value="search" className="gap-1.5"><Search className="size-4" />Suche</TabsTrigger>
-            <NavDivider />
-            <NavGroupLabel>Mandanten</NavGroupLabel>
-            <TabsTrigger value="domains" className="gap-1.5"><Globe2 className="size-4" />Domains</TabsTrigger>
-            <TabsTrigger value="licenses" className="gap-1.5"><ShieldCheck className="size-4" />Lizenzen</TabsTrigger>
-            <TabsTrigger value="modules" className="gap-1.5"><KeyRound className="size-4" />Module</TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5"><Users className="size-4" />Nutzer</TabsTrigger>
-            <NavDivider />
-            <NavGroupLabel>Betrieb</NavGroupLabel>
-            <TabsTrigger value="health" className="gap-1.5"><Activity className="size-4" />Health</TabsTrigger>
-            <TabsTrigger value="emails" className="gap-1.5"><Mail className="size-4" />E-Mails</TabsTrigger>
-            <TabsTrigger value="audit" className="gap-1.5"><BarChart3 className="size-4" />Audit-Log</TabsTrigger>
-            <NavDivider />
-            <NavGroupLabel>Plattform</NavGroupLabel>
-            <TabsTrigger value="system" className="gap-1.5"><RefreshCw className="size-4" />System</TabsTrigger>
-            <TabsTrigger value="selfhost" className="gap-1.5"><Building2 className="size-4" />Self-Hosting</TabsTrigger>
-          </TabsList>
-        </div>
+      <Tabs value={tab} onValueChange={setTab} className="space-y-0">
+        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            {/* Mobile: native dropdown for quickest navigation */}
+            <div className="lg:hidden">
+              <SimpleNavSelect value={tab} onValueChange={setTab} />
+            </div>
+            {/* Desktop: vertical grouped sidebar */}
+            <nav className="hidden lg:block rounded-xl border border-border/60 bg-card/40 p-2">
+              <TabsList className="flex flex-col h-auto w-full gap-0.5 bg-transparent p-0 items-stretch">
+                <SideSection label="Start" />
+                <SideTab value="overview" icon={LayoutDashboard}>Übersicht</SideTab>
+                <SideTab value="onboard" icon={Rocket}>Onboarding</SideTab>
+                <SideTab value="search" icon={Search}>Suche</SideTab>
+                <SideSection label="Mandanten" />
+                <SideTab value="domains" icon={Globe2}>Domains</SideTab>
+                <SideTab value="licenses" icon={ShieldCheck}>Lizenzen</SideTab>
+                <SideTab value="modules" icon={KeyRound}>Module</SideTab>
+                <SideTab value="users" icon={Users}>Nutzer</SideTab>
+                <SideSection label="Betrieb" />
+                <SideTab value="health" icon={Activity}>Health</SideTab>
+                <SideTab value="emails" icon={Mail}>E-Mails</SideTab>
+                <SideTab value="audit" icon={BarChart3}>Audit-Log</SideTab>
+                <SideSection label="Plattform" />
+                <SideTab value="system" icon={RefreshCw}>System</SideTab>
+                <SideTab value="selfhost" icon={Building2}>Self-Hosting</SideTab>
+              </TabsList>
+            </nav>
+          </aside>
+
+          <div className="min-w-0 space-y-6">
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -876,6 +947,8 @@ function SuperAdminPage() {
         <TabsContent value="search" className="space-y-4">
           <GlobalSearchPanel domains={domains} />
         </TabsContent>
+          </div>
+        </div>
       </Tabs>
 
       {statsForDomain && (
