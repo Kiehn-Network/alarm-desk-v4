@@ -699,7 +699,7 @@ html.light { color-scheme: light; }
    ============================================================ */
 .superadmin-theme,
 .superadmin-sidebar {
-  --radius: 1rem;
+  --radius: 0.5rem;
   --background: oklch(0.985 0.005 150);
   --foreground: oklch(0.18 0.02 250);
   --card: oklch(1 0 0);
@@ -734,13 +734,9 @@ html.light { color-scheme: light; }
   color: var(--foreground);
 }
 
-/* Generous rounded cards */
-.superadmin-theme [data-slot="card"],
-.superadmin-theme .rounded-xl,
-.superadmin-theme .rounded-lg {
-  border-radius: 1.25rem;
-}
+/* Subtle rounded cards */
 .superadmin-theme [data-slot="card"] {
+  border-radius: 0.625rem;
   box-shadow: var(--shadow-card);
   border-color: oklch(0.92 0.008 250);
 }
@@ -823,14 +819,13 @@ html.light { color-scheme: light; }
    Per-theme "windows" — cards, header, inputs, tabs
    ============================================================ */
 
-/* Lime (default) — very rounded, airy */
-.superadmin-theme.theme-lime [data-slot="card"] {
-  border-radius: 1.5rem;
+/* Lime — restrained rounding, airy */
+.superadmin-theme [data-slot="card"] {
   background: var(--card);
   border: 1px solid oklch(0.92 0.02 142);
   box-shadow: 0 1px 0 oklch(1 0 0 / 60%) inset, 0 10px 30px -16px oklch(0.30 0.10 142 / 18%);
 }
-.superadmin-theme.theme-lime .sa-header {
+.superadmin-theme .sa-header {
   background: linear-gradient(135deg, oklch(0.20 0.02 250), oklch(0.18 0.02 250));
 }
 
