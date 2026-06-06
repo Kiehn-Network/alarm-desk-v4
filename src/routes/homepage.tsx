@@ -608,7 +608,8 @@ function Footer() {
           <span>© {new Date().getFullYear()} AlarmDesk Software</span>
         </div>
         <div className="flex items-center gap-5">
-          <a href="https://v4.alarmdesk-software.de" className="hover:text-foreground transition">Website</a>
+          <Link to="/impressum" className="hover:text-foreground transition">Impressum</Link>
+          <Link to="/datenschutz" className="hover:text-foreground transition">Datenschutz</Link>
           <Link to="/login" className="hover:text-foreground transition">Anmelden</Link>
         </div>
       </div>

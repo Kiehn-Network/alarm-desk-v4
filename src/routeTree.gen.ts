@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as HomepageRouteImport } from './routes/homepage'
+import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
@@ -69,9 +71,19 @@ const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
   path: '/kiehn-systeme-login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HomepageRoute = HomepageRouteImport.update({
   id: '/homepage',
   path: '/homepage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DatenschutzRoute = DatenschutzRouteImport.update({
+  id: '/datenschutz',
+  path: '/datenschutz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -339,7 +351,9 @@ const AuthenticatedAbrechnungProviderVersandRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/homepage': typeof HomepageRoute
+  '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -389,7 +403,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/datenschutz': typeof DatenschutzRoute
   '/homepage': typeof HomepageRoute
+  '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -437,7 +453,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/datenschutz': typeof DatenschutzRoute
   '/homepage': typeof HomepageRoute
+  '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -489,7 +507,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/datenschutz'
     | '/homepage'
+    | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
     | '/revier-center'
@@ -539,7 +559,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/datenschutz'
     | '/homepage'
+    | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
     | '/admin'
@@ -586,7 +608,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/datenschutz'
     | '/homepage'
+    | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
     | '/_authenticated/revier-center'
@@ -638,7 +662,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  DatenschutzRoute: typeof DatenschutzRoute
   HomepageRoute: typeof HomepageRoute
+  ImpressumRoute: typeof ImpressumRoute
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
@@ -662,11 +688,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KiehnSystemeLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/homepage': {
       id: '/homepage'
       path: '/homepage'
       fullPath: '/homepage'
       preLoaderRoute: typeof HomepageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/datenschutz': {
+      id: '/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/datenschutz'
+      preLoaderRoute: typeof DatenschutzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1169,7 +1209,9 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  DatenschutzRoute: DatenschutzRoute,
   HomepageRoute: HomepageRoute,
+  ImpressumRoute: ImpressumRoute,
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
