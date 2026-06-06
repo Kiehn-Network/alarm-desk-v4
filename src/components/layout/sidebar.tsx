@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
-  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw,
+  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,6 +59,7 @@ const sections: Section[] = [
   ]},
   { label: "Hilfe", items: [
     { to: "/hilfe", label: "Hilfe & Anleitung", icon: HelpCircle },
+    { to: "/support", label: "Support-Tickets", icon: LifeBuoy, roles: ["admin"] },
   ]},
 ];
 
@@ -78,6 +79,7 @@ const superAdminSections: Section[] = [
     { to: "/superadmin", tab: "health", label: "Health", icon: Activity },
     { to: "/superadmin", tab: "emails", label: "E-Mails", icon: Mail },
     { to: "/superadmin", tab: "audit", label: "Audit-Log", icon: BarChart3 },
+    { to: "/superadmin", tab: "tickets", label: "Support-Tickets", icon: LifeBuoy },
   ]},
   { label: "Plattform", items: [
     { to: "/superadmin", tab: "system", label: "System", icon: RefreshCw },
