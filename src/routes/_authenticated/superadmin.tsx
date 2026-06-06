@@ -36,6 +36,9 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: typeof s.tab === "string" ? s.tab : "overview",
+  }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw redirect({ to: "/login" });
