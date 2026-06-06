@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRole, type AppRole } from "@/hooks/use-role";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useDomainModules } from "@/hooks/use-domain-modules";
-import { useSuperAdminTheme } from "@/hooks/use-superadmin-theme";
 import logo from "@/assets/alarmdesk-logo.png";
 
 type Item = {
@@ -92,7 +91,6 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
   const { data: settings } = useAppSettings();
   const { data: enabledModules } = useDomainModules();
   const isSuperAdminMode = actualRole === "superadmin" && !isImpersonating;
-  const [saTheme] = useSuperAdminTheme();
   const sourceSections = isSuperAdminMode ? superAdminSections : sections;
   const visibleSections = sourceSections
     .map((s) => ({
@@ -116,7 +114,7 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
   return (
     <div className={cn(
       "flex h-full w-full flex-col bg-sidebar text-sidebar-foreground",
-      isSuperAdminMode && `superadmin-sidebar theme-${saTheme}`
+      isSuperAdminMode && "superadmin-sidebar"
     )}>
       {isSuperAdminMode && (
         <div className="px-4 py-2 flex items-center gap-2">
