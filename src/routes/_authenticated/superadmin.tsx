@@ -577,42 +577,15 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="modules">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border">
-              <thead>
-                <tr className="bg-muted">
-                  <th className="p-2 text-left">Modul</th>
-                  {domains.map((d: any) => <th key={d.id} className="p-2 text-center">{d.name}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {modules.map((m: any) => (
-                  <tr key={m.id} className="border-t">
-                    <td className="p-2">
-                      {m.parent_key && <span className="text-muted-foreground mr-1">└</span>}
-                      <span className={m.parent_key ? "pl-4" : "font-medium"}>{m.name}</span>{" "}
-                      <span className="text-xs text-muted-foreground">({m.key})</span>
-                    </td>
-                    {domains.map((d: any) => {
-                      const dm = dmodules.find((x: any) => x.domain_id === d.id && x.module_key === m.key);
-                      const enabled = dm?.enabled ?? false;
-                      const parentEnabled = m.parent_key
-                        ? (dmodules.find((x: any) => x.domain_id === d.id && x.module_key === m.parent_key)?.enabled ?? false)
-                        : true;
-                      return (
-                        <td key={d.id} className="p-2 text-center">
-                          <Switch checked={enabled && parentEnabled} disabled={!parentEnabled} onCheckedChange={async (v) => {
-                            await toggleMod({ data: { domain_id: d.id, module_key: m.key, enabled: v } });
-                            invalidateAll();
-                          }} />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ModuleControl
+            domains={domains}
+            modules={modules}
+            dmodules={dmodules}
+            onToggle={async (domain_id, module_key, enabled) => {
+              await toggleMod({ data: { domain_id, module_key, enabled } });
+              invalidateAll();
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="users" className="space-y-2">
@@ -1461,6 +1434,135 @@ function StatLine({ label, v }: { label: string; v: React.ReactNode }) {
     <div className="border rounded p-2">
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className="text-xl font-semibold">{v ?? "—"}</div>
+    </div>
+  );
+}
+
+function ModuleControl({
+  domains, modules, dmodules, onToggle,
+}: {
+  domains: any[];
+  modules: any[];
+  dmodules: any[];
+  onToggle: (domain_id: string, module_key: string, enabled: boolean) => void | Promise<void>;
+}) {
+  const [domainId, setDomainId] = useState<string>(domains[0]?.id ?? "");
+  const [q, setQ] = useState("");
+
+  const domain = domains.find((d) => d.id === domainId);
+  const parents = modules.filter((m) => !m.parent_key);
+  const childrenOf = (key: string) => modules.filter((m) => m.parent_key === key);
+
+  const isEnabled = (key: string) =>
+    dmodules.find((x) => x.domain_id === domainId && x.module_key === key)?.enabled ?? false;
+
+  const matches = (m: any) => {
+    if (!q.trim()) return true;
+    const s = q.toLowerCase();
+    return (m.name ?? "").toLowerCase().includes(s) || (m.key ?? "").toLowerCase().includes(s);
+  };
+
+  const visibleParents = parents.filter(
+    (p) => matches(p) || childrenOf(p.key).some(matches),
+  );
+
+  const setAll = async (val: boolean) => {
+    for (const m of modules) {
+      const current = isEnabled(m.key);
+      if (current !== val) await onToggle(domainId, m.key, val);
+    }
+  };
+
+  if (domains.length === 0) {
+    return <div className="text-sm text-muted-foreground p-4">Keine Domains vorhanden.</div>;
+  }
+
+  const activeCount = modules.filter((m) => isEnabled(m.key)).length;
+
+  return (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-xl border border-border/60 bg-card/40">
+        <div className="flex-1 min-w-0">
+          <Label className="text-xs text-muted-foreground">Mandant</Label>
+          <Select value={domainId} onValueChange={setDomainId}>
+            <SelectTrigger className="mt-1"><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
+            <SelectContent>
+              {domains.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name} <span className="text-muted-foreground">({d.slug})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex-1 min-w-0">
+          <Label className="text-xs text-muted-foreground">Modul suchen</Label>
+          <div className="relative mt-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input className="pl-9" placeholder="z. B. Einsätze, OWKS…" value={q} onChange={(e) => setQ(e.target.value)} />
+          </div>
+        </div>
+        <div className="flex gap-2 md:self-end">
+          <Button variant="outline" size="sm" onClick={() => setAll(true)}>Alle an</Button>
+          <Button variant="outline" size="sm" onClick={() => setAll(false)}>Alle aus</Button>
+        </div>
+      </div>
+
+      {/* Context bar */}
+      {domain && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
+          <div>
+            Mandant: <span className="text-foreground font-medium">{domain.name}</span>
+          </div>
+          <div>{activeCount} von {modules.length} Modulen aktiv</div>
+        </div>
+      )}
+
+      {/* Module list */}
+      <div className="grid gap-3 md:grid-cols-2">
+        {visibleParents.map((p) => {
+          const parentOn = isEnabled(p.key);
+          const kids = childrenOf(p.key);
+          return (
+            <div key={p.id} className="rounded-xl border border-border/60 bg-card/30 overflow-hidden">
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border/60 bg-muted/30">
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{p.name}</div>
+                  <div className="text-xs text-muted-foreground truncate">{p.key}</div>
+                </div>
+                <Switch
+                  checked={parentOn}
+                  onCheckedChange={(v) => onToggle(domainId, p.key, v)}
+                />
+              </div>
+              {kids.length > 0 && (
+                <div className="divide-y divide-border/60">
+                  {kids.filter(matches).map((c) => {
+                    const on = isEnabled(c.key);
+                    return (
+                      <div key={c.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 ${!parentOn ? "opacity-50" : ""}`}>
+                        <div className="min-w-0">
+                          <div className="text-sm truncate">{c.name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{c.key}</div>
+                        </div>
+                        <Switch
+                          checked={on && parentOn}
+                          disabled={!parentOn}
+                          onCheckedChange={(v) => onToggle(domainId, c.key, v)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {visibleParents.length === 0 && (
+          <div className="text-sm text-muted-foreground p-4">Keine Treffer.</div>
+        )}
+      </div>
     </div>
   );
 }
