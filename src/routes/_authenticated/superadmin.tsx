@@ -30,11 +30,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   Activity, Building2, Crown, Globe2, KeyRound, LayoutDashboard,
   Loader2, Mail, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
-  Copy, Archive, BarChart3, Download, Rocket, CalendarClock,
+  Copy, Archive, BarChart3, Download, Rocket, CalendarClock, Plus, X, Filter, LayoutGrid, ListFilter,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
@@ -556,79 +559,35 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="licenses" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base flex items-center gap-2"><CalendarClock className="size-4" /> Bulk-Verlängerung &amp; Erinnerungen</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="text-xs text-muted-foreground">
-                {selectedIds.length} Lizenz(en) ausgewählt. Verlängert ab größerem von <em>heute</em> oder bestehendem Ablaufdatum.
-              </div>
-              <div className="flex flex-wrap items-end gap-2">
-                <div>
-                  <Label className="text-xs">Tage</Label>
-                  <Input type="number" min={1} max={3650} className="w-28" value={extendDays}
-                    onChange={(e) => setExtendDays(Math.max(1, parseInt(e.target.value || "0", 10) || 1))} />
-                </div>
-                {[30, 90, 365].map((d) => (
-                  <Button key={d} size="sm" variant="outline" onClick={() => setExtendDays(d)}>{d}T</Button>
-                ))}
-                <Button size="sm" disabled={selectedIds.length === 0} onClick={async () => {
-                  try {
-                    const r = await extendFn({ data: { ids: selectedIds, days: extendDays } });
-                    toast.success(`${r.updated} Lizenz(en) verlängert um ${extendDays} Tage`);
-                    setSelectedLics({});
-                    invalidateAll();
-                  } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
-                }}>Auswahl verlängern</Button>
-                <Button size="sm" variant="ghost" onClick={() => setSelectedLics({})} disabled={selectedIds.length === 0}>
-                  Auswahl löschen
-                </Button>
-                <div className="flex-1" />
-                <Button size="sm" variant="outline" onClick={async () => {
-                  try {
-                    const r = await expiryFn({});
-                    toast.success(`Erinnerungen geprüft: ${r.checked} Lizenzen, ${r.sent} Mails eingereiht`);
-                  } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
-                }}>Erinnerungen jetzt prüfen</Button>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Automatischer Versand täglich um 09:00 UTC: bei <b>14, 7</b> und <b>1 Tag</b> vor Ablauf an alle Domain-Admins.
-              </div>
-            </CardContent>
-          </Card>
-          {domains.map((d: any) => {
-            const dLic = licenses.filter((l: any) => l.domain_id === d.id);
-            return (
-              <Card key={d.id}>
-                <CardHeader>
-                  <CardTitle className="text-base">{d.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <NewLicenseForm
-                    onCreate={async (payload) => {
-                      await createLic({ data: { domain_id: d.id, ...payload } });
-                      invalidateAll(); toast.success("Lizenz erstellt");
-                    }}
-                  />
-                  {dLic.length === 0 && <div className="text-sm text-muted-foreground">Keine Lizenzen.</div>}
-                  {dLic.map((l: any) => (
-                    <LicenseRow
-                      key={l.id}
-                      license={l}
-                      selected={!!selectedLics[l.id]}
-                      onSelect={(v) => setSelectedLics((s) => ({ ...s, [l.id]: v }))}
-                      onUpdate={async (payload) => {
-                        await updateLic({ data: { id: l.id, ...payload } });
-                        invalidateAll(); toast.success("Lizenz aktualisiert");
-                      }}
-                      onRevoke={async () => { await revokeLic({ data: { id: l.id } }); invalidateAll(); }}
-                    />
-                  ))}
-                </CardContent>
-              </Card>
-            );
-          })}
+          <LicensesPanel
+            domains={domains}
+            licenses={licenses}
+            selectedLics={selectedLics}
+            setSelectedLics={setSelectedLics}
+            extendDays={extendDays}
+            setExtendDays={setExtendDays}
+            onCreate={async (domain_id, payload) => {
+              await createLic({ data: { domain_id, ...payload } });
+              invalidateAll(); toast.success("Lizenz erstellt");
+            }}
+            onUpdate={async (id, payload) => {
+              await updateLic({ data: { id, ...payload } });
+              invalidateAll(); toast.success("Lizenz aktualisiert");
+            }}
+            onRevoke={async (id) => {
+              await revokeLic({ data: { id } });
+              invalidateAll(); toast.success("Lizenz widerrufen");
+            }}
+            onExtend={async (ids, days) => {
+              const r = await extendFn({ data: { ids, days } });
+              toast.success(`${r.updated} Lizenz(en) verlängert um ${days} Tage`);
+              setSelectedLics({}); invalidateAll();
+            }}
+            onExpiryRun={async () => {
+              const r = await expiryFn({});
+              toast.success(`Erinnerungen geprüft: ${r.checked} Lizenzen, ${r.sent} Mails eingereiht`);
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="modules">
@@ -1033,88 +992,329 @@ function isoToDateInput(iso: string | null): string {
   return new Date(iso).toISOString().slice(0, 10);
 }
 
-function NewLicenseForm({ onCreate }: { onCreate: (p: LicensePayload) => Promise<void> }) {
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+function LicenseStatusBadge({ license }: { license: any }) {
+  const d = daysUntil(license.valid_until);
+  if (license.status !== "active") {
+    return <Badge variant="outline" className="bg-muted text-muted-foreground border-border">{license.status}</Badge>;
+  }
+  if (d === null) return <Badge variant="outline" className="bg-success/15 text-success border-success/30">unbefristet</Badge>;
+  if (d < 0) return <Badge variant="outline" className="bg-destructive/15 text-destructive border-destructive/30">abgelaufen</Badge>;
+  if (d <= 14) return <Badge variant="outline" className="bg-warning/15 text-warning border-warning/30">{d}T verbleibend</Badge>;
+  return <Badge variant="outline" className="bg-success/15 text-success border-success/30">aktiv · {d}T</Badge>;
+}
+
+function ExpiryEditor({ value, onSave }: { value: string | null; onSave: (iso: string | null) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(isoToDateInput(value));
+  const [busy, setBusy] = useState(false);
+  return (
+    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setDate(isoToDateInput(value)); }}>
+      <PopoverTrigger asChild>
+        <button className="text-sm hover:underline tabular-nums text-left">
+          {value ? new Date(value).toLocaleDateString() : <span className="text-muted-foreground">unbefristet</span>}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-2">
+        <Label className="text-xs">Gültig bis</Label>
+        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <div className="flex gap-1 flex-wrap">
+          {[
+            { l: "+30T", d: 30 }, { l: "+90T", d: 90 }, { l: "+1J", d: 365 },
+          ].map(({ l, d }) => (
+            <Button key={l} size="sm" variant="outline" onClick={() => {
+              const base = date ? new Date(date) : new Date();
+              base.setDate(base.getDate() + d);
+              setDate(base.toISOString().slice(0, 10));
+            }}>{l}</Button>
+          ))}
+          <Button size="sm" variant="ghost" onClick={() => setDate("")}>unbefristet</Button>
+        </div>
+        <div className="flex justify-end gap-2 pt-1">
+          <Button size="sm" variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+          <Button size="sm" disabled={busy} onClick={async () => {
+            setBusy(true);
+            try { await onSave(toIsoOrNull(date)); setOpen(false); }
+            catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+            finally { setBusy(false); }
+          }}>Speichern</Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function NewLicenseDialog({ domains, defaultDomain, onCreate }: {
+  domains: any[];
+  defaultDomain?: string;
+  onCreate: (domain_id: string, p: LicensePayload) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [domainId, setDomainId] = useState(defaultDomain ?? domains[0]?.id ?? "");
   const [date, setDate] = useState("");
   const [maxUsers, setMaxUsers] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
   return (
-    <div className="flex flex-wrap items-end gap-2 p-2 border rounded bg-muted/30">
-      <div className="flex flex-col">
-        <Label className="text-xs mb-1">Ablaufdatum</Label>
-        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-[160px]" />
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) setDomainId(defaultDomain ?? domains[0]?.id ?? ""); }}>
+      <DialogTrigger asChild>
+        <Button size="sm"><Plus className="size-4" /> Neue Lizenz</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Lizenz erstellen</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Mandant</Label>
+            <Select value={domainId} onValueChange={setDomainId}>
+              <SelectTrigger><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
+              <SelectContent>
+                {domains.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-xs">Gültig bis</Label>
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-xs">Max. Nutzer</Label>
+              <Input type="number" min={1} value={maxUsers} onChange={(e) => setMaxUsers(e.target.value)} placeholder="∞" />
+            </div>
+          </div>
+          <div>
+            <Label className="text-xs">Notiz</Label>
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Abbrechen</Button>
+          <Button disabled={busy || !domainId} onClick={async () => {
+            setBusy(true);
+            try {
+              await onCreate(domainId, {
+                valid_until: toIsoOrNull(date),
+                max_users: maxUsers ? Number(maxUsers) : null,
+                notes: notes || null,
+              });
+              setDate(""); setMaxUsers(""); setNotes(""); setOpen(false);
+            } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+            finally { setBusy(false); }
+          }}>Erstellen</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LicensesPanel({
+  domains, licenses, selectedLics, setSelectedLics, extendDays, setExtendDays,
+  onCreate, onUpdate, onRevoke, onExtend, onExpiryRun,
+}: {
+  domains: any[];
+  licenses: any[];
+  selectedLics: Record<string, boolean>;
+  setSelectedLics: (v: Record<string, boolean> | ((s: Record<string, boolean>) => Record<string, boolean>)) => void;
+  extendDays: number;
+  setExtendDays: (n: number) => void;
+  onCreate: (domain_id: string, p: LicensePayload) => Promise<void>;
+  onUpdate: (id: string, p: Partial<LicensePayload>) => Promise<void>;
+  onRevoke: (id: string) => Promise<void>;
+  onExtend: (ids: string[], days: number) => Promise<void>;
+  onExpiryRun: () => Promise<void>;
+}) {
+  const [domainFilter, setDomainFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [search, setSearch] = useState("");
+  const [onlyExpiring, setOnlyExpiring] = useState(false);
+
+  const domMap = useMemo(() => Object.fromEntries(domains.map((d) => [d.id, d])), [domains]);
+
+  const filtered = useMemo(() => {
+    return licenses.filter((l: any) => {
+      if (domainFilter !== "all" && l.domain_id !== domainFilter) return false;
+      if (statusFilter === "active" && l.status !== "active") return false;
+      if (statusFilter === "revoked" && l.status === "active") return false;
+      if (statusFilter === "expired") {
+        const d = daysUntil(l.valid_until);
+        if (!(l.status === "active" && d !== null && d < 0)) return false;
+      }
+      if (onlyExpiring) {
+        const d = daysUntil(l.valid_until);
+        if (!(l.status === "active" && d !== null && d >= 0 && d <= 30)) return false;
+      }
+      if (search.trim()) {
+        const s = search.toLowerCase();
+        const dn = (domMap[l.domain_id]?.name ?? "").toLowerCase();
+        if (!(l.license_key.toLowerCase().includes(s) || dn.includes(s) || (l.notes ?? "").toLowerCase().includes(s))) return false;
+      }
+      return true;
+    });
+  }, [licenses, domainFilter, statusFilter, search, onlyExpiring, domMap]);
+
+  const selectedIds = Object.keys(selectedLics).filter((k) => selectedLics[k]);
+  const visibleSelectedCount = filtered.filter((l) => selectedLics[l.id]).length;
+  const allVisibleSelected = filtered.length > 0 && visibleSelectedCount === filtered.length;
+
+  const toggleAllVisible = () => {
+    setSelectedLics((s) => {
+      const next = { ...s };
+      if (allVisibleSelected) filtered.forEach((l) => delete next[l.id]);
+      else filtered.forEach((l) => next[l.id] = true);
+      return next;
+    });
+  };
+
+  const stats = useMemo(() => {
+    const active = licenses.filter((l) => l.status === "active");
+    const expiring = active.filter((l) => { const d = daysUntil(l.valid_until); return d !== null && d >= 0 && d <= 30; });
+    const expired = active.filter((l) => { const d = daysUntil(l.valid_until); return d !== null && d < 0; });
+    return { total: licenses.length, active: active.length, expiring: expiring.length, expired: expired.length };
+  }, [licenses]);
+
+  return (
+    <div className="space-y-4">
+      {/* Stat strip */}
+      <div className="grid gap-3 sm:grid-cols-4">
+        <MiniStat label="Lizenzen gesamt" value={stats.total} />
+        <MiniStat label="Aktiv" value={stats.active} tone="success" />
+        <MiniStat label="Läuft in ≤ 30 T aus" value={stats.expiring} tone={stats.expiring ? "warning" : "muted"} />
+        <MiniStat label="Abgelaufen" value={stats.expired} tone={stats.expired ? "destructive" : "muted"} />
       </div>
-      <div className="flex flex-col">
-        <Label className="text-xs mb-1">Max. Nutzer</Label>
-        <Input type="number" min={1} value={maxUsers} onChange={(e) => setMaxUsers(e.target.value)} className="w-[110px]" placeholder="∞" />
+
+      {/* Toolbar */}
+      <Card>
+        <CardContent className="p-3 flex flex-wrap items-end gap-2">
+          <div className="relative flex-1 min-w-[220px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input className="pl-9" placeholder="Suche: Key, Mandant, Notiz…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
+          <Select value={domainFilter} onValueChange={setDomainFilter}>
+            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Mandanten</SelectItem>
+              {domains.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle Status</SelectItem>
+              <SelectItem value="active">Aktiv</SelectItem>
+              <SelectItem value="expired">Abgelaufen</SelectItem>
+              <SelectItem value="revoked">Widerrufen</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant={onlyExpiring ? "default" : "outline"} onClick={() => setOnlyExpiring((v) => !v)}>
+            <CalendarClock className="size-4" /> Bald ablaufend
+          </Button>
+          <div className="flex-1" />
+          <Button size="sm" variant="outline" onClick={onExpiryRun}>
+            <Mail className="size-4" /> Erinnerungen prüfen
+          </Button>
+          <NewLicenseDialog domains={domains} defaultDomain={domainFilter !== "all" ? domainFilter : undefined} onCreate={onCreate} />
+        </CardContent>
+      </Card>
+
+      {/* Bulk action bar */}
+      {selectedIds.length > 0 && (
+        <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 backdrop-blur shadow-sm">
+          <span className="text-sm font-medium">{selectedIds.length} ausgewählt</span>
+          <div className="flex-1" />
+          <Label className="text-xs text-muted-foreground">Tage</Label>
+          <Input type="number" min={1} max={3650} className="w-20 h-8" value={extendDays}
+            onChange={(e) => setExtendDays(Math.max(1, parseInt(e.target.value || "0", 10) || 1))} />
+          {[30, 90, 365].map((d) => (
+            <Button key={d} size="sm" variant="outline" onClick={() => setExtendDays(d)}>{d}T</Button>
+          ))}
+          <Button size="sm" onClick={() => onExtend(selectedIds, extendDays)}>Verlängern</Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedLics({})}>
+            <X className="size-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Table */}
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="text-sm">
+            <thead>
+              <tr>
+                <th className="w-10 p-3">
+                  <input type="checkbox" className="size-4 accent-primary" checked={allVisibleSelected}
+                    onChange={toggleAllVisible} aria-label="Alle auswählen" />
+                </th>
+                <th className="p-3 text-left">Mandant</th>
+                <th className="p-3 text-left">Lizenz-Key</th>
+                <th className="p-3 text-left">Status</th>
+                <th className="p-3 text-left">Gültig bis</th>
+                <th className="p-3 text-left">Max. Nutzer</th>
+                <th className="p-3 text-left">Notiz</th>
+                <th className="p-3 text-right">Aktion</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  Keine Lizenzen — passe die Filter an oder lege eine neue Lizenz an.
+                </td></tr>
+              )}
+              {filtered.map((l: any) => (
+                <tr key={l.id}>
+                  <td className="p-3">
+                    <input type="checkbox" className="size-4 accent-primary" checked={!!selectedLics[l.id]}
+                      onChange={(e) => setSelectedLics((s) => ({ ...s, [l.id]: e.target.checked }))} />
+                  </td>
+                  <td className="p-3">
+                    <div className="font-medium">{domMap[l.domain_id]?.name ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">{domMap[l.domain_id]?.slug}</div>
+                  </td>
+                  <td className="p-3"><code className="text-xs bg-muted px-1.5 py-0.5 rounded">{l.license_key}</code></td>
+                  <td className="p-3"><LicenseStatusBadge license={l} /></td>
+                  <td className="p-3"><ExpiryEditor value={l.valid_until} onSave={(iso) => onUpdate(l.id, { valid_until: iso })} /></td>
+                  <td className="p-3 tabular-nums">{l.max_users ?? <span className="text-muted-foreground">∞</span>}</td>
+                  <td className="p-3 text-muted-foreground max-w-[220px] truncate" title={l.notes ?? ""}>{l.notes || "—"}</td>
+                  <td className="p-3 text-right">
+                    {l.status === "active" ? (
+                      <Button size="sm" variant="ghost" onClick={() => onRevoke(l.id)}>Widerrufen</Button>
+                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <div className="text-xs text-muted-foreground px-1">
+        Automatischer Versand der Auslauf-Erinnerungen täglich 09:00 UTC bei <b>14, 7</b> und <b>1 Tag</b> vor Ablauf.
       </div>
-      <div className="flex flex-col flex-1 min-w-[180px]">
-        <Label className="text-xs mb-1">Notiz</Label>
-        <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" />
-      </div>
-      <Button size="sm" disabled={busy} onClick={async () => {
-        setBusy(true);
-        try {
-          await onCreate({
-            valid_until: toIsoOrNull(date),
-            max_users: maxUsers ? Number(maxUsers) : null,
-            notes: notes || null,
-          });
-          setDate(""); setMaxUsers(""); setNotes("");
-        } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
-        finally { setBusy(false); }
-      }}>Neue Lizenz</Button>
     </div>
   );
 }
 
-function LicenseRow({ license, onUpdate, onRevoke, selected, onSelect }: {
-  license: any;
-  onUpdate: (p: Partial<LicensePayload>) => Promise<void>;
-  onRevoke: () => Promise<void>;
-  selected?: boolean;
-  onSelect?: (v: boolean) => void;
+function MiniStat({ label, value, tone = "muted" }: {
+  label: string; value: number | string;
+  tone?: "muted" | "success" | "warning" | "destructive";
 }) {
-  const [date, setDate] = useState(isoToDateInput(license.valid_until));
-  const [busy, setBusy] = useState(false);
-  const dirty = date !== isoToDateInput(license.valid_until);
-  const expired = license.valid_until && new Date(license.valid_until) < new Date();
+  const toneMap: Record<string, string> = {
+    muted: "text-foreground",
+    success: "text-success",
+    warning: "text-warning",
+    destructive: "text-destructive",
+  };
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 text-sm border rounded p-2">
-      <div className="flex items-center gap-2">
-        {onSelect && (
-          <input type="checkbox" checked={!!selected} onChange={(e) => onSelect(e.target.checked)}
-            className="size-4 accent-primary" aria-label="Lizenz auswählen" />
-        )}
-        <div className="flex flex-col gap-0.5">
-        <code className="text-xs">{license.license_key}</code>
-        <span className="text-xs text-muted-foreground">
-          {license.status}
-          {license.valid_until && (
-            <span className={expired ? "text-destructive ml-1" : "ml-1"}>
-              · {expired ? "abgelaufen" : "gültig bis"} {new Date(license.valid_until).toLocaleDateString()}
-            </span>
-          )}
-          {!license.valid_until && <span className="ml-1">· unbefristet</span>}
-        </span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-[150px] h-8" />
-        {date && (
-          <Button size="sm" variant="ghost" onClick={() => setDate("")}>×</Button>
-        )}
-        <Button size="sm" variant="outline" disabled={!dirty || busy} onClick={async () => {
-          setBusy(true);
-          try { await onUpdate({ valid_until: toIsoOrNull(date) }); }
-          catch (e: any) { toast.error(e?.message ?? "Fehler"); }
-          finally { setBusy(false); }
-        }}>Speichern</Button>
-        {license.status === "active" && (
-          <Button size="sm" variant="outline" onClick={onRevoke}>Widerrufen</Button>
-        )}
-      </div>
-    </div>
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-xs text-muted-foreground">{label}</div>
+        <div className={`text-2xl font-semibold tabular-nums ${toneMap[tone]}`}>{value}</div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1516,99 +1716,231 @@ function ModuleControl({
   dmodules: any[];
   onToggle: (domain_id: string, module_key: string, enabled: boolean) => void | Promise<void>;
 }) {
+  const [view, setView] = useState<"matrix" | "domain">("matrix");
   const [domainId, setDomainId] = useState<string>(domains[0]?.id ?? "");
   const [q, setQ] = useState("");
 
-  const domain = domains.find((d) => d.id === domainId);
-  const parents = modules.filter((m) => !m.parent_key);
+  const parents = useMemo(() => modules.filter((m) => !m.parent_key), [modules]);
   const childrenOf = (key: string) => modules.filter((m) => m.parent_key === key);
-
-  const isEnabled = (key: string) =>
-    dmodules.find((x) => x.domain_id === domainId && x.module_key === key)?.enabled ?? false;
 
   const matches = (m: any) => {
     if (!q.trim()) return true;
     const s = q.toLowerCase();
     return (m.name ?? "").toLowerCase().includes(s) || (m.key ?? "").toLowerCase().includes(s);
   };
+  const visibleParents = parents.filter((p) => matches(p) || childrenOf(p.key).some(matches));
 
-  const visibleParents = parents.filter(
-    (p) => matches(p) || childrenOf(p.key).some(matches),
-  );
+  const isEnabled = (did: string, key: string) =>
+    dmodules.find((x) => x.domain_id === did && x.module_key === key)?.enabled ?? false;
 
-  const setAll = async (val: boolean) => {
-    for (const m of modules) {
-      const current = isEnabled(m.key);
-      if (current !== val) await onToggle(domainId, m.key, val);
-    }
-  };
-
-  if (domains.length === 0) {
-    return <div className="text-sm text-muted-foreground p-4">Keine Domains vorhanden.</div>;
-  }
-
-  const activeCount = modules.filter((m) => isEnabled(m.key)).length;
+  if (domains.length === 0) return <div className="text-sm text-muted-foreground p-4">Keine Domains vorhanden.</div>;
 
   return (
     <div className="space-y-4">
       {/* Toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center gap-3 p-3 rounded-xl border border-border/60 bg-card/40">
-        <div className="flex-1 min-w-0">
-          <Label className="text-xs text-muted-foreground">Mandant</Label>
-          <Select value={domainId} onValueChange={setDomainId}>
-            <SelectTrigger className="mt-1"><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
-            <SelectContent>
-              {domains.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.name} <span className="text-muted-foreground">({d.slug})</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex-1 min-w-0">
-          <Label className="text-xs text-muted-foreground">Modul suchen</Label>
-          <div className="relative mt-1">
+      <Card>
+        <CardContent className="p-3 flex flex-wrap items-center gap-2">
+          <div className="inline-flex rounded-md border bg-card p-0.5">
+            <button
+              onClick={() => setView("matrix")}
+              className={`px-3 py-1.5 text-sm rounded inline-flex items-center gap-1.5 ${view === "matrix" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <LayoutGrid className="size-4" /> Matrix
+            </button>
+            <button
+              onClick={() => setView("domain")}
+              className={`px-3 py-1.5 text-sm rounded inline-flex items-center gap-1.5 ${view === "domain" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              <ListFilter className="size-4" /> Pro Mandant
+            </button>
+          </div>
+          {view === "domain" && (
+            <Select value={domainId} onValueChange={setDomainId}>
+              <SelectTrigger className="w-[220px]"><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
+              <SelectContent>
+                {domains.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input className="pl-9" placeholder="z. B. Einsätze, OWKS…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <Input className="pl-9" placeholder="Modul suchen…" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
-        </div>
-        <div className="flex gap-2 md:self-end">
-          <Button variant="outline" size="sm" onClick={() => setAll(true)}>Alle an</Button>
-          <Button variant="outline" size="sm" onClick={() => setAll(false)}>Alle aus</Button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      {/* Context bar */}
-      {domain && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground px-1">
-          <div>
-            Mandant: <span className="text-foreground font-medium">{domain.name}</span>
-          </div>
-          <div>{activeCount} von {modules.length} Modulen aktiv</div>
-        </div>
+      {view === "matrix" && (
+        <ModuleMatrix
+          domains={domains}
+          parents={visibleParents}
+          childrenOf={childrenOf}
+          matches={matches}
+          isEnabled={isEnabled}
+          onToggle={onToggle}
+        />
       )}
 
-      {/* Module list */}
+      {view === "domain" && (
+        <ModuleDomainView
+          domain={domains.find((d) => d.id === domainId)}
+          parents={visibleParents}
+          childrenOf={childrenOf}
+          matches={matches}
+          modules={modules}
+          isEnabled={(k) => isEnabled(domainId, k)}
+          onToggle={(k, v) => onToggle(domainId, k, v)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ModuleMatrix({
+  domains, parents, childrenOf, matches, isEnabled, onToggle,
+}: {
+  domains: any[];
+  parents: any[];
+  childrenOf: (k: string) => any[];
+  matches: (m: any) => boolean;
+  isEnabled: (did: string, key: string) => boolean;
+  onToggle: (did: string, key: string, val: boolean) => void | Promise<void>;
+}) {
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const toggleExp = (k: string) => setExpanded((s) => ({ ...s, [k]: !s[k] }));
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="text-sm w-full">
+          <thead>
+            <tr>
+              <th className="sticky left-0 z-10 bg-muted/80 backdrop-blur p-3 text-left min-w-[240px]">Modul</th>
+              {domains.map((d) => (
+                <th key={d.id} className="p-3 text-center min-w-[110px]">
+                  <div className="font-medium text-foreground truncate max-w-[120px]" title={d.name}>{d.name}</div>
+                  <div className="text-[11px] text-muted-foreground font-normal">{d.slug}</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {parents.map((p) => {
+              const kids = childrenOf(p.key).filter(matches);
+              const isOpen = expanded[p.key];
+              const hasKids = kids.length > 0;
+              return (
+                <>
+                  <tr key={p.id} className="bg-muted/30">
+                    <td className="sticky left-0 z-10 bg-muted/60 backdrop-blur p-3">
+                      <div className="flex items-center gap-2">
+                        {hasKids ? (
+                          <button
+                            onClick={() => toggleExp(p.key)}
+                            className="size-5 grid place-items-center rounded hover:bg-muted text-muted-foreground"
+                            aria-label={isOpen ? "Einklappen" : "Ausklappen"}>
+                            <span className={`text-xs transition-transform ${isOpen ? "rotate-90" : ""}`}>▶</span>
+                          </button>
+                        ) : <span className="size-5" />}
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{p.name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{p.key}</div>
+                        </div>
+                      </div>
+                    </td>
+                    {domains.map((d) => (
+                      <td key={d.id} className="p-2 text-center">
+                        <Switch
+                          checked={isEnabled(d.id, p.key)}
+                          onCheckedChange={(v) => onToggle(d.id, p.key, v)}
+                        />
+                      </td>
+                    ))}
+                  </tr>
+                  {isOpen && kids.map((c) => (
+                    <tr key={c.id}>
+                      <td className="sticky left-0 z-10 bg-card p-3">
+                        <div className="pl-9 min-w-0">
+                          <div className="text-sm truncate">{c.name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{c.key}</div>
+                        </div>
+                      </td>
+                      {domains.map((d) => {
+                        const parentOn = isEnabled(d.id, p.key);
+                        return (
+                          <td key={d.id} className={`p-2 text-center ${!parentOn ? "opacity-50" : ""}`}>
+                            <Switch
+                              checked={isEnabled(d.id, c.key) && parentOn}
+                              disabled={!parentOn}
+                              onCheckedChange={(v) => onToggle(d.id, c.key, v)}
+                            />
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </>
+              );
+            })}
+            {parents.length === 0 && (
+              <tr><td colSpan={domains.length + 1} className="p-8 text-center text-muted-foreground">Keine Treffer.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+function ModuleDomainView({
+  domain, parents, childrenOf, matches, modules, isEnabled, onToggle,
+}: {
+  domain: any;
+  parents: any[];
+  childrenOf: (k: string) => any[];
+  matches: (m: any) => boolean;
+  modules: any[];
+  isEnabled: (key: string) => boolean;
+  onToggle: (key: string, val: boolean) => void | Promise<void>;
+}) {
+  if (!domain) return null;
+  const activeCount = modules.filter((m) => isEnabled(m.key)).length;
+
+  const setAll = async (val: boolean) => {
+    for (const m of modules) {
+      const current = isEnabled(m.key);
+      if (current !== val) await onToggle(m.key, val);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-1 text-sm">
+        <div>
+          <span className="text-muted-foreground">Mandant:</span>{" "}
+          <span className="font-medium">{domain.name}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground tabular-nums">{activeCount} von {modules.length} aktiv</span>
+          <Button size="sm" variant="outline" onClick={() => setAll(true)}>Alle an</Button>
+          <Button size="sm" variant="outline" onClick={() => setAll(false)}>Alle aus</Button>
+        </div>
+      </div>
       <div className="grid gap-3 md:grid-cols-2">
-        {visibleParents.map((p) => {
+        {parents.map((p) => {
           const parentOn = isEnabled(p.key);
-          const kids = childrenOf(p.key);
+          const kids = childrenOf(p.key).filter(matches);
           return (
-            <div key={p.id} className="rounded-xl border border-border/60 bg-card/30 overflow-hidden">
-              <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border/60 bg-muted/30">
+            <Card key={p.id} className="overflow-hidden">
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-muted/30">
                 <div className="min-w-0">
                   <div className="font-medium truncate">{p.name}</div>
                   <div className="text-xs text-muted-foreground truncate">{p.key}</div>
                 </div>
-                <Switch
-                  checked={parentOn}
-                  onCheckedChange={(v) => onToggle(domainId, p.key, v)}
-                />
+                <Switch checked={parentOn} onCheckedChange={(v) => onToggle(p.key, v)} />
               </div>
               {kids.length > 0 && (
-                <div className="divide-y divide-border/60">
-                  {kids.filter(matches).map((c) => {
+                <div className="divide-y">
+                  {kids.map((c) => {
                     const on = isEnabled(c.key);
                     return (
                       <div key={c.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 ${!parentOn ? "opacity-50" : ""}`}>
@@ -1619,17 +1951,17 @@ function ModuleControl({
                         <Switch
                           checked={on && parentOn}
                           disabled={!parentOn}
-                          onCheckedChange={(v) => onToggle(domainId, c.key, v)}
+                          onCheckedChange={(v) => onToggle(c.key, v)}
                         />
                       </div>
                     );
                   })}
                 </div>
               )}
-            </div>
+            </Card>
           );
         })}
-        {visibleParents.length === 0 && (
+        {parents.length === 0 && (
           <div className="text-sm text-muted-foreground p-4">Keine Treffer.</div>
         )}
       </div>
