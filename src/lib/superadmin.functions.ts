@@ -304,6 +304,8 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
       email,
     });
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "user.password_reset",
+      targetType: "user", targetId: data.user_id, targetLabel: email });
     return { ok: true, email, action_link: link.properties?.action_link ?? null };
   });
 
@@ -376,6 +378,10 @@ export const bulkImportUsers = createServerFn({ method: "POST" })
         results.push({ email: u.email, ok: false, error: e?.message ?? "Fehler" });
       }
     }
+    await logAudit({ actorId: context.userId, action: "user.bulk_import",
+      targetType: "domain", targetId: data.domain_id,
+      metadata: { count: data.users.length, role: data.role,
+        ok: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length } });
     return { results };
   });
 
