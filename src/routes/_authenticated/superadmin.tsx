@@ -338,7 +338,8 @@ function SuperAdminPage() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-0">
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <div className={superNavInGlobal ? "" : "grid gap-6 lg:grid-cols-[240px_1fr]"}>
+          {!superNavInGlobal && (
           <aside className="lg:sticky lg:top-24 lg:self-start">
             {/* Mobile: native dropdown for quickest navigation */}
             <div className="lg:hidden">
@@ -366,6 +367,7 @@ function SuperAdminPage() {
               </TabsList>
             </nav>
           </aside>
+          )}
 
           <div className="min-w-0 space-y-6">
 
