@@ -632,10 +632,7 @@ function SuperAdminPage() {
                       onClick={async () => { await setStatus({ data: { id: d.id, status: d.status === "active" ? "disabled" : "active" } }); invalidateAll(); }}>
                       {d.status === "active" ? "Deaktivieren" : "Aktivieren"}
                     </Button>
-                    <Button size="sm"
-                      onClick={async () => { await startImp({ data: { domain_id: d.id } }); invalidateAll(); toast.success("Impersonation gestartet"); }}>
-                      Als Domain-Admin
-                    </Button>
+                    <ImpersonateDialog domain={d} onDone={() => { invalidateAll(); }} />
                   </div>
                 </CardContent>
               </Card>
