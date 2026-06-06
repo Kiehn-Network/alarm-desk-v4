@@ -248,6 +248,8 @@ function SuperAdminPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview"><LayoutDashboard className="size-4 mr-1.5" />Übersicht</TabsTrigger>
+          <TabsTrigger value="onboard"><Rocket className="size-4 mr-1.5" />Onboarding</TabsTrigger>
+          <TabsTrigger value="search"><Search className="size-4 mr-1.5" />Suche</TabsTrigger>
           <TabsTrigger value="domains">Domains</TabsTrigger>
           <TabsTrigger value="licenses">Lizenzen</TabsTrigger>
           <TabsTrigger value="modules">Module</TabsTrigger>
