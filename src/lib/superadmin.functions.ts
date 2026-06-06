@@ -279,13 +279,47 @@ export const createTenantUser = createServerFn({ method: "POST" })
 
 export const startImpersonation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => z.object({ domain_id: z.string().uuid() }).parse(i))
+  .inputValidator((i) => z.object({
+    domain_id: z.string().uuid(),
+    reason: z.string().max(500).optional(),
+  }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSuper(context.userId);
     const { error } = await supabaseAdmin.from("superadmin_impersonation")
-      .upsert({ superadmin_id: context.userId, target_domain_id: data.domain_id });
+      .upsert({
+        superadmin_id: context.userId,
+        target_domain_id: data.domain_id,
+        forced: true,
+        reason: data.reason ?? null,
+      } as any);
     if (error) throw new Error(error.message);
-    await logAudit({ actorId: context.userId, action: "impersonation.start",
+    await logAudit({ actorId: context.userId, action: "impersonation.start.forced",
+      targetType: "domain", targetId: data.domain_id, metadata: { reason: data.reason ?? null } });
+    return { ok: true };
+  });
+
+export const startImpersonationWithPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    domain_id: z.string().uuid(),
+    pin: z.string().regex(/^\d{6}$/),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: dom } = await supabaseAdmin.from("domains")
+      .select("id, support_pin").eq("id", data.domain_id).maybeSingle();
+    if (!dom || (dom as any).support_pin !== data.pin) {
+      throw new Error("Ungültiger Support-PIN");
+    }
+    const { error } = await supabaseAdmin.from("superadmin_impersonation")
+      .upsert({
+        superadmin_id: context.userId,
+        target_domain_id: data.domain_id,
+        forced: false,
+        reason: null,
+      } as any);
+    if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "impersonation.start.pin",
       targetType: "domain", targetId: data.domain_id });
     return { ok: true };
   });
