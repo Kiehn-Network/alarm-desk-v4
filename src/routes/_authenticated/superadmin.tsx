@@ -264,30 +264,37 @@ function SuperAdminPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="space-y-6">
-        <div className="rounded-xl border border-border/60 bg-card/40 p-2">
-          <TabsList className="flex flex-wrap h-auto gap-1 bg-transparent p-0 justify-start">
-            <NavGroupLabel>Start</NavGroupLabel>
-            <TabsTrigger value="overview" className="gap-1.5"><LayoutDashboard className="size-4" />Übersicht</TabsTrigger>
-            <TabsTrigger value="onboard" className="gap-1.5"><Rocket className="size-4" />Onboarding</TabsTrigger>
-            <TabsTrigger value="search" className="gap-1.5"><Search className="size-4" />Suche</TabsTrigger>
-            <NavDivider />
-            <NavGroupLabel>Mandanten</NavGroupLabel>
-            <TabsTrigger value="domains" className="gap-1.5"><Globe2 className="size-4" />Domains</TabsTrigger>
-            <TabsTrigger value="licenses" className="gap-1.5"><ShieldCheck className="size-4" />Lizenzen</TabsTrigger>
-            <TabsTrigger value="modules" className="gap-1.5"><KeyRound className="size-4" />Module</TabsTrigger>
-            <TabsTrigger value="users" className="gap-1.5"><Users className="size-4" />Nutzer</TabsTrigger>
-            <NavDivider />
-            <NavGroupLabel>Betrieb</NavGroupLabel>
-            <TabsTrigger value="health" className="gap-1.5"><Activity className="size-4" />Health</TabsTrigger>
-            <TabsTrigger value="emails" className="gap-1.5"><Mail className="size-4" />E-Mails</TabsTrigger>
-            <TabsTrigger value="audit" className="gap-1.5"><BarChart3 className="size-4" />Audit-Log</TabsTrigger>
-            <NavDivider />
-            <NavGroupLabel>Plattform</NavGroupLabel>
-            <TabsTrigger value="system" className="gap-1.5"><RefreshCw className="size-4" />System</TabsTrigger>
-            <TabsTrigger value="selfhost" className="gap-1.5"><Building2 className="size-4" />Self-Hosting</TabsTrigger>
-          </TabsList>
-        </div>
+      <Tabs defaultValue="overview" className="space-y-0">
+        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            {/* Mobile: native dropdown for quickest navigation */}
+            <div className="lg:hidden">
+              <SimpleNavSelect />
+            </div>
+            {/* Desktop: vertical grouped sidebar */}
+            <nav className="hidden lg:block rounded-xl border border-border/60 bg-card/40 p-2">
+              <TabsList className="flex flex-col h-auto w-full gap-0.5 bg-transparent p-0 items-stretch">
+                <SideSection label="Start" />
+                <SideTab value="overview" icon={LayoutDashboard}>Übersicht</SideTab>
+                <SideTab value="onboard" icon={Rocket}>Onboarding</SideTab>
+                <SideTab value="search" icon={Search}>Suche</SideTab>
+                <SideSection label="Mandanten" />
+                <SideTab value="domains" icon={Globe2}>Domains</SideTab>
+                <SideTab value="licenses" icon={ShieldCheck}>Lizenzen</SideTab>
+                <SideTab value="modules" icon={KeyRound}>Module</SideTab>
+                <SideTab value="users" icon={Users}>Nutzer</SideTab>
+                <SideSection label="Betrieb" />
+                <SideTab value="health" icon={Activity}>Health</SideTab>
+                <SideTab value="emails" icon={Mail}>E-Mails</SideTab>
+                <SideTab value="audit" icon={BarChart3}>Audit-Log</SideTab>
+                <SideSection label="Plattform" />
+                <SideTab value="system" icon={RefreshCw}>System</SideTab>
+                <SideTab value="selfhost" icon={Building2}>Self-Hosting</SideTab>
+              </TabsList>
+            </nav>
+          </aside>
+
+          <div className="min-w-0 space-y-6">
 
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
