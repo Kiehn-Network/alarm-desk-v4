@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
-export type SuperAdminTheme = "lime" | "tailadmin" | "hope";
+export type SuperAdminTheme = "lime" | "tailadmin" | "hope" | "modern";
 const KEY = "superadmin-theme";
 const EVT = "superadmin-theme-changed";
 
 export function getSuperAdminTheme(): SuperAdminTheme {
   if (typeof window === "undefined") return "lime";
   const v = window.localStorage.getItem(KEY) as SuperAdminTheme | null;
-  return v === "tailadmin" || v === "hope" || v === "lime" ? v : "lime";
+  return v === "tailadmin" || v === "hope" || v === "modern" || v === "lime" ? v : "lime";
 }
 
 export function setSuperAdminTheme(t: SuperAdminTheme) {
