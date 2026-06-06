@@ -838,7 +838,7 @@ export const getDomainStats = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ domain_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSuper(context.userId);
-    const { data: stats, error } = await supabaseAdmin.rpc("superadmin_domain_stats", { _domain_id: data.domain_id });
+    const { data: stats, error } = await context.supabase.rpc("superadmin_domain_stats", { _domain_id: data.domain_id });
     if (error) throw new Error(error.message);
     return stats as any;
   });
