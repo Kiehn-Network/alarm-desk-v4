@@ -82,6 +82,7 @@ const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }
     { value: "health", label: "Health" },
     { value: "emails", label: "E-Mails" },
     { value: "audit", label: "Audit-Log" },
+    { value: "tickets", label: "Support-Tickets" },
   ]},
   { label: "Plattform", items: [
     { value: "system", label: "System" },
@@ -918,6 +919,10 @@ function SuperAdminPage() {
 
         <TabsContent value="audit" className="space-y-4">
           <AuditLogPanel />
+        </TabsContent>
+
+        <TabsContent value="tickets" className="space-y-4">
+          <SupportTicketsPanel />
         </TabsContent>
 
         <TabsContent value="onboard" className="space-y-4">
