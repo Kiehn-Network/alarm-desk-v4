@@ -49,6 +49,7 @@ import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksLicenseExpiryRouteImport } from './routes/api/public/hooks/license-expiry'
 import { Route as ApiPublicHooksEsrpWorkerRouteImport } from './routes/api/public/hooks/esrp-worker'
 import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
 import { Route as AuthenticatedRevierCenterOwksScanRouteImport } from './routes/_authenticated/revier-center/owks/scan'
@@ -282,6 +283,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksLicenseExpiryRoute =
+  ApiPublicHooksLicenseExpiryRouteImport.update({
+    id: '/api/public/hooks/license-expiry',
+    path: '/api/public/hooks/license-expiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksEsrpWorkerRoute =
   ApiPublicHooksEsrpWorkerRouteImport.update({
     id: '/api/public/hooks/esrp-worker',
@@ -415,6 +422,7 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
+  '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -466,6 +474,7 @@ export interface FileRoutesByTo {
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
+  '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -523,6 +532,7 @@ export interface FileRoutesById {
   '/_authenticated/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/_authenticated/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
+  '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -580,6 +590,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
     | '/api/public/hooks/esrp-worker'
+    | '/api/public/hooks/license-expiry'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -631,6 +642,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
     | '/api/public/hooks/esrp-worker'
+    | '/api/public/hooks/license-expiry'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -687,6 +699,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center/owks/scan'
     | '/_authenticated/revier-center/owks/zeitstrahl'
     | '/api/public/hooks/esrp-worker'
+    | '/api/public/hooks/license-expiry'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -706,6 +719,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
+  ApiPublicHooksLicenseExpiryRoute: typeof ApiPublicHooksLicenseExpiryRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -993,6 +1007,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/license-expiry': {
+      id: '/api/public/hooks/license-expiry'
+      path: '/api/public/hooks/license-expiry'
+      fullPath: '/api/public/hooks/license-expiry'
+      preLoaderRoute: typeof ApiPublicHooksLicenseExpiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/esrp-worker': {
       id: '/api/public/hooks/esrp-worker'
       path: '/api/public/hooks/esrp-worker'
@@ -1277,6 +1298,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,
+  ApiPublicHooksLicenseExpiryRoute: ApiPublicHooksLicenseExpiryRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
