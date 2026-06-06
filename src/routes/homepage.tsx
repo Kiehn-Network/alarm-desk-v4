@@ -4,6 +4,7 @@ import {
   CheckCircle2, ArrowRight, Sparkles, Lock, Zap,
   BarChart3, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Home,
   ScanLine, Wrench, Bell as BellIcon, Settings,
+  Star, Quote, Phone, ClipboardList, Smartphone, Archive, Timer,
 } from "lucide-react";
 import logo from "@/assets/alarmdesk-logo.png";
 
@@ -30,6 +31,8 @@ function LandingPage() {
       <LogosBar />
       <Features />
       <Modules />
+      <HnrModule />
+      <Testimonials />
       <SecuritySection />
       <CTA />
       <Footer />
@@ -309,12 +312,43 @@ function Features() {
 
 function Modules() {
   const mods = [
-    { t: "Einsatzverwaltung", d: "Erstellen, Bearbeiten, Hold-Button, Statusampel, Berichte." },
-    { t: "Revier-Center / OWKS", d: "Objekte, NFC-Punkte, Rundgänge, Zeitstrahl, Bestreifungspläne." },
-    { t: "ESRP", d: "Automatischer und manueller Versand an Drittsysteme, Outbox & Wiederholung." },
-    { t: "Notdienste", d: "Kundenspezifische Module — individuelle Formulare und PDF-Vorlagen." },
-    { t: "Abrechnung", d: "Pro Auftraggeber, mit PDF-Versand und Dienstplänen." },
-    { t: "Stammdaten", d: "Kunden, Schlüsselbuch, Import, Dateien — alles an einem Ort." },
+    {
+      i: Bell,
+      t: "Einsatzverwaltung",
+      d: "Das Herzstück von AlarmDesk: Einsätze in Sekunden anlegen, einem Fahrer zuweisen, mit Hold-Button pausieren und über die Statusampel jederzeit sehen, wo der Einsatz steht. Berichte werden mit automatischer Nummer generiert und per E-Mail oder ERP versendet.",
+      tags: ["Hold-Button", "Statusampel", "Auto-Berichtsnummer", "PDF-Versand"],
+    },
+    {
+      i: Radar,
+      t: "Revier-Center / OWKS",
+      badge: "Neu in v4",
+      d: "Komplett neu in v4: Das Revier-Center bündelt das gesamte Objekt- und Wachschutz-Management an einem Ort. Verwalten Sie Objekte, kleben Sie NFC-Punkte an Kontrollstellen und planen Sie wiederkehrende Bestreifungen über den visuellen Zeitstrahl. Fahrer scannen vor Ort per NFC, die Leitstelle sieht jeden Kontrollpunkt live.",
+      tags: ["Objektverwaltung", "NFC-Scans", "Zeitstrahl-Planung", "Bestreifungspläne", "Rundgangsverwaltung"],
+    },
+    {
+      i: Zap,
+      t: "ESRP-Anbindung",
+      d: "Einmalig konfigurieren, dann läuft der Versand an Drittsysteme automatisch beim Abschluss eines Einsatzes — oder manuell aus dem Bericht-Dialog. Eine zentrale Outbox zeigt jeden Versand mit Statuslampe, fehlgeschlagene Übermittlungen lassen sich mit einem Klick wiederholen.",
+      tags: ["Auto-Versand", "Outbox", "Wiederholung", "Statuslampe"],
+    },
+    {
+      i: Wrench,
+      t: "Notdienst-Module",
+      d: "Individuell entwickelte Module für einzelne Auftraggeber: maßgeschneiderte Erfassungsmasken, eigene Mitarbeiter- und Verfügbarkeitsverwaltung, kundenspezifische PDF-Vorlagen und optionale Schnittstellen zu Drittsystemen. Weitere Notdienst-Module können jederzeit ergänzt werden.",
+      tags: ["Individuelle Formulare", "Eigene PDFs", "Verfügbarkeiten"],
+    },
+    {
+      i: FileText,
+      t: "Abrechnung & Dienstpläne",
+      d: "Abrechnungen pro Auftraggeber erstellen, mit Positionen aus erledigten Einsätzen, und direkt als PDF per E-Mail versenden. Dienstpläne ergänzen die Disposition um die Personalseite — wer wann wo ist.",
+      tags: ["Pro Auftraggeber", "PDF-Versand", "Dienstpläne"],
+    },
+    {
+      i: FolderOpen,
+      t: "Stammdaten & Dateien",
+      d: "Kundenverwaltung, Schlüsselbuch, Daten-Import und ein zentraler Dateien-Bereich — alle Stammdaten an einem Ort, sauber pro Mandant getrennt und mit Volltextsuche.",
+      tags: ["Kunden", "Schlüsselbuch", "Import", "Dateien"],
+    },
   ];
   return (
     <section id="module" className="py-24 bg-muted/20 border-y border-border">
@@ -324,12 +358,176 @@ function Modules() {
           <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight">Eine Plattform, viele Spezialisten.</h2>
           <p className="mt-4 text-muted-foreground">Aktivieren Sie nur, was Ihre Domäne braucht — wir erweitern AlarmDesk individuell für Ihre Abläufe.</p>
         </div>
-        <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="mt-12 grid md:grid-cols-2 gap-5">
           {mods.map((m) => (
-            <div key={m.t} className="rounded-2xl border border-border bg-card p-6">
-              <div className="font-semibold">{m.t}</div>
+            <div key={m.t} className="rounded-2xl border border-border bg-card p-6 hover:border-primary/50 transition">
+              <div className="flex items-start justify-between gap-3">
+                <div className="size-10 rounded-lg grid place-items-center bg-primary/15 text-primary shrink-0">
+                  <m.i className="size-5" />
+                </div>
+                {m.badge && (
+                  <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded-full bg-primary text-primary-foreground">{m.badge}</span>
+                )}
+              </div>
+              <div className="mt-4 font-semibold text-lg">{m.t}</div>
               <div className="text-sm text-muted-foreground mt-2 leading-relaxed">{m.d}</div>
+              {m.tags && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {m.tags.map((tag) => (
+                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">{tag}</span>
+                  ))}
+                </div>
+              )}
             </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function HnrModule() {
+  const steps = [
+    "Einsatz abrufen – Stammdaten digital am Mobilgerät verfügbar.",
+    "Ankunft & Zeiterfassung – Alle Ereignisse vor Ort strukturiert erfassen.",
+    "Ereignisse dokumentieren – Zustand, Maßnahmen, Übergabe in vordefinierten Feldern.",
+    "PDF-Bericht generieren – Vollständiger Bericht automatisch erstellt und archiviert.",
+  ];
+  const features = [
+    "Digitale Stammdatenverwaltung pro Objekt",
+    "Mobiler Zugriff für Fahrer",
+    "Strukturierte Zeiterfassung",
+    "Ereignisprotokoll mit Kategorien",
+    "Automatischer PDF-Bericht pro Einsatz",
+    "Archivierung & Suchfunktion",
+    "Anbindung an Leitstelle-Übersicht",
+  ];
+  const badges = [
+    { i: FileText, l: "PDF-Bericht" },
+    { i: Smartphone, l: "Mobil" },
+    { i: Archive, l: "Archiv" },
+    { i: Timer, l: "Zeiterfassung" },
+  ];
+  return (
+    <section id="hnr" className="py-24">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="grid lg:grid-cols-2 gap-12">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-widest text-primary">Modul</span>
+              <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-success/15 text-success">✓ Vollständig entwickelt</span>
+            </div>
+            <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight">HNR-Modul – Hausnotruf</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Für Fahrer & Disponenten im Hausnotruf-Betrieb</p>
+            <p className="mt-6 text-muted-foreground leading-relaxed">
+              Das HNR-Modul digitalisiert den Hausnotruf-Einsatz vollständig — vom Abruf der Stammdaten beim Fahrer über die Zeiterfassung vor Ort bis zum abschließenden PDF-Bericht. Kein Zettelwirtschaft, kein nachträgliches Tippen.
+            </p>
+
+            <div className="mt-8">
+              <div className="text-sm font-semibold mb-4">Ablauf im Einsatz</div>
+              <ol className="space-y-3">
+                {steps.map((s, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="size-7 rounded-full bg-primary text-primary-foreground text-xs font-bold grid place-items-center shrink-0">{i + 1}</span>
+                    <span className="text-sm text-muted-foreground pt-1">{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+
+          <div>
+            <div className="rounded-2xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+              <div className="flex items-center gap-2">
+                <Phone className="size-5 text-primary" />
+                <div className="font-semibold">Was das Modul liefert</div>
+              </div>
+              <ul className="mt-4 space-y-2.5">
+                {features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm">
+                    <CheckCircle2 className="size-4 mt-0.5 text-success shrink-0" />
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {badges.map((b) => (
+                  <span key={b.l} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted text-xs">
+                    <b.i className="size-3.5 text-primary" /> {b.l}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Testimonials() {
+  const reviews = [
+    {
+      n: "Michael K.",
+      r: "Leitstellenleiter, Sicherheitsdienst NRW",
+      t: "Endlich eine Oberfläche, die unsere Leitstelle wirklich versteht. Einsätze zuweisen, Status updaten, Notizen hinterlegen — alles ohne Umwege. Das Team war nach einem Tag drin.",
+    },
+    {
+      n: "Sandra B.",
+      r: "Betriebsleiterin, Sicherheits- & Pflegedienst",
+      t: "Das HNR-Modul hat unsere Hausnotruf-Abläufe komplett verändert. Die Fahrer haben alles auf dem Handy, der PDF-Bericht läuft automatisch. Wir sparen täglich mindestens eine Stunde Büroarbeit.",
+    },
+    {
+      n: "Thomas H.",
+      r: "Geschäftsführer, Objekt- & Revierdienst",
+      t: "Wir nutzen das Notdienst-Modul für unseren Telefonservice. Anruf rein, Maske ausfüllen, PDF an den Kunden — fertig. Professionell und schnell. Unsere Auftraggeber sind begeistert.",
+    },
+    {
+      n: "Jana W.",
+      r: "Disponentin, Wachdienst Berlin",
+      t: "Der Zeitstrahl im Revier-Center ist Gold wert. Ich plane Bestreifungen jetzt visuell statt in Excel-Listen und sehe Konflikte sofort. Die Fahrer scannen NFC vor Ort — kein Diskutieren mehr, ob jemand wirklich da war.",
+    },
+    {
+      n: "Christian R.",
+      r: "Inhaber, Sicherheitsdienst Süddeutschland",
+      t: "Die Mandantentrennung läuft sauber, RLS-Policies und Rollen passen genau zu unserem Aufbau. Als Geschäftsführer schlafe ich ruhiger, seit wir auf AlarmDesk umgestiegen sind.",
+    },
+    {
+      n: "Petra L.",
+      r: "Buchhaltung, Sicherheits- & Servicegruppe",
+      t: "Abrechnung pro Auftraggeber, automatischer PDF-Versand, fertige Positionen aus den Einsätzen — was früher zwei Tage Arbeit war, geht jetzt in zwei Stunden. Unbezahlbar.",
+    },
+  ];
+  return (
+    <section id="bewertungen" className="py-24 bg-muted/20 border-y border-border">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-2xl">
+          <div className="text-xs uppercase tracking-widest text-primary">Stimmen aus der Praxis</div>
+          <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight">Was Kunden sagen.</h2>
+          <p className="mt-4 text-muted-foreground">Frühe Nutzer über ihre Erfahrung mit AlarmDesk im täglichen Betrieb.</p>
+        </div>
+        <div className="mt-12 grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {reviews.map((r) => (
+            <figure key={r.n} className="rounded-2xl border border-border bg-card p-6 flex flex-col">
+              <Quote className="size-5 text-primary/60" />
+              <div className="mt-3 flex items-center gap-0.5 text-warning">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="size-4 fill-current" />
+                ))}
+              </div>
+              <blockquote className="mt-4 text-sm leading-relaxed text-foreground flex-1">
+                „{r.t}"
+              </blockquote>
+              <figcaption className="mt-5 flex items-center gap-3 pt-4 border-t border-border">
+                <div className="size-9 rounded-full bg-primary/15 text-primary grid place-items-center text-xs font-bold">
+                  {r.n.split(" ").map((p) => p[0]).join("")}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold">{r.n}</div>
+                  <div className="text-xs text-muted-foreground">{r.r}</div>
+                </div>
+              </figcaption>
+            </figure>
           ))}
         </div>
       </div>
