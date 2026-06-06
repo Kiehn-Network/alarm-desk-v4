@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
+import { Route as HomepageRouteImport } from './routes/homepage'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
@@ -66,6 +67,11 @@ const LoginRoute = LoginRouteImport.update({
 const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
   id: '/kiehn-systeme-login',
   path: '/kiehn-systeme-login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HomepageRoute = HomepageRouteImport.update({
+  id: '/homepage',
+  path: '/homepage',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -333,6 +339,7 @@ const AuthenticatedAbrechnungProviderVersandRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/homepage': typeof HomepageRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -382,6 +389,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/homepage': typeof HomepageRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -429,6 +437,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/homepage': typeof HomepageRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -480,6 +489,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/homepage'
     | '/kiehn-systeme-login'
     | '/login'
     | '/revier-center'
@@ -529,6 +539,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/homepage'
     | '/kiehn-systeme-login'
     | '/login'
     | '/admin'
@@ -575,6 +586,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/homepage'
     | '/kiehn-systeme-login'
     | '/login'
     | '/_authenticated/revier-center'
@@ -626,6 +638,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  HomepageRoute: typeof HomepageRoute
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
@@ -647,6 +660,13 @@ declare module '@tanstack/react-router' {
       path: '/kiehn-systeme-login'
       fullPath: '/kiehn-systeme-login'
       preLoaderRoute: typeof KiehnSystemeLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/homepage': {
+      id: '/homepage'
+      path: '/homepage'
+      fullPath: '/homepage'
+      preLoaderRoute: typeof HomepageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1149,6 +1169,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  HomepageRoute: HomepageRoute,
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
@@ -1158,3 +1179,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
