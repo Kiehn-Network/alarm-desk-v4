@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
-  Receipt, Upload, HelpCircle,
+  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +17,7 @@ type Item = {
   icon: React.ComponentType<{ className?: string }>;
   roles?: AppRole[];
   module?: string;
+  tab?: string;
 };
 type Section = { label: string; items: Item[] };
 
@@ -61,12 +62,37 @@ const sections: Section[] = [
   ]},
 ];
 
+const superAdminSections: Section[] = [
+  { label: "Start", items: [
+    { to: "/superadmin", tab: "overview", label: "Übersicht", icon: LayoutDashboard },
+    { to: "/superadmin", tab: "onboard", label: "Onboarding", icon: Rocket },
+    { to: "/superadmin", tab: "search", label: "Suche", icon: SearchIcon },
+  ]},
+  { label: "Mandanten", items: [
+    { to: "/superadmin", tab: "domains", label: "Domains", icon: Building2 },
+    { to: "/superadmin", tab: "licenses", label: "Lizenzen", icon: ShieldCheck },
+    { to: "/superadmin", tab: "modules", label: "Module", icon: KeyRound },
+    { to: "/superadmin", tab: "users", label: "Nutzer", icon: Users },
+  ]},
+  { label: "Betrieb", items: [
+    { to: "/superadmin", tab: "health", label: "Health", icon: Activity },
+    { to: "/superadmin", tab: "emails", label: "E-Mails", icon: Mail },
+    { to: "/superadmin", tab: "audit", label: "Audit-Log", icon: BarChart3 },
+  ]},
+  { label: "Plattform", items: [
+    { to: "/superadmin", tab: "system", label: "System", icon: RefreshCw },
+    { to: "/superadmin", tab: "selfhost", label: "Self-Hosting", icon: Crown },
+  ]},
+];
+
 export function SidebarContent({ displayName, onNavigate }: { displayName: string; onNavigate?: () => void }) {
   const { location } = useRouterState();
   const { role, actualRole, isImpersonating } = useRole();
   const { data: settings } = useAppSettings();
   const { data: enabledModules } = useDomainModules();
-  const visibleSections = sections
+  const isSuperAdminMode = actualRole === "superadmin" && !isImpersonating;
+  const sourceSections = isSuperAdminMode ? superAdminSections : sections;
+  const visibleSections = sourceSections
     .map((s) => ({
       ...s,
       items: s.items.filter((i) => {
@@ -119,11 +145,15 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
             <div className="px-3 mb-2 text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">{s.label}</div>
             <ul className="space-y-0.5">
               {s.items.map((it) => {
-                const active = location.pathname === it.to || location.pathname.startsWith(it.to + "/");
+                const currentTab = (location.search as any)?.tab as string | undefined;
+                const active = it.tab
+                  ? location.pathname === it.to && (currentTab ?? "overview") === it.tab
+                  : location.pathname === it.to || location.pathname.startsWith(it.to + "/");
                 return (
-                  <li key={it.to}>
+                  <li key={`${it.to}:${it.tab ?? ""}`}>
                     <Link
                       to={it.to}
+                      search={it.tab ? { tab: it.tab } : undefined as any}
                       onClick={onNavigate}
                       className={cn(
                         "group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",

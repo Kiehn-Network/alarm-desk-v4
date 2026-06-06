@@ -1,5 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
+import { useRole } from "@/hooks/use-role";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +38,9 @@ import {
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
+  validateSearch: (s: Record<string, unknown>) => ({
+    tab: typeof s.tab === "string" ? s.tab : "overview",
+  }),
   beforeLoad: async () => {
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) throw redirect({ to: "/login" });
@@ -127,7 +132,11 @@ function SuperAdminPage() {
   const listModFn = useServerFn(listAppModules);
   const listUsersFn = useServerFn(listAllTenantUsers);
   const impFn = useServerFn(getImpersonation);
-  const [tab, setTab] = useState("overview");
+  const navigate = useNavigate();
+  const { tab } = Route.useSearch();
+  const setTab = (v: string) => navigate({ to: "/superadmin", search: { tab: v }, replace: true });
+  const { actualRole, isImpersonating } = useRole();
+  const superNavInGlobal = actualRole === "superadmin" && !isImpersonating;
 
   const dq = useQuery({ queryKey: ["sa-domains"], queryFn: () => listDomFn() });
   const mq = useQuery({ queryKey: ["sa-modules"], queryFn: () => listModFn() });
@@ -329,7 +338,8 @@ function SuperAdminPage() {
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="space-y-0">
-        <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
+        <div className={superNavInGlobal ? "" : "grid gap-6 lg:grid-cols-[240px_1fr]"}>
+          {!superNavInGlobal && (
           <aside className="lg:sticky lg:top-24 lg:self-start">
             {/* Mobile: native dropdown for quickest navigation */}
             <div className="lg:hidden">
@@ -357,6 +367,7 @@ function SuperAdminPage() {
               </TabsList>
             </nav>
           </aside>
+          )}
 
           <div className="min-w-0 space-y-6">
 
