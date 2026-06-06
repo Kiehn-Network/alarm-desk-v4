@@ -66,6 +66,9 @@ export const createDomain = createServerFn({ method: "POST" })
         mods.map((m: any) => ({ domain_id: d.id, module_key: m.key, enabled: m.enabled })),
       );
     }
+    await logAudit({ actorId: context.userId, action: "domain.create",
+      targetType: "domain", targetId: d.id, targetLabel: d.name,
+      metadata: { slug: data.slug } });
     return d;
   });
 
@@ -79,6 +82,8 @@ export const setDomainStatus = createServerFn({ method: "POST" })
     await assertSuper(context.userId);
     const { error } = await supabaseAdmin.from("domains").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "domain.set_status",
+      targetType: "domain", targetId: data.id, metadata: { status: data.status } });
     return { ok: true };
   });
 
@@ -101,6 +106,9 @@ export const createLicense = createServerFn({ method: "POST" })
       status: "active",
     }).select().single();
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "license.create",
+      targetType: "license", targetId: row.id,
+      metadata: { domain_id: data.domain_id, valid_until: data.valid_until, max_users: data.max_users } });
     return row;
   });
 
@@ -111,6 +119,8 @@ export const revokeLicense = createServerFn({ method: "POST" })
     await assertSuper(context.userId);
     const { error } = await supabaseAdmin.from("licenses").update({ status: "revoked" }).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "license.revoke",
+      targetType: "license", targetId: data.id });
     return { ok: true };
   });
 
@@ -130,6 +140,8 @@ export const updateLicense = createServerFn({ method: "POST" })
     if (data.notes !== undefined) patch.notes = data.notes;
     const { error } = await supabaseAdmin.from("licenses").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "license.update",
+      targetType: "license", targetId: data.id, metadata: patch });
     return { ok: true };
   });
 
@@ -164,6 +176,9 @@ export const toggleDomainModule = createServerFn({ method: "POST" })
         );
       }
     }
+    await logAudit({ actorId: context.userId, action: "module.toggle",
+      targetType: "domain_module", targetId: data.domain_id,
+      metadata: { module_key: data.module_key, enabled: data.enabled } });
     return { ok: true };
   });
 
@@ -205,6 +220,9 @@ export const assignUserToDomain = createServerFn({ method: "POST" })
       role: data.role,
       domain_id: data.role === "superadmin" ? null : data.domain_id,
     });
+    await logAudit({ actorId: context.userId, action: "user.assign",
+      targetType: "user", targetId: data.user_id,
+      metadata: { role: data.role, domain_id: data.domain_id } });
     return { ok: true };
   });
 
@@ -243,6 +261,9 @@ export const createTenantUser = createServerFn({ method: "POST" })
       role: data.role,
       domain_id: data.role === "superadmin" ? null : data.domain_id,
     });
+    await logAudit({ actorId: context.userId, action: "user.create",
+      targetType: "user", targetId: newUserId, targetLabel: data.email,
+      metadata: { role: data.role, domain_id: data.domain_id } });
     return { ok: true, user_id: newUserId };
   });
 
@@ -254,6 +275,8 @@ export const startImpersonation = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("superadmin_impersonation")
       .upsert({ superadmin_id: context.userId, target_domain_id: data.domain_id });
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "impersonation.start",
+      targetType: "domain", targetId: data.domain_id });
     return { ok: true };
   });
 
@@ -262,6 +285,7 @@ export const stopImpersonation = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertSuper(context.userId);
     await supabaseAdmin.from("superadmin_impersonation").delete().eq("superadmin_id", context.userId);
+    await logAudit({ actorId: context.userId, action: "impersonation.stop" });
     return { ok: true };
   });
 
@@ -296,6 +320,8 @@ export const setUserDisabled = createServerFn({ method: "POST" })
       ban_duration: data.disabled ? "876000h" : "none",
     } as any);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: data.disabled ? "user.disable" : "user.enable",
+      targetType: "user", targetId: data.user_id });
     return { ok: true };
   });
 
@@ -309,6 +335,8 @@ export const deleteTenantUser = createServerFn({ method: "POST" })
     await supabaseAdmin.from("profiles").delete().eq("id", data.user_id);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "user.delete",
+      targetType: "user", targetId: data.user_id });
     return { ok: true };
   });
 
