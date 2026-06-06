@@ -36,14 +36,14 @@ const sections: Section[] = [
     { to: "/intrahub", label: "IntraHub", icon: Network },
   ]},
   { label: "Notdienste", items: [
-    { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice" },
-    { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko" },
-    { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz" },
+    { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice", roles: ["admin", "dispatcher"] },
+    { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko", roles: ["admin", "dispatcher"] },
+    { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz", roles: ["admin", "dispatcher"] },
   ]},
   { label: "Abrechnung Hausnotruf", items: [
-    { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser" },
-    { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter" },
-    { to: "/abrechnung/lgwa",       label: "LGWA",        icon: Receipt, module: "lgwa" },
+    { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser", roles: ["admin", "dispatcher"] },
+    { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter", roles: ["admin", "dispatcher"] },
+    { to: "/abrechnung/lgwa",       label: "LGWA",        icon: Receipt, module: "lgwa", roles: ["admin", "dispatcher"] },
   ]},
   { label: "Tools", items: [
     { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"], module: "schluesselbuch" },
