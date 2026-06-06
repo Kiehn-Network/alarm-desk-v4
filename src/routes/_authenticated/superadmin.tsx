@@ -1124,7 +1124,7 @@ function LicensesPanel({
   extendDays: number;
   setExtendDays: (n: number) => void;
   onCreate: (domain_id: string, p: LicensePayload) => Promise<void>;
-  onUpdate: (id: string, p: Partial<LicensePayload>) => Promise<void>;
+  onUpdate: (id: string, p: Partial<LicenseEditPayload>) => Promise<void>;
   onRevoke: (id: string) => Promise<void>;
   onExtend: (ids: string[], days: number) => Promise<void>;
   onExpiryRun: () => Promise<void>;
@@ -1133,6 +1133,7 @@ function LicensesPanel({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [onlyExpiring, setOnlyExpiring] = useState(false);
+  const [editLic, setEditLic] = useState<any | null>(null);
 
   const domMap = useMemo(() => Object.fromEntries(domains.map((d) => [d.id, d])), [domains]);
 
