@@ -848,7 +848,7 @@ export const exportDomainData = createServerFn({ method: "POST" })
     for (const t of tables) {
       const filterCol = t === "domains" ? "id" : "domain_id";
       try {
-        const { data: rows } = await supabaseAdmin.from(t).select("*").eq(filterCol, data.domain_id).limit(50000);
+        const { data: rows } = await (supabaseAdmin as any).from(t).select("*").eq(filterCol, data.domain_id).limit(50000);
         dump[t] = rows ?? [];
       } catch { dump[t] = []; }
     }
