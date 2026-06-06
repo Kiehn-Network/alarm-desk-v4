@@ -112,10 +112,7 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
     }))
     .filter((s) => s.items.length > 0);
   return (
-    <div className={cn(
-      "flex h-full w-full flex-col bg-sidebar text-sidebar-foreground",
-      isSuperAdminMode && "superadmin-sidebar"
-    )}>
+    <div className={cn("flex h-full w-full flex-col bg-sidebar text-sidebar-foreground")}>
       {isSuperAdminMode && (
         <div className="px-4 py-2 flex items-center gap-2">
           <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary text-primary-foreground">

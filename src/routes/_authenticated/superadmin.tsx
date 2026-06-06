@@ -319,24 +319,24 @@ function SuperAdminPage() {
   }
 
   return (
-    <div className="superadmin-theme p-6 space-y-6 max-w-screen-2xl mx-auto">
-      <div className="sa-header rounded-lg bg-sidebar text-sidebar-foreground px-6 py-5 shadow-md border border-sidebar-border">
+    <div className="p-6 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="rounded-md bg-card text-card-foreground px-6 py-5 border">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="size-12 rounded-md bg-primary text-primary-foreground flex items-center justify-center shadow">
+            <div className="size-12 rounded-md bg-primary text-primary-foreground flex items-center justify-center">
               <Crown className="size-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground px-2 py-0.5 rounded-full bg-primary">SuperAdmin</span>
-                <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">Plattform-Konsole</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground px-2 py-0.5 rounded bg-primary">SuperAdmin</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Plattform-Konsole</span>
               </div>
               <h1 className="text-lg font-semibold leading-tight mt-1">Mandanten · Lizenzen · Module · Nutzer · Betrieb</h1>
             </div>
           </div>
           {imp && (
-            <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-warning/20 border border-warning/50">
-              <span className="text-xs text-sidebar-foreground">Impersonation: <b>{imp.name}</b></span>
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-md bg-warning/15 border border-warning/40">
+              <span className="text-xs">Impersonation: <b>{imp.name}</b></span>
               <Button size="sm" variant="outline" onClick={async () => { await stopImp({}); invalidateAll(); }}>Beenden</Button>
             </div>
           )}
