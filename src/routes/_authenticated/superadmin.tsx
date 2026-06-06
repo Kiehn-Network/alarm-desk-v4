@@ -883,6 +883,8 @@ function SuperAdminPage() {
         <TabsContent value="search" className="space-y-4">
           <GlobalSearchPanel domains={domains} />
         </TabsContent>
+          </div>
+        </div>
       </Tabs>
 
       {statsForDomain && (
