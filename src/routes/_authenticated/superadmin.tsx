@@ -719,3 +719,20 @@ function SuperAdminPage() {
     </div>
   );
 }
+
+function KpiCard({ icon, label, value, sub, warn }: {
+  icon: React.ReactNode; label: string; value: React.ReactNode; sub?: string; warn?: boolean;
+}) {
+  return (
+    <Card className={warn ? "border-warning/40" : undefined}>
+      <CardContent className="p-4">
+        <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-wide">
+          <span className={warn ? "text-warning" : "text-primary"}>{icon}</span>
+          {label}
+        </div>
+        <div className="text-3xl font-bold mt-2">{value}</div>
+        {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
+      </CardContent>
+    </Card>
+  );
+}
