@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import logo from "@/assets/alarmdesk-logo.png";
+import { Mail, Lock, ArrowRight } from "lucide-react";
 import hero1 from "@/assets/login-hero-1.jpg";
 import hero2 from "@/assets/login-hero-2.jpg";
 import hero3 from "@/assets/login-hero-3.jpg";
@@ -56,79 +57,134 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
-      <div className="hidden lg:flex relative overflow-hidden" style={{ background: "var(--gradient-surface)" }}>
+    <div className="min-h-screen w-full flex bg-background text-foreground antialiased">
+      {/* Left: Visual + Brand */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <img
           src={heroImage}
           alt="AlarmDesk Leitstelle"
           className="absolute inset-0 w-full h-full object-cover opacity-40"
         />
-        <div className="absolute inset-0" style={{
-          background: "linear-gradient(135deg, oklch(0.18 0.04 255 / 80%) 0%, oklch(0.22 0.06 240 / 60%) 100%)",
-        }} />
+        <div className="absolute inset-0 bg-gradient-to-tr from-background via-background/60 to-transparent" />
         <div className="absolute inset-0 opacity-40" style={{
-          backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.68 0.17 255 / 40%) 0, transparent 50%), radial-gradient(circle at 80% 80%, oklch(0.78 0.13 235 / 30%) 0, transparent 50%)",
+          backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.68 0.17 255 / 30%) 0, transparent 50%), radial-gradient(circle at 80% 80%, oklch(0.78 0.13 235 / 25%) 0, transparent 50%)",
         }} />
-        <div className="relative z-10 p-12 flex flex-col justify-between w-full">
+
+        <div className="relative z-10 p-16 flex flex-col justify-between w-full">
           <div className="flex items-center gap-3">
-            <div className="size-11 rounded-xl grid place-items-center bg-card/40 backdrop-blur overflow-hidden" style={{ boxShadow: "var(--shadow-glow)" }}>
-              <img src={logo} alt="AlarmDesk" className="size-8 object-contain" />
+            <div className="p-2.5 rounded-xl bg-primary/15 border border-primary/30 grid place-items-center" style={{ boxShadow: "var(--shadow-glow)" }}>
+              <img src={logo} alt="AlarmDesk" className="size-6 object-contain" />
             </div>
             <div>
-              <div className="text-lg font-semibold">AlarmDesk</div>
-              <div className="text-xs text-muted-foreground">Einsatzverwaltung</div>
+              <h1 className="text-2xl font-bold tracking-tight">AlarmDesk</h1>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em] leading-none mt-1">Einsatzverwaltung</p>
             </div>
           </div>
-          <div>
-            <h1 className="text-4xl font-bold leading-tight">Schnell.<br/>Übersichtlich.<br/><span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-primary)" }}>Im Einsatz bereit.</span></h1>
-            <p className="mt-4 text-muted-foreground max-w-md">Verwalte Einsätze, Fahrer, Schlüssel und Notdienste an einem Ort.</p>
+
+          <div className="max-w-md">
+            <div className="flex gap-2 mb-8">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-success/15 text-success border border-success/20 uppercase tracking-wider">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
+                </span>
+                System Online
+              </span>
+              <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-primary/15 text-primary border border-primary/20 uppercase tracking-wider">
+                v{info?.current_version ?? "…"}
+              </span>
+            </div>
+            <h2 className="text-5xl font-bold mb-6 leading-[1.15]">
+              Schnell.<br/>Übersichtlich.<br/>
+              <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-primary)" }}>Im Einsatz bereit.</span>
+            </h2>
+            <p className="text-lg text-muted-foreground font-medium">
+              Verwalte Einsätze, Fahrer, Schlüssel und Notdienste an einem zentralen Ort.
+            </p>
           </div>
+
           <VersionBadge info={info} />
         </div>
       </div>
 
-      <div className="flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
+      {/* Right: Login Card */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-background">
+        <div className="w-full max-w-[440px]">
           <div className="lg:hidden mb-8 flex items-center gap-3">
-            <div className="size-10 rounded-xl grid place-items-center bg-card overflow-hidden">
-              <img src={logo} alt="AlarmDesk" className="size-7 object-contain" />
+            <div className="p-2 rounded-xl bg-primary/15 border border-primary/30 grid place-items-center">
+              <img src={logo} alt="AlarmDesk" className="size-6 object-contain" />
             </div>
-            <div className="font-semibold">AlarmDesk</div>
+            <div>
+              <div className="font-bold">AlarmDesk</div>
+              <div className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.2em]">Einsatzverwaltung</div>
+            </div>
           </div>
 
-          <h2 className="text-2xl font-bold">Anmelden</h2>
-          <p className="text-sm text-muted-foreground mt-1">Willkommen zurück</p>
+          <div className="bg-card border border-border rounded-2xl p-8 md:p-10 relative" style={{ boxShadow: "var(--shadow-card)" }}>
+            <div className="mb-10">
+              <h2 className="text-3xl font-bold tracking-tight">Anmelden</h2>
+              <p className="text-muted-foreground mt-2">Willkommen zurück im Dashboard</p>
+            </div>
 
-          <form onSubmit={submit} className="mt-8 space-y-4">
-            <Field label="E-Mail">
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input" placeholder="du@firma.de" />
-            </Field>
-            <Field label="Passwort">
-              <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className="input" placeholder="••••••••" />
-            </Field>
-            <button disabled={loading} className="w-full h-11 rounded-lg font-medium text-primary-foreground transition disabled:opacity-50" style={{ background: "var(--gradient-primary)", boxShadow: "var(--shadow-glow)" }}>
-              {loading ? "Bitte warten…" : "Anmelden"}
-            </button>
-          </form>
-          <div className="mt-6 text-center text-xs text-muted-foreground">
-            Zugänge werden durch den Administrator angelegt.
+            <form onSubmit={submit} className="space-y-6">
+              <div className="space-y-2.5">
+                <label className="block text-[13px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">E-Mail</label>
+                <div className="relative">
+                  <Mail className="absolute inset-y-0 left-4 my-auto size-[18px] text-muted-foreground pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nutzer@organisation.de"
+                    className="w-full bg-input border border-border rounded-xl py-4 pl-12 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <label className="block text-[13px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Passwort</label>
+                <div className="relative">
+                  <Lock className="absolute inset-y-0 left-4 my-auto size-[18px] text-muted-foreground pointer-events-none" />
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-input border border-border rounded-xl py-4 pl-12 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full group relative flex items-center justify-center py-4 px-6 rounded-xl text-primary-foreground font-bold transition-all overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ boxShadow: "var(--shadow-glow)" }}
+              >
+                <div className="absolute inset-0 transition-transform group-hover:scale-105" style={{ background: "var(--gradient-primary)" }} />
+                <span className="relative flex items-center gap-2">
+                  {loading ? "Bitte warten…" : "Anmelden"}
+                  {!loading && <ArrowRight className="size-[18px] group-hover:translate-x-0.5 transition-transform" />}
+                </span>
+              </button>
+            </form>
+
+            <div className="mt-10 pt-8 border-t border-border">
+              <p className="text-center text-xs text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
+                Zugänge werden ausschließlich durch den zuständigen Administrator verwaltet.
+              </p>
+            </div>
           </div>
+
           <div className="mt-8 text-center lg:hidden">
             <VersionBadge info={info} />
           </div>
         </div>
       </div>
-      <style>{`.input{width:100%;height:44px;padding:0 14px;border-radius:10px;background:var(--color-input);border:1px solid var(--color-border);color:var(--color-foreground);font-size:14px;transition:all .15s}.input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-ring)}`}</style>
     </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="block text-xs font-medium text-muted-foreground mb-1.5">{label}</span>
-      {children}
-    </label>
   );
 }
 
