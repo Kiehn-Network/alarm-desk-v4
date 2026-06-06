@@ -127,6 +127,7 @@ function SuperAdminPage() {
   const listModFn = useServerFn(listAppModules);
   const listUsersFn = useServerFn(listAllTenantUsers);
   const impFn = useServerFn(getImpersonation);
+  const [tab, setTab] = useState("overview");
 
   const dq = useQuery({ queryKey: ["sa-domains"], queryFn: () => listDomFn() });
   const mq = useQuery({ queryKey: ["sa-modules"], queryFn: () => listModFn() });
