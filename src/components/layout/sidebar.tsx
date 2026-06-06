@@ -150,7 +150,7 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
                   ? location.pathname === it.to && (currentTab ?? "overview") === it.tab
                   : location.pathname === it.to || location.pathname.startsWith(it.to + "/");
                 return (
-                  <li key={it.to}>
+                  <li key={`${it.to}:${it.tab ?? ""}`}>
                     <Link
                       to={it.to}
                       search={it.tab ? { tab: it.tab } : undefined as any}
