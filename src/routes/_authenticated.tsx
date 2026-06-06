@@ -9,6 +9,7 @@ import { ChatWidget } from "@/components/chat/chat-widget";
 import { TourLauncher } from "@/components/tour/tour-launcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocationTracker } from "@/hooks/use-location-tracker";
+import { useSupportNotifications } from "@/hooks/use-support-notifications";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthLayout() {
   const { user, loading } = useAuth();
   useLocationTracker(!!user);
+  useSupportNotifications();
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
