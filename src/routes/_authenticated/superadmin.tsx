@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   listDomains, createDomain, setDomainStatus,
   createLicense, revokeLicense, toggleDomainModule,
+  updateLicense,
   listAllTenantUsers, assignUserToDomain,
   createTenantUser,
   startImpersonation, stopImpersonation, getImpersonation,
@@ -77,6 +78,7 @@ function SuperAdminPage() {
   const setStatus = useServerFn(setDomainStatus);
   const createLic = useServerFn(createLicense);
   const revokeLic = useServerFn(revokeLicense);
+  const updateLic = useServerFn(updateLicense);
   const toggleMod = useServerFn(toggleDomainModule);
   const assign = useServerFn(assignUserToDomain);
   const createUserFn = useServerFn(createTenantUser);
