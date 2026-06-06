@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listDomains, createDomain, setDomainStatus,
@@ -11,6 +11,8 @@ import {
   startImpersonation, stopImpersonation, getImpersonation,
   getPlatformSettings, updatePlatformMaintenance,
   listAppVersions, createAppVersion, deleteAppVersion,
+  sendPasswordReset, setUserDisabled, deleteTenantUser, bulkImportUsers,
+  getSuperAdminStats,
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
@@ -23,6 +25,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  Activity, Building2, Crown, Globe2, KeyRound, LayoutDashboard,
+  Loader2, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
   beforeLoad: async () => {
