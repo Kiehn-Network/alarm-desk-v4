@@ -14,6 +14,7 @@ import {
   listAppVersions, createAppVersion, deleteAppVersion,
   sendPasswordReset, setUserDisabled, deleteTenantUser, bulkImportUsers,
   getSuperAdminStats,
+  listAuditLog, getHealthSnapshot, listEmailLog, retryDlqEmail,
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
@@ -28,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import {
   Activity, Building2, Crown, Globe2, KeyRound, LayoutDashboard,
-  Loader2, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
+  Loader2, Mail, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
@@ -233,6 +234,9 @@ function SuperAdminPage() {
           <TabsTrigger value="licenses">Lizenzen</TabsTrigger>
           <TabsTrigger value="modules">Module</TabsTrigger>
           <TabsTrigger value="users">Nutzer</TabsTrigger>
+          <TabsTrigger value="health"><Activity className="size-4 mr-1.5" />Health</TabsTrigger>
+          <TabsTrigger value="emails"><Mail className="size-4 mr-1.5" />E-Mails</TabsTrigger>
+          <TabsTrigger value="audit">Audit-Log</TabsTrigger>
           <TabsTrigger value="system">System</TabsTrigger>
           <TabsTrigger value="selfhost">Self-Hosting</TabsTrigger>
         </TabsList>
@@ -717,6 +721,18 @@ function SuperAdminPage() {
         <TabsContent value="selfhost" className="space-y-4">
           <SelfHostGuide />
         </TabsContent>
+
+        <TabsContent value="health" className="space-y-4">
+          <HealthPanel />
+        </TabsContent>
+
+        <TabsContent value="emails" className="space-y-4">
+          <EmailQueuePanel />
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-4">
+          <AuditLogPanel />
+        </TabsContent>
       </Tabs>
     </div>
   );
@@ -823,6 +839,191 @@ function LicenseRow({ license, onUpdate, onRevoke }: {
         {license.status === "active" && (
           <Button size="sm" variant="outline" onClick={onRevoke}>Widerrufen</Button>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ====================== HEALTH ======================
+
+function HealthPanel() {
+  const fn = useServerFn(getHealthSnapshot);
+  const q = useQuery({ queryKey: ["sa-health"], queryFn: () => fn(), refetchInterval: 15_000 });
+  if (q.isLoading) return <div className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> lädt…</div>;
+  if (q.error) return <div className="text-sm text-destructive">Fehler: {(q.error as any)?.message}</div>;
+  const h: any = q.data?.health ?? {};
+  const queues = h.queues ?? {};
+  const em = h.emails_24h ?? {};
+  const cr = h.cron_24h ?? {};
+  const dbMb = h.db_size_bytes ? (h.db_size_bytes / 1024 / 1024).toFixed(1) : "—";
+  const fmtQ = (v: number) => v < 0 ? "n/v" : String(v);
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <KpiCard icon={<Activity className="size-5" />} label="DB-Latenz" value={`${q.data?.db_latency_ms ?? 0} ms`} sub={`DB-Größe ${dbMb} MB`} />
+        <KpiCard icon={<Mail className="size-5" />} label="E-Mails 24h gesendet" value={em.sent ?? 0} sub={`${em.failed ?? 0} fehlgeschlagen · ${em.dlq ?? 0} DLQ`} warn={(em.dlq ?? 0) > 0} />
+        <KpiCard icon={<Mail className="size-5" />} label="Queue: Auth/App" value={`${fmtQ(queues.auth_emails ?? 0)} / ${fmtQ(queues.transactional_emails ?? 0)}`} sub={`DLQ ${fmtQ(queues.auth_emails_dlq ?? 0)} / ${fmtQ(queues.transactional_emails_dlq ?? 0)}`} warn={(queues.auth_emails_dlq ?? 0) > 0 || (queues.transactional_emails_dlq ?? 0) > 0} />
+        <KpiCard icon={<RefreshCw className="size-5" />} label="Cron 24h" value={cr.runs < 0 ? "n/v" : (cr.runs ?? 0)} sub={`${cr.failed < 0 ? "" : `${cr.failed ?? 0} fehlgeschlagen`}`} warn={(cr.failed ?? 0) > 0} />
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-base">Cron-Jobs</CardTitle></CardHeader>
+        <CardContent className="space-y-1">
+          {(q.data?.cron_jobs ?? []).length === 0 && (
+            <div className="text-sm text-muted-foreground">Keine Cron-Jobs sichtbar.</div>
+          )}
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-muted-foreground">
+              <th className="py-1">Name</th><th>Plan</th><th>Aktiv</th><th>Letzter Status</th><th>Letzter Lauf</th>
+            </tr></thead>
+            <tbody>
+              {(q.data?.cron_jobs ?? []).map((j: any) => (
+                <tr key={j.jobname} className="border-t">
+                  <td className="py-1 font-medium">{j.jobname}</td>
+                  <td><code className="text-xs">{j.schedule}</code></td>
+                  <td>{j.active ? "ja" : "nein"}</td>
+                  <td><span className={j.last_status === "succeeded" ? "text-success" : j.last_status ? "text-destructive" : "text-muted-foreground"}>{j.last_status ?? "—"}</span></td>
+                  <td>{j.last_end ? new Date(j.last_end).toLocaleString() : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// ====================== EMAIL QUEUE ======================
+
+function EmailQueuePanel() {
+  const listFn = useServerFn(listEmailLog);
+  const retryFn = useServerFn(retryDlqEmail);
+  const qc = useQueryClient();
+  const [status, setStatus] = useState<string>("all");
+  const [template, setTemplate] = useState<string>("");
+  const [recipient, setRecipient] = useState<string>("");
+  const q = useQuery({
+    queryKey: ["sa-emails", status, template, recipient],
+    queryFn: () => listFn({ data: {
+      limit: 200,
+      status: status === "all" ? null : status,
+      template_name: template || null,
+      recipient: recipient || null,
+    } }),
+    refetchInterval: 30_000,
+  });
+  const badge = (s: string) => {
+    const base = "px-1.5 py-0.5 rounded text-xs ";
+    if (s === "sent") return base + "bg-success/15 text-success";
+    if (s === "pending") return base + "bg-warning/15 text-warning";
+    if (s === "suppressed") return base + "bg-muted text-muted-foreground";
+    return base + "bg-destructive/15 text-destructive";
+  };
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2 items-end">
+        <div>
+          <Label className="text-xs">Status</Label>
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle</SelectItem>
+              <SelectItem value="sent">Gesendet</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="dlq">DLQ</SelectItem>
+              <SelectItem value="suppressed">Suppressed</SelectItem>
+              <SelectItem value="bounced">Bounced</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs">Template</Label>
+          <Input className="w-[200px]" value={template} onChange={(e) => setTemplate(e.target.value)} placeholder="z.B. recovery" />
+        </div>
+        <div className="flex-1 min-w-[200px]">
+          <Label className="text-xs">Empfänger enthält</Label>
+          <Input value={recipient} onChange={(e) => setRecipient(e.target.value)} placeholder="email…" />
+        </div>
+        <Button variant="outline" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["sa-emails"] })}>
+          <RefreshCw className="size-4" />
+        </Button>
+      </div>
+      <div className="border rounded">
+        <table className="w-full text-sm">
+          <thead className="bg-muted text-left">
+            <tr><th className="p-2">Zeit</th><th>Template</th><th>Empfänger</th><th>Status</th><th>Fehler</th><th></th></tr>
+          </thead>
+          <tbody>
+            {(q.data?.rows ?? []).map((r: any) => (
+              <tr key={r.id} className="border-t">
+                <td className="p-2 whitespace-nowrap text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                <td className="text-xs">{r.template_name}</td>
+                <td className="text-xs">{r.recipient_email}</td>
+                <td><span className={badge(r.status)}>{r.status}</span></td>
+                <td className="text-xs text-destructive max-w-[300px] truncate" title={r.error_message ?? ""}>{r.error_message}</td>
+                <td>
+                  {(r.status === "dlq" || r.status === "failed") && (
+                    <Button size="sm" variant="outline" onClick={async () => {
+                      try { await retryFn({ data: { log_id: r.id } }); toast.success("Erneut eingereiht"); qc.invalidateQueries({ queryKey: ["sa-emails"] }); }
+                      catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+                    }}>Retry</Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+            {(q.data?.rows ?? []).length === 0 && !q.isLoading && (
+              <tr><td colSpan={6} className="p-4 text-center text-sm text-muted-foreground">Keine Einträge.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ====================== AUDIT LOG ======================
+
+function AuditLogPanel() {
+  const fn = useServerFn(listAuditLog);
+  const [action, setAction] = useState<string>("");
+  const q = useQuery({
+    queryKey: ["sa-audit", action],
+    queryFn: () => fn({ data: { limit: 300, action: action || null } }),
+  });
+  const fmtMeta = (m: any) => {
+    if (!m || Object.keys(m).length === 0) return "";
+    try { return JSON.stringify(m); } catch { return ""; }
+  };
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-2 items-end">
+        <div className="flex-1 max-w-[300px]">
+          <Label className="text-xs">Action filtern</Label>
+          <Input value={action} onChange={(e) => setAction(e.target.value)} placeholder="z.B. license.create" />
+        </div>
+      </div>
+      <div className="border rounded">
+        <table className="w-full text-sm">
+          <thead className="bg-muted text-left">
+            <tr><th className="p-2">Zeit</th><th>Akteur</th><th>Aktion</th><th>Ziel</th><th>Details</th></tr>
+          </thead>
+          <tbody>
+            {(q.data?.rows ?? []).map((r: any) => (
+              <tr key={r.id} className="border-t align-top">
+                <td className="p-2 text-xs text-muted-foreground whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+                <td className="text-xs">{r.actor_email ?? r.actor_id?.slice(0, 8)}</td>
+                <td><code className="text-xs">{r.action}</code></td>
+                <td className="text-xs">{r.target_label ?? r.target_id?.slice(0, 8) ?? ""}<br/><span className="text-muted-foreground">{r.target_type}</span></td>
+                <td className="text-xs text-muted-foreground max-w-[400px] truncate" title={fmtMeta(r.metadata)}>{fmtMeta(r.metadata)}</td>
+              </tr>
+            ))}
+            {(q.data?.rows ?? []).length === 0 && !q.isLoading && (
+              <tr><td colSpan={5} className="p-4 text-center text-sm text-muted-foreground">Noch keine Einträge.</td></tr>
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

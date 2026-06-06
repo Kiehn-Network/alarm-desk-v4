@@ -2139,6 +2139,42 @@ export type Database = {
         }
         Relationships: []
       }
+      superadmin_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          id: string
+          metadata: Json
+          target_id: string | null
+          target_label: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_label?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json
+          target_id?: string | null
+          target_label?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       superadmin_impersonation: {
         Row: {
           started_at: string
@@ -2303,6 +2339,18 @@ export type Database = {
           read_ct: number
         }[]
       }
+      superadmin_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          jobname: string
+          last_end: string
+          last_start: string
+          last_status: string
+          schedule: string
+        }[]
+      }
+      superadmin_health: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "dispatcher" | "fahrer" | "superadmin" | "user"

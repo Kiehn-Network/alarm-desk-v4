@@ -9,6 +9,30 @@ async function assertSuper(userId: string) {
   if (!data) throw new Error("Nur SuperAdmin");
 }
 
+async function logAudit(opts: {
+  actorId: string;
+  action: string;
+  targetType?: string | null;
+  targetId?: string | null;
+  targetLabel?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(opts.actorId);
+    await supabaseAdmin.from("superadmin_audit_log").insert({
+      actor_id: opts.actorId,
+      actor_email: u.user?.email ?? null,
+      action: opts.action,
+      target_type: opts.targetType ?? null,
+      target_id: opts.targetId ?? null,
+      target_label: opts.targetLabel ?? null,
+      metadata: (opts.metadata ?? {}) as never,
+    });
+  } catch {
+    // never block the actual operation because of audit logging
+  }
+}
+
 function genLicenseKey() {
   const seg = () => Math.random().toString(36).slice(2, 6).toUpperCase();
   return `${seg()}-${seg()}-${seg()}-${seg()}-${seg()}-${seg()}`;
@@ -42,6 +66,9 @@ export const createDomain = createServerFn({ method: "POST" })
         mods.map((m: any) => ({ domain_id: d.id, module_key: m.key, enabled: m.enabled })),
       );
     }
+    await logAudit({ actorId: context.userId, action: "domain.create",
+      targetType: "domain", targetId: d.id, targetLabel: d.name,
+      metadata: { slug: data.slug } });
     return d;
   });
 
@@ -55,6 +82,8 @@ export const setDomainStatus = createServerFn({ method: "POST" })
     await assertSuper(context.userId);
     const { error } = await supabaseAdmin.from("domains").update({ status: data.status }).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "domain.set_status",
+      targetType: "domain", targetId: data.id, metadata: { status: data.status } });
     return { ok: true };
   });
 
@@ -77,6 +106,9 @@ export const createLicense = createServerFn({ method: "POST" })
       status: "active",
     }).select().single();
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "license.create",
+      targetType: "license", targetId: row.id,
+      metadata: { domain_id: data.domain_id, valid_until: data.valid_until, max_users: data.max_users } });
     return row;
   });
 
@@ -87,6 +119,8 @@ export const revokeLicense = createServerFn({ method: "POST" })
     await assertSuper(context.userId);
     const { error } = await supabaseAdmin.from("licenses").update({ status: "revoked" }).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "license.revoke",
+      targetType: "license", targetId: data.id });
     return { ok: true };
   });
 
@@ -106,6 +140,8 @@ export const updateLicense = createServerFn({ method: "POST" })
     if (data.notes !== undefined) patch.notes = data.notes;
     const { error } = await supabaseAdmin.from("licenses").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "license.update",
+      targetType: "license", targetId: data.id, metadata: patch });
     return { ok: true };
   });
 
@@ -140,6 +176,9 @@ export const toggleDomainModule = createServerFn({ method: "POST" })
         );
       }
     }
+    await logAudit({ actorId: context.userId, action: "module.toggle",
+      targetType: "domain_module", targetId: data.domain_id,
+      metadata: { module_key: data.module_key, enabled: data.enabled } });
     return { ok: true };
   });
 
@@ -181,6 +220,9 @@ export const assignUserToDomain = createServerFn({ method: "POST" })
       role: data.role,
       domain_id: data.role === "superadmin" ? null : data.domain_id,
     });
+    await logAudit({ actorId: context.userId, action: "user.assign",
+      targetType: "user", targetId: data.user_id,
+      metadata: { role: data.role, domain_id: data.domain_id } });
     return { ok: true };
   });
 
@@ -219,6 +261,9 @@ export const createTenantUser = createServerFn({ method: "POST" })
       role: data.role,
       domain_id: data.role === "superadmin" ? null : data.domain_id,
     });
+    await logAudit({ actorId: context.userId, action: "user.create",
+      targetType: "user", targetId: newUserId, targetLabel: data.email,
+      metadata: { role: data.role, domain_id: data.domain_id } });
     return { ok: true, user_id: newUserId };
   });
 
@@ -230,6 +275,8 @@ export const startImpersonation = createServerFn({ method: "POST" })
     const { error } = await supabaseAdmin.from("superadmin_impersonation")
       .upsert({ superadmin_id: context.userId, target_domain_id: data.domain_id });
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "impersonation.start",
+      targetType: "domain", targetId: data.domain_id });
     return { ok: true };
   });
 
@@ -238,6 +285,7 @@ export const stopImpersonation = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await assertSuper(context.userId);
     await supabaseAdmin.from("superadmin_impersonation").delete().eq("superadmin_id", context.userId);
+    await logAudit({ actorId: context.userId, action: "impersonation.stop" });
     return { ok: true };
   });
 
@@ -256,6 +304,8 @@ export const sendPasswordReset = createServerFn({ method: "POST" })
       email,
     });
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "user.password_reset",
+      targetType: "user", targetId: data.user_id, targetLabel: email });
     return { ok: true, email, action_link: link.properties?.action_link ?? null };
   });
 
@@ -272,6 +322,8 @@ export const setUserDisabled = createServerFn({ method: "POST" })
       ban_duration: data.disabled ? "876000h" : "none",
     } as any);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: data.disabled ? "user.disable" : "user.enable",
+      targetType: "user", targetId: data.user_id });
     return { ok: true };
   });
 
@@ -285,6 +337,8 @@ export const deleteTenantUser = createServerFn({ method: "POST" })
     await supabaseAdmin.from("profiles").delete().eq("id", data.user_id);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     if (error) throw new Error(error.message);
+    await logAudit({ actorId: context.userId, action: "user.delete",
+      targetType: "user", targetId: data.user_id });
     return { ok: true };
   });
 
@@ -324,6 +378,10 @@ export const bulkImportUsers = createServerFn({ method: "POST" })
         results.push({ email: u.email, ok: false, error: e?.message ?? "Fehler" });
       }
     }
+    await logAudit({ actorId: context.userId, action: "user.bulk_import",
+      targetType: "domain", targetId: data.domain_id,
+      metadata: { count: data.users.length, role: data.role,
+        ok: results.filter((r) => r.ok).length, failed: results.filter((r) => !r.ok).length } });
     return { results };
   });
 
@@ -443,5 +501,94 @@ export const deleteAppVersion = createServerFn({ method: "POST" })
     await assertSuper(context.userId);
     const { error } = await supabaseAdmin.from("app_versions").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---------- Audit Log ----------
+
+export const listAuditLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    limit: z.number().int().positive().max(500).optional(),
+    action: z.string().max(80).nullable().optional(),
+    actor_id: z.string().uuid().nullable().optional(),
+    since: z.string().datetime().nullable().optional(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    let q = supabaseAdmin.from("superadmin_audit_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 200);
+    if (data.action) q = q.eq("action", data.action);
+    if (data.actor_id) q = q.eq("actor_id", data.actor_id);
+    if (data.since) q = q.gte("created_at", data.since);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    return { rows: rows ?? [] };
+  });
+
+// ---------- Health & E-Mail Queue ----------
+
+export const getHealthSnapshot = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuper(context.userId);
+    const started = Date.now();
+    const { data: health, error } = await supabaseAdmin.rpc("superadmin_health");
+    const dbLatencyMs = Date.now() - started;
+    if (error) throw new Error(error.message);
+    const { data: jobs } = await supabaseAdmin.rpc("superadmin_cron_jobs");
+    return { health, db_latency_ms: dbLatencyMs, cron_jobs: jobs ?? [] };
+  });
+
+export const listEmailLog = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    limit: z.number().int().positive().max(500).optional(),
+    status: z.string().max(40).nullable().optional(),
+    template_name: z.string().max(120).nullable().optional(),
+    recipient: z.string().max(255).nullable().optional(),
+    since: z.string().datetime().nullable().optional(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    let q = supabaseAdmin.from("email_send_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(data.limit ?? 200);
+    if (data.status) q = q.eq("status", data.status);
+    if (data.template_name) q = q.eq("template_name", data.template_name);
+    if (data.recipient) q = q.ilike("recipient_email", `%${data.recipient}%`);
+    if (data.since) q = q.gte("created_at", data.since);
+    const { data: rows, error } = await q;
+    if (error) throw new Error(error.message);
+    // dedupe by message_id, latest wins (rows are DESC already)
+    const seen = new Set<string>();
+    const deduped: any[] = [];
+    for (const r of rows ?? []) {
+      const key = (r as any).message_id ?? (r as any).id;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(r);
+    }
+    return { rows: deduped };
+  });
+
+export const retryDlqEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ log_id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await assertSuper(context.userId);
+    const { data: row, error } = await supabaseAdmin.from("email_send_log")
+      .select("metadata, template_name, recipient_email").eq("id", data.log_id).maybeSingle();
+    if (error || !row) throw new Error("E-Mail-Eintrag nicht gefunden");
+    const queueName = ((row as any).metadata?.queue_name as string | undefined)
+      ?? ((row as any).template_name?.startsWith("auth_") ? "auth_emails" : "transactional_emails");
+    const payload = (row as any).metadata?.payload ?? { recipient: (row as any).recipient_email, template: (row as any).template_name };
+    const { error: enqErr } = await supabaseAdmin.rpc("enqueue_email", { queue_name: queueName, payload });
+    if (enqErr) throw new Error(enqErr.message);
+    await logAudit({ actorId: context.userId, action: "email.retry",
+      targetType: "email_log", targetId: data.log_id, metadata: { queue: queueName } });
     return { ok: true };
   });
