@@ -11,8 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
+import { Route as HomepageRouteImport } from './routes/homepage'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
 import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
@@ -68,13 +68,13 @@ const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
   path: '/kiehn-systeme-login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const HomepageRoute = HomepageRouteImport.update({
+  id: '/homepage',
+  path: '/homepage',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
@@ -332,7 +332,8 @@ const AuthenticatedAbrechnungProviderVersandRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedRouteWithChildren
+  '/homepage': typeof HomepageRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -381,7 +382,8 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks/': typeof AuthenticatedRevierCenterOwksIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedRouteWithChildren
+  '/homepage': typeof HomepageRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -427,8 +429,8 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/homepage': typeof HomepageRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -480,6 +482,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/homepage'
     | '/kiehn-systeme-login'
     | '/login'
     | '/revier-center'
@@ -529,6 +532,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/homepage'
     | '/kiehn-systeme-login'
     | '/login'
     | '/admin'
@@ -573,8 +577,8 @@ export interface FileRouteTypes {
     | '/revier-center/owks'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
+    | '/homepage'
     | '/kiehn-systeme-login'
     | '/login'
     | '/_authenticated/revier-center'
@@ -624,8 +628,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  HomepageRoute: typeof HomepageRoute
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
@@ -649,18 +653,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KiehnSystemeLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/homepage': {
+      id: '/homepage'
+      path: '/homepage'
+      fullPath: '/homepage'
+      preLoaderRoute: typeof HomepageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/superadmin': {
@@ -1147,8 +1151,8 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  HomepageRoute: HomepageRoute,
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
@@ -1158,3 +1162,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
