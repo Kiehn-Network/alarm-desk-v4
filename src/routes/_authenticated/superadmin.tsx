@@ -348,7 +348,44 @@ function SuperAdminPage() {
                     <div className="font-semibold">{d.name}</div>
                     <div className="text-xs text-muted-foreground">{d.slug} · {d.status}</div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 justify-end">
+                    <Button size="sm" variant="outline" title="Stats anzeigen" onClick={() => setStatsForDomain(d.id)}>
+                      <BarChart3 className="size-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" title="Daten exportieren (JSON)" onClick={async () => {
+                      try {
+                        toast.message("Export läuft…");
+                        const r = await exportFn({ data: { domain_id: d.id } });
+                        const blob = new Blob([JSON.stringify(r, null, 2)], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url; a.download = `domain-${d.slug}-${new Date().toISOString().slice(0,10)}.json`;
+                        a.click(); URL.revokeObjectURL(url);
+                        toast.success("Export geladen");
+                      } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+                    }}>
+                      <Download className="size-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" title="Domain klonen" onClick={async () => {
+                      const slug = prompt(`Slug der neuen Domain (Klon von ${d.slug})?`);
+                      if (!slug) return;
+                      const name = prompt("Anzeige-Name?", `${d.name} (Klon)`);
+                      if (!name) return;
+                      try {
+                        await cloneFn({ data: { source_id: d.id, new_slug: slug.trim().toLowerCase(), new_name: name } });
+                        toast.success("Domain geklont (Module übernommen)");
+                        invalidateAll();
+                      } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+                    }}>
+                      <Copy className="size-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" title={d.status === "archived" ? "Archivierung aufheben" : "Archivieren (Read-only)"}
+                      onClick={async () => {
+                        await archiveFn({ data: { id: d.id, archived: d.status !== "archived" } });
+                        invalidateAll();
+                      }}>
+                      <Archive className="size-4" />
+                    </Button>
                     <Button size="sm" variant="outline"
                       onClick={async () => { await setStatus({ data: { id: d.id, status: d.status === "active" ? "disabled" : "active" } }); invalidateAll(); }}>
                       {d.status === "active" ? "Deaktivieren" : "Aktivieren"}
