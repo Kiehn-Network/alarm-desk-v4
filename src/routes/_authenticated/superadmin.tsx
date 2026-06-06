@@ -1282,9 +1282,12 @@ function LicensesPanel({
                   <td className="p-3 tabular-nums">{l.max_users ?? <span className="text-muted-foreground">∞</span>}</td>
                   <td className="p-3 text-muted-foreground max-w-[220px] truncate" title={l.notes ?? ""}>{l.notes || "—"}</td>
                   <td className="p-3 text-right">
-                    {l.status === "active" ? (
-                      <Button size="sm" variant="ghost" onClick={() => onRevoke(l.id)}>Widerrufen</Button>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                    <div className="flex justify-end gap-1">
+                      {l.status === "active" && (
+                        <Button size="sm" variant="ghost" onClick={() => onRevoke(l.id)}>Widerrufen</Button>
+                      )}
+                      <Button size="sm" variant="outline" onClick={() => setEditLic(l)}>Bearbeiten</Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1296,6 +1299,17 @@ function LicensesPanel({
       <div className="text-xs text-muted-foreground px-1">
         Automatischer Versand der Auslauf-Erinnerungen täglich 09:00 UTC bei <b>14, 7</b> und <b>1 Tag</b> vor Ablauf.
       </div>
+
+      <EditLicenseDialog
+        license={editLic}
+        domains={domains}
+        onClose={() => setEditLic(null)}
+        onSave={async (patch) => {
+          if (!editLic) return;
+          await onUpdate(editLic.id, patch);
+          setEditLic(null);
+        }}
+      />
     </div>
   );
 }
