@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import logo from "@/assets/alarmdesk-logo.png";
+import heroImage from "@/assets/login-hero.jpg";
 
 type VersionInfo = {
   current_version: string;
@@ -47,7 +48,15 @@ function LoginPage() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       <div className="hidden lg:flex relative overflow-hidden" style={{ background: "var(--gradient-surface)" }}>
-        <div className="absolute inset-0 opacity-30" style={{
+        <img
+          src={heroImage}
+          alt="AlarmDesk Leitstelle"
+          className="absolute inset-0 w-full h-full object-cover opacity-40"
+        />
+        <div className="absolute inset-0" style={{
+          background: "linear-gradient(135deg, oklch(0.18 0.04 255 / 80%) 0%, oklch(0.22 0.06 240 / 60%) 100%)",
+        }} />
+        <div className="absolute inset-0 opacity-40" style={{
           backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.68 0.17 255 / 40%) 0, transparent 50%), radial-gradient(circle at 80% 80%, oklch(0.78 0.13 235 / 30%) 0, transparent 50%)",
         }} />
         <div className="relative z-10 p-12 flex flex-col justify-between w-full">
