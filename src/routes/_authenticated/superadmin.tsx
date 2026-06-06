@@ -2022,3 +2022,75 @@ function ModuleControl({
     </div>
   );
 }
+
+function ImpersonateDialog({ domain, onDone }: { domain: any; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [pin, setPin] = useState("");
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const startPin = useServerFn(startImpersonationWithPin);
+  const startForce = useServerFn(startImpersonation);
+  const handlePin = async () => {
+    setBusy(true);
+    try {
+      await startPin({ data: { domain_id: domain.id, pin } });
+      toast.success("Verbunden via Support-PIN");
+      setOpen(false); setPin(""); onDone();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+    finally { setBusy(false); }
+  };
+  const handleForce = async () => {
+    if (!confirm("Zwangsverbindung wird dem Domänen-Admin angezeigt. Fortfahren?")) return;
+    setBusy(true);
+    try {
+      await startForce({ data: { domain_id: domain.id, reason: reason || undefined } });
+      toast.success("Zwangsverbindung gestartet");
+      setOpen(false); setReason(""); onDone();
+    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+    finally { setBusy(false); }
+  };
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">Als Domain-Admin</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Verbinden mit „{domain.name}"</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-5">
+          <div className="space-y-2">
+            <Label>Support-PIN (vom Domänen-Admin)</Label>
+            <Input
+              inputMode="numeric"
+              maxLength={6}
+              placeholder="6-stelliger PIN"
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            />
+            <Button className="w-full" disabled={pin.length !== 6 || busy} onClick={handlePin}>
+              Mit PIN verbinden
+            </Button>
+          </div>
+          <div className="border-t pt-4 space-y-2">
+            <Label className="text-destructive flex items-center gap-2">
+              <ShieldAlert className="size-4" /> Zwangsverbindung
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Wird dem Domänen-Admin sichtbar angezeigt. Nur im Notfall verwenden.
+            </p>
+            <Textarea
+              placeholder="Grund (optional, wird dem Admin angezeigt)"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+            />
+            <Button variant="destructive" className="w-full" disabled={busy} onClick={handleForce}>
+              Zwangsverbindung starten
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
