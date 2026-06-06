@@ -444,6 +444,7 @@ function SuperAdminPage() {
                 <SideTab value="health" icon={Activity}>Health</SideTab>
                 <SideTab value="emails" icon={Mail}>E-Mails</SideTab>
                 <SideTab value="audit" icon={BarChart3}>Audit-Log</SideTab>
+                <SideTab value="tickets" icon={LifeBuoy}>Support-Tickets</SideTab>
                 <SideSection label="Plattform" />
                 <SideTab value="system" icon={RefreshCw}>System</SideTab>
                 <SideTab value="selfhost" icon={Building2}>Self-Hosting</SideTab>
