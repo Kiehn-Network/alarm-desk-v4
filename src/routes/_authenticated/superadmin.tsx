@@ -58,6 +58,69 @@ function NavDivider() {
   return <span className="mx-1 h-5 w-px bg-border/70 self-center" aria-hidden />;
 }
 
+const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }[] = [
+  { label: "Start", items: [
+    { value: "overview", label: "Übersicht" },
+    { value: "onboard", label: "Onboarding" },
+    { value: "search", label: "Suche" },
+  ]},
+  { label: "Mandanten", items: [
+    { value: "domains", label: "Domains" },
+    { value: "licenses", label: "Lizenzen" },
+    { value: "modules", label: "Module" },
+    { value: "users", label: "Nutzer" },
+  ]},
+  { label: "Betrieb", items: [
+    { value: "health", label: "Health" },
+    { value: "emails", label: "E-Mails" },
+    { value: "audit", label: "Audit-Log" },
+  ]},
+  { label: "Plattform", items: [
+    { value: "system", label: "System" },
+    { value: "selfhost", label: "Self-Hosting" },
+  ]},
+];
+
+function SideSection({ label }: { label: string }) {
+  return (
+    <div className="px-2 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground first:pt-1">
+      {label}
+    </div>
+  );
+}
+
+function SideTab({ value, icon: Icon, children }: { value: string; icon: any; children: React.ReactNode }) {
+  return (
+    <TabsTrigger
+      value={value}
+      className="justify-start gap-2 w-full data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none rounded-md px-3 py-2 text-sm"
+    >
+      <Icon className="size-4" />
+      <span className="truncate">{children}</span>
+    </TabsTrigger>
+  );
+}
+
+function SimpleNavSelect({ value, onValueChange }: { value: string; onValueChange: (v: string) => void }) {
+  return (
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {NAV_SECTIONS.map((sec) => (
+          <div key={sec.label}>
+            <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{sec.label}</div>
+            {sec.items.map((it) => (
+              <SelectItem key={it.value} value={it.value}>{it.label}</SelectItem>
+            ))}
+          </div>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 function SuperAdminPage() {
   const qc = useQueryClient();
   const listDomFn = useServerFn(listDomains);
