@@ -1,5 +1,4 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Shield, Radar, MapPin, FileText, Bell, Users, KeyRound, Activity,
   CheckCircle2, ArrowRight, Sparkles, Lock, Zap,
@@ -17,10 +16,10 @@ export const Route = createFileRoute("/homepage")({
       { name: "description", content: "AlarmDesk bündelt Einsatzleitung, Revier-Center, Notdienste und Abrechnung in einer modernen Plattform für Sicherheitsdienstleister." },
       { property: "og:title", content: "AlarmDesk — Einsatz- & Sicherheitsmanagement" },
       { property: "og:description", content: "Die zentrale Plattform für Wach- und Sicherheitsdienste: Einsätze, Revier, Notdienst, Abrechnung und mehr." },
-      { property: "og:url", content: "https://v4.alarmdesk-software.de/" },
+      { property: "og:url", content: "https://v4.alarmdesk-software.de/homepage" },
       { property: "og:type", content: "website" },
     ],
-    links: [{ rel: "canonical", href: "https://v4.alarmdesk-software.de/" }],
+    links: [{ rel: "canonical", href: "https://v4.alarmdesk-software.de/homepage" }],
   }),
   component: LandingPage,
 });
