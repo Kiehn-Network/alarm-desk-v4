@@ -128,13 +128,23 @@ export const updateLicense = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({
     id: z.string().uuid(),
+    domain_id: z.string().uuid().optional(),
+    status: z.enum(["active", "revoked", "expired"]).optional(),
     valid_until: z.string().datetime().nullable().optional(),
     max_users: z.number().int().positive().max(10000).nullable().optional(),
     notes: z.string().max(500).nullable().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSuper(context.userId);
-    const patch: { valid_until?: string | null; max_users?: number | null; notes?: string | null } = {};
+    const patch: {
+      domain_id?: string;
+      status?: "active" | "revoked" | "expired";
+      valid_until?: string | null;
+      max_users?: number | null;
+      notes?: string | null;
+    } = {};
+    if (data.domain_id !== undefined) patch.domain_id = data.domain_id;
+    if (data.status !== undefined) patch.status = data.status;
     if (data.valid_until !== undefined) patch.valid_until = data.valid_until;
     if (data.max_users !== undefined) patch.max_users = data.max_users;
     if (data.notes !== undefined) patch.notes = data.notes;
