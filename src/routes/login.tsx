@@ -4,17 +4,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import logo from "@/assets/alarmdesk-logo.png";
-import heroSunrise from "@/assets/login-hero-sunrise.jpg";
-import heroDay from "@/assets/login-hero-day.jpg";
-import heroSunset from "@/assets/login-hero-sunset.jpg";
-import heroNight from "@/assets/login-hero-night.jpg";
+import hero1 from "@/assets/login-hero-1.jpg";
+import hero2 from "@/assets/login-hero-2.jpg";
+import hero3 from "@/assets/login-hero-3.jpg";
+import hero4 from "@/assets/login-hero-4.jpg";
 
-function getTimeOfDayHero() {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 9) return heroSunrise;   // Sonnenaufgang
-  if (h >= 9 && h < 17) return heroDay;       // Tag
-  if (h >= 17 && h < 21) return heroSunset;   // Sonnenuntergang
-  return heroNight;                            // Nacht
+const HERO_IMAGES = [hero1, hero2, hero3, hero4];
+
+function getRotatingHero() {
+  // Wechsel alle 6 Stunden (4 Slots pro Tag), kombiniert mit Tag-Index für Variation
+  const now = new Date();
+  const slot = Math.floor(now.getHours() / 6);
+  const dayOfYear = Math.floor(
+    (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
+  );
+  return HERO_IMAGES[(dayOfYear * 4 + slot) % HERO_IMAGES.length];
 }
 
 type VersionInfo = {
@@ -36,7 +40,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<VersionInfo | null>(null);
-  const heroImage = getTimeOfDayHero();
+  const heroImage = getRotatingHero();
 
   useEffect(() => {
     fetch("/api/public/version").then((r) => r.json()).then(setInfo).catch(() => {});
