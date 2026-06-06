@@ -721,6 +721,18 @@ function SuperAdminPage() {
         <TabsContent value="selfhost" className="space-y-4">
           <SelfHostGuide />
         </TabsContent>
+
+        <TabsContent value="health" className="space-y-4">
+          <HealthPanel />
+        </TabsContent>
+
+        <TabsContent value="emails" className="space-y-4">
+          <EmailQueuePanel />
+        </TabsContent>
+
+        <TabsContent value="audit" className="space-y-4">
+          <AuditLogPanel />
+        </TabsContent>
       </Tabs>
     </div>
   );
