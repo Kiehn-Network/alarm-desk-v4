@@ -93,8 +93,23 @@ function SuperAdminPage() {
   const delUserFn = useServerFn(deleteTenantUser);
   const bulkFn = useServerFn(bulkImportUsers);
 
+  const onboardFn = useServerFn(onboardDomain);
+  const cloneFn = useServerFn(cloneDomain);
+  const extendFn = useServerFn(extendLicenses);
+  const archiveFn = useServerFn(setDomainArchived);
+  const expiryFn = useServerFn(sendLicenseExpiryNotices);
+  const exportFn = useServerFn(exportDomainData);
+
   const [newSlug, setNewSlug] = useState("");
   const [newName, setNewName] = useState("");
+
+  // Bulk-License-Extend
+  const [selectedLics, setSelectedLics] = useState<Record<string, boolean>>({});
+  const [extendDays, setExtendDays] = useState<number>(365);
+  const selectedIds = Object.keys(selectedLics).filter((k) => selectedLics[k]);
+
+  // Stats dialog
+  const [statsForDomain, setStatsForDomain] = useState<string | null>(null);
 
   // Search
   const [domainSearch, setDomainSearch] = useState("");
