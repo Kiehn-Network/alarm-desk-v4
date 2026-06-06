@@ -90,6 +90,9 @@ function AdminPage() {
 
       <StatsCards />
 
+      <ForcedImpersonationAlert />
+      <SupportPinCard />
+
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
           <TabsTrigger value="users"><Users className="size-4 mr-2" />Benutzer</TabsTrigger>
