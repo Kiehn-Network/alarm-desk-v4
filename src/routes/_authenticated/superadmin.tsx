@@ -316,21 +316,24 @@ function SuperAdminPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-screen-2xl mx-auto">
-      <div className="sticky top-0 z-20 -mx-6 px-6 py-4 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border/60">
+    <div className="superadmin-theme p-6 space-y-6 max-w-screen-2xl mx-auto">
+      <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-2 px-6 py-5 bg-sidebar text-sidebar-foreground border-b-2 border-primary/60 shadow-lg">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-              <Crown className="size-5 text-primary" />
+            <div className="size-11 rounded-xl bg-primary/15 border border-primary/40 flex items-center justify-center">
+              <Crown className="size-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold leading-tight">SuperAdmin</h1>
-              <p className="text-muted-foreground text-xs">Mandanten · Lizenzen · Module · Nutzer · Betrieb</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary px-1.5 py-0.5 rounded bg-primary/15 border border-primary/30">SuperAdmin</span>
+                <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">Plattform-Konsole</span>
+              </div>
+              <h1 className="text-lg font-semibold leading-tight">Mandanten · Lizenzen · Module · Nutzer · Betrieb</h1>
             </div>
           </div>
           {imp && (
-            <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-warning/10 border border-warning/30">
-              <span className="text-xs">Impersonation: <b>{imp.name}</b></span>
+            <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-warning/20 border border-warning/50">
+              <span className="text-xs text-sidebar-foreground">Impersonation: <b>{imp.name}</b></span>
               <Button size="sm" variant="outline" onClick={async () => { await stopImp({}); invalidateAll(); }}>Beenden</Button>
             </div>
           )}
