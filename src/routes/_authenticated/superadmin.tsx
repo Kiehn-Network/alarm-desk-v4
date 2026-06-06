@@ -981,6 +981,7 @@ function KpiCard({ icon, label, value, sub, warn, tone = "primary" }: {
 }
 
 type LicensePayload = { valid_until: string | null; max_users: number | null; notes: string | null };
+type LicenseEditPayload = LicensePayload & { domain_id?: string; status?: "active" | "revoked" | "expired" };
 
 function toIsoOrNull(d: string): string | null {
   if (!d) return null;
