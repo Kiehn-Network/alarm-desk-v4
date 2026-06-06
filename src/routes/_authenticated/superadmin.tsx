@@ -14,6 +14,7 @@ import {
   listAppVersions, createAppVersion, deleteAppVersion,
   sendPasswordReset, setUserDisabled, deleteTenantUser, bulkImportUsers,
   getSuperAdminStats,
+  listAuditLog, getHealthSnapshot, listEmailLog, retryDlqEmail,
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
@@ -28,7 +29,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import {
   Activity, Building2, Crown, Globe2, KeyRound, LayoutDashboard,
-  Loader2, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
+  Loader2, Mail, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
