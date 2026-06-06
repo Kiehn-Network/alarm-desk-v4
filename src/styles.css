@@ -691,258 +691,193 @@ html.light { color-scheme: light; }
 }
 
 /* ============================================================
-   SUPERADMIN THEME — bright, soft, rounded "console" look
-   Inspired by modern dashboard UIs: dark rounded sidebar with
-   lime accent, airy off-white canvas, big rounded white cards.
-   Scoped via `.superadmin-theme` so the rest of the app is
-   unaffected. The sidebar gets its own scope on the nav root.
+   SUPERADMIN — modern, professional dashboard look.
+   Scoped via `.superadmin-theme` (canvas + cards + inputs) and
+   `.superadmin-sidebar` (nav rail). Built from scratch around a
+   refined indigo accent on an airy neutral canvas with crisp
+   cards, subtle elevation and a dark slate sidebar.
    ============================================================ */
 .superadmin-theme,
 .superadmin-sidebar {
-  --radius: 0.5rem;
-  --background: oklch(0.985 0.005 150);
-  --foreground: oklch(0.18 0.02 250);
+  --radius: 0.625rem;
+
+  /* Neutral canvas */
+  --background: oklch(0.985 0.004 250);
+  --foreground: oklch(0.20 0.02 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 250);
+  --card-foreground: oklch(0.20 0.02 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 250);
-  --primary: oklch(0.86 0.20 142);
-  --primary-foreground: oklch(0.18 0.05 150);
-  --secondary: oklch(0.96 0.01 150);
-  --secondary-foreground: oklch(0.22 0.02 250);
-  --muted: oklch(0.96 0.008 250);
-  --muted-foreground: oklch(0.50 0.015 250);
-  --accent: oklch(0.94 0.04 142);
-  --accent-foreground: oklch(0.22 0.04 150);
-  --border: oklch(0.92 0.008 250);
-  --input: oklch(0.96 0.008 250);
-  --ring: oklch(0.86 0.20 142 / 50%);
-  --sidebar: oklch(0.18 0.01 250);
-  --sidebar-foreground: oklch(0.96 0.005 250);
-  --sidebar-accent: oklch(0.86 0.20 142);
-  --sidebar-accent-foreground: oklch(0.18 0.05 150);
-  --sidebar-border: oklch(0.30 0.01 250 / 50%);
-  --shadow-card: 0 1px 2px oklch(0 0 0 / 3%), 0 10px 30px -16px oklch(0 0 0 / 10%);
+  --popover-foreground: oklch(0.20 0.02 260);
+
+  /* Indigo accent */
+  --primary: oklch(0.58 0.18 265);
+  --primary-foreground: oklch(0.99 0.005 265);
+  --secondary: oklch(0.96 0.01 260);
+  --secondary-foreground: oklch(0.24 0.03 260);
+  --muted: oklch(0.96 0.008 255);
+  --muted-foreground: oklch(0.50 0.02 260);
+  --accent: oklch(0.94 0.04 265);
+  --accent-foreground: oklch(0.24 0.05 265);
+
+  --border: oklch(0.92 0.008 260);
+  --input: oklch(0.96 0.008 260);
+  --ring: oklch(0.58 0.18 265 / 45%);
+
+  /* Sidebar — deep slate */
+  --sidebar: oklch(0.20 0.025 265);
+  --sidebar-foreground: oklch(0.92 0.01 260);
+  --sidebar-accent: oklch(0.58 0.18 265);
+  --sidebar-accent-foreground: oklch(0.99 0.005 265);
+  --sidebar-border: oklch(0.30 0.03 265 / 50%);
+
+  --sa-elev-1: 0 1px 2px oklch(0.20 0.04 265 / 5%);
+  --sa-elev-2: 0 1px 2px oklch(0.20 0.04 265 / 4%),
+               0 8px 24px -16px oklch(0.20 0.04 265 / 20%);
+  --sa-elev-3: 0 1px 2px oklch(0.20 0.04 265 / 4%),
+               0 18px 40px -22px oklch(0.20 0.04 265 / 28%);
 }
 
-/* Soft, airy canvas */
+/* Canvas */
 .superadmin-theme {
   background:
-    radial-gradient(1200px 600px at 10% -10%, oklch(0.95 0.06 142 / 40%), transparent 60%),
-    radial-gradient(900px 500px at 110% 10%, oklch(0.94 0.05 220 / 30%), transparent 60%),
+    radial-gradient(1000px 500px at 0% -10%, oklch(0.94 0.05 265 / 35%), transparent 60%),
+    radial-gradient(900px 500px at 110% 0%, oklch(0.94 0.04 200 / 25%), transparent 60%),
     var(--background);
   color: var(--foreground);
 }
 
-/* Subtle rounded cards */
+/* Cards — crisp, low-contrast border, soft elevation */
 .superadmin-theme [data-slot="card"] {
-  border-radius: 0.625rem;
-  box-shadow: var(--shadow-card);
-  border-color: oklch(0.92 0.008 250);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--sa-elev-2);
+  transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+}
+.superadmin-theme [data-slot="card"]:hover {
+  box-shadow: var(--sa-elev-3);
+  border-color: oklch(0.88 0.02 265);
+}
+.superadmin-theme [data-slot="card-title"] {
+  letter-spacing: -0.01em;
+  font-weight: 600;
 }
 
-/* Sidebar rail: floating dark card with rounded corners */
+/* Header band */
+.superadmin-theme .sa-header {
+  border-radius: var(--radius);
+  background:
+    radial-gradient(600px 200px at 100% 0%, oklch(0.40 0.10 265 / 60%), transparent 60%),
+    linear-gradient(135deg, oklch(0.22 0.03 265), oklch(0.18 0.02 260));
+  color: oklch(0.97 0.005 260);
+  border: 1px solid oklch(0.30 0.03 265 / 60%);
+  box-shadow: var(--sa-elev-3);
+}
+.superadmin-theme .sa-header .text-sidebar-foreground\/60 {
+  color: oklch(1 0 0 / 70%) !important;
+}
+.superadmin-theme .sa-header [data-slot="select-trigger"],
+.superadmin-theme .sa-header [data-slot="input"] {
+  background: oklch(1 0 0 / 10%);
+  border-color: oklch(1 0 0 / 18%);
+  color: oklch(0.98 0.005 260);
+}
+.superadmin-theme .sa-header [data-slot="select-trigger"]::placeholder,
+.superadmin-theme .sa-header [data-slot="input"]::placeholder {
+  color: oklch(1 0 0 / 60%);
+}
+
+/* Form controls */
+.superadmin-theme [data-slot="input"],
+.superadmin-theme [data-slot="select-trigger"],
+.superadmin-theme [data-slot="textarea"] {
+  border-radius: calc(var(--radius) - 0.25rem);
+  background: var(--card);
+  border-color: var(--border);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.superadmin-theme [data-slot="input"]:focus-visible,
+.superadmin-theme [data-slot="select-trigger"]:focus-visible,
+.superadmin-theme [data-slot="textarea"]:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+/* Buttons */
+.superadmin-theme [data-slot="button"] {
+  border-radius: calc(var(--radius) - 0.125rem);
+  font-weight: 500;
+}
+
+/* Tabs — pill row */
+.superadmin-theme [data-slot="tabs-list"] {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 0.125rem);
+  padding: 0.25rem;
+}
+.superadmin-theme [data-slot="tabs-trigger"] {
+  border-radius: calc(var(--radius) - 0.125rem);
+  color: var(--muted-foreground);
+}
+.superadmin-theme [data-slot="tabs-trigger"][data-state="active"] {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--sa-elev-1);
+}
+
+/* Tables — quiet rows, readable headers */
+.superadmin-theme table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+.superadmin-theme thead th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: oklch(0.97 0.006 260);
+  border-bottom: 1px solid var(--border);
+}
+.superadmin-theme tbody tr {
+  transition: background-color .15s ease;
+}
+.superadmin-theme tbody tr:hover {
+  background: oklch(0.97 0.01 265);
+}
+.superadmin-theme tbody td {
+  border-bottom: 1px solid oklch(0.94 0.006 260);
+}
+.superadmin-theme tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Sidebar rail — dark slate panel */
 .superadmin-sidebar {
   background: transparent !important;
 }
 .superadmin-sidebar > nav,
 .superadmin-sidebar > .sa-rail {
-  background: var(--sidebar);
-  color: var(--sidebar-foreground);
-}
-
-/* Active nav pill — chunky lime, dark text */
-.superadmin-sidebar a[data-active="true"],
-.superadmin-sidebar .sa-nav-active {
-  background: var(--sidebar-accent) !important;
-  color: var(--sidebar-accent-foreground) !important;
-  font-weight: 600;
-  box-shadow: 0 6px 18px -8px oklch(0.86 0.20 142 / 55%);
-}
-
-/* ---------- Theme: TailAdmin (slate sidebar + indigo accent) ---------- */
-.superadmin-theme.theme-tailadmin,
-.superadmin-sidebar.theme-tailadmin {
-  --primary: oklch(0.58 0.20 265);
-  --primary-foreground: oklch(0.99 0.005 265);
-  --ring: oklch(0.58 0.20 265 / 45%);
-  --accent: oklch(0.94 0.04 265);
-  --accent-foreground: oklch(0.22 0.04 265);
-  --sidebar: oklch(0.22 0.025 265);
-  --sidebar-foreground: oklch(0.90 0.01 265);
-  --sidebar-accent: oklch(0.30 0.06 265);
-  --sidebar-accent-foreground: oklch(0.98 0.01 265);
-  --sidebar-border: oklch(0.34 0.03 265 / 50%);
-}
-.superadmin-theme.theme-tailadmin {
-  background:
-    radial-gradient(900px 500px at 100% -10%, oklch(0.94 0.04 265 / 50%), transparent 60%),
-    var(--background);
-}
-.superadmin-sidebar.theme-tailadmin a[data-active="true"] {
-  box-shadow: 0 6px 18px -8px oklch(0.58 0.20 265 / 55%);
-}
-
-/* ---------- Theme: Hope UI (bold blue/purple + gradient) ---------- */
-.superadmin-theme.theme-hope,
-.superadmin-sidebar.theme-hope {
-  --primary: oklch(0.55 0.22 275);
-  --primary-foreground: oklch(0.99 0.005 275);
-  --ring: oklch(0.55 0.22 275 / 45%);
-  --accent: oklch(0.93 0.05 285);
-  --accent-foreground: oklch(0.22 0.06 285);
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.22 0.03 275);
-  --sidebar-accent: oklch(0.55 0.22 275);
-  --sidebar-accent-foreground: oklch(0.99 0.005 275);
-  --sidebar-border: oklch(0.90 0.01 275 / 70%);
-}
-.superadmin-theme.theme-hope {
-  background:
-    radial-gradient(1200px 600px at -10% -10%, oklch(0.92 0.08 275 / 55%), transparent 60%),
-    radial-gradient(900px 500px at 110% 0%, oklch(0.92 0.07 320 / 45%), transparent 60%),
-    var(--background);
-}
-.superadmin-sidebar.theme-hope > nav,
-.superadmin-sidebar.theme-hope > .sa-rail {
-  background: var(--sidebar);
+  background: linear-gradient(180deg, oklch(0.22 0.03 265), oklch(0.18 0.025 260));
   color: var(--sidebar-foreground);
   border-right: 1px solid var(--sidebar-border);
 }
-.superadmin-sidebar.theme-hope a[data-active="true"] {
-  background: linear-gradient(135deg, oklch(0.55 0.22 275), oklch(0.55 0.22 320)) !important;
-  color: white !important;
-  box-shadow: 0 8px 20px -8px oklch(0.55 0.22 275 / 55%);
+.superadmin-sidebar a,
+.superadmin-sidebar button {
+  border-radius: calc(var(--radius) - 0.125rem);
+  transition: background-color .15s ease, color .15s ease;
 }
-
-/* ============================================================
-   Per-theme "windows" — cards, header, inputs, tabs
-   ============================================================ */
-
-/* Lime — restrained rounding, airy */
-.superadmin-theme [data-slot="card"] {
-  background: var(--card);
-  border: 1px solid oklch(0.92 0.02 142);
-  box-shadow: 0 1px 0 oklch(1 0 0 / 60%) inset, 0 10px 30px -16px oklch(0.30 0.10 142 / 18%);
+.superadmin-sidebar a:hover,
+.superadmin-sidebar button:hover {
+  background: oklch(1 0 0 / 6%);
+  color: oklch(0.99 0.005 260);
 }
-.superadmin-theme .sa-header {
-  background: linear-gradient(135deg, oklch(0.20 0.02 250), oklch(0.18 0.02 250));
-}
-
-/* TailAdmin — sharper, lower radius, crisp borders, subtle shadow */
-.superadmin-theme.theme-tailadmin {
-  --radius: 0.625rem;
-}
-.superadmin-theme.theme-tailadmin [data-slot="card"] {
-  border-radius: 0.875rem;
-  background: var(--card);
-  border: 1px solid oklch(0.90 0.01 265);
-  box-shadow: 0 1px 2px oklch(0.30 0.05 265 / 4%), 0 8px 24px -16px oklch(0.30 0.05 265 / 18%);
-}
-.superadmin-theme.theme-tailadmin .sa-header {
-  border-radius: 0.875rem;
-  background: linear-gradient(180deg, oklch(0.24 0.025 265), oklch(0.20 0.025 265));
-  border: 1px solid oklch(0.34 0.03 265 / 50%);
-}
-.superadmin-theme.theme-tailadmin [data-slot="card-title"] {
-  letter-spacing: -0.01em;
-}
-
-/* Hope UI — gradient header, glowy cards, blue tint */
-.superadmin-theme.theme-hope {
-  --radius: 1rem;
-}
-.superadmin-theme.theme-hope [data-slot="card"] {
-  border-radius: 1.25rem;
-  background:
-    linear-gradient(180deg, oklch(1 0 0), oklch(0.985 0.01 275));
-  border: 1px solid oklch(0.92 0.02 275);
-  box-shadow:
-    0 1px 0 oklch(1 0 0 / 80%) inset,
-    0 14px 40px -20px oklch(0.45 0.20 275 / 28%);
-}
-.superadmin-theme.theme-hope .sa-header {
-  border-radius: 1.5rem;
-  background:
-    radial-gradient(600px 200px at 90% 10%, oklch(0.65 0.20 320 / 55%), transparent 60%),
-    linear-gradient(135deg, oklch(0.50 0.22 275), oklch(0.45 0.20 260));
-  color: oklch(0.99 0.005 275);
-  border: none;
-  box-shadow: 0 20px 50px -20px oklch(0.45 0.20 275 / 45%);
-}
-.superadmin-theme.theme-hope .sa-header .text-sidebar-foreground\/60 {
-  color: oklch(1 0 0 / 75%) !important;
-}
-.superadmin-theme.theme-hope .sa-header [data-slot="select-trigger"] {
-  background: oklch(1 0 0 / 15%);
-  border-color: oklch(1 0 0 / 25%);
-  color: oklch(0.99 0.005 275);
-}
-
-/* Inputs match per-theme radius */
-.superadmin-theme [data-slot="input"],
-.superadmin-theme [data-slot="select-trigger"],
-.superadmin-theme [data-slot="textarea"] {
-  border-radius: calc(var(--radius) - 0.25rem);
-}
-
-/* Buttons — subtle theme shape */
-.superadmin-theme.theme-tailadmin [data-slot="button"] {
-  border-radius: 0.5rem;
-}
-.superadmin-theme.theme-hope [data-slot="button"] {
-  border-radius: 0.75rem;
-}
-
-/* ---------- Theme: Modern (inspired by ModernAdmin dashboard) ---------- */
-.superadmin-theme.theme-modern,
-.superadmin-sidebar.theme-modern {
-  --radius: 0.5rem;
-  --background: oklch(0.985 0.005 250);
-  --foreground: oklch(0.22 0.03 250);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.03 250);
-  --primary: oklch(0.55 0.17 255);
-  --primary-foreground: oklch(0.99 0.005 255);
-  --ring: oklch(0.55 0.17 255 / 45%);
-  --accent: oklch(0.93 0.04 255);
-  --accent-foreground: oklch(0.22 0.04 255);
-  --muted: oklch(0.96 0.008 250);
-  --muted-foreground: oklch(0.48 0.02 250);
-  --border: oklch(0.90 0.01 250);
-  --input: oklch(0.96 0.008 250);
-  --sidebar: oklch(0.22 0.04 255);
-  --sidebar-foreground: oklch(0.92 0.02 255);
-  --sidebar-accent: oklch(0.55 0.17 255);
-  --sidebar-accent-foreground: oklch(0.99 0.005 255);
-  --sidebar-border: oklch(0.30 0.04 255 / 50%);
-}
-.superadmin-theme.theme-modern {
-  background: var(--background);
-}
-.superadmin-theme.theme-modern [data-slot="card"] {
-  border-radius: 0.625rem;
-  background: var(--card);
-  border: 1px solid oklch(0.92 0.008 250);
-  box-shadow: 0 1px 2px oklch(0.20 0.04 255 / 4%), 0 6px 18px -14px oklch(0.20 0.04 255 / 18%);
-}
-.superadmin-theme.theme-modern .sa-header {
-  border-radius: 0.625rem;
-  background: var(--card);
-  color: var(--foreground);
-  border: 1px solid oklch(0.92 0.008 250);
-  box-shadow: 0 1px 2px oklch(0.20 0.04 255 / 4%);
-}
-.superadmin-theme.theme-modern .sa-header .text-sidebar-foreground\/60 {
-  color: var(--muted-foreground) !important;
-}
-/* Sidebar: dark slate-blue with thin left accent on active item */
-.superadmin-sidebar.theme-modern a[data-active="true"] {
-  background: oklch(0.30 0.06 255) !important;
-  color: oklch(0.99 0.005 255) !important;
-  box-shadow: inset 3px 0 0 0 oklch(0.65 0.18 255);
-  border-radius: 0.375rem;
-}
-.superadmin-theme.theme-modern [data-slot="button"] {
-  border-radius: 0.375rem;
+.superadmin-sidebar a[data-active="true"],
+.superadmin-sidebar .sa-nav-active {
+  background: linear-gradient(135deg, var(--primary), oklch(0.50 0.20 285)) !important;
+  color: var(--sidebar-accent-foreground) !important;
+  font-weight: 600;
+  box-shadow: 0 8px 20px -10px oklch(0.50 0.22 275 / 60%);
 }
