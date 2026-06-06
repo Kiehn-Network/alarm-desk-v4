@@ -402,6 +402,47 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="licenses" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><CalendarClock className="size-4" /> Bulk-Verlängerung &amp; Erinnerungen</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="text-xs text-muted-foreground">
+                {selectedIds.length} Lizenz(en) ausgewählt. Verlängert ab größerem von <em>heute</em> oder bestehendem Ablaufdatum.
+              </div>
+              <div className="flex flex-wrap items-end gap-2">
+                <div>
+                  <Label className="text-xs">Tage</Label>
+                  <Input type="number" min={1} max={3650} className="w-28" value={extendDays}
+                    onChange={(e) => setExtendDays(Math.max(1, parseInt(e.target.value || "0", 10) || 1))} />
+                </div>
+                {[30, 90, 365].map((d) => (
+                  <Button key={d} size="sm" variant="outline" onClick={() => setExtendDays(d)}>{d}T</Button>
+                ))}
+                <Button size="sm" disabled={selectedIds.length === 0} onClick={async () => {
+                  try {
+                    const r = await extendFn({ data: { ids: selectedIds, days: extendDays } });
+                    toast.success(`${r.updated} Lizenz(en) verlängert um ${extendDays} Tage`);
+                    setSelectedLics({});
+                    invalidateAll();
+                  } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+                }}>Auswahl verlängern</Button>
+                <Button size="sm" variant="ghost" onClick={() => setSelectedLics({})} disabled={selectedIds.length === 0}>
+                  Auswahl löschen
+                </Button>
+                <div className="flex-1" />
+                <Button size="sm" variant="outline" onClick={async () => {
+                  try {
+                    const r = await expiryFn({});
+                    toast.success(`Erinnerungen geprüft: ${r.checked} Lizenzen, ${r.sent} Mails eingereiht`);
+                  } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+                }}>Erinnerungen jetzt prüfen</Button>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Automatischer Versand täglich um 09:00 UTC: bei <b>14, 7</b> und <b>1 Tag</b> vor Ablauf an alle Domain-Admins.
+              </div>
+            </CardContent>
+          </Card>
           {domains.map((d: any) => {
             const dLic = licenses.filter((l: any) => l.domain_id === d.id);
             return (
@@ -421,6 +462,8 @@ function SuperAdminPage() {
                     <LicenseRow
                       key={l.id}
                       license={l}
+                      selected={!!selectedLics[l.id]}
+                      onSelect={(v) => setSelectedLics((s) => ({ ...s, [l.id]: v }))}
                       onUpdate={async (payload) => {
                         await updateLic({ data: { id: l.id, ...payload } });
                         invalidateAll(); toast.success("Lizenz aktualisiert");
