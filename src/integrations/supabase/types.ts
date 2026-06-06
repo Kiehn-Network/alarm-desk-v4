@@ -624,6 +624,47 @@ export type Database = {
           },
         ]
       }
+      dienstplaene: {
+        Row: {
+          created_at: string
+          domain_id: string
+          file_path: string
+          file_size: number | null
+          id: string
+          title: string
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          title: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          title?: string
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dienstplaene_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_modules: {
         Row: {
           created_at: string
