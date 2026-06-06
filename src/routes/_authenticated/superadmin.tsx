@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useNavigate } from "@tanstack/react-router";
 import { useRole } from "@/hooks/use-role";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listDomains, createDomain, setDomainStatus,
@@ -981,6 +981,7 @@ function KpiCard({ icon, label, value, sub, warn, tone = "primary" }: {
 }
 
 type LicensePayload = { valid_until: string | null; max_users: number | null; notes: string | null };
+type LicenseEditPayload = LicensePayload & { domain_id?: string; status?: "active" | "revoked" | "expired" };
 
 function toIsoOrNull(d: string): string | null {
   if (!d) return null;
@@ -1112,6 +1113,101 @@ function NewLicenseDialog({ domains, defaultDomain, onCreate }: {
   );
 }
 
+function EditLicenseDialog({
+  license, domains, onClose, onSave,
+}: {
+  license: any | null;
+  domains: any[];
+  onClose: () => void;
+  onSave: (patch: Partial<LicenseEditPayload>) => Promise<void>;
+}) {
+  const [domainId, setDomainId] = useState<string>("");
+  const [status, setStatus] = useState<"active" | "revoked" | "expired">("active");
+  const [date, setDate] = useState("");
+  const [maxUsers, setMaxUsers] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  // Reset form when a new license is opened
+  useEffect(() => {
+    if (license) {
+      setDomainId(license.domain_id ?? "");
+      setStatus((license.status as any) ?? "active");
+      setDate(isoToDateInput(license.valid_until));
+      setMaxUsers(license.max_users != null ? String(license.max_users) : "");
+      setNotes(license.notes ?? "");
+    }
+  }, [license?.id]);
+
+  const open = !!license;
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Lizenz bearbeiten</DialogTitle>
+        </DialogHeader>
+        {license && (
+          <div className="space-y-3">
+            <div className="text-xs text-muted-foreground">
+              Key: <code className="bg-muted px-1.5 py-0.5 rounded">{license.license_key}</code>
+            </div>
+            <div>
+              <Label className="text-xs">Mandant</Label>
+              <Select value={domainId} onValueChange={setDomainId}>
+                <SelectTrigger><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
+                <SelectContent>
+                  {domains.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Status</Label>
+                <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Aktiv</SelectItem>
+                    <SelectItem value="revoked">Widerrufen</SelectItem>
+                    <SelectItem value="expired">Abgelaufen</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Gültig bis</Label>
+                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Max. Nutzer</Label>
+              <Input type="number" min={1} value={maxUsers} onChange={(e) => setMaxUsers(e.target.value)} placeholder="∞ (unbegrenzt)" />
+            </div>
+            <div>
+              <Label className="text-xs">Notiz</Label>
+              <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="optional" rows={3} />
+            </div>
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Abbrechen</Button>
+          <Button disabled={busy || !domainId} onClick={async () => {
+            setBusy(true);
+            try {
+              await onSave({
+                domain_id: domainId,
+                status,
+                valid_until: toIsoOrNull(date),
+                max_users: maxUsers ? Number(maxUsers) : null,
+                notes: notes || null,
+              });
+            } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+            finally { setBusy(false); }
+          }}>Speichern</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function LicensesPanel({
   domains, licenses, selectedLics, setSelectedLics, extendDays, setExtendDays,
   onCreate, onUpdate, onRevoke, onExtend, onExpiryRun,
@@ -1123,7 +1219,7 @@ function LicensesPanel({
   extendDays: number;
   setExtendDays: (n: number) => void;
   onCreate: (domain_id: string, p: LicensePayload) => Promise<void>;
-  onUpdate: (id: string, p: Partial<LicensePayload>) => Promise<void>;
+  onUpdate: (id: string, p: Partial<LicenseEditPayload>) => Promise<void>;
   onRevoke: (id: string) => Promise<void>;
   onExtend: (ids: string[], days: number) => Promise<void>;
   onExpiryRun: () => Promise<void>;
@@ -1132,6 +1228,7 @@ function LicensesPanel({
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [onlyExpiring, setOnlyExpiring] = useState(false);
+  const [editLic, setEditLic] = useState<any | null>(null);
 
   const domMap = useMemo(() => Object.fromEntries(domains.map((d) => [d.id, d])), [domains]);
 
@@ -1280,9 +1377,12 @@ function LicensesPanel({
                   <td className="p-3 tabular-nums">{l.max_users ?? <span className="text-muted-foreground">∞</span>}</td>
                   <td className="p-3 text-muted-foreground max-w-[220px] truncate" title={l.notes ?? ""}>{l.notes || "—"}</td>
                   <td className="p-3 text-right">
-                    {l.status === "active" ? (
-                      <Button size="sm" variant="ghost" onClick={() => onRevoke(l.id)}>Widerrufen</Button>
-                    ) : <span className="text-xs text-muted-foreground">—</span>}
+                    <div className="flex justify-end gap-1">
+                      {l.status === "active" && (
+                        <Button size="sm" variant="ghost" onClick={() => onRevoke(l.id)}>Widerrufen</Button>
+                      )}
+                      <Button size="sm" variant="outline" onClick={() => setEditLic(l)}>Bearbeiten</Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1294,6 +1394,17 @@ function LicensesPanel({
       <div className="text-xs text-muted-foreground px-1">
         Automatischer Versand der Auslauf-Erinnerungen täglich 09:00 UTC bei <b>14, 7</b> und <b>1 Tag</b> vor Ablauf.
       </div>
+
+      <EditLicenseDialog
+        license={editLic}
+        domains={domains}
+        onClose={() => setEditLic(null)}
+        onSave={async (patch) => {
+          if (!editLic) return;
+          await onUpdate(editLic.id, patch);
+          setEditLic(null);
+        }}
+      />
     </div>
   );
 }
