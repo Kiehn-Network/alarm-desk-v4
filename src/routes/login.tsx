@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import logo from "@/assets/alarmdesk-logo.png";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { Mail, Lock, ArrowRight, ArrowLeft, CheckCircle2 } from "lucide-react";
 import hero1 from "@/assets/login-hero-1.jpg";
 import hero2 from "@/assets/login-hero-2.jpg";
 import hero3 from "@/assets/login-hero-3.jpg";
@@ -36,6 +36,8 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<VersionInfo | null>(null);
   const [heroImage] = useState(getRandomHero);
+  const [mode, setMode] = useState<"login" | "forgot">("login");
+  const [resetSent, setResetSent] = useState(false);
 
   useEffect(() => {
     fetch("/api/public/version").then((r) => r.json()).then(setInfo).catch(() => {});
@@ -51,6 +53,23 @@ function LoginPage() {
       navigate({ to: "/dashboard" });
     } catch (err: any) {
       toast.error(err.message ?? "Fehler beim Anmelden");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitForgot = async (e: FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setResetSent(true);
+      toast.success("E-Mail wurde versendet");
+    } catch (err: any) {
+      toast.error(err.message ?? "Fehler beim Senden");
     } finally {
       setLoading(false);
     }
@@ -122,10 +141,77 @@ function LoginPage() {
 
           <div className="bg-card border border-border rounded-2xl p-8 md:p-10 relative" style={{ boxShadow: "var(--shadow-card)" }}>
             <div className="mb-10">
-              <h2 className="text-3xl font-bold tracking-tight">Anmelden</h2>
-              <p className="text-muted-foreground mt-2">Willkommen zurück im Dashboard</p>
+              <h2 className="text-3xl font-bold tracking-tight">
+                {mode === "login" ? "Anmelden" : resetSent ? "E-Mail versendet" : "Passwort vergessen"}
+              </h2>
+              <p className="text-muted-foreground mt-2">
+                {mode === "login"
+                  ? "Willkommen zurück im Dashboard"
+                  : resetSent
+                    ? "Prüfe dein Postfach für den Reset-Link."
+                    : "Wir senden dir einen Link zum Zurücksetzen."}
+              </p>
             </div>
 
+            {mode === "forgot" && resetSent ? (
+              <div className="space-y-6">
+                <div className="flex items-start gap-3 p-4 rounded-xl bg-success/10 border border-success/20">
+                  <CheckCircle2 className="size-5 text-success shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-foreground">Link gesendet an</p>
+                    <p className="text-muted-foreground break-all">{email}</p>
+                    <p className="text-muted-foreground mt-2 text-xs">
+                      Der Link ist 60 Minuten gültig. Schaue auch im Spam-Ordner nach.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setMode("login"); setResetSent(false); }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-border text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  <ArrowLeft className="size-4" /> Zurück zur Anmeldung
+                </button>
+              </div>
+            ) : mode === "forgot" ? (
+              <form onSubmit={submitForgot} className="space-y-6">
+                <div className="space-y-2.5">
+                  <label className="block text-[13px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">E-Mail</label>
+                  <div className="relative">
+                    <Mail className="absolute inset-y-0 left-4 my-auto size-[18px] text-muted-foreground pointer-events-none" />
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="nutzer@organisation.de"
+                      className="w-full bg-input border border-border rounded-xl py-4 pl-12 pr-4 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full group relative flex items-center justify-center py-4 px-6 rounded-xl text-primary-foreground font-bold transition-all overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ boxShadow: "var(--shadow-glow)" }}
+                >
+                  <div className="absolute inset-0 transition-transform group-hover:scale-105" style={{ background: "var(--gradient-primary)" }} />
+                  <span className="relative flex items-center gap-2">
+                    {loading ? "Wird gesendet…" : "Reset-Link senden"}
+                    {!loading && <ArrowRight className="size-[18px] group-hover:translate-x-0.5 transition-transform" />}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMode("login")}
+                  className="w-full flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft className="size-4" /> Zurück zur Anmeldung
+                </button>
+              </form>
+            ) : (
             <form onSubmit={submit} className="space-y-6">
               <div className="space-y-2.5">
                 <label className="block text-[13px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">E-Mail</label>
@@ -143,7 +229,16 @@ function LoginPage() {
               </div>
 
               <div className="space-y-2.5">
-                <label className="block text-[13px] font-semibold text-muted-foreground uppercase tracking-wider ml-1">Passwort</label>
+                <div className="flex items-center justify-between ml-1">
+                  <label className="block text-[13px] font-semibold text-muted-foreground uppercase tracking-wider">Passwort</label>
+                  <button
+                    type="button"
+                    onClick={() => { setMode("forgot"); setResetSent(false); }}
+                    className="text-[12px] font-semibold text-primary hover:underline"
+                  >
+                    Vergessen?
+                  </button>
+                </div>
                 <div className="relative">
                   <Lock className="absolute inset-y-0 left-4 my-auto size-[18px] text-muted-foreground pointer-events-none" />
                   <input
@@ -171,6 +266,7 @@ function LoginPage() {
                 </span>
               </button>
             </form>
+            )}
 
             <div className="mt-10 pt-8 border-t border-border">
               <p className="text-center text-xs text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
