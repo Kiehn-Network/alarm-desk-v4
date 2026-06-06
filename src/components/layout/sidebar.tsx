@@ -112,11 +112,16 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
     }))
     .filter((s) => s.items.length > 0);
   return (
-    <div className={cn("flex h-full w-full flex-col bg-sidebar text-sidebar-foreground", isSuperAdminMode && "ring-1 ring-primary/30")}> 
+    <div className={cn(
+      "flex h-full w-full flex-col bg-sidebar text-sidebar-foreground",
+      isSuperAdminMode && "superadmin-sidebar"
+    )}>
       {isSuperAdminMode && (
-        <div className="px-4 py-1.5 bg-primary/15 border-b border-primary/30 flex items-center gap-2">
-          <Crown className="size-3.5 text-primary" />
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary">SuperAdmin-Konsole</span>
+        <div className="px-4 py-2 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-primary text-primary-foreground">
+            <Crown className="size-3.5" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em]">SuperAdmin</span>
+          </span>
         </div>
       )}
       <Link
@@ -161,8 +166,9 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
                       to={it.to}
                       search={it.tab ? { tab: it.tab } : undefined as any}
                       onClick={onNavigate}
+                      data-active={active ? "true" : undefined}
                       className={cn(
-                        "group flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
+                        "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
                         active
                           ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                           : "text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"

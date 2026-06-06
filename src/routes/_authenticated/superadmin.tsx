@@ -317,18 +317,18 @@ function SuperAdminPage() {
 
   return (
     <div className="superadmin-theme p-6 space-y-6 max-w-screen-2xl mx-auto">
-      <div className="sticky top-0 z-20 -mx-6 -mt-6 mb-2 px-6 py-5 bg-sidebar text-sidebar-foreground border-b-2 border-primary/60 shadow-lg">
+      <div className="rounded-3xl bg-sidebar text-sidebar-foreground px-6 py-5 shadow-xl border border-sidebar-border">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="size-11 rounded-xl bg-primary/15 border border-primary/40 flex items-center justify-center">
-              <Crown className="size-6 text-primary" />
+            <div className="size-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
+              <Crown className="size-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary px-1.5 py-0.5 rounded bg-primary/15 border border-primary/30">SuperAdmin</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground px-2 py-0.5 rounded-full bg-primary">SuperAdmin</span>
                 <span className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">Plattform-Konsole</span>
               </div>
-              <h1 className="text-lg font-semibold leading-tight">Mandanten · Lizenzen · Module · Nutzer · Betrieb</h1>
+              <h1 className="text-lg font-semibold leading-tight mt-1">Mandanten · Lizenzen · Module · Nutzer · Betrieb</h1>
             </div>
           </div>
           {imp && (

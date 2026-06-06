@@ -689,3 +689,77 @@ html.light { color-scheme: light; }
 :root.__legacy_unused {
   --radius: 0.75rem;
 }
+
+/* ============================================================
+   SUPERADMIN THEME — bright, soft, rounded "console" look
+   Inspired by modern dashboard UIs: dark rounded sidebar with
+   lime accent, airy off-white canvas, big rounded white cards.
+   Scoped via `.superadmin-theme` so the rest of the app is
+   unaffected. The sidebar gets its own scope on the nav root.
+   ============================================================ */
+.superadmin-theme,
+.superadmin-sidebar {
+  --radius: 1rem;
+  --background: oklch(0.985 0.005 150);
+  --foreground: oklch(0.18 0.02 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 250);
+  --primary: oklch(0.86 0.20 142);
+  --primary-foreground: oklch(0.18 0.05 150);
+  --secondary: oklch(0.96 0.01 150);
+  --secondary-foreground: oklch(0.22 0.02 250);
+  --muted: oklch(0.96 0.008 250);
+  --muted-foreground: oklch(0.50 0.015 250);
+  --accent: oklch(0.94 0.04 142);
+  --accent-foreground: oklch(0.22 0.04 150);
+  --border: oklch(0.92 0.008 250);
+  --input: oklch(0.96 0.008 250);
+  --ring: oklch(0.86 0.20 142 / 50%);
+  --sidebar: oklch(0.18 0.01 250);
+  --sidebar-foreground: oklch(0.96 0.005 250);
+  --sidebar-accent: oklch(0.86 0.20 142);
+  --sidebar-accent-foreground: oklch(0.18 0.05 150);
+  --sidebar-border: oklch(0.30 0.01 250 / 50%);
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 3%), 0 10px 30px -16px oklch(0 0 0 / 10%);
+}
+
+/* Soft, airy canvas */
+.superadmin-theme {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, oklch(0.95 0.06 142 / 40%), transparent 60%),
+    radial-gradient(900px 500px at 110% 10%, oklch(0.94 0.05 220 / 30%), transparent 60%),
+    var(--background);
+  color: var(--foreground);
+}
+
+/* Generous rounded cards */
+.superadmin-theme [data-slot="card"],
+.superadmin-theme .rounded-xl,
+.superadmin-theme .rounded-lg {
+  border-radius: 1.25rem;
+}
+.superadmin-theme [data-slot="card"] {
+  box-shadow: var(--shadow-card);
+  border-color: oklch(0.92 0.008 250);
+}
+
+/* Sidebar rail: floating dark card with rounded corners */
+.superadmin-sidebar {
+  background: transparent !important;
+}
+.superadmin-sidebar > nav,
+.superadmin-sidebar > .sa-rail {
+  background: var(--sidebar);
+  color: var(--sidebar-foreground);
+}
+
+/* Active nav pill — chunky lime, dark text */
+.superadmin-sidebar a[data-active="true"],
+.superadmin-sidebar .sa-nav-active {
+  background: var(--sidebar-accent) !important;
+  color: var(--sidebar-accent-foreground) !important;
+  font-weight: 600;
+  box-shadow: 0 6px 18px -8px oklch(0.86 0.20 142 / 55%);
+}
