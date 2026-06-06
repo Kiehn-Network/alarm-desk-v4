@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
 import { Route as ImpressumRouteImport } from './routes/impressum'
@@ -61,6 +62,11 @@ import { Route as AuthenticatedNotdienstBudekoNachbearbeitungRouteImport } from 
 import { Route as AuthenticatedNotdienstBudekoMitarbeiterRouteImport } from './routes/_authenticated/notdienst/budeko/mitarbeiter'
 import { Route as AuthenticatedAbrechnungProviderVersandRouteImport } from './routes/_authenticated/abrechnung.$provider.versand'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -356,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -408,6 +415,7 @@ export interface FileRoutesByTo {
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
   '/login': typeof LoginRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -512,6 +521,7 @@ export interface FileRouteTypes {
     | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
+    | '/reset-password'
     | '/revier-center'
     | '/admin'
     | '/alarmierung'
@@ -564,6 +574,7 @@ export interface FileRouteTypes {
     | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
+    | '/reset-password'
     | '/admin'
     | '/alarmierung'
     | '/dashboard'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/impressum'
     | '/kiehn-systeme-login'
     | '/login'
+    | '/reset-password'
     | '/_authenticated/revier-center'
     | '/_authenticated/admin'
     | '/_authenticated/alarmierung'
@@ -667,6 +679,7 @@ export interface RootRouteChildren {
   ImpressumRoute: typeof ImpressumRoute
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -674,6 +687,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -1214,6 +1234,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImpressumRoute: ImpressumRoute,
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
