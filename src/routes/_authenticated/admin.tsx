@@ -7,6 +7,7 @@ import {
   Users, ShieldCheck, FileText, Siren, Tag, Plus, Pencil, Trash2,
   KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
   Boxes, CheckCircle2, GraduationCap,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
 import { SystemSettingsPanel } from "@/components/admin/system-settings-panel";
 import { TourAdminPanel } from "@/components/admin/tour-admin-panel";
+import { SupportPanel } from "@/routes/_authenticated/support";
 import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
   resetUserPassword, deleteUser, impersonateUser,
@@ -93,6 +95,7 @@ function AdminPage() {
           <TabsTrigger value="modules"><Boxes className="size-4 mr-2" />Module</TabsTrigger>
           <TabsTrigger value="tour"><GraduationCap className="size-4 mr-2" />Einführung</TabsTrigger>
           <TabsTrigger value="system"><SettingsIcon className="size-4 mr-2" />System</TabsTrigger>
+          <TabsTrigger value="hilfe"><LifeBuoy className="size-4 mr-2" />Hilfe</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersPanel /></TabsContent>
@@ -100,6 +103,7 @@ function AdminPage() {
         <TabsContent value="modules"><ModulesPanel /></TabsContent>
         <TabsContent value="tour"><TourAdminPanel /></TabsContent>
         <TabsContent value="system"><SystemSettingsPanel /></TabsContent>
+        <TabsContent value="hilfe"><SupportPanel /></TabsContent>
       </Tabs>
     </div>
   );
