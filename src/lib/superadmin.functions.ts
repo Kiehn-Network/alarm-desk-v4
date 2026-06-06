@@ -100,7 +100,7 @@ export const updateLicense = createServerFn({ method: "POST" })
   }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSuper(context.userId);
-    const patch: Record<string, unknown> = {};
+    const patch: { valid_until?: string | null; max_users?: number | null; notes?: string | null } = {};
     if (data.valid_until !== undefined) patch.valid_until = data.valid_until;
     if (data.max_users !== undefined) patch.max_users = data.max_users;
     if (data.notes !== undefined) patch.notes = data.notes;
