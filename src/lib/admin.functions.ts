@@ -38,6 +38,44 @@ async function assertUserInDomain(userId: string, domainId: string) {
   }
 }
 
+// ---------- Support PIN ----------
+
+export const getSupportPin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const domainId = await requireDomainAdmin(context.userId);
+    const { data } = await supabaseAdmin.from("domains")
+      .select("support_pin").eq("id", domainId).maybeSingle();
+    return { pin: (data as any)?.support_pin ?? null, domain_id: domainId };
+  });
+
+export const regenerateSupportPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const domainId = await requireDomainAdmin(context.userId);
+    const { data, error } = await supabaseAdmin.rpc("regenerate_support_pin", { _domain_id: domainId });
+    if (error) throw new Error(error.message);
+    return { pin: data as unknown as string };
+  });
+
+// Returns active forced impersonation row targeting the admin's domain (if any)
+export const getForcedImpersonation = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const domainId = await requireDomainAdmin(context.userId);
+    const { data } = await supabaseAdmin.from("superadmin_impersonation")
+      .select("superadmin_id, started_at, reason, forced")
+      .eq("target_domain_id", domainId).eq("forced", true).maybeSingle();
+    if (!data) return { active: false as const };
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById((data as any).superadmin_id);
+    return {
+      active: true as const,
+      started_at: (data as any).started_at,
+      reason: (data as any).reason,
+      superadmin_email: u.user?.email ?? null,
+    };
+  });
+
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
