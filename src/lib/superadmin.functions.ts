@@ -9,6 +9,30 @@ async function assertSuper(userId: string) {
   if (!data) throw new Error("Nur SuperAdmin");
 }
 
+async function logAudit(opts: {
+  actorId: string;
+  action: string;
+  targetType?: string | null;
+  targetId?: string | null;
+  targetLabel?: string | null;
+  metadata?: Record<string, unknown>;
+}) {
+  try {
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(opts.actorId);
+    await supabaseAdmin.from("superadmin_audit_log").insert({
+      actor_id: opts.actorId,
+      actor_email: u.user?.email ?? null,
+      action: opts.action,
+      target_type: opts.targetType ?? null,
+      target_id: opts.targetId ?? null,
+      target_label: opts.targetLabel ?? null,
+      metadata: (opts.metadata ?? {}) as never,
+    });
+  } catch {
+    // never block the actual operation because of audit logging
+  }
+}
+
 function genLicenseKey() {
   const seg = () => Math.random().toString(36).slice(2, 6).toUpperCase();
   return `${seg()}-${seg()}-${seg()}-${seg()}-${seg()}-${seg()}`;
