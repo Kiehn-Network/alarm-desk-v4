@@ -342,6 +342,7 @@ function SuperAdminPage() {
                 <SelectItem value="lime">Lime Console (aktuell)</SelectItem>
                 <SelectItem value="tailadmin">TailAdmin (Indigo)</SelectItem>
                 <SelectItem value="hope">Hope UI (Gradient)</SelectItem>
+                <SelectItem value="modern">ModernAdmin</SelectItem>
               </SelectContent>
             </Select>
             {imp && (
