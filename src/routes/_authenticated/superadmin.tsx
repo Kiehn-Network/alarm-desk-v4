@@ -22,7 +22,6 @@ import {
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
-import { useSuperAdminTheme } from "@/hooks/use-superadmin-theme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -138,7 +137,6 @@ function SuperAdminPage() {
   const setTab = (v: string) => navigate({ to: "/superadmin", search: { tab: v }, replace: true });
   const { actualRole, isImpersonating } = useRole();
   const superNavInGlobal = actualRole === "superadmin" && !isImpersonating;
-  const [saTheme, setSaTheme] = useSuperAdminTheme();
 
   const dq = useQuery({ queryKey: ["sa-domains"], queryFn: () => listDomFn() });
   const mq = useQuery({ queryKey: ["sa-modules"], queryFn: () => listModFn() });
@@ -318,7 +316,7 @@ function SuperAdminPage() {
   }
 
   return (
-    <div className={`superadmin-theme theme-${saTheme} p-6 space-y-6 max-w-screen-2xl mx-auto`}>
+    <div className="superadmin-theme p-6 space-y-6 max-w-screen-2xl mx-auto">
       <div className="sa-header rounded-3xl bg-sidebar text-sidebar-foreground px-6 py-5 shadow-xl border border-sidebar-border">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -333,25 +331,12 @@ function SuperAdminPage() {
               <h1 className="text-lg font-semibold leading-tight mt-1">Mandanten · Lizenzen · Module · Nutzer · Betrieb</h1>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Select value={saTheme} onValueChange={(v) => setSaTheme(v as any)}>
-              <SelectTrigger className="h-9 w-[170px] bg-sidebar-accent/40 border-sidebar-border text-sidebar-foreground">
-                <SelectValue placeholder="Theme" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lime">Lime Console (aktuell)</SelectItem>
-                <SelectItem value="tailadmin">TailAdmin (Indigo)</SelectItem>
-                <SelectItem value="hope">Hope UI (Gradient)</SelectItem>
-                <SelectItem value="modern">ModernAdmin</SelectItem>
-              </SelectContent>
-            </Select>
-            {imp && (
+          {imp && (
             <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-warning/20 border border-warning/50">
               <span className="text-xs text-sidebar-foreground">Impersonation: <b>{imp.name}</b></span>
               <Button size="sm" variant="outline" onClick={async () => { await stopImp({}); invalidateAll(); }}>Beenden</Button>
             </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
