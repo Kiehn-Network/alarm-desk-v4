@@ -17,6 +17,7 @@ import { Route as HomepageRouteImport } from './routes/homepage'
 import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
 import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
@@ -103,6 +104,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
   id: '/superadmin',
@@ -401,6 +407,7 @@ export interface FileRoutesByFullPath {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   '/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
@@ -456,6 +463,7 @@ export interface FileRoutesByTo {
   '/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
+  '/support': typeof AuthenticatedSupportRoute
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
@@ -511,6 +519,7 @@ export interface FileRoutesById {
   '/_authenticated/schluesseluebergabe': typeof AuthenticatedSchluesseluebergabeRoute
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
+  '/_authenticated/support': typeof AuthenticatedSupportRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   '/_authenticated/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
@@ -569,6 +578,7 @@ export interface FileRouteTypes {
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
+    | '/support'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
     | '/revier-center/owks'
@@ -624,6 +634,7 @@ export interface FileRouteTypes {
     | '/schluesseluebergabe'
     | '/service-center'
     | '/superadmin'
+    | '/support'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
@@ -678,6 +689,7 @@ export interface FileRouteTypes {
     | '/_authenticated/schluesseluebergabe'
     | '/_authenticated/service-center'
     | '/_authenticated/superadmin'
+    | '/_authenticated/support'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/rohrservice'
     | '/_authenticated/revier-center/owks'
@@ -782,6 +794,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/superadmin': {
       id: '/_authenticated/superadmin'
@@ -1247,6 +1266,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSchluesseluebergabeRoute: typeof AuthenticatedSchluesseluebergabeRoute
   AuthenticatedServiceCenterRoute: typeof AuthenticatedServiceCenterRoute
   AuthenticatedSuperadminRoute: typeof AuthenticatedSuperadminRoute
+  AuthenticatedSupportRoute: typeof AuthenticatedSupportRoute
   AuthenticatedNotdienstBudekoRouteRoute: typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   AuthenticatedNotdienstRohrserviceRouteRoute: typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   AuthenticatedAbrechnungProviderRoute: typeof AuthenticatedAbrechnungProviderRouteWithChildren
@@ -1274,6 +1294,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSchluesseluebergabeRoute: AuthenticatedSchluesseluebergabeRoute,
   AuthenticatedServiceCenterRoute: AuthenticatedServiceCenterRoute,
   AuthenticatedSuperadminRoute: AuthenticatedSuperadminRoute,
+  AuthenticatedSupportRoute: AuthenticatedSupportRoute,
   AuthenticatedNotdienstBudekoRouteRoute:
     AuthenticatedNotdienstBudekoRouteRouteWithChildren,
   AuthenticatedNotdienstRohrserviceRouteRoute:

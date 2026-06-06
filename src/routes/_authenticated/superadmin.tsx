@@ -37,8 +37,10 @@ import { toast } from "sonner";
 import {
   Activity, Building2, Crown, Globe2, KeyRound, LayoutDashboard,
   Loader2, Mail, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
-  Copy, Archive, BarChart3, Download, Rocket, CalendarClock, Plus, X, Filter,
+  Copy, Archive, BarChart3, Download, Rocket, CalendarClock, Plus, X, Filter, LifeBuoy,
 } from "lucide-react";
+import { listSupportTickets, updateSupportTicket, getOpenTicketsCount } from "@/lib/support.functions";
+import { TicketDialog } from "@/routes/_authenticated/support";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -62,6 +64,80 @@ function NavGroupLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
+function SupportTicketsPanel() {
+  const listFn = useServerFn(listSupportTickets);
+  const updFn = useServerFn(updateSupportTicket);
+  const qc = useQueryClient();
+  const [status, setStatus] = useState<"open" | "in_progress" | "closed" | "all">("open");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const tq = useQuery({
+    queryKey: ["sa-tickets", status],
+    queryFn: () => listFn({ data: { status } }),
+  });
+  const updM = useMutation({
+    mutationFn: (v: { id: string; status: any }) => updFn({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["sa-tickets"] });
+      qc.invalidateQueries({ queryKey: ["sa-open-tickets"] });
+    },
+  });
+
+  const STATUS_LABEL: Record<string, string> = { open: "Offen", in_progress: "In Bearbeitung", closed: "Geschlossen" };
+  const PRIO_LABEL: Record<string, string> = { low: "Niedrig", normal: "Normal", high: "Hoch" };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <CardTitle className="flex items-center gap-2"><LifeBuoy className="size-4" />Support-Tickets</CardTitle>
+          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
+            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="open">Offen</SelectItem>
+              <SelectItem value="in_progress">In Bearbeitung</SelectItem>
+              <SelectItem value="closed">Geschlossen</SelectItem>
+              <SelectItem value="all">Alle</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {tq.isLoading ? (
+          <div className="text-sm text-muted-foreground">Lädt …</div>
+        ) : (tq.data ?? []).length === 0 ? (
+          <div className="text-sm text-muted-foreground py-10 text-center">Keine Tickets in dieser Ansicht.</div>
+        ) : (
+          <div className="divide-y">
+            {(tq.data ?? []).map((t: any) => (
+              <div key={t.id} className="py-3 flex items-center gap-3">
+                <button onClick={() => setActiveId(t.id)} className="flex-1 min-w-0 text-left">
+                  <div className="font-medium truncate">{t.subject}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {t.domain?.name ?? "—"} · {t.creator?.display_name ?? "—"} ·
+                    {" "}{new Date(t.last_message_at).toLocaleString("de-DE")}
+                  </div>
+                </button>
+                <Badge variant="outline">{PRIO_LABEL[t.priority] ?? t.priority}</Badge>
+                <Select value={t.status}
+                  onValueChange={(v) => updM.mutate({ id: t.id, status: v })}>
+                  <SelectTrigger className="w-40 h-8 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="open">{STATUS_LABEL.open}</SelectItem>
+                    <SelectItem value="in_progress">{STATUS_LABEL.in_progress}</SelectItem>
+                    <SelectItem value="closed">{STATUS_LABEL.closed}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" variant="outline" onClick={() => setActiveId(t.id)}>Öffnen</Button>
+              </div>
+            ))}
+          </div>
+        )}
+        <TicketDialog id={activeId} onClose={() => setActiveId(null)} canChangeStatus />
+      </CardContent>
+    </Card>
+  );
+}
+
 function NavDivider() {
   return <span className="mx-1 h-5 w-px bg-border/70 self-center" aria-hidden />;
 }
@@ -82,6 +158,7 @@ const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }
     { value: "health", label: "Health" },
     { value: "emails", label: "E-Mails" },
     { value: "audit", label: "Audit-Log" },
+    { value: "tickets", label: "Support-Tickets" },
   ]},
   { label: "Plattform", items: [
     { value: "system", label: "System" },
@@ -148,6 +225,8 @@ function SuperAdminPage() {
 
   const statsFn = useServerFn(getSuperAdminStats);
   const sq = useQuery({ queryKey: ["sa-stats"], queryFn: () => statsFn(), refetchInterval: 60_000 });
+  const openTicketsFn = useServerFn(getOpenTicketsCount);
+  const otq = useQuery({ queryKey: ["sa-open-tickets"], queryFn: () => openTicketsFn(), refetchInterval: 60_000 });
 
   const getPlat = useServerFn(getPlatformSettings);
   const updMaint = useServerFn(updatePlatformMaintenance);
@@ -367,6 +446,7 @@ function SuperAdminPage() {
                 <SideTab value="health" icon={Activity}>Health</SideTab>
                 <SideTab value="emails" icon={Mail}>E-Mails</SideTab>
                 <SideTab value="audit" icon={BarChart3}>Audit-Log</SideTab>
+                <SideTab value="tickets" icon={LifeBuoy}>Support-Tickets</SideTab>
                 <SideSection label="Plattform" />
                 <SideTab value="system" icon={RefreshCw}>System</SideTab>
                 <SideTab value="selfhost" icon={Building2}>Self-Hosting</SideTab>
@@ -391,6 +471,10 @@ function SuperAdminPage() {
                 <div className="hidden sm:flex flex-col gap-2">
                   <Button size="sm" onClick={() => setTab("onboard")}><Rocket className="size-4 mr-1.5" /> Mandant onboarden</Button>
                   <Button size="sm" variant="outline" onClick={() => setTab("search")}><Search className="size-4 mr-1.5" /> Globale Suche</Button>
+                  <Button size="sm" variant="outline" onClick={() => setTab("tickets")}>
+                    <LifeBuoy className="size-4 mr-1.5" />
+                    Tickets {otq.data?.count ? <span className="ml-1.5 rounded bg-destructive text-destructive-foreground px-1.5 text-[10px]">{otq.data.count}</span> : null}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -918,6 +1002,10 @@ function SuperAdminPage() {
 
         <TabsContent value="audit" className="space-y-4">
           <AuditLogPanel />
+        </TabsContent>
+
+        <TabsContent value="tickets" className="space-y-4">
+          <SupportTicketsPanel />
         </TabsContent>
 
         <TabsContent value="onboard" className="space-y-4">
