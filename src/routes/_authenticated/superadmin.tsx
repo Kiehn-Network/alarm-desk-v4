@@ -12,6 +12,7 @@ import {
   listAllTenantUsers, assignUserToDomain,
   createTenantUser,
   startImpersonation, stopImpersonation, getImpersonation,
+  startImpersonationWithPin,
   getPlatformSettings, updatePlatformMaintenance,
   listAppVersions, createAppVersion, deleteAppVersion,
   sendPasswordReset, setUserDisabled, deleteTenantUser, bulkImportUsers,
