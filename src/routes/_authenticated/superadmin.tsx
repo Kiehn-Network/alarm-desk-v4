@@ -39,7 +39,7 @@ import {
   Loader2, Mail, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
   Copy, Archive, BarChart3, Download, Rocket, CalendarClock, Plus, X, Filter, LifeBuoy,
 } from "lucide-react";
-import { listSupportTickets, updateSupportTicket } from "@/lib/support.functions";
+import { listSupportTickets, updateSupportTicket, getOpenTicketsCount } from "@/lib/support.functions";
 import { TicketDialog } from "@/routes/_authenticated/support";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
