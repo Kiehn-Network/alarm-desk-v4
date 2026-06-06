@@ -7,7 +7,7 @@ import {
   Users, ShieldCheck, FileText, Siren, Tag, Plus, Pencil, Trash2,
   KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
   Boxes, CheckCircle2, GraduationCap,
-  LifeBuoy,
+  LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,9 @@ import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
   resetUserPassword, deleteUser, impersonateUser,
   listAllGruende, upsertGrund, deleteGrund,
+  getSupportPin, regenerateSupportPin, getForcedImpersonation,
 } from "@/lib/admin.functions";
+import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 
