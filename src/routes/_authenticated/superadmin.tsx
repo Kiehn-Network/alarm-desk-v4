@@ -1716,7 +1716,6 @@ function ModuleControl({
   dmodules: any[];
   onToggle: (domain_id: string, module_key: string, enabled: boolean) => void | Promise<void>;
 }) {
-  const [view, setView] = useState<"matrix" | "domain">("matrix");
   const [domainId, setDomainId] = useState<string>(domains[0]?.id ?? "");
   const [q, setQ] = useState("");
 
@@ -1730,241 +1729,99 @@ function ModuleControl({
   };
   const visibleParents = parents.filter((p) => matches(p) || childrenOf(p.key).some(matches));
 
-  const isEnabled = (did: string, key: string) =>
-    dmodules.find((x) => x.domain_id === did && x.module_key === key)?.enabled ?? false;
+  const isEnabled = (key: string) =>
+    dmodules.find((x) => x.domain_id === domainId && x.module_key === key)?.enabled ?? false;
 
-  if (domains.length === 0) return <div className="text-sm text-muted-foreground p-4">Keine Domains vorhanden.</div>;
+  if (domains.length === 0) return <div className="text-sm text-muted-foreground p-4">Keine Mandanten vorhanden.</div>;
+
+  const activeCount = modules.filter((m) => isEnabled(m.key)).length;
+
+  const setAll = async (val: boolean) => {
+    for (const m of modules) {
+      const current = isEnabled(m.key);
+      if (current !== val) await onToggle(domainId, m.key, val);
+    }
+  };
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
+      {/* Toolbar: Mandant + Suche + Aktionen */}
       <Card>
         <CardContent className="p-3 flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-md border bg-card p-0.5">
-            <button
-              onClick={() => setView("matrix")}
-              className={`px-3 py-1.5 text-sm rounded inline-flex items-center gap-1.5 ${view === "matrix" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-              <LayoutGrid className="size-4" /> Matrix
-            </button>
-            <button
-              onClick={() => setView("domain")}
-              className={`px-3 py-1.5 text-sm rounded inline-flex items-center gap-1.5 ${view === "domain" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
-              <ListFilter className="size-4" /> Pro Mandant
-            </button>
-          </div>
-          {view === "domain" && (
+          <div className="flex items-center gap-2 min-w-[260px]">
+            <Label className="text-sm font-medium whitespace-nowrap">Mandant</Label>
             <Select value={domainId} onValueChange={setDomainId}>
-              <SelectTrigger className="w-[220px]"><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
+              <SelectTrigger className="w-full"><SelectValue placeholder="Mandant wählen…" /></SelectTrigger>
               <SelectContent>
                 {domains.map((d) => (
                   <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          )}
+          </div>
           <div className="relative flex-1 min-w-[220px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <Input className="pl-9" placeholder="Modul suchen…" value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
+          <span className="text-sm text-muted-foreground tabular-nums whitespace-nowrap">
+            {activeCount} / {modules.length} aktiv
+          </span>
+          <Button size="sm" variant="outline" onClick={() => setAll(true)}>Alle an</Button>
+          <Button size="sm" variant="outline" onClick={() => setAll(false)}>Alle aus</Button>
         </CardContent>
       </Card>
 
-      {view === "matrix" && (
-        <ModuleMatrix
-          domains={domains}
-          parents={visibleParents}
-          childrenOf={childrenOf}
-          matches={matches}
-          isEnabled={isEnabled}
-          onToggle={onToggle}
-        />
-      )}
-
-      {view === "domain" && (
-        <ModuleDomainView
-          domain={domains.find((d) => d.id === domainId)}
-          parents={visibleParents}
-          childrenOf={childrenOf}
-          matches={matches}
-          modules={modules}
-          isEnabled={(k) => isEnabled(domainId, k)}
-          onToggle={(k, v) => onToggle(domainId, k, v)}
-        />
-      )}
-    </div>
-  );
-}
-
-function ModuleMatrix({
-  domains, parents, childrenOf, matches, isEnabled, onToggle,
-}: {
-  domains: any[];
-  parents: any[];
-  childrenOf: (k: string) => any[];
-  matches: (m: any) => boolean;
-  isEnabled: (did: string, key: string) => boolean;
-  onToggle: (did: string, key: string, val: boolean) => void | Promise<void>;
-}) {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const toggleExp = (k: string) => setExpanded((s) => ({ ...s, [k]: !s[k] }));
-
-  return (
-    <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="text-sm w-full">
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-10 bg-muted/80 backdrop-blur p-3 text-left min-w-[240px]">Modul</th>
-              {domains.map((d) => (
-                <th key={d.id} className="p-3 text-center min-w-[110px]">
-                  <div className="font-medium text-foreground truncate max-w-[120px]" title={d.name}>{d.name}</div>
-                  <div className="text-[11px] text-muted-foreground font-normal">{d.slug}</div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {parents.map((p) => {
-              const kids = childrenOf(p.key).filter(matches);
-              const isOpen = expanded[p.key];
-              const hasKids = kids.length > 0;
-              return (
-                <>
-                  <tr key={p.id} className="bg-muted/30">
-                    <td className="sticky left-0 z-10 bg-muted/60 backdrop-blur p-3">
-                      <div className="flex items-center gap-2">
-                        {hasKids ? (
-                          <button
-                            onClick={() => toggleExp(p.key)}
-                            className="size-5 grid place-items-center rounded hover:bg-muted text-muted-foreground"
-                            aria-label={isOpen ? "Einklappen" : "Ausklappen"}>
-                            <span className={`text-xs transition-transform ${isOpen ? "rotate-90" : ""}`}>▶</span>
-                          </button>
-                        ) : <span className="size-5" />}
-                        <div className="min-w-0">
-                          <div className="font-medium truncate">{p.name}</div>
-                          <div className="text-[11px] text-muted-foreground truncate">{p.key}</div>
-                        </div>
-                      </div>
-                    </td>
-                    {domains.map((d) => (
-                      <td key={d.id} className="p-2 text-center">
-                        <Switch
-                          checked={isEnabled(d.id, p.key)}
-                          onCheckedChange={(v) => onToggle(d.id, p.key, v)}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                  {isOpen && kids.map((c) => (
-                    <tr key={c.id}>
-                      <td className="sticky left-0 z-10 bg-card p-3">
-                        <div className="pl-9 min-w-0">
-                          <div className="text-sm truncate">{c.name}</div>
-                          <div className="text-[11px] text-muted-foreground truncate">{c.key}</div>
-                        </div>
-                      </td>
-                      {domains.map((d) => {
-                        const parentOn = isEnabled(d.id, p.key);
-                        return (
-                          <td key={d.id} className={`p-2 text-center ${!parentOn ? "opacity-50" : ""}`}>
-                            <Switch
-                              checked={isEnabled(d.id, c.key) && parentOn}
-                              disabled={!parentOn}
-                              onCheckedChange={(v) => onToggle(d.id, c.key, v)}
-                            />
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </>
-              );
-            })}
-            {parents.length === 0 && (
-              <tr><td colSpan={domains.length + 1} className="p-8 text-center text-muted-foreground">Keine Treffer.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
-}
-
-function ModuleDomainView({
-  domain, parents, childrenOf, matches, modules, isEnabled, onToggle,
-}: {
-  domain: any;
-  parents: any[];
-  childrenOf: (k: string) => any[];
-  matches: (m: any) => boolean;
-  modules: any[];
-  isEnabled: (key: string) => boolean;
-  onToggle: (key: string, val: boolean) => void | Promise<void>;
-}) {
-  if (!domain) return null;
-  const activeCount = modules.filter((m) => isEnabled(m.key)).length;
-
-  const setAll = async (val: boolean) => {
-    for (const m of modules) {
-      const current = isEnabled(m.key);
-      if (current !== val) await onToggle(m.key, val);
-    }
-  };
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between px-1 text-sm">
-        <div>
-          <span className="text-muted-foreground">Mandant:</span>{" "}
-          <span className="font-medium">{domain.name}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground tabular-nums">{activeCount} von {modules.length} aktiv</span>
-          <Button size="sm" variant="outline" onClick={() => setAll(true)}>Alle an</Button>
-          <Button size="sm" variant="outline" onClick={() => setAll(false)}>Alle aus</Button>
-        </div>
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {parents.map((p) => {
-          const parentOn = isEnabled(p.key);
-          const kids = childrenOf(p.key).filter(matches);
-          return (
-            <Card key={p.id} className="overflow-hidden">
-              <div className="flex items-center justify-between gap-3 px-4 py-3 border-b bg-muted/30">
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{p.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{p.key}</div>
+      {/* Modul-Liste */}
+      <Card className="overflow-hidden">
+        <div className="divide-y">
+          {visibleParents.length === 0 && (
+            <div className="p-8 text-center text-sm text-muted-foreground">Keine Treffer.</div>
+          )}
+          {visibleParents.map((p) => {
+            const parentOn = isEnabled(p.key);
+            const kids = childrenOf(p.key).filter(matches);
+            return (
+              <div key={p.id}>
+                {/* Parent row */}
+                <div className="flex items-center justify-between gap-4 px-4 py-3 bg-muted/30">
+                  <div className="min-w-0">
+                    <div className="font-medium">{p.name}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{p.key}</div>
+                  </div>
+                  <Switch
+                    checked={parentOn}
+                    onCheckedChange={(v) => onToggle(domainId, p.key, v)}
+                  />
                 </div>
-                <Switch checked={parentOn} onCheckedChange={(v) => onToggle(p.key, v)} />
+                {/* Children rows */}
+                {kids.length > 0 && (
+                  <div className="divide-y">
+                    {kids.map((c) => {
+                      const on = isEnabled(c.key);
+                      return (
+                        <div
+                          key={c.id}
+                          className={`flex items-center justify-between gap-4 pl-10 pr-4 py-2.5 ${!parentOn ? "opacity-50" : ""}`}
+                        >
+                          <div className="min-w-0">
+                            <div className="text-sm">{c.name}</div>
+                            <div className="text-[11px] text-muted-foreground font-mono">{c.key}</div>
+                          </div>
+                          <Switch
+                            checked={on && parentOn}
+                            disabled={!parentOn}
+                            onCheckedChange={(v) => onToggle(domainId, c.key, v)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              {kids.length > 0 && (
-                <div className="divide-y">
-                  {kids.map((c) => {
-                    const on = isEnabled(c.key);
-                    return (
-                      <div key={c.id} className={`flex items-center justify-between gap-3 px-4 py-2.5 ${!parentOn ? "opacity-50" : ""}`}>
-                        <div className="min-w-0">
-                          <div className="text-sm truncate">{c.name}</div>
-                          <div className="text-[11px] text-muted-foreground truncate">{c.key}</div>
-                        </div>
-                        <Switch
-                          checked={on && parentOn}
-                          disabled={!parentOn}
-                          onCheckedChange={(v) => onToggle(c.key, v)}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Card>
-          );
-        })}
-        {parents.length === 0 && (
-          <div className="text-sm text-muted-foreground p-4">Keine Treffer.</div>
-        )}
-      </div>
+            );
+          })}
+        </div>
+      </Card>
     </div>
   );
 }
