@@ -658,3 +658,79 @@ function GruendePanel() {
     </div>
   );
 }
+
+// ---------------- Support PIN ----------------
+
+function SupportPinCard() {
+  const getFn = useServerFn(getSupportPin);
+  const regenFn = useServerFn(regenerateSupportPin);
+  const qc = useQueryClient();
+  const [show, setShow] = useState(false);
+  const { data, isLoading } = useQuery({
+    queryKey: ["support-pin"],
+    queryFn: () => getFn(),
+  });
+  const pin = (data as any)?.pin ?? "";
+  return (
+    <Card>
+      <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+        <div className="flex items-center gap-3">
+          <KeyRound className="size-5 text-primary" />
+          <div>
+            <div className="font-semibold text-sm">Support-PIN</div>
+            <div className="text-xs text-muted-foreground">
+              Gib diesen PIN an den SuperAdmin weiter, damit er sich mit deiner Zustimmung verbinden kann.
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <code className="px-3 py-2 rounded-md bg-muted font-mono text-lg tracking-widest min-w-[8ch] text-center">
+            {isLoading ? "…" : show ? pin : "••••••"}
+          </code>
+          <Button size="icon" variant="outline" title={show ? "Verbergen" : "Anzeigen"} onClick={() => setShow((v) => !v)}>
+            {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </Button>
+          <Button size="icon" variant="outline" title="Kopieren" disabled={!pin}
+            onClick={() => { navigator.clipboard.writeText(pin); toast.success("PIN kopiert"); }}>
+            <CopyIcon className="size-4" />
+          </Button>
+          <Button size="icon" variant="outline" title="Neu generieren"
+            onClick={async () => {
+              if (!confirm("Neuen Support-PIN generieren? Der alte ist danach ungültig.")) return;
+              try {
+                await regenFn();
+                await qc.invalidateQueries({ queryKey: ["support-pin"] });
+                toast.success("Neuer PIN generiert");
+              } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+            }}>
+            <RefreshCw className="size-4" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ForcedImpersonationAlert() {
+  const getFn = useServerFn(getForcedImpersonation);
+  const { data } = useQuery({
+    queryKey: ["forced-impersonation"],
+    queryFn: () => getFn(),
+    refetchInterval: 15_000,
+  });
+  if (!data || !(data as any).active) return null;
+  const d: any = data;
+  return (
+    <div className="rounded-lg border border-destructive/40 bg-destructive/10 text-destructive p-4 flex gap-3">
+      <ShieldAlert className="size-5 shrink-0 mt-0.5" />
+      <div className="text-sm space-y-1">
+        <div className="font-semibold">Zwangsverbindung aktiv</div>
+        <div>
+          SuperAdmin <strong>{d.superadmin_email ?? "unbekannt"}</strong> ist seit{" "}
+          {new Date(d.started_at).toLocaleString("de-DE")} mit deiner Domäne verbunden — ohne Support-PIN.
+        </div>
+        {d.reason && <div>Grund: <em>{d.reason}</em></div>}
+      </div>
+    </div>
+  );
+}
