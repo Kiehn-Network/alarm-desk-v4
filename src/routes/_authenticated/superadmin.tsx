@@ -23,6 +23,7 @@ import {
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
+import { previewSyncTarget, runFullSync } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -237,6 +238,7 @@ const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }
   { label: "Plattform", items: [
     { value: "system", label: "System" },
     { value: "selfhost", label: "Self-Hosting" },
+    { value: "dbsync", label: "DB-Sync" },
   ]},
 ];
 
