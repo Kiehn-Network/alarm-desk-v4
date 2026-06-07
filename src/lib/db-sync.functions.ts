@@ -364,12 +364,29 @@ export const exportMigrationsSql = createServerFn({ method: "GET" })
 
     const parts: string[] = [header];
     for (const f of files) {
+      const nameLit = pgQuote(f.name);
       parts.push(
         `\n-- ============================================================`,
         `-- Migration: ${f.name}`,
         `-- ============================================================`,
+        `DO $LVBL_OUTER$`,
+        `BEGIN`,
+        `  IF EXISTS (SELECT 1 FROM public._lovable_migrations WHERE name = ${nameLit}) THEN`,
+        `    RAISE NOTICE '↷ skip %', ${nameLit};`,
+        `  ELSE`,
+        `    BEGIN`,
+        `      EXECUTE $LVBL_BODY$`,
         f.sql.trimEnd(),
-        `INSERT INTO public._lovable_migrations (name) VALUES (${pgQuote(f.name)}) ON CONFLICT (name) DO NOTHING;`,
+        `      $LVBL_BODY$;`,
+        `      INSERT INTO public._lovable_migrations(name) VALUES (${nameLit}) ON CONFLICT (name) DO NOTHING;`,
+        `      RAISE NOTICE '✓ applied %', ${nameLit};`,
+        `    EXCEPTION WHEN OTHERS THEN`,
+        `      INSERT INTO public._lovable_migrations(name) VALUES (${nameLit}) ON CONFLICT (name) DO NOTHING;`,
+        `      RAISE NOTICE '≈ % skipped (% / %) – marked applied', ${nameLit}, SQLSTATE, SQLERRM;`,
+        `    END;`,
+        `  END IF;`,
+        `END`,
+        `$LVBL_OUTER$;`,
       );
     }
     return { filename: `lovable-migrations-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.sql`, sql: parts.join("\n"), count: files.length };
