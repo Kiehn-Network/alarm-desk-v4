@@ -200,7 +200,7 @@ export const runFullSync = createServerFn({ method: "POST" })
     const logs: LogLine[] = [];
 
     const persist = async (patch: Record<string, unknown>) => {
-      try { await supabaseAdmin.from("sync_jobs").update(patch).eq("id", jobId); } catch {}
+      try { await (supabaseAdmin as any).from("sync_jobs").update(patch).eq("id", jobId); } catch {}
     };
     const pushLog = async (level: LogLine["level"], msg: string, extra?: unknown) => {
       logs.push(logLine(level, msg, extra));
