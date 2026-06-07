@@ -84,6 +84,7 @@ const superAdminSections: Section[] = [
   { label: "Plattform", items: [
     { to: "/superadmin", tab: "system", label: "System", icon: RefreshCw },
     { to: "/superadmin", tab: "selfhost", label: "Self-Hosting", icon: Crown },
+    { to: "/superadmin", tab: "dbsync", label: "DB-Sync", icon: Upload },
   ]},
 ];
 
