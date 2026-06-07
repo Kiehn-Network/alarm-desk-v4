@@ -47,6 +47,8 @@ function DashboardContent() {
   const { data: modules } = useDomainModules();
   const { domainId } = useRole();
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
+  const hausnotrufAktiv = modules?.has("hausnotruf") ?? false;
+  const aktiveProvider = (["malteser", "johanniter", "lgwa"] as const).filter((k) => modules?.has(k));
   const presence = usePresenceList(domainId);
   const onlineByRole = presence.reduce(
     (acc, p) => {
@@ -175,7 +177,9 @@ function DashboardContent() {
 
       {/* Provider + Top Kunden */}
       <div className="grid lg:grid-cols-3 gap-6">
-        <ProviderCard provider={extras?.provider} />
+        {hausnotrufAktiv && aktiveProvider.length > 0 && (
+          <ProviderCard provider={extras?.provider} aktiveProvider={aktiveProvider} />
+        )}
         <TopKundenCard kunden={extras?.topKunden ?? []} />
       </div>
 
