@@ -153,9 +153,13 @@ function DbSyncPanel() {
   const runFn = useServerFn(runFullSync);
   const startFn = useServerFn(startSyncJob);
   const getJobFn = useServerFn(getSyncJob);
+  const startMigFn = useServerFn(startSchemaMigrationJob);
+  const runMigFn = useServerFn(runSchemaMigration);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [openMigConfirm, setOpenMigConfirm] = useState(false);
+  const [migConfirmText, setMigConfirmText] = useState("");
   const [result, setResult] = useState<any>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [errorDetail, setErrorDetail] = useState<{ table: string; detail: string } | null>(null);
@@ -186,6 +190,22 @@ function DbSyncPanel() {
       else toast.warning(`Sync mit Fehlern: ${(r as any).failedCount} Tabellen`);
     },
     onError: (e: any) => toast.error(e?.message ?? "Sync fehlgeschlagen"),
+  });
+
+  const m_mig = useMutation({
+    mutationFn: async () => {
+      const { jobId: newId } = await startMigFn();
+      setJobId(newId);
+      setResult(null);
+      setOpenMigConfirm(false);
+      setMigConfirmText("");
+      return runMigFn({ data: { confirm: "MIGRATE NOW", jobId: newId } });
+    },
+    onSuccess: (r: any) => {
+      if (r.ok) toast.success(`Schema migriert (${r.success} neu, ${r.skipped} übersprungen)`);
+      else toast.warning(`Schema-Migration mit ${r.failed} Fehlern abgeschlossen`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Schema-Migration fehlgeschlagen"),
   });
 
   const preview = pq.data as any;
@@ -276,8 +296,15 @@ function DbSyncPanel() {
               <RefreshCw className="size-4 mr-2" /> Status prüfen
             </Button>
             <Button
+              variant="secondary"
+              disabled={!preview?.configured || isRunning || m_mig.isPending}
+              onClick={() => setOpenMigConfirm(true)}
+            >
+              Schema migrieren
+            </Button>
+            <Button
               variant="destructive"
-              disabled={!preview?.configured || !preview?.targetReachable || isRunning}
+              disabled={!preview?.configured || !preview?.targetReachable || isRunning || m_mig.isPending}
               onClick={() => setOpenConfirm(true)}
             >
               Vollständige Synchronisation starten
