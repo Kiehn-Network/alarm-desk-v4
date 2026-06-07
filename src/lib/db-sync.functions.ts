@@ -86,7 +86,7 @@ async function fetchAllRows(table: string): Promise<Record<string, unknown>[]> {
   // große Pages – supabase erlaubt bis 1000
   const pageSize = 1000;
   while (true) {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from(table)
       .select("*")
       .range(from, from + pageSize - 1);
