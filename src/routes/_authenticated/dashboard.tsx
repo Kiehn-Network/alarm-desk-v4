@@ -47,6 +47,8 @@ function DashboardContent() {
   const { data: modules } = useDomainModules();
   const { domainId } = useRole();
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
+  const hausnotrufAktiv = modules?.has("hausnotruf") ?? false;
+  const aktiveProvider = (["malteser", "johanniter", "lgwa"] as const).filter((k) => modules?.has(k));
   const presence = usePresenceList(domainId);
   const onlineByRole = presence.reduce(
     (acc, p) => {
@@ -175,7 +177,9 @@ function DashboardContent() {
 
       {/* Provider + Top Kunden */}
       <div className="grid lg:grid-cols-3 gap-6">
-        <ProviderCard provider={extras?.provider} />
+        {hausnotrufAktiv && aktiveProvider.length > 0 && (
+          <ProviderCard provider={extras?.provider} aktiveProvider={aktiveProvider} />
+        )}
         <TopKundenCard kunden={extras?.topKunden ?? []} />
       </div>
 
@@ -446,9 +450,9 @@ function StundenCard({ stunden }: { stunden?: { totalMin: number; projectedMin: 
 
 const PROVIDER_LABEL: Record<string, string> = { malteser: "Malteser", johanniter: "Johanniter", lgwa: "LüWa" };
 
-function ProviderCard({ provider }: { provider?: Record<string, number> }) {
-  const entries = (["malteser", "johanniter", "lgwa"] as const).map((k) => ({
-    key: k, label: PROVIDER_LABEL[k], value: provider?.[k] ?? 0,
+function ProviderCard({ provider, aktiveProvider }: { provider?: Record<string, number>; aktiveProvider: readonly string[] }) {
+  const entries = aktiveProvider.map((k) => ({
+    key: k, label: PROVIDER_LABEL[k] ?? k, value: provider?.[k] ?? 0,
   }));
   const max = Math.max(1, ...entries.map((e) => e.value));
   return (
