@@ -161,10 +161,12 @@ function DashboardContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className={`grid grid-cols-2 sm:grid-cols-3 ${schluesselbuchAktiv ? "lg:grid-cols-7" : "lg:grid-cols-5"} gap-3`}>
         {cards.map((c) => <StatCard key={c.label} {...c} />)}
         {schluesselbuchAktiv && (
-          <SchluesselCard entries={schluessel ?? []} />
+          <div className="col-span-2">
+            <SchluesselCard entries={schluessel ?? []} />
+          </div>
         )}
       </div>
 
