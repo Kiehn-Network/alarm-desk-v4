@@ -1065,6 +1065,10 @@ function SuperAdminPage() {
           <SelfHostGuide />
         </TabsContent>
 
+        <TabsContent value="dbsync" className="space-y-4">
+          <DbSyncPanel />
+        </TabsContent>
+
         <TabsContent value="health" className="space-y-4">
           <HealthPanel />
         </TabsContent>
