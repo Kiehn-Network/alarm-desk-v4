@@ -446,7 +446,7 @@ function StundenCard({ stunden }: { stunden?: { totalMin: number; projectedMin: 
 
 const PROVIDER_LABEL: Record<string, string> = { malteser: "Malteser", johanniter: "Johanniter", lgwa: "LüWa" };
 
-function ProviderCard({ provider }: { provider?: { malteser: number; johanniter: number; lgwa: number } }) {
+function ProviderCard({ provider }: { provider?: Record<string, number> }) {
   const entries = (["malteser", "johanniter", "lgwa"] as const).map((k) => ({
     key: k, label: PROVIDER_LABEL[k], value: provider?.[k] ?? 0,
   }));
