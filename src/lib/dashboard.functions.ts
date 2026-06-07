@@ -66,3 +66,89 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       })),
     };
   });
+
+export const getDashboardExtras = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await getEffectiveDomainId(supabase, userId);
+    if (!domainId) {
+      return {
+        reaktion: { heute: null as number | null, gestern: null as number | null, countHeute: 0 },
+        provider: { malteser: 0, johanniter: 0, lgwa: 0 },
+        stunden: { totalMin: 0, projectedMin: 0, daysElapsed: 0, daysInMonth: 0 },
+        topKunden: [] as Array<{ name: string; count: number }>,
+        aktiveFahrer: 0,
+      };
+    }
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterdayStart = new Date(todayStart.getTime() - 24 * 3600 * 1000);
+    const onlineSince = new Date(Date.now() - 10 * 60 * 1000);
+
+    const [rxTodayRes, rxYestRes, providerRes, hoursRes, kundenRes, drvRes] = await Promise.all([
+      supabase.from("einsaetze").select("created_at, vor_ort_am")
+        .gte("created_at", todayStart.toISOString()).not("vor_ort_am", "is", null),
+      supabase.from("einsaetze").select("created_at, vor_ort_am")
+        .gte("created_at", yesterdayStart.toISOString()).lt("created_at", todayStart.toISOString())
+        .not("vor_ort_am", "is", null),
+      supabase.from("einsaetze").select("hausnotruf_provider")
+        .gte("created_at", monthStart.toISOString()).not("hausnotruf_provider", "is", null),
+      supabase.from("einsaetze").select("vor_ort_am, einsatz_ende_am")
+        .gte("created_at", monthStart.toISOString())
+        .not("vor_ort_am", "is", null).not("einsatz_ende_am", "is", null),
+      supabase.from("einsaetze").select("kunden_name")
+        .gte("created_at", monthStart.toISOString()).not("kunden_name", "is", null),
+      supabase.from("driver_locations").select("user_id", { count: "exact", head: true })
+        .gte("updated_at", onlineSince.toISOString()),
+    ]);
+
+    const avgMin = (arr: any[] | null) => {
+      if (!arr || arr.length === 0) return null;
+      let sum = 0; let n = 0;
+      arr.forEach((r) => {
+        const ms = new Date(r.vor_ort_am).getTime() - new Date(r.created_at).getTime();
+        if (ms > 0) { sum += ms; n++; }
+      });
+      return n > 0 ? Math.round((sum / n) / 60000) : null;
+    };
+
+    const providerCounts: Record<string, number> = { malteser: 0, johanniter: 0, lgwa: 0 };
+    (providerRes.data ?? []).forEach((r: any) => {
+      const p = String(r.hausnotruf_provider ?? "").toLowerCase();
+      if (p in providerCounts) providerCounts[p]++;
+    });
+
+    let totalMin = 0;
+    (hoursRes.data ?? []).forEach((r: any) => {
+      const ms = new Date(r.einsatz_ende_am).getTime() - new Date(r.vor_ort_am).getTime();
+      if (ms > 0) totalMin += Math.floor(ms / 60000);
+    });
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysElapsed = now.getDate();
+    const projectedMin = daysElapsed > 0 ? Math.round((totalMin / daysElapsed) * daysInMonth) : 0;
+
+    const kundenCounts = new Map<string, number>();
+    (kundenRes.data ?? []).forEach((r: any) => {
+      const n = String(r.kunden_name ?? "").trim();
+      if (!n) return;
+      kundenCounts.set(n, (kundenCounts.get(n) ?? 0) + 1);
+    });
+    const topKunden = Array.from(kundenCounts.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+
+    return {
+      reaktion: {
+        heute: avgMin(rxTodayRes.data),
+        gestern: avgMin(rxYestRes.data),
+        countHeute: (rxTodayRes.data ?? []).length,
+      },
+      provider: providerCounts,
+      stunden: { totalMin, projectedMin, daysElapsed, daysInMonth },
+      topKunden,
+      aktiveFahrer: drvRes.count ?? 0,
+    };
+  });

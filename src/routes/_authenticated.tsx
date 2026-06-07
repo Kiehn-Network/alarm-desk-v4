@@ -10,6 +10,8 @@ import { TourLauncher } from "@/components/tour/tour-launcher";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocationTracker } from "@/hooks/use-location-tracker";
 import { useSupportNotifications } from "@/hooks/use-support-notifications";
+import { usePresenceBroadcast } from "@/hooks/use-presence";
+import { useRole } from "@/hooks/use-role";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -23,6 +25,14 @@ function AuthLayout() {
   const { user, loading } = useAuth();
   useLocationTracker(!!user);
   useSupportNotifications();
+  const { role, domainId } = useRole();
+  usePresenceBroadcast({
+    enabled: !!user && !!domainId,
+    domainId,
+    userId: user?.id ?? null,
+    role,
+    displayName: (user?.user_metadata?.display_name as string) ?? user?.email ?? null,
+  });
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">

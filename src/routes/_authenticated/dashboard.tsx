@@ -4,8 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { Suspense, useEffect } from "react";
 import {
   BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
+  Activity, Timer, Building2, Wallet,
 } from "lucide-react";
-import { getDashboardStats } from "@/lib/dashboard.functions";
+import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ import { useAppSettings } from "@/hooks/use-app-settings";
 import { Info } from "lucide-react";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { usePresenceList } from "@/hooks/use-presence";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -39,10 +41,24 @@ function DashboardPage() {
 function DashboardContent() {
   const { user } = useAuth();
   const fetch = useServerFn(getDashboardStats);
+  const fetchExtras = useServerFn(getDashboardExtras);
   const qc = useQueryClient();
   const { data: settings } = useAppSettings();
   const { data: modules } = useDomainModules();
+  const { domainId } = useRole();
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
+  const presence = usePresenceList(domainId);
+  const onlineByRole = presence.reduce(
+    (acc, p) => {
+      const r = (p.role ?? "").toLowerCase();
+      if (r === "fahrer") acc.fahrer++;
+      else if (r === "dispatcher") acc.dispatcher++;
+      else if (r === "admin" || r === "superadmin") acc.admin++;
+      else acc.other++;
+      return acc;
+    },
+    { fahrer: 0, dispatcher: 0, admin: 0, other: 0 },
+  );
 
   const { data: schluessel } = useQuery({
     queryKey: ["dashboard-schluessel-unterwegs"],
@@ -74,6 +90,13 @@ function DashboardContent() {
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch(),
     refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: extras } = useQuery({
+    queryKey: ["dashboard-extras"],
+    queryFn: () => fetchExtras(),
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
 
@@ -141,6 +164,19 @@ function DashboardContent() {
         {schluesselbuchAktiv && (
           <SchluesselCard entries={schluessel ?? []} />
         )}
+      </div>
+
+      {/* Online + Reaktionszeit + Stunden */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <OnlineCard online={onlineByRole} />
+        <ReaktionCard reaktion={extras?.reaktion} />
+        <StundenCard stunden={extras?.stunden} />
+      </div>
+
+      {/* Provider + Top Kunden */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <ProviderCard provider={extras?.provider} />
+        <TopKundenCard kunden={extras?.topKunden ?? []} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -314,6 +350,163 @@ function EmptyState({ icon: Icon, title, hint }: { icon: any; title: string; hin
       </div>
       <div className="mt-3 font-medium">{title}</div>
       <div className="text-sm text-muted-foreground mt-1">{hint}</div>
+    </div>
+  );
+}
+
+function fmtHM(min: number | null | undefined) {
+  if (min == null) return "–";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function OnlineCard({ online }: { online: { fahrer: number; dispatcher: number; admin: number; other: number } }) {
+  const total = online.fahrer + online.dispatcher + online.admin + online.other;
+  return (
+    <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+        <Activity className="size-3.5" /> Online
+      </div>
+      <div className="mt-3 flex items-baseline gap-2">
+        <div className="text-3xl font-bold tabular-nums">{total}</div>
+        <div className="text-xs text-muted-foreground">aktiv gerade</div>
+      </div>
+      <div className="mt-4 space-y-2 text-sm">
+        <RoleRow label="Fahrer" value={online.fahrer} tone="success" />
+        <RoleRow label="Dispatcher" value={online.dispatcher} tone="info" />
+        <RoleRow label="Admin" value={online.admin} tone="warning" />
+      </div>
+    </div>
+  );
+}
+
+function RoleRow({ label, value, tone }: { label: string; value: number; tone: "success" | "info" | "warning" }) {
+  const dotCls = tone === "success" ? "bg-success" : tone === "info" ? "bg-info" : "bg-warning";
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <span className={`size-2 rounded-full ${dotCls}`} />
+        {label}
+      </div>
+      <span className="font-medium tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+function ReaktionCard({ reaktion }: { reaktion?: { heute: number | null; gestern: number | null; countHeute: number } }) {
+  const heute = reaktion?.heute ?? null;
+  const gestern = reaktion?.gestern ?? null;
+  const diff = heute != null && gestern != null ? heute - gestern : null;
+  const trendTone = diff == null ? "text-muted-foreground" : diff < 0 ? "text-success" : diff > 0 ? "text-destructive" : "text-muted-foreground";
+  const trendArrow = diff == null ? "·" : diff < 0 ? "▼" : diff > 0 ? "▲" : "·";
+  return (
+    <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+        <Timer className="size-3.5" /> Reaktionszeit heute
+      </div>
+      <div className="mt-3 flex items-baseline gap-2">
+        <div className="text-3xl font-bold tabular-nums">{heute != null ? `${heute} min` : "–"}</div>
+        <div className={`text-xs ${trendTone}`}>
+          {trendArrow} {diff != null ? `${Math.abs(diff)} min vs. gestern` : "kein Vortag"}
+        </div>
+      </div>
+      <div className="mt-4 text-xs text-muted-foreground">
+        Ø Zeit Alarm → Vor Ort · {reaktion?.countHeute ?? 0} Einsätze heute
+      </div>
+    </div>
+  );
+}
+
+function StundenCard({ stunden }: { stunden?: { totalMin: number; projectedMin: number; daysElapsed: number; daysInMonth: number } }) {
+  const total = stunden?.totalMin ?? 0;
+  const proj = stunden?.projectedMin ?? 0;
+  const pct = stunden && stunden.daysInMonth > 0 ? Math.min(100, Math.round((stunden.daysElapsed / stunden.daysInMonth) * 100)) : 0;
+  return (
+    <div className="rounded-xl border border-border bg-card p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
+        <Wallet className="size-3.5" /> Stunden-Hochrechnung
+      </div>
+      <div className="mt-3 flex items-baseline gap-2">
+        <div className="text-3xl font-bold tabular-nums">{fmtHM(total)}</div>
+        <div className="text-xs text-muted-foreground">bisher diesen Monat</div>
+      </div>
+      <div className="mt-4">
+        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+          <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span>Tag {stunden?.daysElapsed ?? 0} / {stunden?.daysInMonth ?? 0}</span>
+          <span>Prognose: <span className="text-foreground font-medium">{fmtHM(proj)}</span></span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const PROVIDER_LABEL: Record<string, string> = { malteser: "Malteser", johanniter: "Johanniter", lgwa: "LüWa" };
+
+function ProviderCard({ provider }: { provider?: Record<string, number> }) {
+  const entries = (["malteser", "johanniter", "lgwa"] as const).map((k) => ({
+    key: k, label: PROVIDER_LABEL[k], value: provider?.[k] ?? 0,
+  }));
+  const max = Math.max(1, ...entries.map((e) => e.value));
+  return (
+    <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-lg font-semibold">Einsätze pro Provider</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">Hausnotruf – aktueller Monat</p>
+        </div>
+        <BarChart3 className="size-5 text-muted-foreground" />
+      </div>
+      <div className="space-y-4">
+        {entries.map((e) => (
+          <div key={e.key}>
+            <div className="flex items-center justify-between text-sm mb-1.5">
+              <span className="font-medium">{e.label}</span>
+              <span className="tabular-nums text-muted-foreground">{e.value}</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary/70 to-primary"
+                style={{ width: `${(e.value / max) * 100}%` }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TopKundenCard({ kunden }: { kunden: Array<{ name: string; count: number }> }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 className="text-lg font-semibold">Top-Kunden</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">nach Einsatzvolumen (Monat)</p>
+        </div>
+        <Building2 className="size-5 text-muted-foreground" />
+      </div>
+      {kunden.length === 0 ? (
+        <div className="text-sm text-muted-foreground">Noch keine Daten verfügbar.</div>
+      ) : (
+        <ol className="space-y-2">
+          {kunden.map((k, i) => (
+            <li key={k.name} className="flex items-center justify-between text-sm py-1.5 border-b border-border/50 last:border-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="size-6 rounded-full bg-muted text-xs font-semibold grid place-items-center shrink-0">
+                  {i + 1}
+                </span>
+                <span className="truncate">{k.name}</span>
+              </div>
+              <span className="font-medium tabular-nums shrink-0 ml-3">{k.count}</span>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
