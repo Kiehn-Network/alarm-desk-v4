@@ -23,7 +23,10 @@ import {
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
-import { previewSyncTarget, runFullSync, startSyncJob, getSyncJob } from "@/lib/db-sync.functions";
+import {
+  previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
+  startSchemaMigrationJob, runSchemaMigration,
+} from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,9 +153,13 @@ function DbSyncPanel() {
   const runFn = useServerFn(runFullSync);
   const startFn = useServerFn(startSyncJob);
   const getJobFn = useServerFn(getSyncJob);
+  const startMigFn = useServerFn(startSchemaMigrationJob);
+  const runMigFn = useServerFn(runSchemaMigration);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
+  const [openMigConfirm, setOpenMigConfirm] = useState(false);
+  const [migConfirmText, setMigConfirmText] = useState("");
   const [result, setResult] = useState<any>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [errorDetail, setErrorDetail] = useState<{ table: string; detail: string } | null>(null);
@@ -183,6 +190,22 @@ function DbSyncPanel() {
       else toast.warning(`Sync mit Fehlern: ${(r as any).failedCount} Tabellen`);
     },
     onError: (e: any) => toast.error(e?.message ?? "Sync fehlgeschlagen"),
+  });
+
+  const m_mig = useMutation({
+    mutationFn: async () => {
+      const { jobId: newId } = await startMigFn();
+      setJobId(newId);
+      setResult(null);
+      setOpenMigConfirm(false);
+      setMigConfirmText("");
+      return runMigFn({ data: { confirm: "MIGRATE NOW", jobId: newId } });
+    },
+    onSuccess: (r: any) => {
+      if (r.ok) toast.success(`Schema migriert (${r.success} neu, ${r.skipped} übersprungen)`);
+      else toast.warning(`Schema-Migration mit ${r.failed} Fehlern abgeschlossen`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Schema-Migration fehlgeschlagen"),
   });
 
   const preview = pq.data as any;
@@ -273,8 +296,15 @@ function DbSyncPanel() {
               <RefreshCw className="size-4 mr-2" /> Status prüfen
             </Button>
             <Button
+              variant="secondary"
+              disabled={!preview?.configured || isRunning || m_mig.isPending}
+              onClick={() => setOpenMigConfirm(true)}
+            >
+              Schema migrieren
+            </Button>
+            <Button
               variant="destructive"
-              disabled={!preview?.configured || !preview?.targetReachable || isRunning}
+              disabled={!preview?.configured || !preview?.targetReachable || isRunning || m_mig.isPending}
               onClick={() => setOpenConfirm(true)}
             >
               Vollständige Synchronisation starten
@@ -485,6 +515,46 @@ function DbSyncPanel() {
               toast.success("In Zwischenablage kopiert");
             }}>Kopieren</Button>
             <Button onClick={() => setErrorDetail(null)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openMigConfirm} onOpenChange={(o) => { if (!m_mig.isPending) setOpenMigConfirm(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schema-Migration bestätigen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>
+              Alle <b>Migrations-Dateien</b> aus <code>supabase/migrations/</code> werden in der
+              Ziel-DB ausgeführt. Bereits angewendete Migrationen werden übersprungen (Tracking in
+              <code> public._lovable_migrations</code>). Existierende Objekte werden als angewendet
+              markiert – keine Daten gehen verloren.
+            </p>
+            <p>
+              Bitte tippe zur Bestätigung: <b className="font-mono">MIGRATE NOW</b>
+            </p>
+            <Input
+              value={migConfirmText}
+              onChange={(e) => setMigConfirmText(e.target.value)}
+              placeholder="MIGRATE NOW"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenMigConfirm(false)} disabled={m_mig.isPending}>
+              Abbrechen
+            </Button>
+            <Button
+              disabled={migConfirmText !== "MIGRATE NOW" || m_mig.isPending}
+              onClick={() => m_mig.mutate()}
+            >
+              {m_mig.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Migriere…</>
+              ) : (
+                "Jetzt migrieren"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
