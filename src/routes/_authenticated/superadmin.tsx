@@ -23,7 +23,7 @@ import {
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
-import { previewSyncTarget, runFullSync } from "@/lib/db-sync.functions";
+import { previewSyncTarget, runFullSync, startSyncJob, getSyncJob } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
