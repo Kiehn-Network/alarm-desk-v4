@@ -2410,6 +2410,63 @@ export type Database = {
         }
         Relationships: []
       }
+      sync_jobs: {
+        Row: {
+          current_pass: number
+          current_table: string | null
+          error: string | null
+          failed_count: number
+          finished_at: string | null
+          id: string
+          logs: Json
+          processed_tables: number
+          started_at: string
+          started_by: string | null
+          status: string
+          tables: Json
+          target_url: string | null
+          total_read: number
+          total_tables: number
+          total_written: number
+        }
+        Insert: {
+          current_pass?: number
+          current_table?: string | null
+          error?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          logs?: Json
+          processed_tables?: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          tables?: Json
+          target_url?: string | null
+          total_read?: number
+          total_tables?: number
+          total_written?: number
+        }
+        Update: {
+          current_pass?: number
+          current_table?: string | null
+          error?: string | null
+          failed_count?: number
+          finished_at?: string | null
+          id?: string
+          logs?: Json
+          processed_tables?: number
+          started_at?: string
+          started_by?: string | null
+          status?: string
+          tables?: Json
+          target_url?: string | null
+          total_read?: number
+          total_tables?: number
+          total_written?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
