@@ -178,26 +178,30 @@ function DbSyncPanel() {
         <CardContent className="space-y-4 text-sm">
           <Alert variant="destructive-soft">
             <ShieldAlert className="size-4" />
-            <AlertTitleX>Achtung – schreibender Vorgang auf die Zielinstanz</AlertTitleX>
-            <AlertDescriptionX>
-              Alle Datensätze aus dem <b>public</b>-Schema dieser Instanz werden in die Zielinstanz
-              geschrieben. Identische Primärschlüssel werden im Ziel <b>überschrieben</b>
-              (UPSERT/merge). Zusätzliche Datensätze, die nur im Ziel existieren, bleiben unberührt.
-              <br />
-              Auth-Benutzer, Storage-Dateien und das <code>auth</code>/<code>storage</code>-Schema
-              werden <b>nicht</b> übertragen.
-            </AlertDescriptionX>
+            <div className="space-y-1 flex-1">
+              <AlertTitleX>Achtung – schreibender Vorgang auf die Zielinstanz</AlertTitleX>
+              <AlertDescriptionX>
+                Alle Datensätze aus dem <b>public</b>-Schema dieser Instanz werden in die Zielinstanz
+                geschrieben. Identische Primärschlüssel werden im Ziel <b>überschrieben</b>
+                (UPSERT/merge). Zusätzliche Datensätze, die nur im Ziel existieren, bleiben unberührt.
+                <br />
+                Auth-Benutzer, Storage-Dateien und das <code>auth</code>/<code>storage</code>-Schema
+                werden <b>nicht</b> übertragen.
+              </AlertDescriptionX>
+            </div>
           </Alert>
 
           {pq.isLoading && <div className="text-muted-foreground">Lade Konfiguration…</div>}
 
           {preview && !preview.configured && (
             <Alert>
-              <AlertTitleX>Keine Zielinstanz konfiguriert</AlertTitleX>
-              <AlertDescriptionX>
-                Die Secrets <code>SYNC_TARGET_SUPABASE_URL</code> und{" "}
-                <code>SYNC_TARGET_SERVICE_ROLE_KEY</code> müssen gesetzt sein.
-              </AlertDescriptionX>
+              <div className="space-y-1 flex-1">
+                <AlertTitleX>Keine Zielinstanz konfiguriert</AlertTitleX>
+                <AlertDescriptionX>
+                  Die Secrets <code>SYNC_TARGET_SUPABASE_URL</code> und{" "}
+                  <code>SYNC_TARGET_SERVICE_ROLE_KEY</code> müssen gesetzt sein.
+                </AlertDescriptionX>
+              </div>
             </Alert>
           )}
 
