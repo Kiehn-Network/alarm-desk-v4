@@ -23,7 +23,7 @@ import {
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
-import { previewSyncTarget, runFullSync } from "@/lib/db-sync.functions";
+import { previewSyncTarget, runFullSync, startSyncJob, getSyncJob } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -148,17 +148,37 @@ function NavDivider() {
 function DbSyncPanel() {
   const previewFn = useServerFn(previewSyncTarget);
   const runFn = useServerFn(runFullSync);
+  const startFn = useServerFn(startSyncJob);
+  const getJobFn = useServerFn(getSyncJob);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [result, setResult] = useState<any>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [errorDetail, setErrorDetail] = useState<{ table: string; detail: string } | null>(null);
+
+  const jq = useQuery({
+    queryKey: ["sync-job", jobId],
+    queryFn: () => getJobFn({ data: { jobId: jobId! } }),
+    enabled: !!jobId,
+    refetchInterval: (q) => {
+      const s = (q.state.data as any)?.status;
+      return s && s !== "running" ? false : 1000;
+    },
+  });
+  const job = jq.data as any;
 
   const m_run = useMutation({
-    mutationFn: () => runFn({ data: { confirm: "SYNC NOW" } }),
-    onSuccess: (r) => {
-      setResult(r);
+    mutationFn: async () => {
+      const { jobId: newId } = await startFn();
+      setJobId(newId);
+      setResult(null);
       setOpenConfirm(false);
       setConfirmText("");
+      return runFn({ data: { confirm: "SYNC NOW", jobId: newId } });
+    },
+    onSuccess: (r) => {
+      setResult(r);
       if ((r as any).ok) toast.success("Synchronisation abgeschlossen");
       else toast.warning(`Sync mit Fehlern: ${(r as any).failedCount} Tabellen`);
     },
@@ -166,6 +186,10 @@ function DbSyncPanel() {
   });
 
   const preview = pq.data as any;
+  const isRunning = m_run.isPending || job?.status === "running";
+  const progress = job?.total_tables
+    ? Math.round((job.processed_tables / job.total_tables) * 100)
+    : 0;
 
   return (
     <div className="space-y-4">
@@ -250,7 +274,7 @@ function DbSyncPanel() {
             </Button>
             <Button
               variant="destructive"
-              disabled={!preview?.configured || !preview?.targetReachable}
+              disabled={!preview?.configured || !preview?.targetReachable || isRunning}
               onClick={() => setOpenConfirm(true)}
             >
               Vollständige Synchronisation starten
@@ -258,6 +282,100 @@ function DbSyncPanel() {
           </div>
         </CardContent>
       </Card>
+
+      {jobId && job && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              {isRunning ? <Loader2 className="size-4 animate-spin" /> : <Activity className="size-4" />}
+              Live-Fortschritt
+              <Badge
+                variant={job.status === "done" ? "secondary" : job.status === "error" ? "destructive" : "outline"}
+                className="ml-2"
+              >
+                {job.status}
+              </Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span>
+                  {job.processed_tables}/{job.total_tables} Tabellen · Pass {job.current_pass}
+                  {job.current_table ? ` · läuft: ${job.current_table}` : ""}
+                </span>
+                <span>{progress}%</span>
+              </div>
+              <div className="h-2 rounded bg-muted overflow-hidden">
+                <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs pt-2">
+                <div className="rounded border p-2"><span className="text-muted-foreground">Gelesen:</span> <b>{job.total_read}</b></div>
+                <div className="rounded border p-2"><span className="text-muted-foreground">Geschrieben:</span> <b>{job.total_written}</b></div>
+                <div className="rounded border p-2"><span className="text-muted-foreground">Fehler:</span> <b className={job.failed_count ? "text-destructive" : ""}>{job.failed_count}</b></div>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-xs font-semibold mb-1">Live-Log</div>
+              <div className="max-h-72 overflow-auto rounded border bg-muted/30 p-2 font-mono text-[11px] leading-relaxed">
+                {(job.logs ?? []).map((l: any, i: number) => (
+                  <div key={i} className={
+                    l.level === "error" ? "text-destructive" :
+                    l.level === "warn" ? "text-amber-600" : "text-foreground/80"
+                  }>
+                    <span className="text-muted-foreground">{new Date(l.t).toLocaleTimeString("de-DE")}</span>{" "}
+                    [{l.level}] {l.msg}
+                    {l.extra?.stack && (
+                      <pre className="whitespace-pre-wrap pl-4 text-[10px] opacity-75">{String(l.extra.stack).slice(0, 800)}</pre>
+                    )}
+                  </div>
+                ))}
+                {(job.logs ?? []).length === 0 && <div className="text-muted-foreground">— noch keine Einträge —</div>}
+              </div>
+            </div>
+
+            {(job.tables ?? []).length > 0 && (
+              <div>
+                <div className="text-xs font-semibold mb-1">Tabellen</div>
+                <div className="max-h-72 overflow-auto border rounded-md">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 sticky top-0">
+                      <tr>
+                        <th className="text-left p-2">Tabelle</th>
+                        <th className="text-right p-2">Gelesen</th>
+                        <th className="text-right p-2">Geschrieben</th>
+                        <th className="text-left p-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(job.tables as any[]).map((t) => (
+                        <tr key={t.table} className="border-t">
+                          <td className="p-2 font-mono">{t.table}</td>
+                          <td className="p-2 text-right">{t.read}</td>
+                          <td className="p-2 text-right">{t.written}</td>
+                          <td className="p-2">
+                            {t.error ? (
+                              <button
+                                className="text-destructive underline text-left"
+                                onClick={() => setErrorDetail({ table: t.table, detail: t.errorDetail ?? t.error })}
+                              >
+                                Fehler – Details
+                              </button>
+                            ) : (
+                              <span className="text-emerald-600">OK</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {result && (
         <Card>
@@ -349,6 +467,24 @@ function DbSyncPanel() {
                 "Jetzt synchronisieren"
               )}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!errorDetail} onOpenChange={(o) => { if (!o) setErrorDetail(null); }}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Fehlerdetails: {errorDetail?.table}</DialogTitle>
+          </DialogHeader>
+          <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap text-xs bg-muted/40 p-3 rounded border font-mono">
+            {errorDetail?.detail}
+          </pre>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              if (errorDetail) navigator.clipboard.writeText(errorDetail.detail);
+              toast.success("In Zwischenablage kopiert");
+            }}>Kopieren</Button>
+            <Button onClick={() => setErrorDetail(null)}>Schließen</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
