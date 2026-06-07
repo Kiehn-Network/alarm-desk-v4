@@ -254,6 +254,7 @@ const THEMES = [
   { value: "violet",   label: "Royal Violet", swatches: ["#1e1530", "#8b5cf6", "#d946ef"] },
   { value: "ocean",    label: "Deep Ocean",   swatches: ["#0c1f2a", "#3aa8d6", "#5cd2c8"] },
   { value: "mono",     label: "Pure Mono",    swatches: ["#0a0a0a", "#ffffff", "#2a2a2a"] },
+  { value: "lavender", label: "Soft Lavender",swatches: ["#eef0fa", "#ffffff", "#7c8cf0"] },
 ] as const;
 
 function ThemeSettings() {
