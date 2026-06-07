@@ -13,7 +13,7 @@ import { listProviderEinsaetze } from "@/lib/abrechnung.functions";
 const PROVIDER_LABEL: Record<string, string> = {
   malteser: "Malteser",
   johanniter: "Johanniter",
-  lgwa: "LGWA",
+  lgwa: "LüWa",
 };
 
 export const Route = createFileRoute("/_authenticated/abrechnung/$provider")({

@@ -49,7 +49,7 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 const PROVIDER_LABEL: Record<string, string> = {
   malteser: "Malteser",
   johanniter: "Johanniter",
-  lgwa: "LGWA",
+  lgwa: "LüWa",
 };
 
 function ProviderChip({ provider }: { provider?: string | null }) {
