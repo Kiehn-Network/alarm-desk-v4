@@ -453,6 +453,62 @@ export type Database = {
           },
         ]
       }
+      data_purge_requests: {
+        Row: {
+          affected_count: number | null
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          domain_id: string
+          executed_at: string | null
+          id: string
+          note: string | null
+          requested_at: string
+          requested_by: string
+          scope: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          affected_count?: number | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          domain_id: string
+          executed_at?: string | null
+          id?: string
+          note?: string | null
+          requested_at?: string
+          requested_by: string
+          scope?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          affected_count?: number | null
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          domain_id?: string
+          executed_at?: string | null
+          id?: string
+          note?: string | null
+          requested_at?: string
+          requested_by?: string
+          scope?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_purge_requests_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       datei_historie: {
         Row: {
           changed_at: string
