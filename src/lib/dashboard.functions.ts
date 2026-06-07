@@ -75,7 +75,7 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
     if (!domainId) {
       return {
         reaktion: { heute: null as number | null, gestern: null as number | null, countHeute: 0 },
-        provider: { malteser: 0, johanniter: 0, lgwa: 0 },
+        provider: {} as Record<string, number>,
         stunden: { totalMin: 0, projectedMin: 0, daysElapsed: 0, daysInMonth: 0 },
         topKunden: [] as Array<{ name: string; count: number }>,
         aktiveFahrer: 0,
@@ -114,10 +114,11 @@ export const getDashboardExtras = createServerFn({ method: "GET" })
       return n > 0 ? Math.round((sum / n) / 60000) : null;
     };
 
-    const providerCounts: Record<string, number> = { malteser: 0, johanniter: 0, lgwa: 0 };
+    const providerCounts: Record<string, number> = {};
     (providerRes.data ?? []).forEach((r: any) => {
       const p = String(r.hausnotruf_provider ?? "").toLowerCase();
-      if (p in providerCounts) providerCounts[p]++;
+      if (!p) return;
+      providerCounts[p] = (providerCounts[p] ?? 0) + 1;
     });
 
     let totalMin = 0;
