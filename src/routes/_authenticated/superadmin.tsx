@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import { listSupportTickets, updateSupportTicket, getOpenTicketsCount } from "@/lib/support.functions";
 import { TicketDialog } from "@/routes/_authenticated/support";
+import { listPendingPurgeRequests, decidePurgeRequest } from "@/lib/data-purge.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -1004,6 +1005,7 @@ function SuperAdminPage() {
 
         <TabsContent value="tickets" className="space-y-4">
           <SupportTicketsPanel />
+          <DataPurgeRequestsPanel />
         </TabsContent>
 
         <TabsContent value="onboard" className="space-y-4">
