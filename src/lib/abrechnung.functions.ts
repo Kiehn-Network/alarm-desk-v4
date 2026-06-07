@@ -109,7 +109,7 @@ export const sendAbrechnungEmail = createServerFn({ method: "POST" })
     const providerLabel =
       data.provider === "malteser" ? "Malteser"
       : data.provider === "johanniter" ? "Johanniter"
-      : "LGWA";
+      : "LüWa";
 
     const path = `abrechnungen/${domainId}/${data.provider}/${data.month}/${Date.now()}_${data.filename}`;
     const pdfBuf = Buffer.from(data.pdf_base64, "base64");

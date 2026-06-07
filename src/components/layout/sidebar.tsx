@@ -43,7 +43,7 @@ const sections: Section[] = [
   { label: "Abrechnung Hausnotruf", items: [
     { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser", roles: ["admin", "dispatcher"] },
     { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter", roles: ["admin", "dispatcher"] },
-    { to: "/abrechnung/lgwa",       label: "LGWA",        icon: Receipt, module: "lgwa", roles: ["admin", "dispatcher"] },
+    { to: "/abrechnung/lgwa",       label: "LüWa",        icon: Receipt, module: "lgwa", roles: ["admin", "dispatcher"] },
   ]},
   { label: "Tools", items: [
     { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"], module: "schluesselbuch" },

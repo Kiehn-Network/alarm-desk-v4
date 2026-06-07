@@ -16,7 +16,7 @@ import {
 import { buildAbrechnungPdf } from "@/lib/abrechnung-pdf";
 
 const PROVIDER_LABEL: Record<string, string> = {
-  malteser: "Malteser", johanniter: "Johanniter", lgwa: "LGWA",
+  malteser: "Malteser", johanniter: "Johanniter", lgwa: "LüWa",
 };
 
 export const Route = createFileRoute("/_authenticated/abrechnung/$provider/versand")({

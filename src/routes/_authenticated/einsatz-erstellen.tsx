@@ -74,7 +74,7 @@ function EinsatzErstellenPage() {
   const providerOptions = [
     malteserOn && { key: "malteser" as const, label: "Malteser" },
     johanniterOn && { key: "johanniter" as const, label: "Johanniter" },
-    lgwaOn && { key: "lgwa" as const, label: "LGWA" },
+    lgwaOn && { key: "lgwa" as const, label: "LüWa" },
   ].filter(Boolean) as { key: "malteser" | "johanniter" | "lgwa"; label: string }[];
 
   const { data: searchData, isFetching } = useQuery({
