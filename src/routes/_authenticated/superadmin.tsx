@@ -318,6 +318,18 @@ function DbSyncPanel() {
               Schema migrieren
             </Button>
             <Button
+              variant="outline"
+              disabled={m_export.isPending}
+              onClick={() => m_export.mutate()}
+              title="Lädt alle Migrations als .sql-Datei – im SQL-Editor der Ziel-Instanz einfügen und ausführen."
+            >
+              {m_export.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Export…</>
+              ) : (
+                "Migrations-SQL exportieren"
+              )}
+            </Button>
+            <Button
               variant="destructive"
               disabled={!preview?.configured || !preview?.targetReachable || isRunning || m_mig.isPending}
               onClick={() => setOpenConfirm(true)}
