@@ -16,7 +16,7 @@ function ProfilPage() {
   const { mode, setMode } = useThemeMode();
   const { data: settings } = useAppSettings();
   const theme = ((settings as any)?.theme as string) ?? "midnight";
-  const themeLabel = ({ midnight: "Midnight Blue", emerald: "Emerald Pro", slate: "Slate Mono", sunset: "Sunset Warm", crimson: "Crimson Red", violet: "Royal Violet", ocean: "Deep Ocean", mono: "Pure Mono" } as Record<string,string>)[theme] ?? theme;
+  const themeLabel = ({ midnight: "Midnight Blue", emerald: "Emerald Pro", slate: "Slate Mono", sunset: "Sunset Warm", crimson: "Crimson Red", violet: "Royal Violet", ocean: "Deep Ocean", mono: "Pure Mono", lavender: "Soft Lavender" } as Record<string,string>)[theme] ?? theme;
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
