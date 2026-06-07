@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type ReactNode } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -82,7 +82,17 @@ function Dashboard() {
             <div className="text-sm space-y-1">
               <KV label="Zuständig" value={aktiv.mitarbeiter?.name ?? "–"} />
               {aktiv.mitarbeiter?.telefon_1 && (
-                <KV label="Telefon" value={aktiv.mitarbeiter.telefon_1} />
+                <KV
+                  label="Telefon"
+                  value={
+                    <a
+                      href={`tel:${aktiv.mitarbeiter.telefon_1.replace(/\s+/g, "")}`}
+                      className="text-primary hover:underline"
+                    >
+                      {aktiv.mitarbeiter.telefon_1}
+                    </a>
+                  }
+                />
               )}
               <KV label="Zeitraum" value={`${fmtDe(aktiv.von)} – ${fmtDe(aktiv.bis)}`} />
             </div>
@@ -331,7 +341,7 @@ function Tile({
   );
 }
 
-function KV({ label, value }: { label: string; value: string }) {
+function KV({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-muted-foreground">{label}</span>
