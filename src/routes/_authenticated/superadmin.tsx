@@ -25,7 +25,7 @@ import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
 import {
   previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
-  startSchemaMigrationJob, runSchemaMigration,
+  startSchemaMigrationJob, runSchemaMigration, exportMigrationsSql,
 } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -155,6 +155,7 @@ function DbSyncPanel() {
   const getJobFn = useServerFn(getSyncJob);
   const startMigFn = useServerFn(startSchemaMigrationJob);
   const runMigFn = useServerFn(runSchemaMigration);
+  const exportMigFn = useServerFn(exportMigrationsSql);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -206,6 +207,20 @@ function DbSyncPanel() {
       else toast.warning(`Schema-Migration mit ${r.failed} Fehlern abgeschlossen`);
     },
     onError: (e: any) => toast.error(e?.message ?? "Schema-Migration fehlgeschlagen"),
+  });
+
+  const m_export = useMutation({
+    mutationFn: async () => exportMigFn(),
+    onSuccess: (r: any) => {
+      const blob = new Blob([r.sql], { type: "text/sql;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = r.filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`SQL-Datei mit ${r.count} Migrations heruntergeladen`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Export fehlgeschlagen"),
   });
 
   const preview = pq.data as any;
@@ -301,6 +316,18 @@ function DbSyncPanel() {
               onClick={() => setOpenMigConfirm(true)}
             >
               Schema migrieren
+            </Button>
+            <Button
+              variant="outline"
+              disabled={m_export.isPending}
+              onClick={() => m_export.mutate()}
+              title="Lädt alle Migrations als .sql-Datei – im SQL-Editor der Ziel-Instanz einfügen und ausführen."
+            >
+              {m_export.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Export…</>
+              ) : (
+                "Migrations-SQL exportieren"
+              )}
             </Button>
             <Button
               variant="destructive"

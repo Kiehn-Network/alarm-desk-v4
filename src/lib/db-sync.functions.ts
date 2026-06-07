@@ -340,6 +340,45 @@ export const startSchemaMigrationJob = createServerFn({ method: "POST" })
     return { jobId: (data as { id: string }).id, total: files.length };
   });
 
+// Halb-automatisch: liefert alle Migrations als ein gebündeltes, idempotentes SQL-Skript zurück.
+export const exportMigrationsSql = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperadmin(context.userId);
+    const files = loadMigrations();
+    const header = [
+      `-- Lovable DB-Sync · Schema-Export`,
+      `-- Generiert: ${new Date().toISOString()}`,
+      `-- Anzahl Migrations-Dateien: ${files.length}`,
+      `-- Anwendung: im SQL-Editor der Ziel-Instanz einfügen und ausführen.`,
+      `-- Bereits angewendete Migrations werden via public._lovable_migrations übersprungen.`,
+      ``,
+      `CREATE TABLE IF NOT EXISTS public._lovable_migrations (`,
+      `  name text PRIMARY KEY,`,
+      `  applied_at timestamptz NOT NULL DEFAULT now(),`,
+      `  duration_ms integer,`,
+      `  checksum text`,
+      `);`,
+      ``,
+    ].join("\n");
+
+    const parts: string[] = [header];
+    for (const f of files) {
+      parts.push(
+        `\n-- ============================================================`,
+        `-- Migration: ${f.name}`,
+        `-- ============================================================`,
+        f.sql.trimEnd(),
+        `INSERT INTO public._lovable_migrations (name) VALUES (${pgQuote(f.name)}) ON CONFLICT (name) DO NOTHING;`,
+      );
+    }
+    return { filename: `lovable-migrations-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.sql`, sql: parts.join("\n"), count: files.length };
+  });
+
+function pgQuote(s: string): string {
+  return `'${s.replace(/'/g, "''")}'`;
+}
+
 export const runSchemaMigration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
