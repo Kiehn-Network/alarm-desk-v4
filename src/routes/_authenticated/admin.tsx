@@ -36,6 +36,10 @@ import {
   listAllGruende, upsertGrund, deleteGrund,
   getSupportPin, regenerateSupportPin, getForcedImpersonation,
 } from "@/lib/admin.functions";
+import {
+  requestDataPurge, listMyPurgeRequests, cancelPurgeRequest,
+} from "@/lib/data-purge.functions";
+import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
@@ -100,6 +104,7 @@ function AdminPage() {
           <TabsTrigger value="modules"><Boxes className="size-4 mr-2" />Module</TabsTrigger>
           <TabsTrigger value="tour"><GraduationCap className="size-4 mr-2" />Einführung</TabsTrigger>
           <TabsTrigger value="system"><SettingsIcon className="size-4 mr-2" />System</TabsTrigger>
+          <TabsTrigger value="datenloeschung"><Trash2 className="size-4 mr-2" />Datenlöschung</TabsTrigger>
           <TabsTrigger value="hilfe"><LifeBuoy className="size-4 mr-2" />Hilfe</TabsTrigger>
         </TabsList>
 
@@ -108,8 +113,157 @@ function AdminPage() {
         <TabsContent value="modules"><ModulesPanel /></TabsContent>
         <TabsContent value="tour"><TourAdminPanel /></TabsContent>
         <TabsContent value="system"><SystemSettingsPanel /></TabsContent>
+        <TabsContent value="datenloeschung"><DatenLoeschungPanel /></TabsContent>
         <TabsContent value="hilfe"><SupportPanel /></TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ---------------- Datenlöschung (Datei-Verwaltung) ----------------
+
+function DatenLoeschungPanel() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listMyPurgeRequests);
+  const reqFn = useServerFn(requestDataPurge);
+  const cancelFn = useServerFn(cancelPurgeRequest);
+
+  const lq = useQuery({ queryKey: ["my-purge-requests"], queryFn: () => listFn() });
+  const requests = lq.data?.requests ?? [];
+  const pending = requests.find((r: any) => r.status === "pending");
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [note, setNote] = useState("");
+
+  const m_request = useMutation({
+    mutationFn: () => reqFn({ data: { note: note || null } }),
+    onSuccess: () => {
+      toast.success("Antrag zur Löschung gestellt — wartet auf Bestätigung durch den SuperAdmin.");
+      setConfirmOpen(false); setConfirmText(""); setNote("");
+      qc.invalidateQueries({ queryKey: ["my-purge-requests"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  const m_cancel = useMutation({
+    mutationFn: (id: string) => cancelFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Antrag zurückgezogen");
+      qc.invalidateQueries({ queryKey: ["my-purge-requests"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  const STATUS_LABEL: Record<string, string> = {
+     pending: "Wartet auf Bestätigung",
+     approved: "Freigegeben",
+     rejected: "Abgelehnt",
+     completed: "Ausgeführt",
+  };
+  const STATUS_CLS: Record<string, string> = {
+    pending: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+    approved: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
+    rejected: "bg-muted text-muted-foreground border-border",
+    completed: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 space-y-3">
+        <div className="flex items-start gap-3">
+          <div className="size-10 rounded-lg bg-destructive/15 grid place-items-center shrink-0">
+            <ShieldAlert className="size-5 text-destructive" />
+          </div>
+          <div className="space-y-1">
+            <div className="font-semibold">Alle Daten der Datei-Verwaltung löschen</div>
+            <p className="text-sm text-muted-foreground">
+              Löscht <b>unwiderruflich</b> alle Dateien dieser Domäne aus der Datei-Verwaltung
+              (inkl. zugehöriger Verknüpfungen, Historie und Storage-Dateien).
+              Die Aktion muss vom SuperAdmin bestätigt werden.
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-end">
+          <Button
+            variant="destructive"
+            disabled={!!pending || lq.isLoading}
+            onClick={() => setConfirmOpen(true)}
+          >
+            <Trash2 className="size-4 mr-2" /> Löschung beantragen
+          </Button>
+        </div>
+        {pending && (
+          <div className="text-xs text-amber-400">
+            Es ist bereits ein Antrag offen ({fmt(pending.requested_at)}).
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-5 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="font-semibold">Verlauf</div>
+        {lq.isLoading ? (
+          <div className="text-sm text-muted-foreground">Lade …</div>
+        ) : requests.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-6 text-center">Noch keine Anträge.</div>
+        ) : (
+          <div className="divide-y">
+            {requests.map((r: any) => (
+              <div key={r.id} className="py-3 flex items-center gap-3 flex-wrap">
+                <Badge variant="outline" className={STATUS_CLS[r.status]}>{STATUS_LABEL[r.status] ?? r.status}</Badge>
+                <div className="text-sm min-w-0">
+                  <div className="truncate">
+                    Beantragt: <span className="text-muted-foreground">{fmt(r.requested_at)}</span>
+                  </div>
+                  {r.decided_at && (
+                    <div className="text-xs text-muted-foreground">
+                      Entscheidung: {fmt(r.decided_at)}{r.affected_count != null ? ` — ${r.affected_count} Dateien` : ""}
+                    </div>
+                  )}
+                  {r.note && <div className="text-xs text-muted-foreground italic">„{r.note}"</div>}
+                </div>
+                {r.status === "pending" && (
+                  <Button size="sm" variant="outline" className="ml-auto"
+                    onClick={() => { if (confirm("Antrag zurückziehen?")) m_cancel.mutate(r.id); }}>
+                    Zurückziehen
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Löschung aller Datei-Verwaltungs-Daten beantragen</AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Aktion entfernt nach Bestätigung durch den SuperAdmin <b>alle</b> Dateien dieser
+              Domäne unwiderruflich. Bitte tippe zur Bestätigung <b>LÖSCHEN</b> ein.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Bestätigung</Label>
+              <Input value={confirmText} onChange={(e) => setConfirmText(e.target.value)} placeholder="LÖSCHEN" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Notiz (optional)</Label>
+              <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Grund / Hinweis für den SuperAdmin" />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={confirmText.trim() !== "LÖSCHEN" || m_request.isPending}
+              onClick={(e) => { e.preventDefault(); m_request.mutate(); }}
+            >
+              Antrag stellen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
