@@ -23,6 +23,7 @@ import {
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
 import { listAppModules } from "@/lib/settings.functions";
+import { previewSyncTarget, runFullSync } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -144,6 +145,232 @@ function NavDivider() {
   return <span className="mx-1 h-5 w-px bg-border/70 self-center" aria-hidden />;
 }
 
+function DbSyncPanel() {
+  const previewFn = useServerFn(previewSyncTarget);
+  const runFn = useServerFn(runFullSync);
+  const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
+  const [openConfirm, setOpenConfirm] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [result, setResult] = useState<any>(null);
+
+  const m_run = useMutation({
+    mutationFn: () => runFn({ data: { confirm: "SYNC NOW" } }),
+    onSuccess: (r) => {
+      setResult(r);
+      setOpenConfirm(false);
+      setConfirmText("");
+      if ((r as any).ok) toast.success("Synchronisation abgeschlossen");
+      else toast.warning(`Sync mit Fehlern: ${(r as any).failedCount} Tabellen`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Sync fehlgeschlagen"),
+  });
+
+  const preview = pq.data as any;
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw className="size-5" /> Datenbank-Synchronisation
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm">
+          <Alert variant="destructive-soft">
+            <ShieldAlert className="size-4" />
+            <div className="space-y-1 flex-1">
+              <AlertTitleX>Achtung – schreibender Vorgang auf die Zielinstanz</AlertTitleX>
+              <AlertDescriptionX>
+                Alle Datensätze aus dem <b>public</b>-Schema dieser Instanz werden in die Zielinstanz
+                geschrieben. Identische Primärschlüssel werden im Ziel <b>überschrieben</b>
+                (UPSERT/merge). Zusätzliche Datensätze, die nur im Ziel existieren, bleiben unberührt.
+                <br />
+                Auth-Benutzer, Storage-Dateien und das <code>auth</code>/<code>storage</code>-Schema
+                werden <b>nicht</b> übertragen.
+              </AlertDescriptionX>
+            </div>
+          </Alert>
+
+          {pq.isLoading && <div className="text-muted-foreground">Lade Konfiguration…</div>}
+
+          {preview && !preview.configured && (
+            <Alert>
+              <div className="space-y-1 flex-1">
+                <AlertTitleX>Keine Zielinstanz konfiguriert</AlertTitleX>
+                <AlertDescriptionX>
+                  Die Secrets <code>SYNC_TARGET_SUPABASE_URL</code> und{" "}
+                  <code>SYNC_TARGET_SERVICE_ROLE_KEY</code> müssen gesetzt sein.
+                </AlertDescriptionX>
+              </div>
+            </Alert>
+          )}
+
+          {preview && preview.configured && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="rounded-md border p-3 space-y-1">
+                <div className="text-xs text-muted-foreground">Quelle (diese Instanz)</div>
+                <div className="font-mono text-xs break-all">{preview.sourceUrl ?? "—"}</div>
+              </div>
+              <div className="rounded-md border p-3 space-y-1">
+                <div className="text-xs text-muted-foreground">Ziel</div>
+                <div className="font-mono text-xs break-all">{preview.targetUrl}</div>
+                <div className="text-xs">
+                  {preview.targetReachable ? (
+                    <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-700">
+                      erreichbar
+                    </Badge>
+                  ) : (
+                    <Badge variant="destructive">
+                      nicht erreichbar{preview.targetError ? ` – ${preview.targetError}` : ""}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {preview && preview.configured && (
+            <div>
+              <div className="text-xs text-muted-foreground mb-1">
+                Es werden {preview.tables.length} Tabellen synchronisiert
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {preview.tables.map((t: string) => (
+                  <Badge key={t} variant="outline" className="text-[10px] font-mono">
+                    {t}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" onClick={() => pq.refetch()} disabled={pq.isFetching}>
+              <RefreshCw className="size-4 mr-2" /> Status prüfen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={!preview?.configured || !preview?.targetReachable}
+              onClick={() => setOpenConfirm(true)}
+            >
+              Vollständige Synchronisation starten
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {result && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Ergebnis</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Dauer</div>
+                <div className="text-lg font-semibold">{(result.durationMs / 1000).toFixed(1)}s</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Gelesen</div>
+                <div className="text-lg font-semibold">{result.totalRead}</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Geschrieben</div>
+                <div className="text-lg font-semibold">{result.totalWritten}</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Fehlerhafte Tabellen</div>
+                <div className={`text-lg font-semibold ${result.failedCount ? "text-destructive" : "text-emerald-600"}`}>
+                  {result.failedCount}
+                </div>
+              </div>
+            </div>
+            <div className="max-h-96 overflow-auto border rounded-md">
+              <table className="w-full text-xs">
+                <thead className="bg-muted/50 sticky top-0">
+                  <tr>
+                    <th className="text-left p-2">Tabelle</th>
+                    <th className="text-right p-2">Gelesen</th>
+                    <th className="text-right p-2">Geschrieben</th>
+                    <th className="text-left p-2">Fehler</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.tables.map((t: any) => (
+                    <tr key={t.table} className="border-t">
+                      <td className="p-2 font-mono">{t.table}</td>
+                      <td className="p-2 text-right">{t.read}</td>
+                      <td className="p-2 text-right">{t.written}</td>
+                      <td className="p-2 text-destructive">{t.error ?? ""}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={openConfirm} onOpenChange={(o) => { if (!m_run.isPending) setOpenConfirm(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Synchronisation bestätigen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>
+              Damit werden ALLE Datensätze der aktuellen Datenbank in die Zielinstanz
+              <br />
+              <code className="text-xs">{preview?.targetUrl}</code>
+              <br />
+              geschrieben. Bestehende Datensätze mit gleicher ID werden überschrieben.
+            </p>
+            <p>
+              Bitte tippe zur Bestätigung: <b className="font-mono">SYNC NOW</b>
+            </p>
+            <Input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="SYNC NOW"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenConfirm(false)} disabled={m_run.isPending}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={confirmText !== "SYNC NOW" || m_run.isPending}
+              onClick={() => m_run.mutate()}
+            >
+              {m_run.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Synchronisiere…</>
+              ) : (
+                "Jetzt synchronisieren"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// kleine lokale Alert-Hilfsstücke (kompatibel ohne extra Imports)
+function Alert({ children, variant }: { children: React.ReactNode; variant?: "destructive-soft" }) {
+  const cls =
+    variant === "destructive-soft"
+      ? "border border-destructive/40 bg-destructive/5 text-foreground"
+      : "border border-border bg-muted/40 text-foreground";
+  return <div className={`rounded-md p-3 text-sm flex gap-2 items-start ${cls}`}>{children}</div>;
+}
+function AlertTitleX({ children }: { children: React.ReactNode }) {
+  return <div className="font-semibold mb-0.5">{children}</div>;
+}
+function AlertDescriptionX({ children }: { children: React.ReactNode }) {
+  return <div className="text-sm text-muted-foreground [&_b]:text-foreground">{children}</div>;
+}
+
 function DataPurgeRequestsPanel() {
   const qc = useQueryClient();
   const listFn = useServerFn(listPendingPurgeRequests);
@@ -237,6 +464,7 @@ const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }
   { label: "Plattform", items: [
     { value: "system", label: "System" },
     { value: "selfhost", label: "Self-Hosting" },
+    { value: "dbsync", label: "DB-Sync" },
   ]},
 ];
 
@@ -1061,6 +1289,10 @@ function SuperAdminPage() {
 
         <TabsContent value="selfhost" className="space-y-4">
           <SelfHostGuide />
+        </TabsContent>
+
+        <TabsContent value="dbsync" className="space-y-4">
+          <DbSyncPanel />
         </TabsContent>
 
         <TabsContent value="health" className="space-y-4">
