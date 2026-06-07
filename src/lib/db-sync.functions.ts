@@ -301,3 +301,227 @@ export const runFullSync = createServerFn({ method: "POST" })
     return { ok, durationMs: Date.now() - started, totalRead, totalWritten,
       tables: results, failedCount: failed.length, jobId };
   });
+
+// ============================================================
+// Schema-Migration: führt supabase/migrations/*.sql gegen Ziel-DB aus
+// ============================================================
+
+// Migrations werden zum Build-Zeitpunkt eingebettet.
+const MIGRATION_MODULES = import.meta.glob("/supabase/migrations/*.sql", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+function loadMigrations(): { name: string; sql: string }[] {
+  return Object.entries(MIGRATION_MODULES)
+    .map(([path, sql]) => ({ name: path.split("/").pop() as string, sql }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export const startSchemaMigrationJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperadmin(context.userId);
+    const dbUrl = process.env.SYNC_TARGET_DB_URL;
+    if (!dbUrl) throw new Error("SYNC_TARGET_DB_URL ist nicht gesetzt.");
+    const files = loadMigrations();
+    const { data, error } = await supabaseAdmin
+      .from("sync_jobs")
+      .insert({
+        started_by: context.userId,
+        status: "running",
+        target_url: process.env.SYNC_TARGET_SUPABASE_URL ?? "(db-url)",
+        total_tables: files.length,
+        logs: [logLine("info", `Schema-Migration gestartet – ${files.length} Dateien`)] as never,
+      })
+      .select("id").single();
+    if (error) throw new Error(`sync_jobs insert: ${error.message}`);
+    return { jobId: (data as { id: string }).id, total: files.length };
+  });
+
+export const runSchemaMigration = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ confirm: z.literal("MIGRATE NOW"), jobId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertSuperadmin(context.userId);
+    const dbUrl = process.env.SYNC_TARGET_DB_URL;
+    if (!dbUrl) throw new Error("SYNC_TARGET_DB_URL ist nicht gesetzt.");
+    const { default: postgres } = await import("postgres");
+
+    const jobId = data.jobId;
+    const started = Date.now();
+    const files = loadMigrations();
+    const logs: LogLine[] = [];
+    const tables: TableResult[] = [];
+
+    const persist = async (patch: Record<string, unknown>) => {
+      try { await (supabaseAdmin as any).from("sync_jobs").update(patch).eq("id", jobId); } catch {}
+    };
+    const pushLog = async (level: LogLine["level"], msg: string, extra?: unknown) => {
+      logs.push(logLine(level, msg, extra));
+      await persist({ logs: logs as never });
+    };
+
+    let sql: ReturnType<typeof postgres> | null = null;
+    try {
+      sql = postgres(dbUrl, {
+        ssl: "require",
+        max: 1,
+        idle_timeout: 5,
+        connect_timeout: 15,
+        prepare: false,
+      });
+
+      await pushLog("info", "Verbindung zur Ziel-DB hergestellt");
+
+      // Tracking-Tabelle anlegen (idempotent)
+      await sql.unsafe(`
+        CREATE TABLE IF NOT EXISTS public._lovable_migrations (
+          name text PRIMARY KEY,
+          applied_at timestamptz NOT NULL DEFAULT now(),
+          duration_ms integer,
+          checksum text
+        );
+      `);
+      await pushLog("info", "Tracking-Tabelle _lovable_migrations bereit");
+
+      const appliedRows = await sql<{ name: string }[]>`SELECT name FROM public._lovable_migrations`;
+      const applied = new Set(appliedRows.map((r) => r.name));
+      await pushLog("info", `${applied.size} Migrationen bereits angewendet, ${files.length - applied.size} ausstehend`);
+
+      let processed = 0;
+      let success = 0;
+      let skipped = 0;
+      let failed = 0;
+
+      for (const file of files) {
+        await persist({ current_table: file.name, current_pass: 1 });
+        const t = Date.now();
+
+        if (applied.has(file.name)) {
+          skipped++;
+          processed++;
+          tables.push({ table: file.name, read: 0, written: 0 });
+          await pushLog("info", `↷ ${file.name} – bereits angewendet`);
+          await persist({
+            tables: tables as never,
+            processed_tables: processed,
+            failed_count: failed,
+          });
+          continue;
+        }
+
+        let lastErr: string | undefined;
+        let lastErrDetail: string | undefined;
+        try {
+          await sql.begin(async (tx) => {
+            await tx.unsafe(file.sql);
+            await tx`
+              INSERT INTO public._lovable_migrations (name, duration_ms)
+              VALUES (${file.name}, ${Date.now() - t})
+              ON CONFLICT (name) DO NOTHING
+            `;
+          });
+          success++;
+          await pushLog("info", `✓ ${file.name} (${Date.now() - t}ms)`);
+        } catch (e) {
+          const err = e as Error & { code?: string; detail?: string; hint?: string; position?: string };
+          // "already exists" o.ä.: als angewendet markieren, damit weitere Migrationen darauf aufbauen können
+          const msg = err.message ?? String(err);
+          const benign = /already exists|duplicate object|duplicate_object|42P07|42710|42701/i.test(
+            `${msg} ${err.code ?? ""}`,
+          );
+          if (benign) {
+            try {
+              await sql`
+                INSERT INTO public._lovable_migrations (name, duration_ms)
+                VALUES (${file.name}, ${Date.now() - t})
+                ON CONFLICT (name) DO NOTHING
+              `;
+              skipped++;
+              await pushLog("warn", `≈ ${file.name} – Objekte bereits vorhanden, als angewendet markiert`, {
+                code: err.code, message: msg.slice(0, 400),
+              });
+            } catch (markErr) {
+              failed++;
+              lastErr = msg;
+              lastErrDetail = `${err.code ?? ""} ${msg}\n${err.detail ?? ""}\n${err.hint ?? ""}\n${(markErr as Error).message}`;
+              await pushLog("error", `✗ ${file.name} – Markierung fehlgeschlagen`, { stack: lastErrDetail });
+            }
+          } else {
+            failed++;
+            lastErr = msg;
+            lastErrDetail = [
+              `code: ${err.code ?? "?"}`,
+              `position: ${err.position ?? "?"}`,
+              `detail: ${err.detail ?? ""}`,
+              `hint: ${err.hint ?? ""}`,
+              `message: ${msg}`,
+              `stack: ${err.stack ?? ""}`,
+            ].join("\n");
+            await pushLog("error", `✗ ${file.name}: ${msg}`, { stack: lastErrDetail });
+          }
+        }
+
+        processed++;
+        tables.push({
+          table: file.name,
+          read: 0,
+          written: lastErr ? 0 : 1,
+          error: lastErr,
+          errorDetail: lastErrDetail,
+        });
+        await persist({
+          tables: tables as never,
+          processed_tables: processed,
+          failed_count: failed,
+        });
+      }
+
+      await pushLog(
+        failed === 0 ? "info" : "warn",
+        `Fertig: ${success} ausgeführt, ${skipped} übersprungen, ${failed} Fehler`,
+      );
+      await persist({
+        status: failed === 0 ? "done" : "error",
+        finished_at: new Date().toISOString(),
+        current_table: null,
+        processed_tables: processed,
+        failed_count: failed,
+      });
+
+      try {
+        await supabaseAdmin.from("superadmin_audit_log").insert({
+          actor_id: context.userId,
+          actor_email: context.claims?.email ?? null,
+          action: "schema_migrate",
+          target_type: "database",
+          target_id: null,
+          target_label: process.env.SYNC_TARGET_SUPABASE_URL ?? null,
+          metadata: {
+            duration_ms: Date.now() - started,
+            total: files.length,
+            success, skipped, failed,
+            job_id: jobId,
+          } as never,
+        });
+      } catch {}
+
+      return { ok: failed === 0, total: files.length, success, skipped, failed, jobId };
+    } catch (e) {
+      const err = e as Error;
+      await pushLog("error", `Abbruch: ${err.message}`, { stack: err.stack });
+      await persist({
+        status: "error",
+        finished_at: new Date().toISOString(),
+        error: err.message,
+        current_table: null,
+      });
+      throw err;
+    } finally {
+      try { if (sql) await sql.end({ timeout: 5 }); } catch {}
+    }
+  });
