@@ -144,6 +144,78 @@ function NavDivider() {
   return <span className="mx-1 h-5 w-px bg-border/70 self-center" aria-hidden />;
 }
 
+function DataPurgeRequestsPanel() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listPendingPurgeRequests);
+  const decideFn = useServerFn(decidePurgeRequest);
+  const lq = useQuery({ queryKey: ["sa-purge-requests"], queryFn: () => listFn(), refetchInterval: 60_000 });
+  const requests = (lq.data?.requests ?? []) as any[];
+
+  const m_decide = useMutation({
+    mutationFn: (v: { id: string; decision: "approve" | "reject" }) => decideFn({ data: v }),
+    onSuccess: (_d, v) => {
+      toast.success(v.decision === "approve" ? "Antrag freigegeben — Daten gelöscht." : "Antrag abgelehnt.");
+      qc.invalidateQueries({ queryKey: ["sa-purge-requests"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  const STATUS_LABEL: Record<string, string> = {
+    pending: "Wartet", approved: "Freigegeben", rejected: "Abgelehnt", completed: "Ausgeführt",
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Trash2 className="size-4" />Datenlöschungs-Anträge</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {lq.isLoading ? (
+          <div className="text-sm text-muted-foreground">Lädt …</div>
+        ) : requests.length === 0 ? (
+          <div className="text-sm text-muted-foreground py-6 text-center">Keine Anträge.</div>
+        ) : (
+          <div className="divide-y">
+            {requests.map((r) => (
+              <div key={r.id} className="py-3 flex items-center gap-3 flex-wrap">
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium truncate">
+                    {r.domain?.name ?? "—"} <span className="text-xs text-muted-foreground">({r.domain?.slug ?? "?"})</span>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    Scope: {r.scope} · von {r.requested_by_name ?? r.requested_by} · {new Date(r.requested_at).toLocaleString("de-DE")}
+                  </div>
+                  {r.note && <div className="text-xs italic text-muted-foreground">„{r.note}"</div>}
+                  {r.affected_count != null && (
+                    <div className="text-xs text-muted-foreground">{r.affected_count} Dateien betroffen</div>
+                  )}
+                </div>
+                <Badge variant="outline">{STATUS_LABEL[r.status] ?? r.status}</Badge>
+                {r.status === "pending" && (
+                  <>
+                    <Button size="sm" variant="outline"
+                      onClick={() => { if (confirm("Antrag ablehnen?")) m_decide.mutate({ id: r.id, decision: "reject" }); }}>
+                      Ablehnen
+                    </Button>
+                    <Button size="sm" variant="destructive"
+                      onClick={() => {
+                        if (confirm(`Alle Dateien der Domäne „${r.domain?.name ?? ""}" UNWIDERRUFLICH löschen?`)) {
+                          m_decide.mutate({ id: r.id, decision: "approve" });
+                        }
+                      }}>
+                      Freigeben & löschen
+                    </Button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }[] = [
   { label: "Start", items: [
     { value: "overview", label: "Übersicht" },
