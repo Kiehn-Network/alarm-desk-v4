@@ -518,6 +518,46 @@ function DbSyncPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={openMigConfirm} onOpenChange={(o) => { if (!m_mig.isPending) setOpenMigConfirm(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Schema-Migration bestätigen</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p>
+              Alle <b>Migrations-Dateien</b> aus <code>supabase/migrations/</code> werden in der
+              Ziel-DB ausgeführt. Bereits angewendete Migrationen werden übersprungen (Tracking in
+              <code> public._lovable_migrations</code>). Existierende Objekte werden als angewendet
+              markiert – keine Daten gehen verloren.
+            </p>
+            <p>
+              Bitte tippe zur Bestätigung: <b className="font-mono">MIGRATE NOW</b>
+            </p>
+            <Input
+              value={migConfirmText}
+              onChange={(e) => setMigConfirmText(e.target.value)}
+              placeholder="MIGRATE NOW"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenMigConfirm(false)} disabled={m_mig.isPending}>
+              Abbrechen
+            </Button>
+            <Button
+              disabled={migConfirmText !== "MIGRATE NOW" || m_mig.isPending}
+              onClick={() => m_mig.mutate()}
+            >
+              {m_mig.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Migriere…</>
+              ) : (
+                "Jetzt migrieren"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
