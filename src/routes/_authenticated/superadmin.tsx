@@ -752,6 +752,7 @@ function SuperAdminPage() {
                 <SideSection label="Plattform" />
                 <SideTab value="system" icon={RefreshCw}>System</SideTab>
                 <SideTab value="selfhost" icon={Building2}>Self-Hosting</SideTab>
+                <SideTab value="dbsync" icon={Upload}>DB-Sync</SideTab>
               </TabsList>
             </nav>
           </aside>
