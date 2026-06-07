@@ -4,8 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { Suspense, useEffect } from "react";
 import {
   BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
+  Activity, Timer, Building2, Wallet,
 } from "lucide-react";
-import { getDashboardStats } from "@/lib/dashboard.functions";
+import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ import { useAppSettings } from "@/hooks/use-app-settings";
 import { Info } from "lucide-react";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { usePresenceList } from "@/hooks/use-presence";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -39,10 +41,24 @@ function DashboardPage() {
 function DashboardContent() {
   const { user } = useAuth();
   const fetch = useServerFn(getDashboardStats);
+  const fetchExtras = useServerFn(getDashboardExtras);
   const qc = useQueryClient();
   const { data: settings } = useAppSettings();
   const { data: modules } = useDomainModules();
+  const { domainId } = useRole();
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
+  const presence = usePresenceList(domainId);
+  const onlineByRole = presence.reduce(
+    (acc, p) => {
+      const r = (p.role ?? "").toLowerCase();
+      if (r === "fahrer") acc.fahrer++;
+      else if (r === "dispatcher") acc.dispatcher++;
+      else if (r === "admin" || r === "superadmin") acc.admin++;
+      else acc.other++;
+      return acc;
+    },
+    { fahrer: 0, dispatcher: 0, admin: 0, other: 0 },
+  );
 
   const { data: schluessel } = useQuery({
     queryKey: ["dashboard-schluessel-unterwegs"],
@@ -74,6 +90,13 @@ function DashboardContent() {
     queryKey: ["dashboard-stats"],
     queryFn: () => fetch(),
     refetchInterval: 30000,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: extras } = useQuery({
+    queryKey: ["dashboard-extras"],
+    queryFn: () => fetchExtras(),
+    refetchInterval: 60000,
     refetchOnWindowFocus: true,
   });
 
@@ -141,6 +164,19 @@ function DashboardContent() {
         {schluesselbuchAktiv && (
           <SchluesselCard entries={schluessel ?? []} />
         )}
+      </div>
+
+      {/* Online + Reaktionszeit + Stunden */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <OnlineCard online={onlineByRole} />
+        <ReaktionCard reaktion={extras?.reaktion} />
+        <StundenCard stunden={extras?.stunden} />
+      </div>
+
+      {/* Provider + Top Kunden */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        <ProviderCard provider={extras?.provider} />
+        <TopKundenCard kunden={extras?.topKunden ?? []} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
