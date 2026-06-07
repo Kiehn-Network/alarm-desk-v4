@@ -259,14 +259,12 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: nu
     muted: "bg-muted text-muted-foreground",
   };
   return (
-    <div className="rounded-xl border border-border bg-card p-5 transition hover:border-primary/40" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex items-start justify-between">
-        <div className={`size-10 rounded-lg grid place-items-center ${toneMap[tone]}`}>
-          <Icon className="size-5" />
-        </div>
+    <div className="rounded-xl border border-border bg-card p-4 transition hover:border-primary/40 hover:-translate-y-0.5 duration-200" style={{ boxShadow: "var(--shadow-card)" }}>
+      <div className={`size-8 rounded-md grid place-items-center ${toneMap[tone]}`}>
+        <Icon className="size-4" />
       </div>
-      <div className="mt-4 text-3xl font-bold tabular-nums">{value}</div>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">{label}</div>
+      <div className="mt-3 text-2xl font-bold tabular-nums leading-none">{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-2 truncate">{label}</div>
     </div>
   );
 }
@@ -284,16 +282,29 @@ function SchluesselCard({ entries }: { entries: Array<any> }) {
     rueckgabe_offen: "bg-destructive/15 text-destructive",
   };
   return (
-    <div className="rounded-xl border border-border bg-card p-5 transition hover:border-primary/40" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="flex items-start justify-between">
-        <div className="size-10 rounded-lg grid place-items-center bg-warning/15 text-warning">
-          <KeyRound className="size-5" />
+    <div
+      className="relative h-full rounded-xl border border-warning/40 p-4 transition hover:border-warning/70 hover:-translate-y-0.5 duration-200 overflow-hidden"
+      style={{
+        background: "linear-gradient(135deg, color-mix(in oklab, var(--warning) 14%, var(--card)) 0%, var(--card) 70%)",
+        boxShadow: "var(--shadow-card)",
+      }}
+    >
+      <div className="absolute -right-6 -top-6 size-24 rounded-full bg-warning/10 blur-2xl pointer-events-none" />
+      <div className="flex items-start justify-between relative">
+        <div className="flex items-center gap-2.5">
+          <div className="size-9 rounded-lg grid place-items-center bg-warning/20 text-warning ring-1 ring-warning/30">
+            <KeyRound className="size-5" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] uppercase tracking-wider text-warning font-semibold">Schlüssel</span>
+            <span className="text-[10px] text-muted-foreground">unterwegs</span>
+          </div>
         </div>
         <Popover>
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="size-7 rounded-full grid place-items-center text-muted-foreground hover:bg-accent hover:text-foreground transition"
+              className="size-7 rounded-full grid place-items-center text-muted-foreground hover:bg-warning/15 hover:text-warning transition"
               aria-label="Schlüssel-Details anzeigen"
             >
               <Info className="size-4" />
@@ -333,8 +344,10 @@ function SchluesselCard({ entries }: { entries: Array<any> }) {
           </PopoverContent>
         </Popover>
       </div>
-      <div className="mt-4 text-3xl font-bold tabular-nums">{count}</div>
-      <div className="text-xs uppercase tracking-wider text-muted-foreground mt-1">Schlüssel unterwegs</div>
+      <div className="mt-3 flex items-baseline gap-2 relative">
+        <div className="text-4xl font-bold tabular-nums leading-none text-warning">{count}</div>
+        <div className="text-xs text-muted-foreground">{count === 1 ? "Schlüssel" : "Schlüssel"} extern</div>
+      </div>
     </div>
   );
 }
