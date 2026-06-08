@@ -8,8 +8,9 @@ import {
   type EmailProvider,
 } from "@/lib/email-send.server";
 
-const providerEnum = z.enum(["resend", "mailgun", "sendgrid"]);
+const providerEnum = z.enum(["resend", "mailgun", "sendgrid", "smtp"]);
 const regionEnum = z.enum(["us", "eu"]);
+const smtpSecureEnum = z.enum(["ssl", "starttls", "none"]);
 
 async function assertSuperadmin(userId: string) {
   const { data } = await supabaseAdmin
@@ -28,7 +29,13 @@ async function assertDomainAdmin(userId: string, domainId: string) {
 
 function maskRow(r: any) {
   if (!r) return null;
-  return { ...r, api_key: r.api_key ? maskKey(r.api_key) : null, has_api_key: !!r.api_key };
+  return {
+    ...r,
+    api_key: r.api_key ? maskKey(r.api_key) : null,
+    has_api_key: !!r.api_key,
+    smtp_password: r.smtp_password ? "••••••••" : null,
+    has_smtp_password: !!r.smtp_password,
+  };
 }
 
 // ---------- Platform (Superadmin) ----------
@@ -52,23 +59,34 @@ export const upsertPlatformEmailSettings = createServerFn({ method: "POST" })
     from_name: z.string().max(200).nullable().optional(),
     mailgun_domain: z.string().max(200).nullable().optional(),
     mailgun_region: regionEnum.optional(),
+    smtp_host: z.string().max(255).nullable().optional(),
+    smtp_port: z.number().int().min(1).max(65535).nullable().optional(),
+    smtp_username: z.string().max(255).nullable().optional(),
+    smtp_password: z.string().min(0).max(500).optional(), // empty = keep
+    smtp_secure: smtpSecureEnum.optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSuperadmin(context.userId);
     const { data: existing } = await supabaseAdmin
-      .from("platform_email_settings").select("api_key").eq("id", true).maybeSingle();
+      .from("platform_email_settings").select("api_key, smtp_password").eq("id", true).maybeSingle() as any;
     const finalKey = data.api_key && data.api_key.length > 0 ? data.api_key : existing?.api_key ?? null;
+    const finalSmtpPw = data.smtp_password && data.smtp_password.length > 0 ? data.smtp_password : existing?.smtp_password ?? null;
     const { error } = await supabaseAdmin.from("platform_email_settings").upsert({
       id: true,
       provider: data.provider,
-      api_key: finalKey,
+      api_key: data.provider === "smtp" ? null : finalKey,
       from_email: data.from_email,
       from_name: data.from_name ?? null,
       mailgun_domain: data.mailgun_domain ?? null,
       mailgun_region: data.mailgun_region ?? "us",
+      smtp_host: data.provider === "smtp" ? (data.smtp_host ?? null) : null,
+      smtp_port: data.provider === "smtp" ? (data.smtp_port ?? null) : null,
+      smtp_username: data.provider === "smtp" ? (data.smtp_username ?? null) : null,
+      smtp_password: data.provider === "smtp" ? finalSmtpPw : null,
+      smtp_secure: data.provider === "smtp" ? (data.smtp_secure ?? "starttls") : null,
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
-    });
+    } as any);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -79,17 +97,9 @@ export const sendPlatformTestEmail = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuperadmin(context.userId);
     const { data: ps } = await supabaseAdmin
-      .from("platform_email_settings").select("*").eq("id", true).maybeSingle();
-    if (!ps?.api_key || !ps.from_email) throw new Error("Plattform-E-Mail noch nicht vollständig konfiguriert.");
-    const cfg = {
-      source: "platform" as const,
-      provider: ps.provider as EmailProvider,
-      api_key: ps.api_key,
-      from_email: ps.from_email,
-      from_name: ps.from_name ?? null,
-      mailgun_domain: ps.mailgun_domain ?? null,
-      mailgun_region: (ps.mailgun_region as "us" | "eu") ?? "us",
-    };
+      .from("platform_email_settings").select("*").eq("id", true).maybeSingle() as any;
+    if (!ps?.from_email || !ps?.provider) throw new Error("Plattform-E-Mail noch nicht konfiguriert.");
+    const cfg = buildResolved("platform", ps);
     await sendEmailViaProvider(cfg, {
       to: data.to,
       subject: "AlarmDesk – Testmail (Plattform)",
@@ -98,6 +108,23 @@ export const sendPlatformTestEmail = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+function buildResolved(source: "platform" | "domain", row: any) {
+  return {
+    source,
+    provider: row.provider as EmailProvider,
+    api_key: row.api_key ?? null,
+    from_email: row.from_email,
+    from_name: row.from_name ?? null,
+    mailgun_domain: row.mailgun_domain ?? null,
+    mailgun_region: (row.mailgun_region as "us" | "eu") ?? "us",
+    smtp_host: row.smtp_host ?? null,
+    smtp_port: row.smtp_port ?? null,
+    smtp_username: row.smtp_username ?? null,
+    smtp_password: row.smtp_password ?? null,
+    smtp_secure: (row.smtp_secure as any) ?? "starttls",
+  };
+}
 
 // ---------- Domain ----------
 
@@ -130,34 +157,53 @@ export const upsertDomainEmailSettings = createServerFn({ method: "POST" })
     from_name: z.string().max(200).nullable().optional(),
     mailgun_domain: z.string().max(200).nullable().optional(),
     mailgun_region: regionEnum.nullable().optional(),
+    smtp_host: z.string().max(255).nullable().optional(),
+    smtp_port: z.number().int().min(1).max(65535).nullable().optional(),
+    smtp_username: z.string().max(255).nullable().optional(),
+    smtp_password: z.string().min(0).max(500).optional(),
+    smtp_secure: smtpSecureEnum.nullable().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
     const domainId = await requireEffectiveDomainId(context.supabase, context.userId);
     await assertDomainAdmin(context.userId, domainId);
 
     const { data: existing } = await supabaseAdmin
-      .from("domain_email_settings").select("api_key").eq("domain_id", domainId).maybeSingle();
+      .from("domain_email_settings").select("api_key, smtp_password").eq("domain_id", domainId).maybeSingle() as any;
     const finalKey = data.api_key && data.api_key.length > 0 ? data.api_key : existing?.api_key ?? null;
+    const finalSmtpPw = data.smtp_password && data.smtp_password.length > 0 ? data.smtp_password : existing?.smtp_password ?? null;
 
     if (data.mode === "own") {
       if (!data.provider) throw new Error("Provider ist Pflicht bei eigenem Versand.");
       if (!data.from_email) throw new Error("Absender-Adresse ist Pflicht.");
-      if (!finalKey) throw new Error("API-Key ist Pflicht.");
-      if (data.provider === "mailgun" && !data.mailgun_domain) throw new Error("Mailgun-Domain ist Pflicht.");
+      if (data.provider === "smtp") {
+        if (!data.smtp_host || !data.smtp_port || !data.smtp_username || !finalSmtpPw) {
+          throw new Error("SMTP-Host, Port, Benutzer und Passwort sind Pflicht.");
+        }
+      } else {
+        if (!finalKey) throw new Error("API-Key ist Pflicht.");
+        if (data.provider === "mailgun" && !data.mailgun_domain) throw new Error("Mailgun-Domain ist Pflicht.");
+      }
     }
 
+    const ownSmtp = data.mode === "own" && data.provider === "smtp";
+    const ownApi = data.mode === "own" && data.provider !== "smtp";
     const { error } = await supabaseAdmin.from("domain_email_settings").upsert({
       domain_id: domainId,
       mode: data.mode,
       provider: data.provider ?? null,
-      api_key: data.mode === "own" ? finalKey : null,
+      api_key: ownApi ? finalKey : null,
       from_email: data.from_email ?? null,
       from_name: data.from_name ?? null,
       mailgun_domain: data.mailgun_domain ?? null,
       mailgun_region: data.mailgun_region ?? "us",
+      smtp_host: ownSmtp ? (data.smtp_host ?? null) : null,
+      smtp_port: ownSmtp ? (data.smtp_port ?? null) : null,
+      smtp_username: ownSmtp ? (data.smtp_username ?? null) : null,
+      smtp_password: ownSmtp ? finalSmtpPw : null,
+      smtp_secure: ownSmtp ? (data.smtp_secure ?? "starttls") : null,
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
-    });
+    } as any);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
