@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
+import { sendEmailForDomain } from "@/lib/email-send.server";
 
 const inputSchema = z.object({
   einsatz_id: z.string().uuid(),
@@ -63,34 +64,15 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
       </div>
     `;
 
-    // Enqueue via Lovable Email queue (transactional_emails pgmq queue)
-    const SENDER_DOMAIN = "notify.einsatz-bericht.de";
-    const FROM = `Einsatzbericht <bericht@${SENDER_DOMAIN}>`;
-    const messageId = crypto.randomUUID();
-    const idempotencyKey = `einsatz-bericht-${data.einsatz_id}-${Date.now()}`;
-
     let status: "sent" | "failed" = "sent";
     let errorMessage: string | null = null;
     try {
-      const { error: enqErr } = await (supabaseAdmin as any).rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
-          message_id: messageId,
-          to: data.recipient_email,
-          from: FROM,
-          sender_domain: SENDER_DOMAIN,
-          subject,
-          html,
-          purpose: "transactional",
-          label: "einsatz-bericht",
-          idempotency_key: idempotencyKey,
-          queued_at: new Date().toISOString(),
-        },
+      await sendEmailForDomain(domainId, {
+        to: data.recipient_email,
+        subject,
+        html,
+        label: "einsatz-bericht",
       });
-      if (enqErr) {
-        status = "failed";
-        errorMessage = enqErr.message.slice(0, 500);
-      }
     } catch (e: any) {
       status = "failed";
       errorMessage = String(e?.message ?? e).slice(0, 500);
@@ -106,10 +88,7 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
     });
 
     if (status === "failed") {
-      throw new Error(
-        "Versand fehlgeschlagen. Bitte stelle sicher, dass die Absender-Domain eingerichtet ist. Details: " +
-          (errorMessage ?? ""),
-      );
+      throw new Error("Versand fehlgeschlagen: " + (errorMessage ?? ""));
     }
 
     return { ok: true, downloadUrl };
