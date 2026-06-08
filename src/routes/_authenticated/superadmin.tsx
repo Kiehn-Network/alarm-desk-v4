@@ -2662,7 +2662,7 @@ function InterventionAllowlistPanel() {
   const domains: Array<{ id: string; name: string }> = (q.data?.domains ?? []) as any;
   const rows: Array<{ domain_id: string; partner_domain_id: string }> = (q.data?.rows ?? []) as any;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!selectedDomain) return;
     const current = new Set(rows.filter((r) => r.domain_id === selectedDomain).map((r) => r.partner_domain_id));
     setDraft(current);
