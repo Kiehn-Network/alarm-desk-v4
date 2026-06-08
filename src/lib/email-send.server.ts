@@ -154,7 +154,18 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
   }
 
   if (cfg.provider === "smtp") {
-    const { WorkerMailer } = await import("worker-mailer");
+    let WorkerMailer: any;
+    try {
+      ({ WorkerMailer } = await import("worker-mailer"));
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      if (msg.includes("cloudflare:sockets")) {
+        throw new Error(
+          "SMTP-Versand ist im lokalen Dev-Server nicht verfügbar (benötigt Cloudflare Worker). Bitte im veröffentlichten/Preview-Deployment testen oder einen HTTP-API-Provider (Resend/Mailgun/SendGrid) verwenden."
+        );
+      }
+      throw e;
+    }
     const secure = (cfg.smtp_secure as string) ?? "starttls";
     const mailer = await WorkerMailer.connect({
       credentials: { username: cfg.smtp_username!, password: cfg.smtp_password! },
