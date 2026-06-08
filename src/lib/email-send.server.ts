@@ -1,15 +1,20 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export type EmailProvider = "resend" | "mailgun" | "sendgrid";
+export type EmailProvider = "resend" | "mailgun" | "sendgrid" | "smtp";
 
 export interface ResolvedEmailConfig {
   source: "platform" | "domain";
   provider: EmailProvider;
-  api_key: string;
+  api_key: string | null;
   from_email: string;
   from_name: string | null;
   mailgun_domain: string | null;
   mailgun_region: "us" | "eu";
+  smtp_host?: string | null;
+  smtp_port?: number | null;
+  smtp_username?: string | null;
+  smtp_password?: string | null;
+  smtp_secure?: "ssl" | "starttls" | "none" | null;
 }
 
 export interface SendInput {
@@ -32,23 +37,7 @@ export async function resolveEmailConfigForDomain(domainId: string): Promise<Res
   const mode = (ds?.mode as string) ?? "platform";
 
   if (mode === "own") {
-    if (!ds?.provider || !ds.api_key || !ds.from_email) {
-      throw new Error(
-        'Eigene SMTP-/E-Mail-Daten unvollständig. Bitte im Admin-Bereich unter "E-Mail-Versand" Provider, API-Key und Absender hinterlegen.',
-      );
-    }
-    if (ds.provider === "mailgun" && !ds.mailgun_domain) {
-      throw new Error("Mailgun-Domain fehlt in den E-Mail-Einstellungen.");
-    }
-    return {
-      source: "domain",
-      provider: ds.provider as EmailProvider,
-      api_key: ds.api_key,
-      from_email: ds.from_email,
-      from_name: ds.from_name ?? null,
-      mailgun_domain: ds.mailgun_domain ?? null,
-      mailgun_region: (ds.mailgun_region as "us" | "eu") ?? "us",
-    };
+    return buildConfig("domain", ds);
   }
 
   // platform
@@ -58,22 +47,38 @@ export async function resolveEmailConfigForDomain(domainId: string): Promise<Res
     .eq("id", true)
     .maybeSingle();
   if (pErr) throw new Error("Plattform-E-Mail-Einstellungen nicht lesbar: " + pErr.message);
-  if (!ps?.provider || !ps.api_key || !ps.from_email) {
-    throw new Error(
-      "AlarmDesk-Versand ist noch nicht konfiguriert. Der Superadmin muss Plattform-E-Mail-Daten hinterlegen, oder hinterlege eigene SMTP-Daten für deine Domäne.",
-    );
+  if (!ps) {
+    throw new Error("AlarmDesk-Versand ist noch nicht konfiguriert. Der Superadmin muss Plattform-E-Mail-Daten hinterlegen, oder hinterlege eigene SMTP-Daten für deine Domäne.");
   }
-  if (ps.provider === "mailgun" && !ps.mailgun_domain) {
-    throw new Error("Mailgun-Domain in Plattform-Einstellungen fehlt.");
+  return buildConfig("platform", ps);
+}
+
+function buildConfig(source: "platform" | "domain", row: any): ResolvedEmailConfig {
+  if (!row?.provider || !row?.from_email) {
+    throw new Error("E-Mail-Versand unvollständig konfiguriert (Provider und Absender erforderlich).");
+  }
+  const provider = row.provider as EmailProvider;
+  if (provider === "smtp") {
+    if (!row.smtp_host || !row.smtp_port || !row.smtp_username || !row.smtp_password) {
+      throw new Error("SMTP-Daten unvollständig (Host, Port, Benutzer, Passwort erforderlich).");
+    }
+  } else {
+    if (!row.api_key) throw new Error("API-Key fehlt in den E-Mail-Einstellungen.");
+    if (provider === "mailgun" && !row.mailgun_domain) throw new Error("Mailgun-Domain fehlt.");
   }
   return {
-    source: "platform",
-    provider: ps.provider as EmailProvider,
-    api_key: ps.api_key,
-    from_email: ps.from_email,
-    from_name: ps.from_name ?? null,
-    mailgun_domain: ps.mailgun_domain ?? null,
-    mailgun_region: (ps.mailgun_region as "us" | "eu") ?? "us",
+    source,
+    provider,
+    api_key: row.api_key ?? null,
+    from_email: row.from_email,
+    from_name: row.from_name ?? null,
+    mailgun_domain: row.mailgun_domain ?? null,
+    mailgun_region: (row.mailgun_region as "us" | "eu") ?? "us",
+    smtp_host: row.smtp_host ?? null,
+    smtp_port: row.smtp_port ?? null,
+    smtp_username: row.smtp_username ?? null,
+    smtp_password: row.smtp_password ?? null,
+    smtp_secure: (row.smtp_secure as any) ?? "starttls",
   };
 }
 
@@ -146,6 +151,31 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
       throw new Error(`SendGrid-Fehler ${res.status}: ${body.slice(0, 400)}`);
     }
     return { id: res.headers.get("x-message-id") };
+  }
+
+  if (cfg.provider === "smtp") {
+    const { WorkerMailer } = await import("worker-mailer");
+    const secure = (cfg.smtp_secure as string) ?? "starttls";
+    const mailer = await WorkerMailer.connect({
+      credentials: { username: cfg.smtp_username!, password: cfg.smtp_password! },
+      authType: ["plain", "login"],
+      host: cfg.smtp_host!,
+      port: cfg.smtp_port!,
+      secure: secure === "ssl",
+      startTls: secure === "starttls",
+    });
+    try {
+      await mailer.send({
+        from: cfg.from_name ? { name: cfg.from_name, email: cfg.from_email } : cfg.from_email,
+        to: input.to,
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+      });
+    } finally {
+      try { await mailer.close(); } catch { /* ignore */ }
+    }
+    return { id: null };
   }
 
   throw new Error(`Unbekannter Provider: ${cfg.provider}`);
