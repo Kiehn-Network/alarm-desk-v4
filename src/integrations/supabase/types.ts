@@ -1432,6 +1432,45 @@ export type Database = {
         }
         Relationships: []
       }
+      intervention_allowlist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          partner_domain_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          partner_domain_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          partner_domain_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intervention_allowlist_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intervention_allowlist_partner_domain_id_fkey"
+            columns: ["partner_domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       intervention_partners: {
         Row: {
           aktiv: boolean
