@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Mail, Send, Save, Loader2, KeyRound } from "lucide-react";
+import { Mail, Send, Save, Loader2, KeyRound, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,12 +24,17 @@ export function PlatformEmailPanel() {
   const q = useQuery({ queryKey: ["platform-email-settings"], queryFn: () => get() });
   const s = q.data?.settings;
 
-  const [provider, setProvider] = useState<"resend" | "mailgun" | "sendgrid">("resend");
+  const [provider, setProvider] = useState<"resend" | "mailgun" | "sendgrid" | "smtp">("resend");
   const [apiKey, setApiKey] = useState("");
   const [fromEmail, setFromEmail] = useState("");
   const [fromName, setFromName] = useState("AlarmDesk");
   const [mgDomain, setMgDomain] = useState("");
   const [mgRegion, setMgRegion] = useState<"us" | "eu">("eu");
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState<number | "">(587);
+  const [smtpUser, setSmtpUser] = useState("");
+  const [smtpPass, setSmtpPass] = useState("");
+  const [smtpSecure, setSmtpSecure] = useState<"ssl" | "starttls" | "none">("starttls");
   const [testTo, setTestTo] = useState("");
 
   useEffect(() => {
@@ -40,7 +45,12 @@ export function PlatformEmailPanel() {
     setMgDomain(s.mailgun_domain ?? "");
     setMgRegion((s.mailgun_region as any) ?? "eu");
     setApiKey("");
-  }, [s?.provider, s?.from_email, s?.from_name, s?.mailgun_domain, s?.mailgun_region]);
+    setSmtpHost((s as any).smtp_host ?? "");
+    setSmtpPort((s as any).smtp_port ?? 587);
+    setSmtpUser((s as any).smtp_username ?? "");
+    setSmtpPass("");
+    setSmtpSecure(((s as any).smtp_secure as any) ?? "starttls");
+  }, [s?.provider, s?.from_email, s?.from_name, s?.mailgun_domain, s?.mailgun_region, (s as any)?.smtp_host, (s as any)?.smtp_port, (s as any)?.smtp_username, (s as any)?.smtp_secure]);
 
   useEffect(() => { if (user?.email && !testTo) setTestTo(user.email); }, [user?.email]);
 
@@ -53,6 +63,11 @@ export function PlatformEmailPanel() {
         from_name: fromName || null,
         mailgun_domain: provider === "mailgun" ? mgDomain : null,
         mailgun_region: provider === "mailgun" ? mgRegion : undefined,
+        smtp_host: provider === "smtp" ? smtpHost : null,
+        smtp_port: provider === "smtp" ? (smtpPort === "" ? null : Number(smtpPort)) : null,
+        smtp_username: provider === "smtp" ? smtpUser : null,
+        smtp_password: provider === "smtp" ? (smtpPass || undefined) : undefined,
+        smtp_secure: provider === "smtp" ? smtpSecure : undefined,
       },
     }),
     onSuccess: () => { toast.success("Plattform-E-Mail-Einstellungen gespeichert"); qc.invalidateQueries({ queryKey: ["platform-email-settings"] }); },
@@ -86,10 +101,11 @@ export function PlatformEmailPanel() {
               <SelectItem value="resend">Resend</SelectItem>
               <SelectItem value="mailgun">Mailgun</SelectItem>
               <SelectItem value="sendgrid">SendGrid</SelectItem>
+              <SelectItem value="smtp">SMTP (eigener Mailserver)</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        {provider !== "smtp" && <div className="space-y-1.5">
           <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> API-Key</Label>
           <Input
             type="password"
@@ -97,7 +113,7 @@ export function PlatformEmailPanel() {
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={s?.has_api_key ? "•••• gespeichert (zum Ändern neu eingeben)" : "API-Key einfügen"}
           />
-        </div>
+        </div>}
         <div className="space-y-1.5">
           <Label className="text-xs">Absender E-Mail</Label>
           <Input type="email" value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} placeholder="versand@alarmdesk-software.de" />
@@ -119,6 +135,37 @@ export function PlatformEmailPanel() {
                 <SelectContent>
                   <SelectItem value="eu">EU</SelectItem>
                   <SelectItem value="us">US</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+        {provider === "smtp" && (
+          <>
+            <div className="space-y-1.5">
+              <Label className="text-xs flex items-center gap-1"><Server className="size-3" /> SMTP-Host</Label>
+              <Input value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="smtp.deine-domain.de" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Port</Label>
+              <Input type="number" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value === "" ? "" : Number(e.target.value))} placeholder="587" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Benutzername</Label>
+              <Input value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} placeholder="user@deine-domain.de" autoComplete="off" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Passwort</Label>
+              <Input type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} placeholder={(s as any)?.has_smtp_password ? "•••• gespeichert" : "SMTP-Passwort"} autoComplete="new-password" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Verschlüsselung</Label>
+              <Select value={smtpSecure} onValueChange={(v) => setSmtpSecure(v as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="starttls">STARTTLS (Port 587)</SelectItem>
+                  <SelectItem value="ssl">SSL/TLS (Port 465)</SelectItem>
+                  <SelectItem value="none">Keine (nicht empfohlen)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
