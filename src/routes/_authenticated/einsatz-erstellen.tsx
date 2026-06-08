@@ -415,9 +415,41 @@ function EinsatzErstellenPage() {
         <section className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
           <div className="flex items-center gap-2">
             <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">4</span>
-            <h2 className="font-semibold">Fahrer zuweisen</h2>
+            <h2 className="font-semibold">Zuweisen</h2>
           </div>
-          {fahrer.length === 0 ? (
+          {interventionOn && (
+            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setZielMode("fahrer")}
+                className={`px-3 py-1.5 text-sm ${zielMode === "fahrer" ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted"}`}
+              >Eigener Fahrer</button>
+              <button
+                type="button"
+                onClick={() => setZielMode("partner")}
+                className={`px-3 py-1.5 text-sm inline-flex items-center gap-1.5 ${zielMode === "partner" ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted"}`}
+              ><Network className="size-3.5" /> Partner</button>
+            </div>
+          )}
+          {zielMode === "partner" ? (
+            partners.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Noch keine Interventionspartner angelegt. Lege sie unter <b>Intervention</b> an.
+              </p>
+            ) : (
+              <div>
+                <Label>Partner</Label>
+                <Select value={partnerId} onValueChange={setPartnerId}>
+                  <SelectTrigger><SelectValue placeholder="Partner wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {partners.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.display_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )
+          ) : fahrer.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Keine Nutzer mit Rolle "Fahrer" gefunden. Rollen können im Admin Center vergeben werden.
             </p>
@@ -436,8 +468,15 @@ function EinsatzErstellenPage() {
           )}
 
           <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
-            <Button onClick={submit} disabled={saving || !fahrerId || !grund.trim()} className="gap-2">
-              <Send className="size-4" /> Einsatz an Fahrer übergeben
+            <Button
+              onClick={submit}
+              disabled={
+                saving || !grund.trim() ||
+                (zielMode === "fahrer" ? !fahrerId : !partnerId)
+              }
+              className="gap-2"
+            >
+              <Send className="size-4" /> {zielMode === "partner" ? "Einsatz an Partner übergeben" : "Einsatz an Fahrer übergeben"}
             </Button>
             <Button onClick={() => navigate({ to: "/alarmierung" })} variant="ghost" className="ml-auto">
               Abbrechen
