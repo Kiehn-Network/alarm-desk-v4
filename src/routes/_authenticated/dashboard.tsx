@@ -163,6 +163,13 @@ function DashboardContent() {
         </div>
       )}
 
+      {interventionAktiv && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Eingehende Partner-Einsätze</h2>
+          <PartnerInbox />
+        </section>
+      )}
+
       <div className={`grid grid-cols-2 sm:grid-cols-3 ${schluesselbuchAktiv ? "lg:grid-cols-7" : "lg:grid-cols-5"} gap-3`}>
         {cards.map((c) => <StatCard key={c.label} {...c} />)}
         {schluesselbuchAktiv && (
