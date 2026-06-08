@@ -22,6 +22,7 @@ import {
   setDomainArchived, globalSearch, getDomainStats, exportDomainData,
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
+import { PlatformEmailPanel } from "@/components/admin/platform-email-panel";
 import { listAppModules } from "@/lib/settings.functions";
 import {
   previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
