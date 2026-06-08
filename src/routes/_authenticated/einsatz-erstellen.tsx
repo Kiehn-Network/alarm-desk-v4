@@ -16,6 +16,8 @@ import {
   createEinsatz, listEinsatzGruende, listFahrer, searchKundenDateien,
 } from "@/lib/einsaetze.functions";
 import { ausgebenSchluessel } from "@/lib/schluesselbuch.functions";
+import { listMyPartners, createEinsatzForPartner } from "@/lib/intervention.functions";
+import { Network } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/einsatz-erstellen")({
   component: EinsatzErstellenPage,
@@ -44,6 +46,17 @@ function EinsatzErstellenPage() {
   const create = useServerFn(createEinsatz);
   const ausgeben = useServerFn(ausgebenSchluessel);
   const schluesselbuchOn = modules?.has("schluesselbuch") ?? false;
+  const interventionOn = modules?.has("intervention") ?? false;
+  const listPartnersFn = useServerFn(listMyPartners);
+  const createForPartner = useServerFn(createEinsatzForPartner);
+  const { data: partnerData } = useQuery({
+    queryKey: ["intervention-partners-active"],
+    queryFn: () => listPartnersFn(),
+    enabled: interventionOn,
+  });
+  const partners = ((partnerData?.partners ?? []) as Array<any>).filter((p) => p.aktiv);
+  const [zielMode, setZielMode] = useState<"fahrer" | "partner">("fahrer");
+  const [partnerId, setPartnerId] = useState("");
 
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
@@ -115,12 +128,30 @@ function EinsatzErstellenPage() {
   async function submit() {
     if (!picked) { toast.error("Bitte zuerst einen Kunden suchen und auswählen"); return; }
     if (!grund.trim()) { toast.error("Bitte Einsatzgrund eingeben oder auswählen"); return; }
-    if (!fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
+    if (zielMode === "fahrer" && !fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
+    if (zielMode === "partner" && !partnerId) { toast.error("Bitte einen Partner wählen"); return; }
     if (hausnotrufEnabled && einsatzTyp === "hausnotruf" && providerOptions.length > 0 && !hausnotrufProvider) {
       toast.error("Bitte einen Hausnotruf-Anbieter wählen"); return;
     }
     setSaving(true);
     try {
+      if (zielMode === "partner") {
+        await createForPartner({ data: {
+          partner_id: partnerId,
+          einsatzgrund: grund.trim(),
+          einsatzgrund_id: grundId,
+          kunden_name: picked.kunden_name,
+          address: picked.address,
+          key_number: picked.key_number,
+          anlagen_nr: picked.anlagen_nr,
+          teilnehmer_id: picked.teilnehmer_id,
+          beschreibung: null,
+        }});
+        const p = partners.find((x) => x.id === partnerId);
+        toast.success(`Einsatz an ${p?.display_name ?? "Partner"} übergeben`);
+        navigate({ to: "/alarmierung" });
+        return;
+      }
       const created: any = await create({ data: {
         einsatzgrund: grund.trim(),
         einsatzgrund_id: grundId,
