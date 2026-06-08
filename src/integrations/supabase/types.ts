@@ -731,6 +731,11 @@ export type Database = {
           mailgun_region: string | null
           mode: string
           provider: string | null
+          smtp_host: string | null
+          smtp_password: string | null
+          smtp_port: number | null
+          smtp_secure: string | null
+          smtp_username: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -743,6 +748,11 @@ export type Database = {
           mailgun_region?: string | null
           mode?: string
           provider?: string | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_secure?: string | null
+          smtp_username?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -755,6 +765,11 @@ export type Database = {
           mailgun_region?: string | null
           mode?: string
           provider?: string | null
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_secure?: string | null
+          smtp_username?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1952,6 +1967,11 @@ export type Database = {
           mailgun_domain: string | null
           mailgun_region: string | null
           provider: string
+          smtp_host: string | null
+          smtp_password: string | null
+          smtp_port: number | null
+          smtp_secure: string | null
+          smtp_username: string | null
           updated_at: string
           updated_by: string | null
         }
@@ -1963,6 +1983,11 @@ export type Database = {
           mailgun_domain?: string | null
           mailgun_region?: string | null
           provider?: string
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_secure?: string | null
+          smtp_username?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -1974,6 +1999,11 @@ export type Database = {
           mailgun_domain?: string | null
           mailgun_region?: string | null
           provider?: string
+          smtp_host?: string | null
+          smtp_password?: string | null
+          smtp_port?: number | null
+          smtp_secure?: string | null
+          smtp_username?: string | null
           updated_at?: string
           updated_by?: string | null
         }
