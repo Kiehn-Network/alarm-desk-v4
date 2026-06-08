@@ -721,6 +721,53 @@ export type Database = {
           },
         ]
       }
+      domain_email_settings: {
+        Row: {
+          api_key: string | null
+          domain_id: string
+          from_email: string | null
+          from_name: string | null
+          mailgun_domain: string | null
+          mailgun_region: string | null
+          mode: string
+          provider: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          domain_id: string
+          from_email?: string | null
+          from_name?: string | null
+          mailgun_domain?: string | null
+          mailgun_region?: string | null
+          mode?: string
+          provider?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          domain_id?: string
+          from_email?: string | null
+          from_name?: string | null
+          mailgun_domain?: string | null
+          mailgun_region?: string | null
+          mode?: string
+          provider?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_email_settings_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: true
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_modules: {
         Row: {
           created_at: string
@@ -1895,6 +1942,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      platform_email_settings: {
+        Row: {
+          api_key: string | null
+          from_email: string | null
+          from_name: string | null
+          id: boolean
+          mailgun_domain: string | null
+          mailgun_region: string | null
+          provider: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: boolean
+          mailgun_domain?: string | null
+          mailgun_region?: string | null
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          id?: boolean
+          mailgun_domain?: string | null
+          mailgun_region?: string | null
+          provider?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       platform_settings: {
         Row: {

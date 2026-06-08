@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
+import { sendEmailForDomain } from "@/lib/email-send.server";
 
 const providerEnum = z.enum(["malteser", "johanniter", "lgwa"]);
 
@@ -137,30 +138,15 @@ export const sendAbrechnungEmail = createServerFn({ method: "POST" })
       </div>
     `;
 
-    const SENDER_DOMAIN = "notify.einsatz-bericht.de";
-    const FROM = `Einsatzbericht <bericht@${SENDER_DOMAIN}>`;
-    const messageId = crypto.randomUUID();
-    const idempotencyKey = `abrechnung-${data.provider}-${data.month}-${Date.now()}`;
-
     let status: "sent" | "failed" = "sent";
     let errorMessage: string | null = null;
     try {
-      const { error: enqErr } = await (supabaseAdmin as any).rpc("enqueue_email", {
-        queue_name: "transactional_emails",
-        payload: {
-          message_id: messageId,
-          to: data.recipient_email,
-          from: FROM,
-          sender_domain: SENDER_DOMAIN,
-          subject,
-          html,
-          purpose: "transactional",
-          label: "abrechnung",
-          idempotency_key: idempotencyKey,
-          queued_at: new Date().toISOString(),
-        },
+      await sendEmailForDomain(domainId, {
+        to: data.recipient_email,
+        subject,
+        html,
+        label: "abrechnung",
       });
-      if (enqErr) { status = "failed"; errorMessage = enqErr.message.slice(0, 500); }
     } catch (e: any) {
       status = "failed";
       errorMessage = String(e?.message ?? e).slice(0, 500);

@@ -22,6 +22,7 @@ import {
   setDomainArchived, globalSearch, getDomainStats, exportDomainData,
 } from "@/lib/superadmin.functions";
 import { SelfHostGuide } from "@/components/admin/selfhost-guide";
+import { PlatformEmailPanel } from "@/components/admin/platform-email-panel";
 import { listAppModules } from "@/lib/settings.functions";
 import {
   previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
@@ -696,6 +697,7 @@ const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }
   ]},
   { label: "Plattform", items: [
     { value: "system", label: "System" },
+    { value: "platform-email", label: "E-Mail-Versand" },
     { value: "selfhost", label: "Self-Hosting" },
     { value: "dbsync", label: "DB-Sync" },
   ]},
@@ -984,6 +986,7 @@ function SuperAdminPage() {
                 <SideTab value="tickets" icon={LifeBuoy}>Support-Tickets</SideTab>
                 <SideSection label="Plattform" />
                 <SideTab value="system" icon={RefreshCw}>System</SideTab>
+                <SideTab value="platform-email" icon={Mail}>E-Mail-Versand</SideTab>
                 <SideTab value="selfhost" icon={Building2}>Self-Hosting</SideTab>
                 <SideTab value="dbsync" icon={Upload}>DB-Sync</SideTab>
               </TabsList>
@@ -1531,6 +1534,10 @@ function SuperAdminPage() {
 
         <TabsContent value="health" className="space-y-4">
           <HealthPanel />
+        </TabsContent>
+
+        <TabsContent value="platform-email" className="space-y-4">
+          <PlatformEmailPanel />
         </TabsContent>
 
         <TabsContent value="emails" className="space-y-4">

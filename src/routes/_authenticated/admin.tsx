@@ -9,6 +9,7 @@ import {
   Boxes, CheckCircle2, GraduationCap,
   LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert,
 } from "lucide-react";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +30,7 @@ import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
 import { SystemSettingsPanel } from "@/components/admin/system-settings-panel";
 import { TourAdminPanel } from "@/components/admin/tour-admin-panel";
+import { EmailSettingsPanel } from "@/components/admin/email-settings-panel";
 import { SupportPanel } from "@/routes/_authenticated/support";
 import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
@@ -104,6 +106,7 @@ function AdminPage() {
           <TabsTrigger value="modules"><Boxes className="size-4 mr-2" />Module</TabsTrigger>
           <TabsTrigger value="tour"><GraduationCap className="size-4 mr-2" />Einführung</TabsTrigger>
           <TabsTrigger value="system"><SettingsIcon className="size-4 mr-2" />System</TabsTrigger>
+          <TabsTrigger value="email"><Mail className="size-4 mr-2" />E-Mail</TabsTrigger>
           <TabsTrigger value="datenloeschung"><Trash2 className="size-4 mr-2" />Datenlöschung</TabsTrigger>
           <TabsTrigger value="hilfe"><LifeBuoy className="size-4 mr-2" />Hilfe</TabsTrigger>
         </TabsList>
@@ -113,6 +116,7 @@ function AdminPage() {
         <TabsContent value="modules"><ModulesPanel /></TabsContent>
         <TabsContent value="tour"><TourAdminPanel /></TabsContent>
         <TabsContent value="system"><SystemSettingsPanel /></TabsContent>
+          <TabsContent value="email"><EmailSettingsPanel /></TabsContent>
         <TabsContent value="datenloeschung"><DatenLoeschungPanel /></TabsContent>
         <TabsContent value="hilfe"><SupportPanel /></TabsContent>
       </Tabs>
