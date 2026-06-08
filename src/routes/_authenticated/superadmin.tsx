@@ -43,11 +43,12 @@ import { toast } from "sonner";
 import {
   Activity, Building2, Crown, Globe2, KeyRound, LayoutDashboard,
   Loader2, Mail, RefreshCw, Search, ShieldAlert, ShieldCheck, Trash2, Upload, Users,
-  Copy, Archive, BarChart3, Download, Rocket, CalendarClock, Plus, X, Filter, LifeBuoy,
+  Copy, Archive, BarChart3, Download, Rocket, CalendarClock, Plus, X, Filter, LifeBuoy, Network,
 } from "lucide-react";
 import { listSupportTickets, updateSupportTicket, getOpenTicketsCount } from "@/lib/support.functions";
 import { TicketDialog } from "@/routes/_authenticated/support";
 import { listPendingPurgeRequests, decidePurgeRequest } from "@/lib/data-purge.functions";
+import { saListInterventionAllowlist, saSetInterventionAllowlist } from "@/lib/intervention.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
   validateSearch: (s: Record<string, unknown>) => ({
