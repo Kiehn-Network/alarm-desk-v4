@@ -981,6 +981,7 @@ function SuperAdminPage() {
                 <SideTab value="licenses" icon={ShieldCheck}>Lizenzen</SideTab>
                 <SideTab value="modules" icon={KeyRound}>Module</SideTab>
                 <SideTab value="users" icon={Users}>Nutzer</SideTab>
+                <SideTab value="intervention" icon={Network}>Intervention</SideTab>
                 <SideSection label="Betrieb" />
                 <SideTab value="health" icon={Activity}>Health</SideTab>
                 <SideTab value="emails" icon={Mail}>E-Mails</SideTab>
