@@ -688,6 +688,7 @@ const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }
     { value: "licenses", label: "Lizenzen" },
     { value: "modules", label: "Module" },
     { value: "users", label: "Nutzer" },
+    { value: "intervention", label: "Intervention" },
   ]},
   { label: "Betrieb", items: [
     { value: "health", label: "Health" },
