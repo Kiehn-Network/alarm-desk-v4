@@ -16,6 +16,8 @@ import {
   createEinsatz, listEinsatzGruende, listFahrer, searchKundenDateien,
 } from "@/lib/einsaetze.functions";
 import { ausgebenSchluessel } from "@/lib/schluesselbuch.functions";
+import { listMyPartners, createEinsatzForPartner } from "@/lib/intervention.functions";
+import { Network } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/einsatz-erstellen")({
   component: EinsatzErstellenPage,
@@ -44,6 +46,17 @@ function EinsatzErstellenPage() {
   const create = useServerFn(createEinsatz);
   const ausgeben = useServerFn(ausgebenSchluessel);
   const schluesselbuchOn = modules?.has("schluesselbuch") ?? false;
+  const interventionOn = modules?.has("intervention") ?? false;
+  const listPartnersFn = useServerFn(listMyPartners);
+  const createForPartner = useServerFn(createEinsatzForPartner);
+  const { data: partnerData } = useQuery({
+    queryKey: ["intervention-partners-active"],
+    queryFn: () => listPartnersFn(),
+    enabled: interventionOn,
+  });
+  const partners = ((partnerData?.partners ?? []) as Array<any>).filter((p) => p.aktiv);
+  const [zielMode, setZielMode] = useState<"fahrer" | "partner">("fahrer");
+  const [partnerId, setPartnerId] = useState("");
 
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
@@ -115,12 +128,30 @@ function EinsatzErstellenPage() {
   async function submit() {
     if (!picked) { toast.error("Bitte zuerst einen Kunden suchen und auswählen"); return; }
     if (!grund.trim()) { toast.error("Bitte Einsatzgrund eingeben oder auswählen"); return; }
-    if (!fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
+    if (zielMode === "fahrer" && !fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
+    if (zielMode === "partner" && !partnerId) { toast.error("Bitte einen Partner wählen"); return; }
     if (hausnotrufEnabled && einsatzTyp === "hausnotruf" && providerOptions.length > 0 && !hausnotrufProvider) {
       toast.error("Bitte einen Hausnotruf-Anbieter wählen"); return;
     }
     setSaving(true);
     try {
+      if (zielMode === "partner") {
+        await createForPartner({ data: {
+          partner_id: partnerId,
+          einsatzgrund: grund.trim(),
+          einsatzgrund_id: grundId,
+          kunden_name: picked.kunden_name,
+          address: picked.address,
+          key_number: picked.key_number,
+          anlagen_nr: picked.anlagen_nr,
+          teilnehmer_id: picked.teilnehmer_id,
+          beschreibung: null,
+        }});
+        const p = partners.find((x) => x.id === partnerId);
+        toast.success(`Einsatz an ${p?.display_name ?? "Partner"} übergeben`);
+        navigate({ to: "/alarmierung" });
+        return;
+      }
       const created: any = await create({ data: {
         einsatzgrund: grund.trim(),
         einsatzgrund_id: grundId,
@@ -384,9 +415,41 @@ function EinsatzErstellenPage() {
         <section className="rounded-xl border border-border bg-card p-6 space-y-4" style={{ boxShadow: "var(--shadow-card)" }}>
           <div className="flex items-center gap-2">
             <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">4</span>
-            <h2 className="font-semibold">Fahrer zuweisen</h2>
+            <h2 className="font-semibold">Zuweisen</h2>
           </div>
-          {fahrer.length === 0 ? (
+          {interventionOn && (
+            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setZielMode("fahrer")}
+                className={`px-3 py-1.5 text-sm ${zielMode === "fahrer" ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted"}`}
+              >Eigener Fahrer</button>
+              <button
+                type="button"
+                onClick={() => setZielMode("partner")}
+                className={`px-3 py-1.5 text-sm inline-flex items-center gap-1.5 ${zielMode === "partner" ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted"}`}
+              ><Network className="size-3.5" /> Partner</button>
+            </div>
+          )}
+          {zielMode === "partner" ? (
+            partners.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Noch keine Interventionspartner angelegt. Lege sie unter <b>Intervention</b> an.
+              </p>
+            ) : (
+              <div>
+                <Label>Partner</Label>
+                <Select value={partnerId} onValueChange={setPartnerId}>
+                  <SelectTrigger><SelectValue placeholder="Partner wählen" /></SelectTrigger>
+                  <SelectContent>
+                    {partners.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.display_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )
+          ) : fahrer.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               Keine Nutzer mit Rolle "Fahrer" gefunden. Rollen können im Admin Center vergeben werden.
             </p>
@@ -405,8 +468,15 @@ function EinsatzErstellenPage() {
           )}
 
           <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
-            <Button onClick={submit} disabled={saving || !fahrerId || !grund.trim()} className="gap-2">
-              <Send className="size-4" /> Einsatz an Fahrer übergeben
+            <Button
+              onClick={submit}
+              disabled={
+                saving || !grund.trim() ||
+                (zielMode === "fahrer" ? !fahrerId : !partnerId)
+              }
+              className="gap-2"
+            >
+              <Send className="size-4" /> {zielMode === "partner" ? "Einsatz an Partner übergeben" : "Einsatz an Fahrer übergeben"}
             </Button>
             <Button onClick={() => navigate({ to: "/alarmierung" })} variant="ghost" className="ml-auto">
               Abbrechen

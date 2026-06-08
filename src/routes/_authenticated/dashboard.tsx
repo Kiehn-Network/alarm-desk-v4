@@ -15,6 +15,7 @@ import { Info } from "lucide-react";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { usePresenceList } from "@/hooks/use-presence";
+import { PartnerInbox } from "@/components/intervention/partner-inbox";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -49,6 +50,7 @@ function DashboardContent() {
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
   const hausnotrufAktiv = modules?.has("hausnotruf") ?? false;
   const aktiveProvider = (["malteser", "johanniter", "lgwa"] as const).filter((k) => modules?.has(k));
+  const interventionAktiv = modules?.has("intervention") ?? false;
   const presence = usePresenceList(domainId);
   const onlineByRole = presence.reduce(
     (acc, p) => {
@@ -159,6 +161,13 @@ function DashboardContent() {
           <Info className="size-4 mt-0.5 shrink-0 text-primary" />
           <p className="whitespace-pre-wrap">{settings.dashboard_hinweis}</p>
         </div>
+      )}
+
+      {interventionAktiv && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Eingehende Partner-Einsätze</h2>
+          <PartnerInbox />
+        </section>
       )}
 
       <div className={`grid grid-cols-2 sm:grid-cols-3 ${schluesselbuchAktiv ? "lg:grid-cols-7" : "lg:grid-cols-5"} gap-3`}>

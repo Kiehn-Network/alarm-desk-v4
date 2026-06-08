@@ -1,68 +1,92 @@
+# Interventions-Modul
 
-# ESRP-Modul (ERP-Anbindung)
+Ermöglicht es, einen Einsatz an einen externen **Interventionspartner** (eigene AlarmDesk-Domain) zu übergeben. Beide Seiten sehen den Einsatz und arbeiten parallel daran.
 
 ## Datenmodell (Migration)
 
-**`erp_settings`** (pro Domain, Admin-only)
-- `domain_id` (PK), `api_base`, `api_user`, `api_token`, `endpoint_path` (Default `/azs-av-einsaetze`), `use_api_prefix` (bool), `aktiv` (bool), `auto_on_abschluss` (bool, Default true).
-- RLS: SELECT für eigene Domain (alle), INSERT/UPDATE nur Domain-Admin oder Superadmin. Token wird in Server-Fns nur an Admins zurückgegeben (bzw. maskiert für andere).
+**`app_modules`-Eintrag**: `key='intervention'`, `name='Intervention'`.
 
-**`erp_outbox`**
-- `id`, `domain_id`, `einsatz_id` (FK), `external_id` (z.B. `AD-{bericht_nr}`), `payload` (jsonb), `status` enum `pending|sent|failed`, `tries` int, `last_error` text, `next_retry_at`, `sent_at`, `created_by`, `created_at`, `updated_at`.
-- Index auf `(domain_id, einsatz_id)`, `(status, next_retry_at)`.
-- RLS: SELECT eigene Domain; INSERT/UPDATE/DELETE Admin+Dispatcher.
+**`intervention_partners`** (vom Admin gepflegte Partner-Liste pro Domain)
+- `id`, `domain_id` (FK domains, der Besitzer der Liste), `partner_domain_id` (FK domains, das Ziel), `display_name` (Anzeige im Dialog), `kontakt_email`, `kontakt_telefon`, `notiz`, `aktiv` (bool), `created_at`, `updated_at`.
+- UNIQUE `(domain_id, partner_domain_id)`.
+- RLS: SELECT/INSERT/UPDATE/DELETE nur Domain-Admin der `domain_id` oder Superadmin.
 
-**App-Modul registrieren**: `app_modules` Eintrag `key='esrp'`, `name='ESRP'`.
+**`einsatz_partner_shares`** (Verknüpfung „Einsatz X wurde an Partner Y geteilt")
+- `id`, `einsatz_id` (FK einsaetze), `owner_domain_id` (der Sender), `partner_domain_id` (der Empfänger), `status` enum `offen|angenommen|in_bearbeitung|abgeschlossen|abgelehnt`, `partner_assigned_to` (FK auth.users, Fahrer des Partners), `partner_notiz`, `created_by`, `created_at`, `updated_at`.
+- UNIQUE `(einsatz_id, partner_domain_id)`.
+- Index `(partner_domain_id, status)` für Dashboard-Query des Partners.
+- RLS: SELECT/UPDATE wenn `current_effective_domain_id() IN (owner_domain_id, partner_domain_id)`. INSERT nur Admin/Dispatcher der `owner_domain_id`.
 
-## Server-Funktionen — `src/lib/esrp.functions.ts`
-
-- `getEsrpSettings()` — gibt Settings zurück; Token nur an Admin/Superadmin, sonst maskiert (`••••`).
-- `updateEsrpSettings({ api_base, api_user, api_token?, endpoint_path, use_api_prefix, aktiv, auto_on_abschluss })` — Admin-only, Zod-validiert.
-- `enqueueEinsatzToErp({ einsatz_id })` — lädt Einsatz, baut Payload, INSERT in `erp_outbox` (Status `pending`), ruft direkt `processOutboxItem` auf.
-- `processOutboxItem({ outbox_id })` — interner Worker: Holt Settings, führt `POST /login` aus, cached JWT in DB-Spalte oder pro Aufruf neu, POST an `endpoint`. Bei 200/201/409 → `sent`. Sonst `failed` mit `next_retry_at = now()+1min` (Retry-Backoff wie PHP).
-- `retryOutbox({ outbox_id })` — Admin/Dispatcher; setzt `next_retry_at=now()` und ruft `processOutboxItem` auf.
-- `listOutboxStatusForEinsaetze({ einsatz_ids })` — gibt letzten Status pro Einsatz zurück (für Lampen).
-
-**Payload-Default** (kann später erweitert werden):
+**`einsaetze` erweitern**: keine Schema-Änderung. Sichtbarkeit für Partner via zusätzlicher RLS-Policy auf `einsaetze`:
 ```
-{ einsatz_id: "AD-{bericht_nr}", kunden_name, address, key_number,
-  anlagen_nr, teilnehmer_id, einsatzgrund, beschreibung,
-  geplant_am, vor_ort_am, abfahrt_am, abgeschlossen_am,
-  bericht_data }
+USING (
+  current_effective_domain_id() = domain_id  -- bisherige Regel
+  OR EXISTS (
+    SELECT 1 FROM einsatz_partner_shares s
+    WHERE s.einsatz_id = einsaetze.id
+      AND s.partner_domain_id = current_effective_domain_id()
+  )
+)
 ```
+Analog für `einsatz_historie` und `dateien`-Verknüpfung (über `datei_verknuepfungen`), damit der Partner Bericht/Anhänge sieht. UPDATE auf `einsaetze` bleibt auf `owner_domain_id` beschränkt — Partner schreibt nur in `einsatz_partner_shares` (`partner_assigned_to`, `status`, `partner_notiz`) und in eigene Felder wie `vor_ort_am`/`abfahrt_am` über Server-Fn (siehe unten).
 
-## Auto-Versand bei Abschluss
+## Server-Funktionen — `src/lib/intervention.functions.ts`
 
-In `src/lib/einsaetze.functions.ts` an der Stelle, wo `status` auf `abgeschlossen` gesetzt wird: prüfen ob `erp_settings.aktiv && auto_on_abschluss` → `enqueueEinsatzToErp` (best-effort, Fehler nicht propagieren).
-
-## Cron-Worker
-
-`src/routes/api/public/hooks/esrp-worker.ts` — POST, holt bis zu 20 Outbox-Jobs (`pending` oder `failed` mit fälligem Retry), ruft pro Job `processOutboxItem` über `supabaseAdmin`. pg_cron Job alle 1 Minute.
+- `listMyPartners()` — Partner der eigenen Domain (für Dialog beim Einsatz-Erstellen).
+- `listAvailablePartnerDomains()` — Admin-only; alle Domains außer eigener, für Auswahl beim Anlegen eines Partners.
+- `upsertPartner({ id?, partner_domain_id, display_name, kontakt_email?, kontakt_telefon?, notiz?, aktiv })` — Admin-only.
+- `deletePartner({ id })` — Admin-only.
+- `shareEinsatzWithPartner({ einsatz_id, partner_id })` — Admin/Dispatcher; legt `einsatz_partner_shares` an, schreibt `einsatz_historie`-Eintrag.
+- `unshareEinsatz({ share_id })` — Admin/Dispatcher der Owner-Domain; entfernt Share.
+- `partnerAcceptEinsatz({ share_id })` / `partnerDeclineEinsatz({ share_id, grund? })` — Partner-Admin/Dispatcher.
+- `partnerAssignFahrer({ share_id, fahrer_id })` — setzt `partner_assigned_to`, Status `in_bearbeitung`.
+- `listSharedToMe()` — Einsätze, die meiner Domain als Partner geteilt wurden (für Partner-Dashboard).
+- `listSharesForEinsatz({ einsatz_id })` — Status pro Share (für Owner-Sicht / Status-Lampe).
 
 ## UI
 
-**Admin-Einstellungsseite** — `src/routes/_authenticated/esrp.tsx` (Admin/Superadmin):
-- Konfigurations-Card: API_BASE, API_USER, API_TOKEN, Endpoint, Auto-Versand bei Abschluss, Aktiv-Switch.
-- Outbox-Tabelle: letzte 50 Jobs mit Status, Fehlermeldung, Retry-Button, Payload-Preview.
-- Sidebar-Eintrag „ESRP" unter Center, sichtbar wenn Modul `esrp` für Domain aktiv ist.
+**1) Admin-Seite — `src/routes/_authenticated/intervention.tsx`** (Admin/Superadmin):
+- Tabelle der Interventionspartner mit Spalten Name, Partner-Domain, Kontakt, Aktiv.
+- Dialog „Partner hinzufügen": Combobox aller anderen Domains (`listAvailablePartnerDomains`) + Anzeige-Name, Kontaktdaten, Notiz.
+- Bearbeiten / Aktivieren-Toggle / Löschen.
 
-**Bericht-Versand-Dialog** — `src/components/bericht-send-dialog.tsx`:
-- Radio/Checkboxen: `Nur PDF`, `Nur ERP`, `PDF + ERP` (ERP-Optionen nur wenn ESRP aktiv).
-- Bei ERP-Versand → `enqueueEinsatzToErp`, Erfolg/Fehler-Toast.
+**2) Sidebar-Eintrag** „Intervention" unter Center, sichtbar wenn Modul `intervention` für Domain aktiv ist.
 
-**Status-Lampe** — kleine Komponente `<EsrpStatusLamp einsatzId=… />` (grün=sent, orange=pending, rot=failed, grau=none). Eingebunden in Einsatz-Listen (Dashboard/Meine Einsätze) per `listOutboxStatusForEinsaetze` Batch-Query.
+**3) Einsatz-Erstellen** — `src/routes/_authenticated/einsatz-erstellen.tsx`:
+- Im Fahrer-Auswahl-Bereich neuer Tab/Toggle „Eigene Fahrer" ↔ „Partner".
+- „Partner": Liste aus `listMyPartners()` (nur aktive). Auswahl speichert nach Einsatz-Create direkt `shareEinsatzWithPartner`. `assigned_to` bleibt leer beim Owner.
+- Nur sichtbar wenn Modul aktiv.
 
-## Sicherheit
+**4) Owner-Sicht im Einsatz**:
+- In Einsatz-Liste (Dashboard / Meine Einsätze): kleine Komponente `<PartnerShareBadge einsatzId />` zeigt „Partner: <Name> · <Status>".
+- Im Bericht-Dialog: Sektion mit Partner-Status + zugewiesenem Partner-Fahrer (read-only).
 
-- Token verschlüsselt? Vorerst als Plaintext in DB (Lovable-Cloud Standard); RLS schützt vor anderen Domänen; SELECT der Token-Spalte in Server-Fn nur an Admins.
-- Cron-Endpunkt unter `/api/public/hooks/` — keine sensiblen Daten, idempotent durch Outbox-IDs.
+**5) Partner-Dashboard** — Erweiterung `src/routes/_authenticated/dashboard.tsx`:
+- Neue Section „Von Partnern erhaltene Einsätze" — Query `listSharedToMe()` (nur wenn Modul aktiv).
+- Pro Eintrag: Annehmen/Ablehnen-Buttons; nach Annahme „Fahrer zuweisen"-Combobox (`partnerAssignFahrer`).
+- Angenommene Einsätze landen zusätzlich in „Meine Einsätze" des zugewiesenen Fahrers (über erweiterte RLS-Sicht + Filter auf `partner_assigned_to`).
+
+**6) Fahrer-Sicht (Partner)**:
+- In `meine-einsaetze.tsx` Query erweitern: Einsätze, bei denen entweder `assigned_to = me` ODER ein `einsatz_partner_shares.partner_assigned_to = me`. Beide Seiten sehen Vor-Ort-/Abfahrt-/Ende-Zeiten in Echtzeit (Realtime auf `einsaetze` ist bereits aktiv).
+
+## Berechtigungs-Detail
+
+- Partner-Fahrer schreibt `abfahrt_am`/`vor_ort_am`/`einsatz_ende_am` über bestehende Server-Fn → diese muss erweitert werden, sodass auch der zugewiesene Partner-Fahrer schreiben darf (Check: existiert Share mit `partner_assigned_to = userId`).
+- Bericht-Schreiben (Owner-only) bleibt beim Owner. Diskussion: oder darf Partner-Fahrer den Bericht schreiben? **Default: Partner-Fahrer schreibt den Bericht**, Owner sieht ihn nur (typischer Fall: Partner fährt tatsächlich raus). → Update-Policy auf `einsaetze` für Bericht-Felder analog erweitern.
 
 ## Schritte
 
-1. Migration (Tabellen, Enums, RLS, app_modules-Eintrag).
-2. Server-Fns + Auto-Hook in `einsaetze.functions.ts`.
-3. Cron-Route + pg_cron-Insert.
-4. Sidebar + Admin-Route + Outbox-UI.
-5. Bericht-Send-Dialog erweitern + Status-Lampe.
+1. Migration: `app_modules`-Eintrag, Tabellen `intervention_partners`, `einsatz_partner_shares`, RLS-Policies, Erweiterung der `einsaetze`-Policies.
+2. Server-Funktionen + Erweiterung bestehender Einsatz-Update-Fns für Partner-Fahrer.
+3. Admin-Route + Sidebar-Eintrag.
+4. Einsatz-Erstellen-Dialog: Partner-Tab.
+5. Partner-Dashboard-Section + `meine-einsaetze` erweitern.
+6. PartnerShareBadge in Listen.
 
-Soll ich starten?
+## Offene Fragen
+
+- **Bericht**: Soll der Partner-Fahrer den Bericht schreiben (Default oben) oder nur der Owner?
+- **Sichtbarkeit Kunde**: Sieht der Partner die vollen Kundendaten (Adresse/Telefon)? Default: ja, sonst kann er nicht hinfahren.
+- **Abrechnung**: Soll der geteilte Einsatz beim Partner in seiner Abrechnung auftauchen, oder nur beim Owner? Default: nur Owner.
+
+Soll ich diese Defaults so umsetzen oder anpassen?
