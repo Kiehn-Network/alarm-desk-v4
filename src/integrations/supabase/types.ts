@@ -1131,6 +1131,70 @@ export type Database = {
           },
         ]
       }
+      einsatz_partner_shares: {
+        Row: {
+          ablehnung_grund: string | null
+          created_at: string
+          created_by: string | null
+          einsatz_id: string
+          id: string
+          owner_domain_id: string
+          partner_assigned_to: string | null
+          partner_domain_id: string
+          partner_notiz: string | null
+          status: Database["public"]["Enums"]["intervention_share_status"]
+          updated_at: string
+        }
+        Insert: {
+          ablehnung_grund?: string | null
+          created_at?: string
+          created_by?: string | null
+          einsatz_id: string
+          id?: string
+          owner_domain_id: string
+          partner_assigned_to?: string | null
+          partner_domain_id: string
+          partner_notiz?: string | null
+          status?: Database["public"]["Enums"]["intervention_share_status"]
+          updated_at?: string
+        }
+        Update: {
+          ablehnung_grund?: string | null
+          created_at?: string
+          created_by?: string | null
+          einsatz_id?: string
+          id?: string
+          owner_domain_id?: string
+          partner_assigned_to?: string | null
+          partner_domain_id?: string
+          partner_notiz?: string | null
+          status?: Database["public"]["Enums"]["intervention_share_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "einsatz_partner_shares_einsatz_id_fkey"
+            columns: ["einsatz_id"]
+            isOneToOne: false
+            referencedRelation: "einsaetze"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "einsatz_partner_shares_owner_domain_id_fkey"
+            columns: ["owner_domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "einsatz_partner_shares_partner_domain_id_fkey"
+            columns: ["partner_domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -1367,6 +1431,60 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      intervention_partners: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          display_name: string
+          domain_id: string
+          id: string
+          kontakt_email: string | null
+          kontakt_telefon: string | null
+          notiz: string | null
+          partner_domain_id: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          display_name: string
+          domain_id: string
+          id?: string
+          kontakt_email?: string | null
+          kontakt_telefon?: string | null
+          notiz?: string | null
+          partner_domain_id: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          display_name?: string
+          domain_id?: string
+          id?: string
+          kontakt_email?: string | null
+          kontakt_telefon?: string | null
+          notiz?: string | null
+          partner_domain_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intervention_partners_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intervention_partners_partner_domain_id_fkey"
+            columns: ["partner_domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       intrahub_posts: {
         Row: {
@@ -2657,6 +2775,10 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      einsatz_is_shared_to_me: {
+        Args: { _einsatz_id: string }
+        Returns: boolean
+      }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
@@ -2708,6 +2830,10 @@ export type Database = {
       }
       superadmin_domain_stats: { Args: { _domain_id: string }; Returns: Json }
       superadmin_health: { Args: never; Returns: Json }
+      user_is_partner_fahrer: {
+        Args: { _einsatz_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "dispatcher" | "fahrer" | "superadmin" | "user"
@@ -2721,6 +2847,12 @@ export type Database = {
         | "abgeschlossen"
         | "storniert"
       erp_outbox_status: "pending" | "sent" | "failed"
+      intervention_share_status:
+        | "offen"
+        | "angenommen"
+        | "in_bearbeitung"
+        | "abgeschlossen"
+        | "abgelehnt"
       owks_bestreifung_status:
         | "geplant"
         | "aktiv"
@@ -2888,6 +3020,13 @@ export const Constants = {
         "storniert",
       ],
       erp_outbox_status: ["pending", "sent", "failed"],
+      intervention_share_status: [
+        "offen",
+        "angenommen",
+        "in_bearbeitung",
+        "abgeschlossen",
+        "abgelehnt",
+      ],
       owks_bestreifung_status: [
         "geplant",
         "aktiv",
