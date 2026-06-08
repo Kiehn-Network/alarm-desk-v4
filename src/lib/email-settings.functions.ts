@@ -138,11 +138,14 @@ export const getDomainEmailSettings = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     // Also tell client if platform fallback is available
     const { data: ps } = await supabaseAdmin
-      .from("platform_email_settings").select("provider, from_email, api_key").eq("id", true).maybeSingle();
+      .from("platform_email_settings").select("provider, from_email, api_key, smtp_host, smtp_password").eq("id", true).maybeSingle() as any;
+    const psAvail = !!(ps?.from_email && ps?.provider && (
+      ps.provider === "smtp" ? (ps.smtp_host && ps.smtp_password) : ps.api_key
+    ));
     return {
       domain_id: domainId,
       settings: maskRow(data),
-      platform_available: !!(ps?.api_key && ps?.from_email),
+      platform_available: psAvail,
       platform_from: ps?.from_email ?? null,
     };
   });
