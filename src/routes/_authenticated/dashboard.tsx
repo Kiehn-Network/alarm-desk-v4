@@ -15,6 +15,7 @@ import { Info } from "lucide-react";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { usePresenceList } from "@/hooks/use-presence";
+import { PartnerInbox } from "@/components/intervention/partner-inbox";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardPage,
@@ -49,6 +50,7 @@ function DashboardContent() {
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
   const hausnotrufAktiv = modules?.has("hausnotruf") ?? false;
   const aktiveProvider = (["malteser", "johanniter", "lgwa"] as const).filter((k) => modules?.has(k));
+  const interventionAktiv = modules?.has("intervention") ?? false;
   const presence = usePresenceList(domainId);
   const onlineByRole = presence.reduce(
     (acc, p) => {
