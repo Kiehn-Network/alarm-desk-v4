@@ -34,7 +34,7 @@ export async function resolveEmailConfigForDomain(domainId: string): Promise<Res
   if (mode === "own") {
     if (!ds?.provider || !ds.api_key || !ds.from_email) {
       throw new Error(
-        "Eigene SMTP-/E-Mail-Daten unvollständig. Bitte im Admin-Bereich unter „E-Mail-Versand" Provider, API-Key und Absender hinterlegen.",
+        'Eigene SMTP-/E-Mail-Daten unvollständig. Bitte im Admin-Bereich unter "E-Mail-Versand" Provider, API-Key und Absender hinterlegen.',
       );
     }
     if (ds.provider === "mailgun" && !ds.mailgun_domain) {
