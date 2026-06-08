@@ -31,13 +31,73 @@ export const listAvailablePartnerDomains = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
     const domainId = await requireEffectiveDomainId(supabase, userId);
+    // Nur vom SuperAdmin freigegebene Partner-Domains anbieten
+    const { data: allow, error: aErr } = await (supabaseAdmin as any)
+      .from("intervention_allowlist")
+      .select("partner_domain_id")
+      .eq("domain_id", domainId);
+    if (aErr) throw new Error(aErr.message);
+    const ids = (allow ?? []).map((r: any) => r.partner_domain_id);
+    if (ids.length === 0) return { domains: [] };
     const { data, error } = await supabaseAdmin
       .from("domains")
       .select("id, name")
-      .neq("id", domainId)
+      .in("id", ids)
       .order("name");
     if (error) throw new Error(error.message);
     return { domains: data ?? [] };
+  });
+
+// === SuperAdmin: Allowlist verwalten ===
+
+export const saListInterventionAllowlist = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+    const { data: isSa } = await (supabase as any).rpc("is_superadmin");
+    if (!isSa) throw new Error("forbidden");
+    const [{ data: rows, error }, { data: doms, error: dErr }] = await Promise.all([
+      supabaseAdmin.from("intervention_allowlist").select("id, domain_id, partner_domain_id, created_at"),
+      supabaseAdmin.from("domains").select("id, name").order("name"),
+    ]);
+    if (error) throw new Error(error.message);
+    if (dErr) throw new Error(dErr.message);
+    return { rows: rows ?? [], domains: doms ?? [] };
+  });
+
+export const saSetInterventionAllowlist = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    domain_id: z.string().uuid(),
+    partner_domain_ids: z.array(z.string().uuid()).max(500),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: isSa } = await (supabase as any).rpc("is_superadmin");
+    if (!isSa) throw new Error("forbidden");
+    const desired = new Set(data.partner_domain_ids.filter((id) => id !== data.domain_id));
+    const { data: existing, error: eErr } = await supabaseAdmin
+      .from("intervention_allowlist")
+      .select("id, partner_domain_id")
+      .eq("domain_id", data.domain_id);
+    if (eErr) throw new Error(eErr.message);
+    const current = new Map<string, string>((existing ?? []).map((r: any) => [r.partner_domain_id, r.id]));
+    const toAdd = [...desired].filter((id) => !current.has(id));
+    const toRemove = [...current.entries()].filter(([pid]) => !desired.has(pid)).map(([, id]) => id);
+    if (toRemove.length > 0) {
+      const { error } = await supabaseAdmin.from("intervention_allowlist").delete().in("id", toRemove);
+      if (error) throw new Error(error.message);
+    }
+    if (toAdd.length > 0) {
+      const rows = toAdd.map((pid) => ({
+        domain_id: data.domain_id,
+        partner_domain_id: pid,
+        created_by: userId,
+      }));
+      const { error } = await supabaseAdmin.from("intervention_allowlist").insert(rows);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true, added: toAdd.length, removed: toRemove.length };
   });
 
 export const upsertPartner = createServerFn({ method: "POST" })
