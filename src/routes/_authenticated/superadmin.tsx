@@ -1570,6 +1570,10 @@ function SuperAdminPage() {
         <TabsContent value="search" className="space-y-4">
           <GlobalSearchPanel domains={domains} />
         </TabsContent>
+
+        <TabsContent value="intervention" className="space-y-4">
+          <InterventionAllowlistPanel />
+        </TabsContent>
           </div>
         </div>
       </Tabs>
