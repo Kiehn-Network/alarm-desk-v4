@@ -2648,3 +2648,115 @@ function ImpersonateDialog({ domain, onDone }: { domain: any; onDone: () => void
     </Dialog>
   );
 }
+
+function InterventionAllowlistPanel() {
+  const listFn = useServerFn(saListInterventionAllowlist);
+  const setFn = useServerFn(saSetInterventionAllowlist);
+  const qc = useQueryClient();
+  const q = useQuery({ queryKey: ["sa-intervention-allowlist"], queryFn: () => listFn() });
+  const [selectedDomain, setSelectedDomain] = useState<string>("");
+  const [draft, setDraft] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState("");
+
+  const domains: Array<{ id: string; name: string }> = (q.data?.domains ?? []) as any;
+  const rows: Array<{ domain_id: string; partner_domain_id: string }> = (q.data?.rows ?? []) as any;
+
+  React.useEffect(() => {
+    if (!selectedDomain) return;
+    const current = new Set(rows.filter((r) => r.domain_id === selectedDomain).map((r) => r.partner_domain_id));
+    setDraft(current);
+  }, [selectedDomain, q.data]);
+
+  const countsByDomain = useMemo(() => {
+    const m = new Map<string, number>();
+    rows.forEach((r) => m.set(r.domain_id, (m.get(r.domain_id) ?? 0) + 1));
+    return m;
+  }, [rows]);
+
+  const toggle = (id: string) => {
+    setDraft((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  async function save() {
+    if (!selectedDomain) return;
+    setBusy(true);
+    try {
+      await setFn({ data: { domain_id: selectedDomain, partner_domain_ids: [...draft] } });
+      toast.success("Gespeichert");
+      qc.invalidateQueries({ queryKey: ["sa-intervention-allowlist"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Fehler");
+    } finally { setBusy(false); }
+  }
+
+  const candidates = domains
+    .filter((d) => d.id !== selectedDomain)
+    .filter((d) => !filter || d.name.toLowerCase().includes(filter.toLowerCase()));
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-lg font-semibold flex items-center gap-2"><Network className="size-5 text-primary" /> Intervention — erlaubte Partner pro Domain</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Lege fest, welche anderen Domains eine Domain als Interventionspartner auswählen darf. Nur freigegebene Domains erscheinen dort in der Auswahl.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+          <div className="rounded-lg border border-border overflow-hidden">
+            <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40">Domain wählen</div>
+            <div className="max-h-[480px] overflow-auto">
+              {domains.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setSelectedDomain(d.id)}
+                  className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-2 border-b border-border ${selectedDomain === d.id ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted/40"}`}
+                >
+                  <span className="truncate">{d.name}</span>
+                  <span className="text-[10px] tabular-nums text-muted-foreground">{countsByDomain.get(d.id) ?? 0}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-border p-4 space-y-3">
+            {!selectedDomain ? (
+              <div className="text-sm text-muted-foreground">Bitte links eine Domain wählen.</div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder="Partner suchen…" className="max-w-xs" />
+                  <div className="text-xs text-muted-foreground">{draft.size} ausgewählt</div>
+                  <div className="ml-auto flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => setDraft(new Set(candidates.map((c) => c.id)))}>Alle</Button>
+                    <Button size="sm" variant="outline" onClick={() => setDraft(new Set())}>Keine</Button>
+                    <Button size="sm" onClick={save} disabled={busy}>Speichern</Button>
+                  </div>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-1 max-h-[440px] overflow-auto">
+                  {candidates.map((d) => {
+                    const checked = draft.has(d.id);
+                    return (
+                      <label key={d.id} className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer ${checked ? "border-primary/40 bg-primary/5" : "border-border hover:bg-muted/40"}`}>
+                        <input type="checkbox" checked={checked} onChange={() => toggle(d.id)} />
+                        <span className="text-sm truncate">{d.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
