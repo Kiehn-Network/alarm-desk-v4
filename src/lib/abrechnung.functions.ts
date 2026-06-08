@@ -26,10 +26,12 @@ export const listProviderEinsaetze = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
     const { startISO, endISO } = monthRange(data.month);
     let q = supabase
       .from("einsaetze").select("*")
+      .eq("domain_id", domainId)
       .eq("einsatz_typ", "hausnotruf")
       .eq("hausnotruf_provider", data.provider)
       .gte("created_at", startISO).lt("created_at", endISO)
