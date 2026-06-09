@@ -2509,6 +2509,94 @@ export type Database = {
         }
         Relationships: []
       }
+      schluesseluebergabe_protokolle: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          items: Json
+          kunden_name: string | null
+          notiz: string | null
+          ort: string | null
+          protokoll_nr: number
+          richtung: string
+          strasse: string | null
+          uebergeben_an_name: string | null
+          uebergeben_von_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          items?: Json
+          kunden_name?: string | null
+          notiz?: string | null
+          ort?: string | null
+          protokoll_nr: number
+          richtung: string
+          strasse?: string | null
+          uebergeben_an_name?: string | null
+          uebergeben_von_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          items?: Json
+          kunden_name?: string | null
+          notiz?: string | null
+          ort?: string | null
+          protokoll_nr?: number
+          richtung?: string
+          strasse?: string | null
+          uebergeben_an_name?: string | null
+          uebergeben_von_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schluesseluebergabe_protokolle_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schluesseluebergabe_settings: {
+        Row: {
+          domain_id: string
+          firmenname: string | null
+          footer_adresse: string | null
+          footer_kontakt: string | null
+          updated_at: string
+        }
+        Insert: {
+          domain_id: string
+          firmenname?: string | null
+          footer_adresse?: string | null
+          footer_kontakt?: string | null
+          updated_at?: string
+        }
+        Update: {
+          domain_id?: string
+          firmenname?: string | null
+          footer_adresse?: string | null
+          footer_kontakt?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schluesseluebergabe_settings_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: true
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       superadmin_audit_log: {
         Row: {
           action: string
@@ -2845,6 +2933,10 @@ export type Database = {
           payload: Json
           source_queue: string
         }
+        Returns: number
+      }
+      next_schluessel_protokoll_nr: {
+        Args: { _domain_id: string }
         Returns: number
       }
       read_email_batch: {
