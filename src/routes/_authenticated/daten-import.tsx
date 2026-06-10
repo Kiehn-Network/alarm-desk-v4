@@ -374,6 +374,8 @@ function DatenImportPage() {
           </CardContent>
         </Card>
       )}
+
+      <BulkFileAttachSection />
     </div>
   );
 }
@@ -388,5 +390,145 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: "su
       <div className="text-xs text-muted-foreground">{label}</div>
       <div className={`text-2xl font-bold ${color}`}>{value}</div>
     </div>
+  );
+}
+
+function BulkFileAttachSection() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [result, setResult] = useState<any>(null);
+  const attachFn = useServerFn(attachFilesToDateien);
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Nicht angemeldet");
+      setProgress({ done: 0, total: files.length });
+      const uploaded: { upload_filename: string; storage_path: string; mime_type: string | null; size_bytes: number | null }[] = [];
+      const uploadErrors: { filename: string; message: string }[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        try {
+          const ext = f.name.split(".").pop() ?? "bin";
+          const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+          const up = await supabase.storage.from("dateien").upload(path, f, {
+            contentType: f.type || "application/octet-stream",
+          });
+          if (up.error) throw up.error;
+          uploaded.push({
+            upload_filename: f.name,
+            storage_path: path,
+            mime_type: f.type || null,
+            size_bytes: f.size,
+          });
+        } catch (e: any) {
+          uploadErrors.push({ filename: f.name, message: e?.message ?? String(e) });
+        }
+        setProgress({ done: i + 1, total: files.length });
+      }
+      if (uploaded.length === 0) {
+        return { total: files.length, matched: 0, attached: 0, versioned: 0, unmatched: [], errors: uploadErrors };
+      }
+      const res = await attachFn({ data: { files: uploaded } });
+      return { ...res, errors: [...uploadErrors, ...(res.errors ?? [])] };
+    },
+    onSuccess: (res) => {
+      setResult(res);
+      toast.success(`${res.matched} zugeordnet (${res.attached} angeh\u00e4ngt, ${res.versioned} neue Versionen), ${res.unmatched.length} ohne Treffer`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Upload fehlgeschlagen"),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Files className="size-5 text-primary" /> Dateien zuordnen (PDF, Bilder, …)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          L\u00e4dt mehrere Originaldateien hoch und ordnet sie den bereits importierten Eintr\u00e4gen automatisch zu.
+          Match erfolgt prim\u00e4r \u00fcber den Dateinamen (Spalte <code>filename</code>); fehlt ein Treffer,
+          wird zus\u00e4tzlich versucht, die <strong>Anlagen-Nr.</strong> oder <strong>Teilnehmer-ID</strong>
+          im Dateinamen zu erkennen. Existiert bereits eine Datei, wird eine neue Version angeh\u00e4ngt
+          und mit dem Original verkn\u00fcpft.
+        </p>
+
+        <input
+          type="file"
+          multiple
+          onChange={(e) => { setFiles(Array.from(e.target.files ?? [])); setResult(null); }}
+          className="text-sm"
+        />
+
+        {files.length > 0 && (
+          <div className="text-sm text-muted-foreground">
+            {files.length} Datei{files.length === 1 ? "" : "en"} ausgew\u00e4hlt
+            {" "}({(files.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1)} MB gesamt)
+          </div>
+        )}
+
+        {progress && mutation.isPending && (
+          <div className="text-sm">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-muted-foreground">Upload l\u00e4uft…</span>
+              <span className="font-mono">{progress.done} / {progress.total}</span>
+            </div>
+            <div className="h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-full bg-primary transition-all" style={{ width: `${(progress.done / Math.max(1, progress.total)) * 100}%` }} />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end">
+          <Button
+            disabled={files.length === 0 || mutation.isPending}
+            onClick={() => { setResult(null); mutation.mutate(); }}
+          >
+            {mutation.isPending ? (
+              <><Loader2 className="size-4 mr-2 animate-spin" /> Verarbeite…</>
+            ) : (
+              <><Upload className="size-4 mr-2" /> {files.length} Datei{files.length === 1 ? "" : "en"} hochladen &amp; zuordnen</>
+            )}
+          </Button>
+        </div>
+
+        {result && (
+          <div className="space-y-3 pt-2 border-t">
+            <div className="grid grid-cols-4 gap-3">
+              <Stat label="Gesamt" value={result.total} />
+              <Stat label="Zugeordnet" value={result.matched} tone="success" />
+              <Stat label="Neue Versionen" value={result.versioned} tone="info" />
+              <Stat label="Ohne Treffer" value={result.unmatched.length} tone="muted" />
+            </div>
+            {result.unmatched.length > 0 && (
+              <div className="rounded-md border border-warning/40 bg-warning/5 p-3">
+                <div className="text-sm font-medium text-warning mb-2 flex items-center gap-2">
+                  <Link2 className="size-4" /> {result.unmatched.length} Datei{result.unmatched.length === 1 ? "" : "en"} ohne Treffer
+                </div>
+                <ul className="text-xs space-y-1 max-h-40 overflow-y-auto font-mono">
+                  {result.unmatched.slice(0, 50).map((u: any, i: number) => (
+                    <li key={i}>{u.filename}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {result.errors?.length > 0 && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                <div className="text-sm font-medium text-destructive mb-2 flex items-center gap-2">
+                  <AlertTriangle className="size-4" /> {result.errors.length} Fehler
+                </div>
+                <ul className="text-xs space-y-1 max-h-40 overflow-y-auto">
+                  {result.errors.slice(0, 20).map((e: any, i: number) => (
+                    <li key={i}><span className="font-mono text-muted-foreground">{e.filename}:</span> {e.message}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
