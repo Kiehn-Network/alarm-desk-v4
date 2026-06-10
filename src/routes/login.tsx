@@ -38,9 +38,26 @@ function LoginPage() {
   const [heroImage] = useState(getRandomHero);
   const [mode, setMode] = useState<"login" | "forgot">("login");
   const [resetSent, setResetSent] = useState(false);
+  const [dbStatus, setDbStatus] = useState<"connecting" | "online" | "offline">("connecting");
 
   useEffect(() => {
-    fetch("/api/public/version").then((r) => r.json()).then(setInfo).catch(() => {});
+    let cancelled = false;
+    const check = async () => {
+      if (!cancelled) setDbStatus((s) => (s === "online" ? s : "connecting"));
+      try {
+        const r = await fetch("/api/public/version", { cache: "no-store" });
+        if (!r.ok) throw new Error(String(r.status));
+        const data = await r.json();
+        if (cancelled) return;
+        setInfo(data);
+        setDbStatus("online");
+      } catch {
+        if (!cancelled) setDbStatus("offline");
+      }
+    };
+    check();
+    const id = setInterval(check, 15000);
+    return () => { cancelled = true; clearInterval(id); };
   }, []);
 
   const submit = async (e: FormEvent) => {
@@ -102,13 +119,7 @@ function LoginPage() {
 
           <div className="max-w-md">
             <div className="flex gap-2 mb-8">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-success/15 text-success border border-success/20 uppercase tracking-wider">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success" />
-                </span>
-                System Online
-              </span>
+              <StatusBadge status={dbStatus} />
               <span className="px-3 py-1 rounded-full text-[11px] font-semibold bg-primary/15 text-primary border border-primary/20 uppercase tracking-wider">
                 v{info?.current_version ?? "…"}
               </span>
@@ -321,5 +332,22 @@ function VersionBadge({ info }: { info: VersionInfo | null }) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: "connecting" | "online" | "offline" }) {
+  const cfg = {
+    online: { label: "System Online", cls: "bg-success/15 text-success border-success/20", dot: "bg-success", ping: true },
+    connecting: { label: "Verbindungsaufbau…", cls: "bg-warning/15 text-warning border-warning/20", dot: "bg-warning", ping: true },
+    offline: { label: "Keine Verbindung möglich", cls: "bg-destructive/15 text-destructive border-destructive/20", dot: "bg-destructive", ping: false },
+  }[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border uppercase tracking-wider ${cfg.cls}`}>
+      <span className="relative flex h-1.5 w-1.5">
+        {cfg.ping && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${cfg.dot}`} />}
+        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${cfg.dot}`} />
+      </span>
+      {cfg.label}
+    </span>
   );
 }
