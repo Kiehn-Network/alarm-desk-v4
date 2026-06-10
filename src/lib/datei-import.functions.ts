@@ -104,3 +104,195 @@ export const importDateien = createServerFn({ method: "POST" })
 
     return { inserted, updated, skipped, errors, total: data.rows.length };
   });
+
+// =====================================================================
+// Bulk-Datei-Upload: ordnet hochgeladene Storage-Dateien anhand
+// Dateiname / Anlagen-Nr / Teilnehmer-ID den bestehenden `dateien`-Eintraegen zu.
+// Bei bereits vorhandener Storage-Datei wird eine neue Version angelegt
+// und ueber `datei_verknuepfungen` mit dem Original verbunden.
+// =====================================================================
+
+const fileSchema = z.object({
+  upload_filename: z.string().min(1).max(500),
+  storage_path: z.string().min(1).max(500),
+  mime_type: z.string().max(150).optional().nullable(),
+  size_bytes: z.number().int().nonnegative().optional().nullable(),
+});
+
+const attachSchema = z.object({
+  files: z.array(fileSchema).min(1).max(2000),
+});
+
+function normalize(s: string | null | undefined) {
+  return (s ?? "").toLowerCase().trim();
+}
+function stripExt(name: string) {
+  const i = name.lastIndexOf(".");
+  return i > 0 ? name.slice(0, i) : name;
+}
+
+export const attachFilesToDateien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => attachSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertAdmin(supabase, userId, domainId);
+
+    // Bestehende dateien-Eintraege der Domaene laden (paginiert)
+    const pageSize = 1000;
+    let from = 0;
+    const dateien: any[] = [];
+    while (true) {
+      const { data: page, error } = await supabase
+        .from("dateien")
+        .select("id, filename, anlagen_nr, teilnehmer_id, storage_path")
+        .eq("domain_id", domainId)
+        .is("deleted_at", null)
+        .range(from, from + pageSize - 1);
+      if (error) throw new Error(error.message);
+      if (!page || page.length === 0) break;
+      dateien.push(...page);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+
+    // Indizes vorbereiten
+    const byFilename = new Map<string, any[]>();
+    const byFilenameNoExt = new Map<string, any[]>();
+    const withKeys: { row: any; anlagen?: string; teilnehmer?: string }[] = [];
+    for (const r of dateien) {
+      const fn = normalize(r.filename);
+      if (fn) {
+        const arr = byFilename.get(fn) ?? [];
+        arr.push(r);
+        byFilename.set(fn, arr);
+        const ne = stripExt(fn);
+        const arr2 = byFilenameNoExt.get(ne) ?? [];
+        arr2.push(r);
+        byFilenameNoExt.set(ne, arr2);
+      }
+      const an = normalize(r.anlagen_nr);
+      const tn = normalize(r.teilnehmer_id);
+      if (an || tn) withKeys.push({ row: r, anlagen: an || undefined, teilnehmer: tn || undefined });
+    }
+
+    let matched = 0;
+    let versioned = 0;
+    let attached = 0;
+    const unmatched: { filename: string; storage_path: string }[] = [];
+    const errors: { filename: string; message: string }[] = [];
+
+    for (const f of data.files) {
+      try {
+        const baseRaw = f.upload_filename.split(/[\\/]/).pop() || f.upload_filename;
+        const base = normalize(baseRaw);
+        const baseNoExt = stripExt(base);
+
+        // 1) Exakter Dateiname
+        let candidates = byFilename.get(base) ?? byFilenameNoExt.get(baseNoExt) ?? [];
+        // 2) Fallback: Anlagen-Nr / Teilnehmer-ID kommt im Upload-Namen vor
+        if (candidates.length === 0) {
+          const fallback: any[] = [];
+          for (const wk of withKeys) {
+            if (wk.anlagen && base.includes(wk.anlagen)) fallback.push(wk.row);
+            else if (wk.teilnehmer && base.includes(wk.teilnehmer)) fallback.push(wk.row);
+          }
+          candidates = fallback;
+        }
+
+        if (candidates.length === 0) {
+          unmatched.push({ filename: baseRaw, storage_path: f.storage_path });
+          continue;
+        }
+
+        // Bei mehreren Treffern: ersten ohne Storage bevorzugen, sonst ersten
+        const target =
+          candidates.find((c) => !c.storage_path) ?? candidates[0];
+
+        matched++;
+
+        if (!target.storage_path) {
+          // Storage anhaengen
+          const { error: upErr } = await supabase
+            .from("dateien")
+            .update({
+              storage_path: f.storage_path,
+              mime_type: f.mime_type ?? null,
+              size_bytes: f.size_bytes ?? null,
+              filename: baseRaw, // Originalname uebernehmen, falls vorher Platzhalter
+            })
+            .eq("id", target.id);
+          if (upErr) throw new Error(upErr.message);
+          await supabase.from("datei_historie").insert({
+            datei_id: target.id,
+            field_name: "storage_path",
+            old_value: null,
+            new_value: f.storage_path,
+            changed_by: userId,
+            domain_id: domainId,
+          });
+          // lokal aktualisieren, damit weitere Uploads ggf. Version anlegen
+          target.storage_path = f.storage_path;
+          attached++;
+        } else {
+          // Neue Version anlegen
+          const { count } = await supabase
+            .from("datei_verknuepfungen")
+            .select("id", { count: "exact", head: true })
+            .or(`datei_a_id.eq.${target.id},datei_b_id.eq.${target.id}`);
+          const versionNr = (count ?? 0) + 2;
+
+          const { data: full, error: fErr } = await supabase
+            .from("dateien")
+            .select("address, key_number, folder, kunden_name, notiz, teilnehmer_id, anlagen_nr")
+            .eq("id", target.id)
+            .single();
+          if (fErr) throw new Error(fErr.message);
+
+          const newName = `${stripExt(target.filename || baseRaw)} (v${versionNr})`;
+          const { data: inserted, error: insErr } = await supabase
+            .from("dateien")
+            .insert({
+              filename: newName,
+              storage_path: f.storage_path,
+              mime_type: f.mime_type ?? null,
+              size_bytes: f.size_bytes ?? null,
+              address: full?.address ?? null,
+              key_number: full?.key_number ?? null,
+              folder: full?.folder ?? null,
+              kunden_name: full?.kunden_name ?? null,
+              notiz: full?.notiz ?? null,
+              teilnehmer_id: full?.teilnehmer_id ?? null,
+              anlagen_nr: full?.anlagen_nr ?? null,
+              uploaded_by: userId,
+              domain_id: domainId,
+            })
+            .select("id")
+            .single();
+          if (insErr) throw new Error(insErr.message);
+
+          // Verknuepfung Original <-> neue Version
+          const [a, b] = [target.id, inserted!.id].sort();
+          await supabase.from("datei_verknuepfungen").insert({
+            datei_a_id: a,
+            datei_b_id: b,
+            created_by: userId,
+            domain_id: domainId,
+          });
+          versioned++;
+        }
+      } catch (e: any) {
+        errors.push({ filename: f.upload_filename, message: e?.message ?? String(e) });
+      }
+    }
+
+    return {
+      total: data.files.length,
+      matched,
+      attached,
+      versioned,
+      unmatched,
+      errors,
+    };
+  });
