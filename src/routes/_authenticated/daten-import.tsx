@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Upload, FileText, FileJson, Database, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { Upload, FileText, FileJson, Database, AlertTriangle, CheckCircle2, Loader2, Files, Link2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
-import { importDateien } from "@/lib/datei-import.functions";
+import { importDateien, attachFilesToDateien } from "@/lib/datei-import.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/daten-import")({
   component: DatenImportPage,
