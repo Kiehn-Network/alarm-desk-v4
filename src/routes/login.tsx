@@ -334,3 +334,20 @@ function VersionBadge({ info }: { info: VersionInfo | null }) {
     </div>
   );
 }
+
+function StatusBadge({ status }: { status: "connecting" | "online" | "offline" }) {
+  const cfg = {
+    online: { label: "System Online", cls: "bg-success/15 text-success border-success/20", dot: "bg-success", ping: true },
+    connecting: { label: "Verbindungsaufbau…", cls: "bg-warning/15 text-warning border-warning/20", dot: "bg-warning", ping: true },
+    offline: { label: "Keine Verbindung möglich", cls: "bg-destructive/15 text-destructive border-destructive/20", dot: "bg-destructive", ping: false },
+  }[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold border uppercase tracking-wider ${cfg.cls}`}>
+      <span className="relative flex h-1.5 w-1.5">
+        {cfg.ping && <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${cfg.dot}`} />}
+        <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${cfg.dot}`} />
+      </span>
+      {cfg.label}
+    </span>
+  );
+}
