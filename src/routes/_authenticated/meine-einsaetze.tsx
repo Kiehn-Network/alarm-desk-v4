@@ -362,10 +362,10 @@ function SchluesselBanner({ einsatzId, einsatzAbgeschlossen }: { einsatzId: stri
         if (s.status === "ausgegeben") {
           return (
             <div key={s.id} className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 flex items-center gap-3">
-              <KeyRound className="size-5 text-amber-400 shrink-0" />
+              <KeyRound className="size-5 text-amber-600 dark:text-amber-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-amber-100">Schlüssel {s.key_number} – Übernahme bestätigen</div>
-                <div className="text-xs text-amber-200/80">Träger: {s.traeger_name}</div>
+                <div className="text-sm font-semibold text-amber-900 dark:text-amber-100">Schlüssel {s.key_number} – Übernahme bestätigen</div>
+                <div className="text-xs text-amber-800/90 dark:text-amber-200/80">Träger: {s.traeger_name}</div>
               </div>
               <Button size="sm" onClick={() => doUebernehmen(s.id)} className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white">
                 <CheckSquare className="size-4" /> Übernommen
@@ -376,10 +376,10 @@ function SchluesselBanner({ einsatzId, einsatzAbgeschlossen }: { einsatzId: stri
         if (s.status === "uebernommen") {
           return (
             <div key={s.id} className="rounded-lg border border-blue-500/40 bg-blue-500/10 p-3 flex items-center gap-3">
-              <KeyRound className="size-5 text-blue-400 shrink-0" />
+              <KeyRound className="size-5 text-blue-600 dark:text-blue-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-blue-100">Schlüssel {s.key_number} bei dir</div>
-                <div className="text-xs text-blue-200/80">
+                <div className="text-sm font-semibold text-blue-900 dark:text-blue-100">Schlüssel {s.key_number} bei dir</div>
+                <div className="text-xs text-blue-800/90 dark:text-blue-200/80">
                   {einsatzAbgeschlossen ? "Bitte an Zentrale zurückgeben." : "Nach Abschluss bitte an Zentrale zurückgeben."}
                 </div>
               </div>
@@ -392,10 +392,10 @@ function SchluesselBanner({ einsatzId, einsatzAbgeschlossen }: { einsatzId: stri
         if (s.status === "rueckgabe_offen") {
           return (
             <div key={s.id} className="rounded-lg border border-orange-500/40 bg-orange-500/10 p-3 flex items-center gap-3">
-              <KeyRound className="size-5 text-orange-400 shrink-0" />
+              <KeyRound className="size-5 text-orange-600 dark:text-orange-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-orange-100">Schlüssel {s.key_number} – Rückgabe wartet auf Zentrale</div>
-                <div className="text-xs text-orange-200/80">Schlüssel in der Zentrale abgeben.</div>
+                <div className="text-sm font-semibold text-orange-900 dark:text-orange-100">Schlüssel {s.key_number} – Rückgabe wartet auf Zentrale</div>
+                <div className="text-xs text-orange-800/90 dark:text-orange-200/80">Schlüssel in der Zentrale abgeben.</div>
               </div>
             </div>
           );
@@ -403,9 +403,9 @@ function SchluesselBanner({ einsatzId, einsatzAbgeschlossen }: { einsatzId: stri
         if (s.status === "zurueck") {
           return (
             <div key={s.id} className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 flex items-center gap-3">
-              <KeyRound className="size-5 text-emerald-400 shrink-0" />
+              <KeyRound className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-emerald-100">Schlüssel {s.key_number} zurück</div>
+                <div className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">Schlüssel {s.key_number} zurück</div>
               </div>
             </div>
           );
