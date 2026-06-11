@@ -31,6 +31,7 @@ import {
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { DateiEditDialog } from "@/components/datei-edit-dialog";
+import { safeUUID } from "@/lib/utils";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
@@ -310,7 +311,7 @@ function UploadDialog({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error("Nicht angemeldet");
         const ext = file.name.split(".").pop() ?? "bin";
-        path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+        path = `${user.id}/${safeUUID()}.${ext}`;
         const up = await supabase.storage.from("dateien").upload(path, file, {
           contentType: file.type || "application/octet-stream",
         });
@@ -523,7 +524,7 @@ function DetailDialog({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Nicht angemeldet");
       const ext = file.name.split(".").pop() ?? "bin";
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+      const path = `${user.id}/${safeUUID()}.${ext}`;
       const up = await supabase.storage.from("dateien").upload(path, file, {
         contentType: file.type || "application/octet-stream",
       });
