@@ -3,6 +3,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/s
 import { SidebarContent } from "./sidebar";
 import { useState } from "react";
 import { useThemeMode } from "@/hooks/use-theme-mode";
+import { OfflineStatusBadge } from "@/components/offline-status-badge";
 
 export function Topbar({ title, displayName }: { title?: string; displayName: string }) {
   const [open, setOpen] = useState(false);
@@ -32,6 +33,7 @@ export function Topbar({ title, displayName }: { title?: string; displayName: st
 
       <div className="hidden md:block text-sm text-muted-foreground">{title}</div>
       <div className="flex-1" />
+      <OfflineStatusBadge />
       <button
         type="button"
         onClick={toggle}
