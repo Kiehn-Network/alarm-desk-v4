@@ -396,11 +396,22 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ einsatz_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: e } = await supabase
-      .from("einsaetze").select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id")
+      .from("einsaetze")
+      .select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id,assigned_to,status")
       .eq("id", data.einsatz_id).single();
     if (!e) return { dateien: [] };
+    // Fahrer dürfen NUR während eines aktiven, ihnen zugewiesenen Einsatzes sehen.
+    const { data: isFahrer } = await supabase.rpc("has_role", { _user_id: userId, _role: "fahrer" });
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: isDispatcher } = await supabase.rpc("has_role", { _user_id: userId, _role: "dispatcher" });
+    const { data: isSuper } = await supabase.rpc("has_role", { _user_id: userId, _role: "superadmin" });
+    const elevated = Boolean(isAdmin || isDispatcher || isSuper);
+    if (isFahrer && !elevated) {
+      if (e.assigned_to !== userId) return { dateien: [] };
+      if (e.status !== "in_bearbeitung") return { dateien: [] };
+    }
     const ors: string[] = [];
     const add = (col: string, val: any) => {
       if (!val) return;
@@ -423,6 +434,52 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
       .limit(100);
     if (error) throw new Error(error.message);
     return { dateien: rows ?? [] };
+  });
+
+export const getEinsatzDateiSignedUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      einsatz_id: z.string().uuid(),
+      storage_path: z.string().min(1).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: e } = await supabase
+      .from("einsaetze")
+      .select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id,assigned_to,status")
+      .eq("id", data.einsatz_id).single();
+    if (!e) throw new Error("Einsatz nicht gefunden");
+    const { data: isFahrer } = await supabase.rpc("has_role", { _user_id: userId, _role: "fahrer" });
+    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: isDispatcher } = await supabase.rpc("has_role", { _user_id: userId, _role: "dispatcher" });
+    const { data: isSuper } = await supabase.rpc("has_role", { _user_id: userId, _role: "superadmin" });
+    const elevated = Boolean(isAdmin || isDispatcher || isSuper);
+    if (isFahrer && !elevated) {
+      if (e.assigned_to !== userId) throw new Error("Kein Zugriff");
+      if (e.status !== "in_bearbeitung") throw new Error("Einsatz beendet – kein Zugriff mehr");
+    }
+    // Datei muss zu diesem Einsatz-Kontext passen (via RLS sichtbar + Match auf Kunden/Adresse/Key/TN/Anlage).
+    const { data: row } = await supabase
+      .from("dateien")
+      .select("id,kunden_name,address,key_number,anlagen_nr,teilnehmer_id")
+      .eq("storage_path", data.storage_path)
+      .is("deleted_at", null)
+      .maybeSingle();
+    if (!row) throw new Error("Datei nicht gefunden");
+    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+    const match =
+      (e.kunden_name && norm(row.kunden_name).includes(norm(e.kunden_name))) ||
+      (e.address && norm(row.address).includes(norm(e.address))) ||
+      (e.key_number && norm(row.key_number) === norm(e.key_number)) ||
+      (e.anlagen_nr && norm(row.anlagen_nr) === norm(e.anlagen_nr)) ||
+      (e.teilnehmer_id && norm(row.teilnehmer_id) === norm(e.teilnehmer_id));
+    if (!match) throw new Error("Datei gehört nicht zu diesem Einsatz");
+    const { signFileToken } = await import("@/lib/file-proxy.server");
+    // Für Fahrer: kein Download (inline erzwungen). Für andere: gleiches Verhalten ok.
+    const token = await signFileToken(data.storage_path, 60, { noDownload: true });
+    return { url: `/api/public/files/get?t=${encodeURIComponent(token)}` };
   });
 
 export const listFahrer = createServerFn({ method: "GET" })
