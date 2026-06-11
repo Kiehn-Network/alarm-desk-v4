@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { listIntrahubPosts, createIntrahubPost, updateIntrahubPost, deleteIntrahubPost } from "@/lib/intrahub.functions";
+import { safeUUID } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/intrahub")({
   component: IntraHubPage,
@@ -215,7 +216,7 @@ function PostDialog({ open, onClose, editing }: { open: boolean; onClose: () => 
       for (const f of Array.from(files)) {
         if (f.size > 25 * 1024 * 1024) { toast.error(`${f.name}: max. 25 MB`); continue; }
         const ext = f.name.split(".").pop() ?? "bin";
-        const path = `${crypto.randomUUID()}.${ext}`;
+        const path = `${safeUUID()}.${ext}`;
         const { error } = await supabase.storage.from("intrahub").upload(path, f, { contentType: f.type, upsert: false });
         if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
         next.push({ path, name: f.name, mime: f.type, size: f.size });
