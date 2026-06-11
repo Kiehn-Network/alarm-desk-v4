@@ -13,6 +13,7 @@ import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { importDateien, attachFilesToDateien } from "@/lib/datei-import.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { safeUUID } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/daten-import")({
   component: DatenImportPage,
@@ -394,17 +395,6 @@ function Stat({ label, value, tone }: { label: string; value: number; tone?: "su
 }
 
 function BulkFileAttachSection() {
-  function safeUUID() {
-    const c: any = typeof crypto !== "undefined" ? crypto : undefined;
-    if (c?.randomUUID) return c.randomUUID();
-    const bytes = new Uint8Array(16);
-    if (c?.getRandomValues) c.getRandomValues(bytes);
-    else for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
-    bytes[6] = (bytes[6] & 0x0f) | 0x40;
-    bytes[8] = (bytes[8] & 0x3f) | 0x80;
-    const h = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
-  }
   const [files, setFiles] = useState<File[]>([]);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [result, setResult] = useState<any>(null);
