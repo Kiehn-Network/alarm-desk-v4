@@ -32,6 +32,7 @@ import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { DateiEditDialog } from "@/components/datei-edit-dialog";
 import { safeUUID } from "@/lib/utils";
+import { FilePreviewDialog } from "@/components/file-preview-dialog";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
