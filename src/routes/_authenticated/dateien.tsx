@@ -32,6 +32,7 @@ import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { DateiEditDialog } from "@/components/datei-edit-dialog";
 import { safeUUID } from "@/lib/utils";
+import { FilePreviewDialog } from "@/components/file-preview-dialog";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
@@ -513,6 +514,7 @@ function DetailDialog({
   const sign = useServerFn(getDateiSignedUrl);
   const update = useServerFn(updateDatei);
   const [attaching, setAttaching] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const linkedItems = links
     .filter((l) => l.datei_a_id === datei.id || l.datei_b_id === datei.id)
     .map((l) => all.find((d) => d.id === (l.datei_a_id === datei.id ? l.datei_b_id : l.datei_a_id)))
@@ -590,12 +592,7 @@ function DetailDialog({
           {datei.storage_path ? (
             <Button
               variant="outline" className="gap-2"
-              onClick={async () => {
-                try {
-                  const { url } = await sign({ data: { storage_path: datei.storage_path! } });
-                  window.open(url, "_blank");
-                } catch (e: any) { toast.error(e.message); }
-              }}
+              onClick={() => setPreviewOpen(true)}
             >
               <Eye className="size-4" /> Öffnen
             </Button>
@@ -611,6 +608,15 @@ function DetailDialog({
           )}
         </DialogFooter>
       </DialogContent>
+      {datei.storage_path && (
+        <FilePreviewDialog
+          open={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          storagePath={datei.storage_path}
+          filename={datei.filename}
+          mimeType={datei.mime_type}
+        />
+      )}
     </Dialog>
   );
 }
