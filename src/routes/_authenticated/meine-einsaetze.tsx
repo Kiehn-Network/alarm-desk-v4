@@ -403,9 +403,9 @@ function SchluesselBanner({ einsatzId, einsatzAbgeschlossen }: { einsatzId: stri
         if (s.status === "zurueck") {
           return (
             <div key={s.id} className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3 flex items-center gap-3">
-              <KeyRound className="size-5 text-emerald-400 shrink-0" />
+              <KeyRound className="size-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-emerald-100">Schlüssel {s.key_number} zurück</div>
+                <div className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">Schlüssel {s.key_number} zurück</div>
               </div>
             </div>
           );
