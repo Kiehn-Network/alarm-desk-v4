@@ -27,15 +27,25 @@ async function getKey(): Promise<CryptoKey> {
   );
 }
 
-export async function signFileToken(storagePath: string, ttlSeconds: number): Promise<string> {
-  const payload = { p: storagePath, e: Math.floor(Date.now() / 1000) + ttlSeconds };
+export async function signFileToken(
+  storagePath: string,
+  ttlSeconds: number,
+  opts?: { noDownload?: boolean },
+): Promise<string> {
+  const payload: { p: string; e: number; nd?: 1 } = {
+    p: storagePath,
+    e: Math.floor(Date.now() / 1000) + ttlSeconds,
+  };
+  if (opts?.noDownload) payload.nd = 1;
   const payloadStr = b64url(enc.encode(JSON.stringify(payload)));
   const key = await getKey();
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(payloadStr));
   return `${payloadStr}.${b64url(sig)}`;
 }
 
-export async function verifyFileToken(token: string): Promise<{ storagePath: string }> {
+export async function verifyFileToken(
+  token: string,
+): Promise<{ storagePath: string; noDownload: boolean }> {
   const parts = token.split(".");
   if (parts.length !== 2) throw new Error("Ungültiger Token");
   const [payloadStr, sigStr] = parts;
@@ -48,8 +58,8 @@ export async function verifyFileToken(token: string): Promise<{ storagePath: str
     enc.encode(payloadStr),
   );
   if (!ok) throw new Error("Ungültige Signatur");
-  const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(payloadStr))) as { p: string; e: number };
+  const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(payloadStr))) as { p: string; e: number; nd?: number };
   if (!payload || typeof payload.p !== "string" || typeof payload.e !== "number") throw new Error("Ungültiger Token");
   if (payload.e < Math.floor(Date.now() / 1000)) throw new Error("Token abgelaufen");
-  return { storagePath: payload.p };
+  return { storagePath: payload.p, noDownload: payload.nd === 1 };
 }
