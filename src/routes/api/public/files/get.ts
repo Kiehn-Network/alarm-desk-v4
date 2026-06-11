@@ -10,7 +10,7 @@ export const Route = createFileRoute("/api/public/files/get")({
           if (!token) return new Response("Missing token", { status: 400 });
 
           const { verifyFileToken } = await import("@/lib/file-proxy.server");
-          const { storagePath } = await verifyFileToken(token);
+          const { storagePath, noDownload } = await verifyFileToken(token);
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { data, error } = await supabaseAdmin.storage
@@ -19,7 +19,8 @@ export const Route = createFileRoute("/api/public/files/get")({
           if (error || !data) return new Response("Not found", { status: 404 });
 
           const filename = storagePath.split("/").pop() ?? "datei";
-          const inline = url.searchParams.get("inline") === "1";
+          // Token can enforce inline-only (no download) regardless of query param.
+          const inline = noDownload || url.searchParams.get("inline") === "1";
           const disposition = `${inline ? "inline" : "attachment"}; filename="${filename.replace(/"/g, "")}"`;
 
           return new Response(data, {
