@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getDateiSignedUrl } from "@/lib/dateien.functions";
+import { getEinsatzDateiSignedUrl } from "@/lib/einsaetze.functions";
 
 function extOf(name: string) {
   const m = name.toLowerCase().match(/\.([a-z0-9]+)$/);
@@ -14,15 +15,20 @@ function extOf(name: string) {
 }
 
 export function FilePreviewDialog({
-  open, onClose, storagePath, filename, mimeType,
+  open, onClose, storagePath, filename, mimeType, noDownload, einsatzId,
 }: {
   open: boolean;
   onClose: () => void;
   storagePath: string;
   filename: string;
   mimeType?: string | null;
+  /** Verhindert Download/Neuer-Tab-Buttons; serverseitig wird inline erzwungen, wenn einsatzId gesetzt ist. */
+  noDownload?: boolean;
+  /** Wenn gesetzt, wird der Einsatz-kontextbezogene Signer verwendet (Fahrer-Zugriff geprüft, kein Download möglich). */
+  einsatzId?: string | null;
 }) {
-  const sign = useServerFn(getDateiSignedUrl);
+  const signDirect = useServerFn(getDateiSignedUrl);
+  const signEinsatz = useServerFn(getEinsatzDateiSignedUrl);
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -31,7 +37,10 @@ export function FilePreviewDialog({
     let cancelled = false;
     setLoading(true);
     setUrl(null);
-    sign({ data: { storage_path: storagePath } })
+    const p = einsatzId
+      ? signEinsatz({ data: { einsatz_id: einsatzId, storage_path: storagePath } })
+      : signDirect({ data: { storage_path: storagePath } });
+    p
       .then((res) => {
         if (cancelled) return;
         // append inline=1 so server returns inline disposition
@@ -41,7 +50,7 @@ export function FilePreviewDialog({
       .catch((e: any) => { if (!cancelled) toast.error(e?.message ?? "Fehler"); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [open, storagePath, sign]);
+  }, [open, storagePath, einsatzId, signDirect, signEinsatz]);
 
   const ext = extOf(filename);
   const mt = (mimeType ?? "").toLowerCase();
@@ -59,7 +68,7 @@ export function FilePreviewDialog({
           <div className="flex items-center justify-between gap-3">
             <DialogTitle className="truncate text-base">{filename}</DialogTitle>
             <div className="flex items-center gap-1.5 mr-6">
-              {url && (
+              {url && !noDownload && (
                 <>
                   <Button asChild size="sm" variant="ghost" className="gap-1.5">
                     <a href={url} target="_blank" rel="noopener">
@@ -96,11 +105,13 @@ export function FilePreviewDialog({
               <p className="text-sm text-muted-foreground">
                 Für diesen Dateityp ist keine Vorschau verfügbar.
               </p>
-              <Button asChild variant="outline" className="gap-2">
-                <a href={url.replace("inline=1", "inline=0")} download={filename}>
-                  <Download className="size-4" /> Herunterladen
-                </a>
-              </Button>
+              {!noDownload && (
+                <Button asChild variant="outline" className="gap-2">
+                  <a href={url.replace("inline=1", "inline=0")} download={filename}>
+                    <Download className="size-4" /> Herunterladen
+                  </a>
+                </Button>
+              )}
             </div>
           )}
           {!previewable && false}
