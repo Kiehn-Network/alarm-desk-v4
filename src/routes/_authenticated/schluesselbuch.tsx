@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, CheckSquare, Search, User, MapPin } from "lucide-react";
+import { KeyRound, CheckSquare, Search, User, MapPin, ArrowRight, ArrowLeft, Hand, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -106,39 +106,91 @@ function SchluesselbuchPage() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">Keine Einträge.</div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="space-y-3">
           {filtered.map((s) => {
             const meta = STATUS_META[s.status] ?? { label: s.status, cls: "bg-muted text-muted-foreground" };
+            const steps = [
+              { icon: ArrowRight, label: "Ausgabe",   at: s.ausgegeben_at,           by: profiles[s.ausgegeben_by] },
+              { icon: Hand,       label: "Übernahme", at: s.uebernommen_at,          by: s.traeger_name },
+              { icon: Undo2,      label: "Rückgabe angefragt", at: s.rueckgabe_angefragt_at, by: null },
+              { icon: ArrowLeft,  label: "Zurück",    at: s.zurueck_at,              by: profiles[s.zurueck_by] },
+            ];
             return (
-              <li key={s.id} className="rounded-xl border border-border bg-card p-4" style={{ boxShadow: "var(--shadow-card)" }}>
-                <div className="flex flex-wrap items-start gap-3">
+              <li key={s.id} className="rounded-xl border border-border bg-card p-4 md:p-5" style={{ boxShadow: "var(--shadow-card)" }}>
+                {/* Header row */}
+                <div className="flex flex-wrap items-center gap-3">
                   <div className="size-10 rounded-lg bg-primary/10 grid place-items-center shrink-0">
                     <KeyRound className="size-5 text-primary" />
                   </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-lg font-bold tabular-nums">{s.key_number}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${meta.cls}`}>{meta.label}</span>
-                    </div>
-                    <div className="text-sm flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
-                      {s.kunden_name && <span className="inline-flex items-center gap-1"><User className="size-3.5" /> {s.kunden_name}</span>}
-                      {s.address && <span className="inline-flex items-center gap-1"><MapPin className="size-3.5" /> {s.address}</span>}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Träger: <span className="text-foreground/80 font-medium">{s.traeger_name}</span>
-                      {" · "}Ausgabe {fmt(s.ausgegeben_at)} ({profiles[s.ausgegeben_by] ?? "—"})
-                      {s.uebernommen_at && <> · Übernommen {fmt(s.uebernommen_at)}</>}
-                      {s.rueckgabe_angefragt_at && <> · Rückgabe angefragt {fmt(s.rueckgabe_angefragt_at)}</>}
-                      {s.zurueck_at && <> · Zurück {fmt(s.zurueck_at)} ({profiles[s.zurueck_by] ?? "—"})</>}
-                    </div>
-                    {s.notiz && <div className="text-xs text-muted-foreground italic">„{s.notiz}"</div>}
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xl font-bold tabular-nums">{s.key_number}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${meta.cls}`}>{meta.label}</span>
                   </div>
-                  {s.status === "rueckgabe_offen" && (
-                    <Button size="sm" onClick={() => doBestaetigen(s.id)} className="gap-1.5">
-                      <CheckSquare className="size-4" /> Rückgabe bestätigen
-                    </Button>
-                  )}
+                  <div className="ml-auto flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground hidden md:inline">
+                      Träger: <span className="text-foreground/80 font-medium">{s.traeger_name}</span>
+                    </span>
+                    {s.status === "rueckgabe_offen" && (
+                      <Button size="sm" onClick={() => doBestaetigen(s.id)} className="gap-1.5">
+                        <CheckSquare className="size-4" /> Rückgabe bestätigen
+                      </Button>
+                    )}
+                  </div>
                 </div>
+
+                {/* Customer row */}
+                {(s.kunden_name || s.address) && (
+                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                    {s.kunden_name && (
+                      <div className="inline-flex items-center gap-2 min-w-0">
+                        <User className="size-4 text-muted-foreground shrink-0" />
+                        <span className="truncate">{s.kunden_name}</span>
+                      </div>
+                    )}
+                    {s.address && (
+                      <div className="inline-flex items-center gap-2 min-w-0">
+                        <MapPin className="size-4 text-muted-foreground shrink-0" />
+                        <span className="truncate">{s.address}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="md:hidden mt-2 text-xs text-muted-foreground">
+                  Träger: <span className="text-foreground/80 font-medium">{s.traeger_name}</span>
+                </div>
+
+                {/* Timeline */}
+                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {steps.map((step, i) => {
+                    const Icon = step.icon;
+                    const done = !!step.at;
+                    return (
+                      <div
+                        key={i}
+                        className={`rounded-lg border px-3 py-2 ${
+                          done
+                            ? "border-border bg-muted/40"
+                            : "border-dashed border-border/60 bg-transparent opacity-60"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+                          <Icon className="size-3.5" /> {step.label}
+                        </div>
+                        <div className={`mt-1 text-sm tabular-nums ${done ? "text-foreground" : "text-muted-foreground"}`}>
+                          {done ? fmt(step.at) : "–"}
+                        </div>
+                        {done && step.by && (
+                          <div className="text-[11px] text-muted-foreground truncate">{step.by}</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {s.notiz && (
+                  <div className="mt-3 text-xs text-muted-foreground italic border-l-2 border-border pl-2">„{s.notiz}"</div>
+                )}
               </li>
             );
           })}
