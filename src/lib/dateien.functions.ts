@@ -183,5 +183,5 @@ export const getDateiSignedUrl = createServerFn({ method: "POST" })
     // This hides the Supabase storage URL from clients.
     const { signFileToken } = await import("@/lib/file-proxy.server");
     const token = await signFileToken(data.storage_path, 60);
-    return { url: `/api/files/get?t=${encodeURIComponent(token)}` };
+    return { url: `/api/public/files/get?t=${encodeURIComponent(token)}` };
   });
