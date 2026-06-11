@@ -1,32 +1,26 @@
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Download, FileText, Loader2, Info } from "lucide-react";
+import { Eye, FileText, Loader2, Info } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { listDateienForEinsatz } from "@/lib/einsaetze.functions";
-import { getDateiSignedUrl } from "@/lib/dateien.functions";
+import { FilePreviewDialog } from "@/components/file-preview-dialog";
 
 export function EinsatzDateienDialog({
   einsatzId, open, onClose,
 }: { einsatzId: string | null; open: boolean; onClose: () => void }) {
   const list = useServerFn(listDateienForEinsatz);
-  const signedUrl = useServerFn(getDateiSignedUrl);
   const { data, isLoading } = useQuery({
     queryKey: ["einsatz-dateien", einsatzId],
     queryFn: () => list({ data: { einsatz_id: einsatzId! } }),
     enabled: open && !!einsatzId,
   });
   const dateien = (data?.dateien ?? []) as any[];
-
-  async function openDatei(d: any) {
-    try {
-      const res = await signedUrl({ data: { storage_path: d.storage_path } });
-      window.open(res.url, "_blank", "noopener");
-    } catch (e: any) { toast.error(e.message ?? "Fehler"); }
-  }
+  const [preview, setPreview] = useState<{ path: string; name: string; mime?: string | null } | null>(null);
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
@@ -53,8 +47,13 @@ export function EinsatzDateienDialog({
                     </div>
                   </div>
                   {d.storage_path && (
-                    <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => openDatei(d)}>
-                      <Download className="size-4" /> Öffnen
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="gap-1.5"
+                      onClick={() => setPreview({ path: d.storage_path, name: d.filename, mime: d.mime_type })}
+                    >
+                      <Eye className="size-4" /> Ansehen
                     </Button>
                   )}
                 </div>
@@ -70,5 +69,17 @@ export function EinsatzDateienDialog({
         )}
       </DialogContent>
     </Dialog>
+    {preview && einsatzId && (
+      <FilePreviewDialog
+        open={!!preview}
+        onClose={() => setPreview(null)}
+        storagePath={preview.path}
+        filename={preview.name}
+        mimeType={preview.mime}
+        einsatzId={einsatzId}
+        noDownload
+      />
+    )}
+    </>
   );
 }
