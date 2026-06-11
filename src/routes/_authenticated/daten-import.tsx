@@ -410,7 +410,7 @@ function BulkFileAttachSection() {
         const f = files[i];
         try {
           const ext = f.name.split(".").pop() ?? "bin";
-          const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
+          const path = `${user.id}/${safeUUID()}.${ext}`;
           const up = await supabase.storage.from("dateien").upload(path, f, {
             contentType: f.type || "application/octet-stream",
           });
