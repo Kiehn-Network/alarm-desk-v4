@@ -53,6 +53,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksLicenseExpiryRouteImport } from './routes/api/public/hooks/license-expiry'
 import { Route as ApiPublicHooksEsrpWorkerRouteImport } from './routes/api/public/hooks/esrp-worker'
+import { Route as ApiPublicFilesGetRouteImport } from './routes/api/public/files/get'
 import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
 import { Route as AuthenticatedRevierCenterOwksScanRouteImport } from './routes/_authenticated/revier-center/owks/scan'
 import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
@@ -308,6 +309,11 @@ const ApiPublicHooksEsrpWorkerRoute =
     path: '/api/public/hooks/esrp-worker',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicFilesGetRoute = ApiPublicFilesGetRouteImport.update({
+  id: '/api/public/files/get',
+  path: '/api/public/files/get',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRevierCenterOwksZeitstrahlRoute =
   AuthenticatedRevierCenterOwksZeitstrahlRouteImport.update({
     id: '/zeitstrahl',
@@ -436,6 +442,7 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
+  '/api/public/files/get': typeof ApiPublicFilesGetRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -490,6 +497,7 @@ export interface FileRoutesByTo {
   '/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
+  '/api/public/files/get': typeof ApiPublicFilesGetRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -550,6 +558,7 @@ export interface FileRoutesById {
   '/_authenticated/revier-center/owks/rundgaenge': typeof AuthenticatedRevierCenterOwksRundgaengeRoute
   '/_authenticated/revier-center/owks/scan': typeof AuthenticatedRevierCenterOwksScanRoute
   '/_authenticated/revier-center/owks/zeitstrahl': typeof AuthenticatedRevierCenterOwksZeitstrahlRoute
+  '/api/public/files/get': typeof ApiPublicFilesGetRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -610,6 +619,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/rundgaenge'
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
+    | '/api/public/files/get'
     | '/api/public/hooks/esrp-worker'
     | '/api/public/hooks/license-expiry'
     | '/lovable/email/auth/preview'
@@ -664,6 +674,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks/rundgaenge'
     | '/revier-center/owks/scan'
     | '/revier-center/owks/zeitstrahl'
+    | '/api/public/files/get'
     | '/api/public/hooks/esrp-worker'
     | '/api/public/hooks/license-expiry'
     | '/lovable/email/auth/preview'
@@ -723,6 +734,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center/owks/rundgaenge'
     | '/_authenticated/revier-center/owks/scan'
     | '/_authenticated/revier-center/owks/zeitstrahl'
+    | '/api/public/files/get'
     | '/api/public/hooks/esrp-worker'
     | '/api/public/hooks/license-expiry'
     | '/lovable/email/auth/preview'
@@ -743,6 +755,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
+  ApiPublicFilesGetRoute: typeof ApiPublicFilesGetRoute
   ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
   ApiPublicHooksLicenseExpiryRoute: typeof ApiPublicHooksLicenseExpiryRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -1060,6 +1073,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksEsrpWorkerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/files/get': {
+      id: '/api/public/files/get'
+      path: '/api/public/files/get'
+      fullPath: '/api/public/files/get'
+      preLoaderRoute: typeof ApiPublicFilesGetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/revier-center/owks/zeitstrahl': {
       id: '/_authenticated/revier-center/owks/zeitstrahl'
       path: '/zeitstrahl'
@@ -1340,6 +1360,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
+  ApiPublicFilesGetRoute: ApiPublicFilesGetRoute,
   ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,
   ApiPublicHooksLicenseExpiryRoute: ApiPublicHooksLicenseExpiryRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

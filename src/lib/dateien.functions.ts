@@ -179,9 +179,9 @@ export const getDateiSignedUrl = createServerFn({ method: "POST" })
       .eq("storage_path", data.storage_path)
       .maybeSingle();
     if (!row) throw new Error("Datei nicht gefunden oder kein Zugriff");
-    const { data: signed, error } = await supabaseAdmin.storage
-      .from("dateien")
-      .createSignedUrl(data.storage_path, 60);
-    if (error) throw new Error(error.message);
-    return { url: signed.signedUrl };
+    // Issue a short-lived HMAC token pointing to our own proxy route.
+    // This hides the Supabase storage URL from clients.
+    const { signFileToken } = await import("@/lib/file-proxy.server");
+    const token = await signFileToken(data.storage_path, 60);
+    return { url: `/api/files/get?t=${encodeURIComponent(token)}` };
   });
