@@ -40,7 +40,13 @@ export async function verifyFileToken(token: string): Promise<{ storagePath: str
   if (parts.length !== 2) throw new Error("Ungültiger Token");
   const [payloadStr, sigStr] = parts;
   const key = await getKey();
-  const ok = await crypto.subtle.verify("HMAC", key, b64urlDecode(sigStr), enc.encode(payloadStr));
+  const sigBytes = b64urlDecode(sigStr);
+  const ok = await crypto.subtle.verify(
+    "HMAC",
+    key,
+    sigBytes.buffer.slice(sigBytes.byteOffset, sigBytes.byteOffset + sigBytes.byteLength) as ArrayBuffer,
+    enc.encode(payloadStr),
+  );
   if (!ok) throw new Error("Ungültige Signatur");
   const payload = JSON.parse(new TextDecoder().decode(b64urlDecode(payloadStr))) as { p: string; e: number };
   if (!payload || typeof payload.p !== "string" || typeof payload.e !== "number") throw new Error("Ungültiger Token");
