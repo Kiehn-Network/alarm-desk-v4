@@ -27,6 +27,8 @@ import { HoldButton } from "@/components/hold-button";
 import { EinsatzDateienDialog } from "@/components/einsatz-dateien-dialog";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 import { KundenInfoDialog } from "@/components/kunden-info-dialog";
+import { enqueue } from "@/lib/offline-queue";
+import { useOfflineQueue } from "@/hooks/use-offline-queue";
 
 export const Route = createFileRoute("/_authenticated/meine-einsaetze")({
   component: MeineEinsaetzePage,
@@ -52,10 +54,9 @@ function MeineEinsaetzePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const list = useServerFn(listMeineEinsaetze);
-  const abschliessen = useServerFn(abschliessenEinsatz);
-  const setZeit = useServerFn(setEinsatzZeit);
   const { data: modules } = useDomainModules();
   const schluesselbuchOn = modules?.has("schluesselbuch") ?? false;
+  const { online } = useOfflineQueue();
 
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["meine-einsaetze"],
@@ -120,19 +121,44 @@ function MeineEinsaetzePage() {
   async function complete(id: string) {
     setBusy(id);
     try {
-      await abschliessen({ data: { id } });
-      toast.success("Einsatz abgeschlossen");
-      refetch();
+      if (!online) {
+        enqueue({ kind: "abschliessenEinsatz", data: { id } });
+        toast.success("Offline – Abschluss wird gesendet, sobald wieder online");
+      } else {
+        await abschliessenEinsatz({ data: { id } });
+        toast.success("Einsatz abgeschlossen");
+        refetch();
+      }
     } catch (e: any) {
-      toast.error(e.message ?? "Fehler");
+      // Netzwerkfehler trotz online-Flag: puffern
+      const msg = e?.message ?? "";
+      if (/network|fetch|failed to fetch|load failed/i.test(msg)) {
+        enqueue({ kind: "abschliessenEinsatz", data: { id } });
+        toast.success("Verbindung weg – Abschluss wird automatisch nachgesendet");
+      } else {
+        toast.error(msg || "Fehler");
+      }
     } finally { setBusy(null); }
   }
 
   async function setTime(id: string, feld: "vor_ort" | "abfahrt" | "ende") {
     try {
-      await setZeit({ data: { id, feld } });
+      if (!online) {
+        enqueue({ kind: "setEinsatzZeit", data: { id, feld } });
+        toast.success("Offline – Zeit wird gesendet, sobald wieder online");
+        return;
+      }
+      await setEinsatzZeit({ data: { id, feld } });
       qc.invalidateQueries({ queryKey: ["meine-einsaetze"] });
-    } catch (e: any) { toast.error(e.message ?? "Fehler"); }
+    } catch (e: any) {
+      const msg = e?.message ?? "";
+      if (/network|fetch|failed to fetch|load failed/i.test(msg)) {
+        enqueue({ kind: "setEinsatzZeit", data: { id, feld } });
+        toast.success("Verbindung weg – Zeit wird automatisch nachgesendet");
+      } else {
+        toast.error(msg || "Fehler");
+      }
+    }
   }
 
   return (

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Save, Lock } from "lucide-react";
@@ -13,6 +12,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { updateEinsatzBericht } from "@/lib/einsaetze.functions";
 import { useRole } from "@/hooks/use-role";
+import { enqueue } from "@/lib/offline-queue";
+import { useOfflineQueue } from "@/hooks/use-offline-queue";
 
 type Einsatz = any;
 type BerichtTyp = "hausnotruf" | "av_einsatz";
@@ -26,9 +27,9 @@ function guessTyp(e: Einsatz): BerichtTyp {
 export function EinsatzBerichtDialog({
   einsatz, open, onClose,
 }: { einsatz: Einsatz | null; open: boolean; onClose: () => void }) {
-  const save = useServerFn(updateEinsatzBericht);
   const qc = useQueryClient();
   const { canManage } = useRole();
+  const { online } = useOfflineQueue();
   const readonly = einsatz?.status === "abgeschlossen" && !canManage;
   const [typ, setTyp] = useState<BerichtTyp>("av_einsatz");
   const [hnProblem, setHnProblem] = useState("");
@@ -50,22 +51,35 @@ export function EinsatzBerichtDialog({
 
   async function submit() {
     setBusy(true);
+    const payload = {
+      id: einsatz.id,
+      bericht_typ: typ,
+      bericht_data: typ === "av_einsatz" ? av : null,
+      hausnotruf_problem: typ === "hausnotruf" ? hnProblem : null,
+      hausnotruf_loesung: typ === "hausnotruf" ? hnLoesung : null,
+    };
     try {
-      await save({
-        data: {
-          id: einsatz.id,
-          bericht_typ: typ,
-          bericht_data: typ === "av_einsatz" ? av : null,
-          hausnotruf_problem: typ === "hausnotruf" ? hnProblem : null,
-          hausnotruf_loesung: typ === "hausnotruf" ? hnLoesung : null,
-        },
-      });
+      if (!online) {
+        enqueue({ kind: "updateEinsatzBericht", data: payload });
+        toast.success("Offline – Bericht wird gesendet, sobald wieder online");
+        onClose();
+        return;
+      }
+      await updateEinsatzBericht({ data: payload });
       toast.success("Bericht gespeichert");
       qc.invalidateQueries({ queryKey: ["meine-einsaetze"] });
       qc.invalidateQueries({ queryKey: ["einsaetze"] });
       onClose();
-    } catch (e: any) { toast.error(e.message ?? "Fehler"); }
-    finally { setBusy(false); }
+    } catch (e: any) {
+      const msg = e?.message ?? "";
+      if (/network|fetch|failed to fetch|load failed/i.test(msg)) {
+        enqueue({ kind: "updateEinsatzBericht", data: payload });
+        toast.success("Verbindung weg – Bericht wird automatisch nachgesendet");
+        onClose();
+      } else {
+        toast.error(msg || "Fehler");
+      }
+    } finally { setBusy(false); }
   }
 
   return (
