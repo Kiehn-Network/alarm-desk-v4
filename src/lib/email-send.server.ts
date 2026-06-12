@@ -23,6 +23,7 @@ export interface SendInput {
   html: string;
   text?: string;
   label?: string;
+  bcc?: string | null;
 }
 
 /** Resolve effective email config for a domain. Throws clear error if unconfigured. */
