@@ -202,7 +202,17 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
 /** Convenience: resolve config and send for a given domain. */
 export async function sendEmailForDomain(domainId: string, input: SendInput): Promise<{ id: string | null; source: string; provider: EmailProvider }> {
   const cfg = await resolveEmailConfigForDomain(domainId);
-  const r = await sendEmailViaProvider(cfg, input);
+  // Always honor the domain's BCC address, even when versand mode = platform
+  let bcc = input.bcc ?? null;
+  if (!bcc) {
+    const { data: ds } = await supabaseAdmin
+      .from("domain_email_settings").select("bcc_email").eq("domain_id", domainId).maybeSingle() as any;
+    const candidate = (ds?.bcc_email ?? "").trim();
+    if (candidate && candidate.toLowerCase() !== input.to.toLowerCase()) {
+      bcc = candidate;
+    }
+  }
+  const r = await sendEmailViaProvider(cfg, { ...input, bcc });
   return { id: r.id, source: cfg.source, provider: cfg.provider };
 }
 
