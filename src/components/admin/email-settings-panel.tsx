@@ -39,6 +39,7 @@ export function EmailSettingsPanel() {
   const [smtpPass, setSmtpPass] = useState("");
   const [smtpSecure, setSmtpSecure] = useState<"ssl" | "starttls" | "none">("starttls");
   const [testTo, setTestTo] = useState("");
+  const [bccEmail, setBccEmail] = useState("");
 
   useEffect(() => {
     if (!s) return;
@@ -54,6 +55,7 @@ export function EmailSettingsPanel() {
     setSmtpUser((s as any).smtp_username ?? "");
     setSmtpPass("");
     setSmtpSecure(((s as any).smtp_secure as any) ?? "starttls");
+    setBccEmail(((s as any).bcc_email as string) ?? "");
   }, [s?.mode, s?.provider, s?.from_email, s?.from_name, s?.mailgun_domain, s?.mailgun_region, (s as any)?.smtp_host, (s as any)?.smtp_port, (s as any)?.smtp_username, (s as any)?.smtp_secure]);
 
   useEffect(() => { if (user?.email && !testTo) setTestTo(user.email); }, [user?.email]);
@@ -73,6 +75,7 @@ export function EmailSettingsPanel() {
         smtp_username: mode === "own" && provider === "smtp" ? smtpUser : null,
         smtp_password: mode === "own" && provider === "smtp" ? (smtpPass || undefined) : undefined,
         smtp_secure: mode === "own" && provider === "smtp" ? smtpSecure : null,
+        bcc_email: bccEmail.trim() ? bccEmail.trim() : null,
       },
     }),
     onSuccess: () => { toast.success("E-Mail-Einstellungen gespeichert"); qc.invalidateQueries({ queryKey: ["domain-email-settings"] }); },
@@ -203,6 +206,19 @@ export function EmailSettingsPanel() {
             </div>
           </div>
         )}
+
+        <div className="mt-5 pt-5 border-t border-border space-y-1.5">
+          <Label className="text-xs flex items-center gap-1"><Mail className="size-3" /> BCC-Adresse (optional)</Label>
+          <Input
+            type="email"
+            value={bccEmail}
+            onChange={(e) => setBccEmail(e.target.value)}
+            placeholder="z.B. archiv@deine-domain.de"
+          />
+          <p className="text-xs text-muted-foreground">
+            Wenn gesetzt, wird jede aus dieser Domäne versendete E-Mail zusätzlich als Blindkopie an diese Adresse geschickt – unabhängig vom gewählten Versandweg.
+          </p>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2 mt-6">
           <Button onClick={() => m_save.mutate()} disabled={m_save.isPending} className="gap-2">

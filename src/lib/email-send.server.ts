@@ -23,6 +23,7 @@ export interface SendInput {
   html: string;
   text?: string;
   label?: string;
+  bcc?: string | null;
 }
 
 /** Resolve effective email config for a domain. Throws clear error if unconfigured. */
@@ -98,6 +99,7 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
       body: JSON.stringify({
         from: formatFrom(cfg),
         to: [input.to],
+        bcc: input.bcc ? [input.bcc] : undefined,
         subject: input.subject,
         html: input.html,
         text: input.text,
@@ -113,6 +115,7 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
     const form = new URLSearchParams();
     form.set("from", formatFrom(cfg));
     form.set("to", input.to);
+    if (input.bcc) form.set("bcc", input.bcc);
     form.set("subject", input.subject);
     form.set("html", input.html);
     if (input.text) form.set("text", input.text);
@@ -137,7 +140,10 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
         Authorization: `Bearer ${cfg.api_key}`,
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: input.to }] }],
+        personalizations: [{
+          to: [{ email: input.to }],
+          ...(input.bcc ? { bcc: [{ email: input.bcc }] } : {}),
+        }],
         from: { email: cfg.from_email, name: cfg.from_name ?? undefined },
         subject: input.subject,
         content: [
@@ -179,6 +185,7 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
       await mailer.send({
         from: cfg.from_name ? { name: cfg.from_name, email: cfg.from_email } : cfg.from_email,
         to: input.to,
+        bcc: input.bcc ?? undefined,
         subject: input.subject,
         html: input.html,
         text: input.text,
@@ -195,7 +202,17 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
 /** Convenience: resolve config and send for a given domain. */
 export async function sendEmailForDomain(domainId: string, input: SendInput): Promise<{ id: string | null; source: string; provider: EmailProvider }> {
   const cfg = await resolveEmailConfigForDomain(domainId);
-  const r = await sendEmailViaProvider(cfg, input);
+  // Always honor the domain's BCC address, even when versand mode = platform
+  let bcc = input.bcc ?? null;
+  if (!bcc) {
+    const { data: ds } = await supabaseAdmin
+      .from("domain_email_settings").select("bcc_email").eq("domain_id", domainId).maybeSingle() as any;
+    const candidate = (ds?.bcc_email ?? "").trim();
+    if (candidate && candidate.toLowerCase() !== input.to.toLowerCase()) {
+      bcc = candidate;
+    }
+  }
+  const r = await sendEmailViaProvider(cfg, { ...input, bcc });
   return { id: r.id, source: cfg.source, provider: cfg.provider };
 }
 
