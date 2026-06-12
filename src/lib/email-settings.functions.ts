@@ -165,6 +165,7 @@ export const upsertDomainEmailSettings = createServerFn({ method: "POST" })
     smtp_username: z.string().max(255).nullable().optional(),
     smtp_password: z.string().min(0).max(500).optional(),
     smtp_secure: smtpSecureEnum.nullable().optional(),
+    bcc_email: z.union([z.string().email().max(200), z.literal("")]).nullable().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
     const domainId = await requireEffectiveDomainId(context.supabase, context.userId);
@@ -204,6 +205,7 @@ export const upsertDomainEmailSettings = createServerFn({ method: "POST" })
       smtp_username: ownSmtp ? (data.smtp_username ?? null) : null,
       smtp_password: ownSmtp ? finalSmtpPw : null,
       smtp_secure: ownSmtp ? (data.smtp_secure ?? "starttls") : null,
+      bcc_email: data.bcc_email ? data.bcc_email : null,
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
     } as any);
