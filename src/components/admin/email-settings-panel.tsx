@@ -207,6 +207,19 @@ export function EmailSettingsPanel() {
           </div>
         )}
 
+        <div className="mt-5 pt-5 border-t border-border space-y-1.5">
+          <Label className="text-xs flex items-center gap-1"><Mail className="size-3" /> BCC-Adresse (optional)</Label>
+          <Input
+            type="email"
+            value={bccEmail}
+            onChange={(e) => setBccEmail(e.target.value)}
+            placeholder="z.B. archiv@deine-domain.de"
+          />
+          <p className="text-xs text-muted-foreground">
+            Wenn gesetzt, wird jede aus dieser Domäne versendete E-Mail zusätzlich als Blindkopie an diese Adresse geschickt – unabhängig vom gewählten Versandweg.
+          </p>
+        </div>
+
         <div className="flex flex-wrap items-center gap-2 mt-6">
           <Button onClick={() => m_save.mutate()} disabled={m_save.isPending} className="gap-2">
             {m_save.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
