@@ -724,6 +724,7 @@ export type Database = {
       domain_email_settings: {
         Row: {
           api_key: string | null
+          bcc_email: string | null
           domain_id: string
           from_email: string | null
           from_name: string | null
@@ -741,6 +742,7 @@ export type Database = {
         }
         Insert: {
           api_key?: string | null
+          bcc_email?: string | null
           domain_id: string
           from_email?: string | null
           from_name?: string | null
@@ -758,6 +760,7 @@ export type Database = {
         }
         Update: {
           api_key?: string | null
+          bcc_email?: string | null
           domain_id?: string
           from_email?: string | null
           from_name?: string | null

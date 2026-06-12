@@ -1,0 +1,1 @@
+ALTER TABLE public.domain_email_settings ADD COLUMN IF NOT EXISTS bcc_email TEXT;
