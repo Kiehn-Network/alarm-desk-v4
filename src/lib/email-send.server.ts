@@ -99,6 +99,7 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
       body: JSON.stringify({
         from: formatFrom(cfg),
         to: [input.to],
+        bcc: input.bcc ? [input.bcc] : undefined,
         subject: input.subject,
         html: input.html,
         text: input.text,
@@ -114,6 +115,7 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
     const form = new URLSearchParams();
     form.set("from", formatFrom(cfg));
     form.set("to", input.to);
+    if (input.bcc) form.set("bcc", input.bcc);
     form.set("subject", input.subject);
     form.set("html", input.html);
     if (input.text) form.set("text", input.text);
@@ -138,7 +140,10 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
         Authorization: `Bearer ${cfg.api_key}`,
       },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: input.to }] }],
+        personalizations: [{
+          to: [{ email: input.to }],
+          ...(input.bcc ? { bcc: [{ email: input.bcc }] } : {}),
+        }],
         from: { email: cfg.from_email, name: cfg.from_name ?? undefined },
         subject: input.subject,
         content: [
@@ -180,6 +185,7 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
       await mailer.send({
         from: cfg.from_name ? { name: cfg.from_name, email: cfg.from_email } : cfg.from_email,
         to: input.to,
+        bcc: input.bcc ?? undefined,
         subject: input.subject,
         html: input.html,
         text: input.text,
