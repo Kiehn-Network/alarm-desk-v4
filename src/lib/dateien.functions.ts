@@ -185,3 +185,60 @@ export const getDateiSignedUrl = createServerFn({ method: "POST" })
     const token = await signFileToken(data.storage_path, 60);
     return { url: `/api/public/files/get?t=${encodeURIComponent(token)}` };
   });
+
+export const softDeleteDateienBulk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      ids: z.array(z.string().uuid()).min(1).max(5000).optional(),
+      kunden_name: z.string().max(200).optional(),
+      all: z.boolean().optional(),
+      reason: z.string().max(500).optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role, domain_id").eq("user_id", userId);
+    const isAllowed = (roles ?? []).some((r: any) =>
+      r.role === "superadmin" || (r.role === "admin" && r.domain_id === domainId));
+    if (!isAllowed) throw new Error("Nur Domänen-Admins können Dateien löschen");
+
+    // Resolve IDs (always domain-scoped, only not-yet-deleted rows)
+    let ids: string[] = [];
+    const base = supabase.from("dateien").select("id").eq("domain_id", domainId).is("deleted_at", null);
+    if (data.all) {
+      const { data: rows, error } = await base;
+      if (error) throw new Error(error.message);
+      ids = (rows ?? []).map((r: any) => r.id);
+    } else if (data.kunden_name !== undefined) {
+      const name = (data.kunden_name ?? "").trim();
+      const q = name.length === 0
+        ? supabase.from("dateien").select("id").eq("domain_id", domainId).is("deleted_at", null).or("kunden_name.is.null,kunden_name.eq.")
+        : supabase.from("dateien").select("id").eq("domain_id", domainId).is("deleted_at", null).eq("kunden_name", name);
+      const { data: rows, error } = await q;
+      if (error) throw new Error(error.message);
+      ids = (rows ?? []).map((r: any) => r.id);
+    } else if (data.ids && data.ids.length > 0) {
+      const { data: rows, error } = await supabase
+        .from("dateien").select("id").eq("domain_id", domainId).is("deleted_at", null).in("id", data.ids);
+      if (error) throw new Error(error.message);
+      ids = (rows ?? []).map((r: any) => r.id);
+    }
+    if (ids.length === 0) return { ok: true, deleted: 0 };
+
+    const CHUNK = 200;
+    const nowIso = new Date().toISOString();
+    let deleted = 0;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      const { error } = await supabase
+        .from("dateien")
+        .update({ deleted_at: nowIso, deleted_by: userId, deleted_reason: data.reason ?? null })
+        .in("id", slice);
+      if (error) throw new Error(error.message);
+      deleted += slice.length;
+    }
+    return { ok: true, deleted };
+  });
