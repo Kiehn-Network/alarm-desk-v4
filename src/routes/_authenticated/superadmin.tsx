@@ -585,6 +585,70 @@ function DbSyncPanel() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={openBootstrap} onOpenChange={(o) => { if (!m_bootstrap.isPending) setOpenBootstrap(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bootstrap-SQL (Schema + SuperAdmin)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Erstellt ein einzelnes SQL-File, das auf einer <b>frischen Datenbank</b> ausgeführt werden kann:
+              alle Migrations werden angewendet und anschließend wird ein SuperAdmin-Account angelegt
+              (oder dessen Passwort zurückgesetzt), damit du dich sofort einloggen kannst.
+            </p>
+            <div className="space-y-1">
+              <Label htmlFor="bs-email">E-Mail</Label>
+              <Input
+                id="bs-email"
+                type="email"
+                value={bsEmail}
+                onChange={(e) => setBsEmail(e.target.value)}
+                placeholder="superadmin@example.com"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bs-password">Passwort</Label>
+              <Input
+                id="bs-password"
+                type="text"
+                value={bsPassword}
+                onChange={(e) => setBsPassword(e.target.value)}
+                placeholder="mind. 6 Zeichen"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bs-name">Anzeigename</Label>
+              <Input
+                id="bs-name"
+                value={bsName}
+                onChange={(e) => setBsName(e.target.value)}
+                placeholder="SuperAdmin"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenBootstrap(false)} disabled={m_bootstrap.isPending}>
+              Abbrechen
+            </Button>
+            <Button
+              disabled={
+                m_bootstrap.isPending ||
+                !bsEmail.includes("@") ||
+                bsPassword.length < 6
+              }
+              onClick={() => m_bootstrap.mutate()}
+            >
+              {m_bootstrap.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Erzeuge SQL…</>
+              ) : (
+                <><Download className="size-4 mr-2" /> SQL herunterladen</>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={openMigConfirm} onOpenChange={(o) => { if (!m_mig.isPending) setOpenMigConfirm(o); }}>
         <DialogContent>
           <DialogHeader>
