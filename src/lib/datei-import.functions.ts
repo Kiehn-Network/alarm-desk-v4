@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
 const rowSchema = z.object({
+  legacy_id: z.string().max(100).optional().nullable(),
   filename: z.string().min(1).max(255),
   address: z.string().max(500).optional().nullable(),
   key_number: z.string().max(100).optional().nullable(),
@@ -47,7 +48,7 @@ export const importDateien = createServerFn({ method: "POST" })
     for (let i = 0; i < data.rows.length; i++) {
       const r = data.rows[i];
       try {
-        const dupKey = r.anlagen_nr || r.teilnehmer_id;
+        const dupKey = r.legacy_id || r.anlagen_nr || r.teilnehmer_id;
         let existing: any = null;
         if (dupKey && data.duplicate_strategy !== "insert") {
           const q = supabase
@@ -55,7 +56,8 @@ export const importDateien = createServerFn({ method: "POST" })
             .select("id")
             .eq("domain_id", domainId)
             .is("deleted_at", null);
-          if (r.anlagen_nr) q.eq("anlagen_nr", r.anlagen_nr);
+          if (r.legacy_id) q.eq("legacy_id", r.legacy_id);
+          else if (r.anlagen_nr) q.eq("anlagen_nr", r.anlagen_nr);
           else if (r.teilnehmer_id) q.eq("teilnehmer_id", r.teilnehmer_id);
           const { data: found } = await q.limit(1).maybeSingle();
           existing = found;
@@ -69,6 +71,7 @@ export const importDateien = createServerFn({ method: "POST" })
           const { error } = await supabase
             .from("dateien")
             .update({
+              legacy_id: r.legacy_id ?? null,
               filename: r.filename,
               address: r.address ?? null,
               key_number: r.key_number ?? null,
@@ -84,6 +87,7 @@ export const importDateien = createServerFn({ method: "POST" })
           continue;
         }
         const { error } = await supabase.from("dateien").insert({
+          legacy_id: r.legacy_id ?? null,
           filename: r.filename,
           address: r.address ?? null,
           key_number: r.key_number ?? null,
