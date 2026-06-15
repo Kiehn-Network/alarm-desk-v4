@@ -396,6 +396,140 @@ function pgQuote(s: string): string {
   return `'${s.replace(/'/g, "''")}'`;
 }
 
+export const exportFullBootstrapSql = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        email: z.string().email().max(255),
+        password: z.string().min(6).max(128),
+        displayName: z.string().min(1).max(120).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertSuperadmin(context.userId);
+    const files = loadMigrations();
+
+    const header = [
+      `-- Lovable DB-Bootstrap · Schema + Superadmin`,
+      `-- Generiert: ${new Date().toISOString()}`,
+      `-- Anzahl Migrations-Dateien: ${files.length}`,
+      `-- Anwendung: in der frischen Ziel-DB im SQL-Editor einfügen und ausführen.`,
+      `-- Bereits angewendete Migrations werden via public._lovable_migrations übersprungen.`,
+      ``,
+      `CREATE EXTENSION IF NOT EXISTS pgcrypto;`,
+      ``,
+      `CREATE TABLE IF NOT EXISTS public._lovable_migrations (`,
+      `  name text PRIMARY KEY,`,
+      `  applied_at timestamptz NOT NULL DEFAULT now(),`,
+      `  duration_ms integer,`,
+      `  checksum text`,
+      `);`,
+      ``,
+    ].join("\n");
+
+    const parts: string[] = [header];
+    for (const f of files) {
+      const nameLit = pgQuote(f.name);
+      parts.push(
+        `\n-- ============================================================`,
+        `-- Migration: ${f.name}`,
+        `-- ============================================================`,
+        `DO $LVBL_OUTER$`,
+        `BEGIN`,
+        `  IF EXISTS (SELECT 1 FROM public._lovable_migrations WHERE name = ${nameLit}) THEN`,
+        `    RAISE NOTICE '↷ skip %', ${nameLit};`,
+        `  ELSE`,
+        `    BEGIN`,
+        `      EXECUTE $LVBL_BODY$`,
+        f.sql.trimEnd(),
+        `      $LVBL_BODY$;`,
+        `      INSERT INTO public._lovable_migrations(name) VALUES (${nameLit}) ON CONFLICT (name) DO NOTHING;`,
+        `      RAISE NOTICE '✓ applied %', ${nameLit};`,
+        `    EXCEPTION WHEN OTHERS THEN`,
+        `      INSERT INTO public._lovable_migrations(name) VALUES (${nameLit}) ON CONFLICT (name) DO NOTHING;`,
+        `      RAISE NOTICE '≈ % skipped (% / %) – marked applied', ${nameLit}, SQLSTATE, SQLERRM;`,
+        `    END;`,
+        `  END IF;`,
+        `END`,
+        `$LVBL_OUTER$;`,
+      );
+    }
+
+    const emailLit = pgQuote(data.email);
+    const pwLit = pgQuote(data.password);
+    const nameLit = pgQuote(data.displayName ?? "SuperAdmin");
+
+    parts.push(
+      ``,
+      `-- ============================================================`,
+      `-- Superadmin-Account anlegen / Passwort zurücksetzen`,
+      `-- ============================================================`,
+      `ALTER TABLE public.user_roles ADD COLUMN IF NOT EXISTS domain_id UUID;`,
+      `NOTIFY pgrst, 'reload schema';`,
+      ``,
+      `DO $LVBL_SA$`,
+      `DECLARE`,
+      `  v_email    TEXT := ${emailLit};`,
+      `  v_password TEXT := ${pwLit};`,
+      `  v_name     TEXT := ${nameLit};`,
+      `  v_user_id  UUID;`,
+      `BEGIN`,
+      `  SELECT id INTO v_user_id FROM auth.users WHERE email = v_email;`,
+      ``,
+      `  IF v_user_id IS NULL THEN`,
+      `    v_user_id := gen_random_uuid();`,
+      `    INSERT INTO auth.users (`,
+      `      instance_id, id, aud, role, email, encrypted_password,`,
+      `      email_confirmed_at, created_at, updated_at,`,
+      `      raw_app_meta_data, raw_user_meta_data, is_super_admin`,
+      `    ) VALUES (`,
+      `      '00000000-0000-0000-0000-000000000000',`,
+      `      v_user_id, 'authenticated', 'authenticated', v_email,`,
+      `      crypt(v_password, gen_salt('bf')),`,
+      `      now(), now(), now(),`,
+      `      jsonb_build_object('provider','email','providers',ARRAY['email']),`,
+      `      jsonb_build_object('display_name', v_name),`,
+      `      false`,
+      `    );`,
+      `    INSERT INTO auth.identities (`,
+      `      id, user_id, provider_id, identity_data, provider,`,
+      `      last_sign_in_at, created_at, updated_at`,
+      `    ) VALUES (`,
+      `      gen_random_uuid(), v_user_id, v_user_id::text,`,
+      `      jsonb_build_object('sub', v_user_id::text, 'email', v_email),`,
+      `      'email', now(), now(), now()`,
+      `    );`,
+      `  ELSE`,
+      `    UPDATE auth.users`,
+      `       SET encrypted_password = crypt(v_password, gen_salt('bf')),`,
+      `           email_confirmed_at = COALESCE(email_confirmed_at, now()),`,
+      `           updated_at         = now()`,
+      `     WHERE id = v_user_id;`,
+      `  END IF;`,
+      ``,
+      `  INSERT INTO public.profiles (id, display_name)`,
+      `  VALUES (v_user_id, v_name)`,
+      `  ON CONFLICT (id) DO NOTHING;`,
+      ``,
+      `  INSERT INTO public.user_roles (user_id, role, domain_id)`,
+      `  VALUES (v_user_id, 'superadmin'::app_role, NULL)`,
+      `  ON CONFLICT (user_id, role) DO NOTHING;`,
+      `END`,
+      `$LVBL_SA$;`,
+      ``,
+      `NOTIFY pgrst, 'reload schema';`,
+    );
+
+    return {
+      filename: `lovable-bootstrap-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.sql`,
+      sql: parts.join("\n"),
+      count: files.length,
+      email: data.email,
+    };
+  });
+
 export const runSchemaMigration = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>

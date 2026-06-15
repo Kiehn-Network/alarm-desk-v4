@@ -27,6 +27,7 @@ import { listAppModules } from "@/lib/settings.functions";
 import {
   previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
   startSchemaMigrationJob, runSchemaMigration, exportMigrationsSql,
+  exportFullBootstrapSql,
 } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -158,11 +159,16 @@ function DbSyncPanel() {
   const startMigFn = useServerFn(startSchemaMigrationJob);
   const runMigFn = useServerFn(runSchemaMigration);
   const exportMigFn = useServerFn(exportMigrationsSql);
+  const exportBootstrapFn = useServerFn(exportFullBootstrapSql);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [openMigConfirm, setOpenMigConfirm] = useState(false);
   const [migConfirmText, setMigConfirmText] = useState("");
+  const [openBootstrap, setOpenBootstrap] = useState(false);
+  const [bsEmail, setBsEmail] = useState("");
+  const [bsPassword, setBsPassword] = useState("");
+  const [bsName, setBsName] = useState("SuperAdmin");
   const [result, setResult] = useState<any>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [errorDetail, setErrorDetail] = useState<{ table: string; detail: string } | null>(null);
@@ -223,6 +229,25 @@ function DbSyncPanel() {
       toast.success(`SQL-Datei mit ${r.count} Migrations heruntergeladen`);
     },
     onError: (e: any) => toast.error(e?.message ?? "Export fehlgeschlagen"),
+  });
+
+  const m_bootstrap = useMutation({
+    mutationFn: async () =>
+      exportBootstrapFn({
+        data: { email: bsEmail.trim(), password: bsPassword, displayName: bsName.trim() || undefined },
+      }),
+    onSuccess: (r: any) => {
+      const blob = new Blob([r.sql], { type: "text/sql;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = r.filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Bootstrap-SQL erstellt (${r.count} Migrations + SuperAdmin ${r.email})`);
+      setOpenBootstrap(false);
+      setBsPassword("");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Bootstrap-Export fehlgeschlagen"),
   });
 
   const preview = pq.data as any;
@@ -329,6 +354,18 @@ function DbSyncPanel() {
                 <><Loader2 className="size-4 mr-2 animate-spin" /> Export…</>
               ) : (
                 "Migrations-SQL exportieren"
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={m_bootstrap.isPending}
+              onClick={() => setOpenBootstrap(true)}
+              title="Erzeugt ein komplettes Bootstrap-SQL: alle Migrations + SuperAdmin-Account."
+            >
+              {m_bootstrap.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Bootstrap…</>
+              ) : (
+                <><Download className="size-4 mr-2" /> Bootstrap-SQL (Schema + SuperAdmin)</>
               )}
             </Button>
             <Button
@@ -544,6 +581,70 @@ function DbSyncPanel() {
               toast.success("In Zwischenablage kopiert");
             }}>Kopieren</Button>
             <Button onClick={() => setErrorDetail(null)}>Schließen</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openBootstrap} onOpenChange={(o) => { if (!m_bootstrap.isPending) setOpenBootstrap(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Bootstrap-SQL (Schema + SuperAdmin)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              Erstellt ein einzelnes SQL-File, das auf einer <b>frischen Datenbank</b> ausgeführt werden kann:
+              alle Migrations werden angewendet und anschließend wird ein SuperAdmin-Account angelegt
+              (oder dessen Passwort zurückgesetzt), damit du dich sofort einloggen kannst.
+            </p>
+            <div className="space-y-1">
+              <Label htmlFor="bs-email">E-Mail</Label>
+              <Input
+                id="bs-email"
+                type="email"
+                value={bsEmail}
+                onChange={(e) => setBsEmail(e.target.value)}
+                placeholder="superadmin@example.com"
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bs-password">Passwort</Label>
+              <Input
+                id="bs-password"
+                type="text"
+                value={bsPassword}
+                onChange={(e) => setBsPassword(e.target.value)}
+                placeholder="mind. 6 Zeichen"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="bs-name">Anzeigename</Label>
+              <Input
+                id="bs-name"
+                value={bsName}
+                onChange={(e) => setBsName(e.target.value)}
+                placeholder="SuperAdmin"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenBootstrap(false)} disabled={m_bootstrap.isPending}>
+              Abbrechen
+            </Button>
+            <Button
+              disabled={
+                m_bootstrap.isPending ||
+                !bsEmail.includes("@") ||
+                bsPassword.length < 6
+              }
+              onClick={() => m_bootstrap.mutate()}
+            >
+              {m_bootstrap.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Erzeuge SQL…</>
+              ) : (
+                <><Download className="size-4 mr-2" /> SQL herunterladen</>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
