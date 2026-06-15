@@ -554,6 +554,50 @@ function AlarmierungPage() {
           </div>
         </DialogContent>
       </Dialog>
+      <Dialog open={!!bulkOpen} onOpenChange={(o) => { if (!o) setBulkOpen(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {bulkOpen === "all"
+                ? "Wirklich ALLE Einsätze löschen?"
+                : `${selected.size} Einsätze löschen?`}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkOpen === "all"
+                ? "Sämtliche Einsätze deiner Domäne werden unwiderruflich entfernt, inklusive Verlauf, E-Mail-Logs und Schlüsselbuch-Einträgen."
+                : "Die ausgewählten Einsätze werden unwiderruflich entfernt, inklusive Verlauf, E-Mail-Logs und Schlüsselbuch-Einträgen."}
+              {" "}Diese Aktion kann nicht rückgängig gemacht werden.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setBulkOpen(null)} disabled={bulkBusy}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={bulkBusy}
+              onClick={async () => {
+                setBulkBusy(true);
+                try {
+                  const payload = bulkOpen === "all"
+                    ? { all: true as const }
+                    : { ids: Array.from(selected) };
+                  const res = await loeschenBulk({ data: payload });
+                  toast.success(`${res.deleted ?? 0} Einsätze gelöscht`);
+                  setSelected(new Set());
+                  setBulkOpen(null);
+                  refetch();
+                } catch (err: any) {
+                  toast.error(err.message ?? "Fehler");
+                } finally { setBulkBusy(false); }
+              }}
+            >
+              <Trash2 className="size-4 mr-1.5" />
+              {bulkOpen === "all" ? "Alle endgültig löschen" : "Auswahl löschen"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
       <EinsatzBerichtDialog
         einsatz={berichtFor}
         open={!!berichtFor}
