@@ -325,6 +325,28 @@ function DateienPage() {
       {editFor && (
         <DateiEditDialog datei={editFor} onClose={() => setEditFor(null)} onDone={refresh} />
       )}
+
+      <Dialog open={!!bulkOpen} onOpenChange={(v) => !v && setBulkOpen(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {bulkOpen?.mode === "all" ? "Alle Dateien löschen" : "Auswahl löschen"}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkOpen?.mode === "all"
+                ? `Damit werden alle ${dateien.length} Dateien der Domäne in den Papierkorb verschoben (Soft-Delete). Verknüpfungen bleiben bestehen.`
+                : `${selected.size} Datei(en) werden in den Papierkorb verschoben (Soft-Delete).`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkOpen(null)} disabled={bulkBusy}>Abbrechen</Button>
+            <Button variant="destructive" onClick={runBulk} disabled={bulkBusy} className="gap-2">
+              {bulkBusy && <Loader2 className="size-4 animate-spin" />}
+              Endgültig löschen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
