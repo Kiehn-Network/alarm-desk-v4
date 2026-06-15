@@ -159,11 +159,16 @@ function DbSyncPanel() {
   const startMigFn = useServerFn(startSchemaMigrationJob);
   const runMigFn = useServerFn(runSchemaMigration);
   const exportMigFn = useServerFn(exportMigrationsSql);
+  const exportBootstrapFn = useServerFn(exportFullBootstrapSql);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [openMigConfirm, setOpenMigConfirm] = useState(false);
   const [migConfirmText, setMigConfirmText] = useState("");
+  const [openBootstrap, setOpenBootstrap] = useState(false);
+  const [bsEmail, setBsEmail] = useState("");
+  const [bsPassword, setBsPassword] = useState("");
+  const [bsName, setBsName] = useState("SuperAdmin");
   const [result, setResult] = useState<any>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [errorDetail, setErrorDetail] = useState<{ table: string; detail: string } | null>(null);
@@ -224,6 +229,25 @@ function DbSyncPanel() {
       toast.success(`SQL-Datei mit ${r.count} Migrations heruntergeladen`);
     },
     onError: (e: any) => toast.error(e?.message ?? "Export fehlgeschlagen"),
+  });
+
+  const m_bootstrap = useMutation({
+    mutationFn: async () =>
+      exportBootstrapFn({
+        data: { email: bsEmail.trim(), password: bsPassword, displayName: bsName.trim() || undefined },
+      }),
+    onSuccess: (r: any) => {
+      const blob = new Blob([r.sql], { type: "text/sql;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = r.filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+      toast.success(`Bootstrap-SQL erstellt (${r.count} Migrations + SuperAdmin ${r.email})`);
+      setOpenBootstrap(false);
+      setBsPassword("");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Bootstrap-Export fehlgeschlagen"),
   });
 
   const preview = pq.data as any;
