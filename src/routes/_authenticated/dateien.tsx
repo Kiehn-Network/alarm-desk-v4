@@ -742,10 +742,13 @@ function Info({ label, value }: { label: string; value: string | null }) {
 }
 
 function KundenListe({
-  dateien, search, onEdit,
-}: { dateien: Datei[]; search: string; onEdit: (d: Datei) => void }) {
+  dateien, search, onEdit, isAdmin, onDone,
+}: { dateien: Datei[]; search: string; onEdit: (d: Datei) => void; isAdmin: boolean; onDone: () => void }) {
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const bulkDelete = useServerFn(softDeleteDateienBulk);
+  const [confirm, setConfirm] = useState<null | { name: string; count: number }>(null);
+  const [busy, setBusy] = useState(false);
 
   const grouped = useMemo(() => {
     const map = new Map<string, Datei[]>();
@@ -797,6 +800,14 @@ function KundenListe({
                     {g.items.length} {g.items.length === 1 ? "Eintrag" : "Einträge"}
                   </p>
                 </div>
+                {isAdmin && (
+                  <Button
+                    size="sm" variant="ghost" className="gap-1.5 text-destructive hover:text-destructive"
+                    onClick={() => setConfirm({ name: g.name, count: g.items.length })}
+                  >
+                    <Trash2 className="size-4" /> Kunde löschen
+                  </Button>
+                )}
               </div>
               <ul className="divide-y divide-border/60 rounded-md border border-border/60 bg-muted/20">
                 {g.items.map((d) => (
@@ -830,6 +841,38 @@ function KundenListe({
           </Button>
         </div>
       )}
+      <Dialog open={!!confirm} onOpenChange={(v) => !v && setConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Kunden-Dateien löschen</DialogTitle>
+            <DialogDescription>
+              {confirm && `Alle ${confirm.count} Datei(en) des Kunden „${confirm.name}" werden in den Papierkorb verschoben (Soft-Delete).`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirm(null)} disabled={busy}>Abbrechen</Button>
+            <Button
+              variant="destructive" className="gap-2" disabled={busy}
+              onClick={async () => {
+                if (!confirm) return;
+                setBusy(true);
+                try {
+                  const name = confirm.name === "(ohne Kunde)" ? "" : confirm.name;
+                  const res = await bulkDelete({ data: { kunden_name: name } });
+                  toast.success(`${res.deleted} Datei(en) gelöscht`);
+                  setConfirm(null);
+                  onDone();
+                } catch (e: any) {
+                  toast.error(e.message ?? "Löschen fehlgeschlagen");
+                } finally { setBusy(false); }
+              }}
+            >
+              {busy && <Loader2 className="size-4 animate-spin" />}
+              Löschen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
