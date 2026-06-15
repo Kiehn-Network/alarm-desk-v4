@@ -357,6 +357,18 @@ function DbSyncPanel() {
               )}
             </Button>
             <Button
+              variant="outline"
+              disabled={m_bootstrap.isPending}
+              onClick={() => setOpenBootstrap(true)}
+              title="Erzeugt ein komplettes Bootstrap-SQL: alle Migrations + SuperAdmin-Account."
+            >
+              {m_bootstrap.isPending ? (
+                <><Loader2 className="size-4 mr-2 animate-spin" /> Bootstrap…</>
+              ) : (
+                <><Download className="size-4 mr-2" /> Bootstrap-SQL (Schema + SuperAdmin)</>
+              )}
+            </Button>
+            <Button
               variant="destructive"
               disabled={!preview?.configured || !preview?.targetReachable || isRunning || m_mig.isPending}
               onClick={() => setOpenConfirm(true)}
