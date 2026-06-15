@@ -620,6 +620,7 @@ export type Database = {
           id: string
           key_number: string | null
           kunden_name: string | null
+          legacy_id: string | null
           mime_type: string | null
           notiz: string | null
           size_bytes: number | null
@@ -641,6 +642,7 @@ export type Database = {
           id?: string
           key_number?: string | null
           kunden_name?: string | null
+          legacy_id?: string | null
           mime_type?: string | null
           notiz?: string | null
           size_bytes?: number | null
@@ -662,6 +664,7 @@ export type Database = {
           id?: string
           key_number?: string | null
           kunden_name?: string | null
+          legacy_id?: string | null
           mime_type?: string | null
           notiz?: string | null
           size_bytes?: number | null
