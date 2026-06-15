@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter,
   DialogHeader, DialogTitle,
@@ -26,7 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   listDateien, createDatei, softDeleteDatei,
   linkDateien, unlinkDateien, getDateiSignedUrl,
-  updateDatei, listDateiHistorie,
+  updateDatei, listDateiHistorie, softDeleteDateienBulk,
 } from "@/lib/dateien.functions";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
@@ -58,7 +59,9 @@ function DateienGate() {
 
 function DateienPage() {
   const qc = useQueryClient();
+  const { isAdmin } = useRole();
   const list = useServerFn(listDateien);
+  const bulkDelete = useServerFn(softDeleteDateienBulk);
   const { data, isLoading } = useQuery({
     queryKey: ["dateien"],
     queryFn: () => list(),
@@ -72,6 +75,9 @@ function DateienPage() {
   const [tab, setTab] = useState<"dateien" | "kunden">("dateien");
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState<null | { mode: "selected" | "all"; count: number }>(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const dateien = data?.dateien ?? [];
   const links = data?.links ?? [];
@@ -90,11 +96,47 @@ function DateienPage() {
   const pageItems = filtered.slice((safePage - 1) * pageSize, safePage * pageSize);
   // Reset auf Seite 1 wenn Suche sich ändert
   useEffect(() => { setPage(1); }, [search, tab]);
+  useEffect(() => { setSelected(new Set()); }, [search, tab]);
 
   const linkCount = (id: string) =>
     links.filter((l) => l.datei_a_id === id || l.datei_b_id === id).length;
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["dateien"] });
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+  const toggleAllVisible = () => {
+    setSelected((prev) => {
+      const allSelected = pageItems.every((d) => prev.has(d.id));
+      const next = new Set(prev);
+      if (allSelected) pageItems.forEach((d) => next.delete(d.id));
+      else pageItems.forEach((d) => next.add(d.id));
+      return next;
+    });
+  };
+  const allVisibleSelected = pageItems.length > 0 && pageItems.every((d) => selected.has(d.id));
+  const someVisibleSelected = pageItems.some((d) => selected.has(d.id)) && !allVisibleSelected;
+
+  const runBulk = async () => {
+    if (!bulkOpen) return;
+    setBulkBusy(true);
+    try {
+      const res = bulkOpen.mode === "all"
+        ? await bulkDelete({ data: { all: true } })
+        : await bulkDelete({ data: { ids: Array.from(selected) } });
+      toast.success(`${res.deleted} Datei(en) gelöscht`);
+      setSelected(new Set());
+      setBulkOpen(null);
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Löschen fehlgeschlagen");
+    } finally { setBulkBusy(false); }
+  };
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -136,9 +178,38 @@ function DateienPage() {
       </div>
 
       {tab === "kunden" ? (
-        <KundenListe dateien={dateien} search={search} onEdit={(d) => setEditFor(d)} />
+        <KundenListe
+          dateien={dateien}
+          search={search}
+          onEdit={(d) => setEditFor(d)}
+          isAdmin={isAdmin}
+          onDone={refresh}
+        />
       ) : (
       <div className="rounded-xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
+        {isAdmin && (
+          <div className="px-4 lg:px-5 py-2.5 border-b border-border flex flex-wrap items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">
+              {selected.size > 0 ? `${selected.size} ausgewählt` : "Keine Auswahl"}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                size="sm" variant="destructive" className="gap-2"
+                disabled={selected.size === 0}
+                onClick={() => setBulkOpen({ mode: "selected", count: selected.size })}
+              >
+                <Trash2 className="size-4" /> Auswahl löschen ({selected.size})
+              </Button>
+              <Button
+                size="sm" variant="outline" className="gap-2"
+                disabled={dateien.length === 0}
+                onClick={() => setBulkOpen({ mode: "all", count: dateien.length })}
+              >
+                <Trash2 className="size-4" /> Alle löschen
+              </Button>
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="p-12 text-center text-muted-foreground">
             <Loader2 className="size-6 animate-spin mx-auto" />
@@ -156,6 +227,15 @@ function DateienPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                {isAdmin && (
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={allVisibleSelected ? true : someVisibleSelected ? "indeterminate" : false}
+                      onCheckedChange={() => toggleAllVisible()}
+                      aria-label="Alle sichtbaren auswählen"
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Datei</TableHead>
                 <TableHead>Kunde</TableHead>
                 <TableHead>Adresse</TableHead>
@@ -168,6 +248,15 @@ function DateienPage() {
             <TableBody>
               {pageItems.map((d) => (
                 <TableRow key={d.id} className="cursor-pointer" onClick={() => setDetailFor(d)}>
+                  {isAdmin && (
+                    <TableCell onClick={(e) => e.stopPropagation()} className="w-[40px]">
+                      <Checkbox
+                        checked={selected.has(d.id)}
+                        onCheckedChange={() => toggleOne(d.id)}
+                        aria-label="Auswählen"
+                      />
+                    </TableCell>
+                  )}
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <FileText className="size-4 text-primary shrink-0" />
