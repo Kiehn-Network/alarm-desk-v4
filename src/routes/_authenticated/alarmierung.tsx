@@ -23,8 +23,9 @@ import { useRole } from "@/hooks/use-role";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
   listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
-  editEinsatzFull, deleteEinsatz,
+  editEinsatzFull, deleteEinsatz, deleteEinsaetzeBulk,
 } from "@/lib/einsaetze.functions";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 import { BerichtSendDialog } from "@/components/bericht-send-dialog";
@@ -185,6 +186,7 @@ function AlarmierungPage() {
   const stornieren = useServerFn(stornierenEinsatz);
   const editFull = useServerFn(editEinsatzFull);
   const loeschen = useServerFn(deleteEinsatz);
+  const loeschenBulk = useServerFn(deleteEinsaetzeBulk);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
@@ -200,6 +202,9 @@ function AlarmierungPage() {
   const [editFor, setEditFor] = useState<Einsatz | null>(null);
   const [deleteFor, setDeleteFor] = useState<Einsatz | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkOpen, setBulkOpen] = useState<null | "selected" | "all">(null);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -233,6 +238,26 @@ function AlarmierungPage() {
     aktiv: einsaetze.filter(isAktiv).length,
     erledigt: einsaetze.filter(isErledigt).length,
   }), [einsaetze]);
+
+  // Visible IDs in current filter view
+  const visibleIds = useMemo(() => filtered.map((e) => e.id), [filtered]);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const someVisibleSelected = visibleIds.some((id) => selected.has(id));
+  const toggleOne = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const toggleAllVisible = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) visibleIds.forEach((id) => next.delete(id));
+      else visibleIds.forEach((id) => next.add(id));
+      return next;
+    });
+  // Reset selection when filter scope changes
+  useEffect(() => { setSelected(new Set()); }, [tab, typFilter, search]);
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -295,6 +320,33 @@ function AlarmierungPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
+        {isAdmin && (selected.size > 0 || einsaetze.length > 0) && (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2 border-b border-border bg-muted/30">
+            <div className="text-xs text-muted-foreground">
+              {selected.size > 0
+                ? <><span className="font-medium text-foreground">{selected.size}</span> ausgewählt</>
+                : <>Mehrfach-Auswahl per Häkchen — Admin-Werkzeug</>}
+            </div>
+            <div className="flex items-center gap-2">
+              {selected.size > 0 && (
+                <Button size="sm" variant="ghost" onClick={() => setSelected(new Set())}>
+                  Auswahl aufheben
+                </Button>
+              )}
+              {selected.size > 0 && (
+                <Button size="sm" variant="destructive" className="gap-1.5"
+                        onClick={() => setBulkOpen("selected")}>
+                  <Trash2 className="size-4" /> Auswahl löschen ({selected.size})
+                </Button>
+              )}
+              <Button size="sm" variant="outline"
+                      className="gap-1.5 text-red-400 border-red-500/40 hover:bg-red-500/10"
+                      onClick={() => setBulkOpen("all")}>
+                <Trash2 className="size-4" /> Alle löschen
+              </Button>
+            </div>
+          </div>
+        )}
         {isLoading ? (
           <div className="p-12 text-center text-muted-foreground">Lade Einsätze...</div>
         ) : filtered.length === 0 ? (
@@ -309,6 +361,15 @@ function AlarmierungPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted/40 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  {isAdmin && (
+                    <th className="px-3 py-3 font-semibold w-8">
+                      <Checkbox
+                        checked={allVisibleSelected ? true : (someVisibleSelected ? "indeterminate" : false)}
+                        onCheckedChange={() => toggleAllVisible()}
+                        aria-label="Alle sichtbaren auswählen"
+                      />
+                    </th>
+                  )}
                   <th className="px-4 py-3 font-semibold">Einsatz</th>
                   <th className="px-4 py-3 font-semibold">Fahrer</th>
                   <th className="px-4 py-3 font-semibold">Startzeit</th>
@@ -327,6 +388,15 @@ function AlarmierungPage() {
                   const end = e.einsatz_ende_am ?? e.abgeschlossen_am ?? null;
                   return (
                     <tr key={e.id} className="hover:bg-muted/30 transition-colors">
+                      {isAdmin && (
+                        <td className="px-3 py-3 align-middle">
+                          <Checkbox
+                            checked={selected.has(e.id)}
+                            onCheckedChange={() => toggleOne(e.id)}
+                            aria-label="Auswählen"
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3 align-middle max-w-[280px]">
                         <div className="flex items-center gap-2">
                           {hausnotrufEnabled && (
@@ -480,6 +550,50 @@ function AlarmierungPage() {
               }}
             >
               <Trash2 className="size-4 mr-1.5" /> Endgültig löschen
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!bulkOpen} onOpenChange={(o) => { if (!o) setBulkOpen(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {bulkOpen === "all"
+                ? "Wirklich ALLE Einsätze löschen?"
+                : `${selected.size} Einsätze löschen?`}
+            </DialogTitle>
+            <DialogDescription>
+              {bulkOpen === "all"
+                ? "Sämtliche Einsätze deiner Domäne werden unwiderruflich entfernt, inklusive Verlauf, E-Mail-Logs und Schlüsselbuch-Einträgen."
+                : "Die ausgewählten Einsätze werden unwiderruflich entfernt, inklusive Verlauf, E-Mail-Logs und Schlüsselbuch-Einträgen."}
+              {" "}Diese Aktion kann nicht rückgängig gemacht werden.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setBulkOpen(null)} disabled={bulkBusy}>
+              Abbrechen
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={bulkBusy}
+              onClick={async () => {
+                setBulkBusy(true);
+                try {
+                  const payload = bulkOpen === "all"
+                    ? { all: true as const }
+                    : { ids: Array.from(selected) };
+                  const res = await loeschenBulk({ data: payload });
+                  toast.success(`${res.deleted ?? 0} Einsätze gelöscht`);
+                  setSelected(new Set());
+                  setBulkOpen(null);
+                  refetch();
+                } catch (err: any) {
+                  toast.error(err.message ?? "Fehler");
+                } finally { setBulkBusy(false); }
+              }}
+            >
+              <Trash2 className="size-4 mr-1.5" />
+              {bulkOpen === "all" ? "Alle endgültig löschen" : "Auswahl löschen"}
             </Button>
           </div>
         </DialogContent>

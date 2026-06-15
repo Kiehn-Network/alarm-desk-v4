@@ -659,3 +659,51 @@ export const deleteEinsatz = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const deleteEinsaetzeBulk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      ids: z.array(z.string().uuid()).min(1).max(5000).optional(),
+      all: z.boolean().optional(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role, domain_id").eq("user_id", userId);
+    const isAllowed = (roles ?? []).some((r: any) =>
+      r.role === "superadmin" || (r.role === "admin" && r.domain_id === domainId));
+    if (!isAllowed) throw new Error("Nur Domänen-Admins können Einsätze löschen");
+
+    // Resolve IDs to delete (always domain-scoped)
+    let ids: string[] = [];
+    if (data.all) {
+      const { data: rows, error } = await supabase
+        .from("einsaetze").select("id").eq("domain_id", domainId);
+      if (error) throw new Error(error.message);
+      ids = (rows ?? []).map((r: any) => r.id);
+    } else if (data.ids && data.ids.length > 0) {
+      // Filter to current domain to prevent cross-domain deletion
+      const { data: rows, error } = await supabase
+        .from("einsaetze").select("id").eq("domain_id", domainId).in("id", data.ids);
+      if (error) throw new Error(error.message);
+      ids = (rows ?? []).map((r: any) => r.id);
+    }
+    if (ids.length === 0) return { ok: true, deleted: 0 };
+
+    // Chunked cleanup of related rows + delete
+    const CHUNK = 200;
+    let deleted = 0;
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      await supabase.from("einsatz_historie").delete().in("einsatz_id", slice);
+      await supabase.from("einsatz_email_log").delete().in("einsatz_id", slice);
+      await supabase.from("schluessel_buch").delete().in("einsatz_id", slice);
+      const { error } = await supabase.from("einsaetze").delete().in("id", slice);
+      if (error) throw new Error(error.message);
+      deleted += slice.length;
+    }
+    return { ok: true, deleted };
+  });
