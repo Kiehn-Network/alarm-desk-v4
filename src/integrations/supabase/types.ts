@@ -910,6 +910,7 @@ export type Database = {
           key_number: string | null
           kunden_email: string | null
           kunden_name: string | null
+          legacy_data: Json | null
           prioritaet: Database["public"]["Enums"]["einsatz_prioritaet"]
           status: Database["public"]["Enums"]["einsatz_status"]
           storniert_at: string | null
@@ -947,6 +948,7 @@ export type Database = {
           key_number?: string | null
           kunden_email?: string | null
           kunden_name?: string | null
+          legacy_data?: Json | null
           prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
           status?: Database["public"]["Enums"]["einsatz_status"]
           storniert_at?: string | null
@@ -984,6 +986,7 @@ export type Database = {
           key_number?: string | null
           kunden_email?: string | null
           kunden_name?: string | null
+          legacy_data?: Json | null
           prioritaet?: Database["public"]["Enums"]["einsatz_prioritaet"]
           status?: Database["public"]["Enums"]["einsatz_status"]
           storniert_at?: string | null
