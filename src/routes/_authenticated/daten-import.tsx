@@ -616,6 +616,7 @@ function LegacyEinsaetzeImportSection() {
   const [text, setText] = useState("");
   const [domainId, setDomainId] = useState<string>("");
   const [einsatzTyp, setEinsatzTyp] = useState("hausnotruf");
+  const [provider, setProvider] = useState<"" | "malteser" | "johanniter" | "lgwa">("malteser");
   const [result, setResult] = useState<any>(null);
   const importFn = useServerFn(importLegacyEinsaetze);
   const listFn = useServerFn(listImportDomains);
@@ -630,7 +631,15 @@ function LegacyEinsaetzeImportSection() {
   }, [text]);
 
   const mutation = useMutation({
-    mutationFn: async () => importFn({ data: { domain_id: domainId, einsatz_typ: einsatzTyp, rows } }),
+    mutationFn: async () =>
+      importFn({
+        data: {
+          domain_id: domainId,
+          einsatz_typ: einsatzTyp,
+          hausnotruf_provider: einsatzTyp === "hausnotruf" && provider ? provider : null,
+          rows,
+        },
+      }),
     onSuccess: (res) => {
       setResult(res);
       toast.success(`${res.inserted} Einsätze importiert${res.errors?.length ? `, ${res.errors.length} Fehler` : ""}`);
@@ -654,7 +663,7 @@ function LegacyEinsaetzeImportSection() {
           unverändert in <code>legacy_data</code> gespeichert. Format: CSV, JSON oder SQL-Dump.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <Label className="text-xs">Ziel-Domain</Label>
             <select
@@ -680,6 +689,20 @@ function LegacyEinsaetzeImportSection() {
               <option value="bedrohung">Bedrohung</option>
               <option value="schluessel">Schlüsseldienst</option>
               <option value="sonstiges">Sonstiges</option>
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Organisation (Hausnotruf)</Label>
+            <select
+              value={provider}
+              onChange={(e) => setProvider(e.target.value as any)}
+              disabled={einsatzTyp !== "hausnotruf"}
+              className="w-full text-sm rounded-md border bg-background px-2 py-2 mt-1 disabled:opacity-50"
+            >
+              <option value="malteser">Malteser</option>
+              <option value="johanniter">Johanniter</option>
+              <option value="lgwa">LüWa</option>
+              <option value="">— keine —</option>
             </select>
           </div>
         </div>
