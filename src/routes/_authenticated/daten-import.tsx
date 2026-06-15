@@ -12,6 +12,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { importDateien, attachFilesToDateien } from "@/lib/datei-import.functions";
+import { importLegacyEinsaetze, listImportDomains } from "@/lib/legacy-einsaetze-import.functions";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { safeUUID } from "@/lib/utils";
 
@@ -377,6 +379,8 @@ function DatenImportPage() {
       )}
 
       <BulkFileAttachSection />
+
+      <LegacyEinsaetzeImportSection />
     </div>
   );
 }
