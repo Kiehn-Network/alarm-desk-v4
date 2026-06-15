@@ -27,6 +27,7 @@ import { listAppModules } from "@/lib/settings.functions";
 import {
   previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
   startSchemaMigrationJob, runSchemaMigration, exportMigrationsSql,
+  exportFullBootstrapSql,
 } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
