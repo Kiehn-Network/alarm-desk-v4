@@ -11,6 +11,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const inputSchema = z.object({
   domain_id: z.string().uuid(),
   einsatz_typ: z.string().min(1).max(50).default("hausnotruf"),
+  hausnotruf_provider: z.enum(["malteser", "johanniter", "lgwa"]).optional().nullable(),
   rows: z.array(z.record(z.string(), z.any())).min(1).max(5000),
 });
 
@@ -93,6 +94,10 @@ export const importLegacyEinsaetze = createServerFn({ method: "POST" })
           einsatz_ende_am: end,
           abgeschlossen_am: status === "abgeschlossen" ? end : null,
           hausnotruf_loesung: solution ? String(solution).slice(0, 5000) : null,
+          hausnotruf_provider:
+            data.einsatz_typ === "hausnotruf"
+              ? (pick(r, "hausnotruf_provider", "provider", "organisation", "organization") ?? data.hausnotruf_provider ?? null)
+              : null,
           kunden_name: pick(r, "kunden_name", "customer", "kunde"),
           address: pick(r, "address", "adresse"),
           key_number: pick(r, "key_number", "schluessel"),
