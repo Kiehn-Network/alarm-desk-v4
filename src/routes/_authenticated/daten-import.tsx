@@ -22,6 +22,7 @@ export const Route = createFileRoute("/_authenticated/daten-import")({
 });
 
 type Row = {
+  legacy_id?: string | null;
   filename: string;
   address?: string | null;
   key_number?: string | null;
@@ -33,6 +34,13 @@ type Row = {
 };
 
 const FIELD_ALIASES: Record<string, keyof Row> = {
+  id: "legacy_id",
+  legacy_id: "legacy_id",
+  legacyid: "legacy_id",
+  altid: "legacy_id",
+  oldid: "legacy_id",
+  fileid: "legacy_id",
+  file_id: "legacy_id",
   filename: "filename",
   file: "filename",
   dateiname: "filename",
@@ -249,7 +257,7 @@ function DatenImportPage() {
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={"CSV, JSON oder SQL-INSERT hier einfügen…\n\nErkannte Spalten: filename, address, key_number, folder, kunden_name, notiz, teilnehmer_id, anlagen_nr"}
+            placeholder={"CSV, JSON oder SQL-INSERT hier einfügen…\n\nErkannte Spalten: id (=legacy_id, für file_id-Zuordnung in Einsätzen), filename, address, key_number, folder, kunden_name, notiz, teilnehmer_id, anlagen_nr"}
             className="font-mono text-xs min-h-[200px]"
           />
           <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
