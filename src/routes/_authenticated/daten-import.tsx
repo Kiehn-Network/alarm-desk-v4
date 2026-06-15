@@ -537,3 +537,193 @@ function BulkFileAttachSection() {
     </Card>
   );
 }
+function parseLegacyText(text: string): any[] {
+  const t = text.trim();
+  if (!t) return [];
+  if (t.startsWith("[") || t.startsWith("{")) {
+    const j = JSON.parse(t);
+    return Array.isArray(j) ? j : (j.rows ?? j.data ?? []);
+  }
+  if (/insert\s+into/i.test(t)) {
+    // Reuse SQL parser logic — generic columns
+    const rows: any[] = [];
+    const re = /INSERT\s+INTO\s+`?\w+`?\s*\(([^)]+)\)\s*VALUES\s*([\s\S]+?);/gi;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(t)) !== null) {
+      const cols = m[1].split(",").map((s) => s.trim().replace(/`/g, "").toLowerCase());
+      const vp = m[2];
+      const tuples: string[][] = [];
+      let cur: string[] = [], field = "", inStr = false, depth = 0;
+      for (let i = 0; i < vp.length; i++) {
+        const c = vp[i];
+        if (inStr) {
+          if (c === "\\" && i + 1 < vp.length) { field += vp[i + 1]; i++; }
+          else if (c === "'") { if (vp[i + 1] === "'") { field += "'"; i++; } else inStr = false; }
+          else field += c;
+        } else {
+          if (c === "'") inStr = true;
+          else if (c === "(") { if (depth === 0) { cur = []; field = ""; } depth++; }
+          else if (c === ")") { depth--; if (depth === 0) { cur.push(field.trim()); tuples.push(cur); field = ""; } }
+          else if (c === "," && depth === 1) { cur.push(field.trim()); field = ""; }
+          else if (depth > 0) field += c;
+        }
+      }
+      for (const tup of tuples) {
+        const r: any = {};
+        cols.forEach((c, idx) => {
+          let v: any = tup[idx];
+          if (v === undefined) v = null;
+          else if (/^null$/i.test(v)) v = null;
+          else if (v.startsWith("'") && v.endsWith("'")) v = v.slice(1, -1);
+          r[c] = v;
+        });
+        rows.push(r);
+      }
+    }
+    return rows;
+  }
+  // CSV: split delimiters ; , \t — keep all columns
+  const lines: string[][] = [];
+  let cur: string[] = [], field = "", inQ = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (inQ) {
+      if (c === '"') { if (t[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += c;
+    } else {
+      if (c === '"') inQ = true;
+      else if (c === "," || c === ";" || c === "\t") { cur.push(field); field = ""; }
+      else if (c === "\n") { cur.push(field); lines.push(cur); cur = []; field = ""; }
+      else if (c === "\r") {}
+      else field += c;
+    }
+  }
+  if (field.length > 0 || cur.length > 0) { cur.push(field); lines.push(cur); }
+  if (lines.length < 2) return [];
+  const headers = lines[0].map((h) => h.trim().toLowerCase());
+  const out: any[] = [];
+  for (let i = 1; i < lines.length; i++) {
+    const l = lines[i];
+    if (l.every((v) => !v.trim())) continue;
+    const r: any = {};
+    headers.forEach((h, idx) => { r[h] = (l[idx]?.trim() ?? null) || null; });
+    out.push(r);
+  }
+  return out;
+}
+
+function LegacyEinsaetzeImportSection() {
+  const [text, setText] = useState("");
+  const [domainId, setDomainId] = useState<string>("");
+  const [einsatzTyp, setEinsatzTyp] = useState("hausnotruf");
+  const [result, setResult] = useState<any>(null);
+  const importFn = useServerFn(importLegacyEinsaetze);
+  const listFn = useServerFn(listImportDomains);
+
+  const domQ = useQuery({
+    queryKey: ["legacy-import-domains"],
+    queryFn: () => listFn(),
+  });
+
+  const rows = useMemo(() => {
+    try { return parseLegacyText(text); } catch { return []; }
+  }, [text]);
+
+  const mutation = useMutation({
+    mutationFn: async () => importFn({ data: { domain_id: domainId, einsatz_typ: einsatzTyp, rows } }),
+    onSuccess: (res) => {
+      setResult(res);
+      toast.success(`${res.inserted} Einsätze importiert${res.errors?.length ? `, ${res.errors.length} Fehler` : ""}`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Import fehlgeschlagen"),
+  });
+
+  return (
+    <Card className="border-primary/30">
+      <CardHeader>
+        <CardTitle className="text-base flex items-center gap-2">
+          <Database className="size-5 text-primary" /> Alt-Einsätze importieren (Legacy)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Importiert Einsätze aus älteren Systemversionen. Bekannte Felder werden gemappt
+          (<code>start_time</code>, <code>end_time</code>, <code>vorort_time</code>,
+          <code> abfahrt_time</code>, <code>status</code>, <code>reason</code>,
+          <code> solution</code>, <code>cancel_reason</code>); alle Originalfelder werden zusätzlich
+          unverändert in <code>legacy_data</code> gespeichert. Format: CSV, JSON oder SQL-Dump.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Label className="text-xs">Ziel-Domain</Label>
+            <select
+              value={domainId}
+              onChange={(e) => setDomainId(e.target.value)}
+              className="w-full text-sm rounded-md border bg-background px-2 py-2 mt-1"
+            >
+              <option value="">— bitte wählen —</option>
+              {(domQ.data?.domains ?? []).map((d: any) => (
+                <option key={d.id} value={d.id}>{d.name} ({d.slug})</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label className="text-xs">Einsatz-Typ</Label>
+            <select
+              value={einsatzTyp}
+              onChange={(e) => setEinsatzTyp(e.target.value)}
+              className="w-full text-sm rounded-md border bg-background px-2 py-2 mt-1"
+            >
+              <option value="hausnotruf">Hausnotruf</option>
+              <option value="intervention">Intervention</option>
+              <option value="bedrohung">Bedrohung</option>
+              <option value="schluessel">Schlüsseldienst</option>
+              <option value="sonstiges">Sonstiges</option>
+            </select>
+          </div>
+        </div>
+
+        <Textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={"CSV / JSON / SQL-INSERT hier einfügen…"}
+          className="font-mono text-xs min-h-[160px]"
+        />
+
+        <div className="flex items-center justify-between">
+          <div className="text-xs text-muted-foreground">{rows.length} Zeile{rows.length === 1 ? "" : "n"} erkannt</div>
+          <Button
+            disabled={!domainId || rows.length === 0 || mutation.isPending}
+            onClick={() => { setResult(null); mutation.mutate(); }}
+          >
+            {mutation.isPending ? (
+              <><Loader2 className="size-4 mr-2 animate-spin" /> Importiere…</>
+            ) : (
+              <><Upload className="size-4 mr-2" /> {rows.length} Einsätze importieren</>
+            )}
+          </Button>
+        </div>
+
+        {result && (
+          <div className="space-y-3 pt-2 border-t">
+            <div className="grid grid-cols-3 gap-3">
+              <Stat label="Gesamt" value={result.total} />
+              <Stat label="Importiert" value={result.inserted} tone="success" />
+              <Stat label="Fehler" value={result.errors?.length ?? 0} tone="muted" />
+            </div>
+            {result.errors?.length > 0 && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3">
+                <ul className="text-xs space-y-1 max-h-40 overflow-y-auto">
+                  {result.errors.slice(0, 20).map((e: any, i: number) => (
+                    <li key={i}><span className="font-mono text-muted-foreground">Zeile {e.row}:</span> {e.message}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
