@@ -66,9 +66,30 @@ export const importLegacyEinsaetze = createServerFn({ method: "POST" })
     const errors: { row: number; message: string }[] = [];
     const records: any[] = [];
 
+    // Pre-resolve file_id (legacy) -> datei row for enrichment
+    const fileIds = Array.from(new Set(
+      data.rows
+        .map((r) => pick(r, "file_id", "fileid", "datei_id", "dateiid"))
+        .filter((v) => v != null && v !== "")
+        .map((v) => String(v)),
+    ));
+    const fileMap = new Map<string, any>();
+    if (fileIds.length > 0) {
+      const { data: dateien } = await supabaseAdmin
+        .from("dateien")
+        .select("id, legacy_id, kunden_name, address, key_number, teilnehmer_id, anlagen_nr")
+        .eq("domain_id", data.domain_id)
+        .in("legacy_id", fileIds);
+      (dateien ?? []).forEach((d: any) => {
+        if (d.legacy_id) fileMap.set(String(d.legacy_id), d);
+      });
+    }
+
     for (let i = 0; i < data.rows.length; i++) {
       const r = data.rows[i];
       try {
+        const fileLegacyId = pick(r, "file_id", "fileid", "datei_id", "dateiid");
+        const matchedFile = fileLegacyId ? fileMap.get(String(fileLegacyId)) : null;
         const start = toIso(pick(r, "start_time", "start", "created_at", "geplant_am"));
         const end = toIso(pick(r, "end_time", "end", "abgeschlossen_am", "einsatz_ende_am"));
         const vorort = toIso(pick(r, "vorort_time", "vor_ort_am", "vor_ort_time"));
@@ -98,11 +119,11 @@ export const importLegacyEinsaetze = createServerFn({ method: "POST" })
             data.einsatz_typ === "hausnotruf"
               ? (pick(r, "hausnotruf_provider", "provider", "organisation", "organization") ?? data.hausnotruf_provider ?? null)
               : null,
-          kunden_name: pick(r, "kunden_name", "customer", "kunde"),
-          address: pick(r, "address", "adresse"),
-          key_number: pick(r, "key_number", "schluessel"),
-          anlagen_nr: pick(r, "anlagen_nr", "anlagennr"),
-          teilnehmer_id: pick(r, "teilnehmer_id", "teilnehmerid"),
+          kunden_name: pick(r, "kunden_name", "customer", "kunde") ?? matchedFile?.kunden_name ?? null,
+          address: pick(r, "address", "adresse") ?? matchedFile?.address ?? null,
+          key_number: pick(r, "key_number", "schluessel") ?? matchedFile?.key_number ?? null,
+          anlagen_nr: pick(r, "anlagen_nr", "anlagennr") ?? matchedFile?.anlagen_nr ?? null,
+          teilnehmer_id: pick(r, "teilnehmer_id", "teilnehmerid") ?? matchedFile?.teilnehmer_id ?? null,
           beschreibung: pick(r, "beschreibung", "description", "notiz"),
           legacy_data: r,
         };
