@@ -282,7 +282,7 @@ export async function enqueueErpForEinsatz(opts: {
     .from("einsaetze").select("*").eq("id", opts.einsatz_id).single();
   if (eErr || !einsatz) throw new Error("Einsatz nicht gefunden");
 
-  const payload = buildErpPayload(einsatz);
+  const payload = await buildErpPayload(einsatz);
   const { data: row, error } = await supabaseAdmin
     .from("erp_outbox")
     .insert({
