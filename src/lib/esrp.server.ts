@@ -71,13 +71,14 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
       ? `/api${s.endpoint_path.startsWith("/") ? "" : "/"}${s.endpoint_path}`
       : s.endpoint_path.startsWith("/") ? s.endpoint_path : `/${s.endpoint_path}`;
     const url = `${s.api_base.replace(/\/$/, "")}${ep}`;
+    const payload = await resolveOutboundPayload(job);
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${jwt}`,
       },
-      body: JSON.stringify(job.payload),
+      body: JSON.stringify(payload),
     });
     const body = await res.text();
     if (res.status === 200 || res.status === 201 || res.status === 409) {
@@ -90,7 +91,7 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
       }).eq("id", outboxId);
       return { ok: true };
     }
-    const msg = formatErpError(res.status, body, job.payload);
+    const msg = formatErpError(res.status, body, payload);
     await markFailed(outboxId, job.tries, msg);
     return { ok: false, error: msg };
   } catch (e: any) {
@@ -98,6 +99,28 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
     await markFailed(outboxId, job.tries, msg);
     return { ok: false, error: msg };
   }
+}
+
+async function resolveOutboundPayload(job: any) {
+  const payload = job.payload;
+  const hasEinsatzId = payload && typeof payload === "object" && typeof payload.EinsatzId === "string" && payload.EinsatzId.trim() !== "";
+  if (hasEinsatzId || !job.einsatz_id) return payload;
+
+  const { data: einsatz } = await supabaseAdmin
+    .from("einsaetze")
+    .select("*")
+    .eq("id", job.einsatz_id)
+    .maybeSingle();
+
+  if (!einsatz) return payload;
+
+  const rebuiltPayload = buildErpPayload(einsatz);
+  await supabaseAdmin
+    .from("erp_outbox")
+    .update({ payload: rebuiltPayload, external_id: rebuiltPayload.EinsatzId })
+    .eq("id", job.id);
+
+  return rebuiltPayload;
 }
 
 /**
