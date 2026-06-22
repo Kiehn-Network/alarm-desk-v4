@@ -90,7 +90,7 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
       }).eq("id", outboxId);
       return { ok: true };
     }
-    const msg = `ERP HTTP ${res.status}: ${body.slice(0, 500)}`;
+    const msg = formatErpError(res.status, body, job.payload);
     await markFailed(outboxId, job.tries, msg);
     return { ok: false, error: msg };
   } catch (e: any) {
@@ -98,6 +98,71 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
     await markFailed(outboxId, job.tries, msg);
     return { ok: false, error: msg };
   }
+}
+
+/**
+ * Baut eine ausführliche Fehlermeldung für die Outbox:
+ * - Status + Titel
+ * - "detail" / "message" aus Problem+JSON
+ * - Extrahierte Feldnamen aus errors{}, validationErrors[], oder Texten wie "X darf nicht leer sein"
+ * - Vergleich mit Payload: welche dieser Felder sind null/leer
+ * - gekürzter Raw-Body (max 800 Zeichen)
+ */
+function formatErpError(status: number, rawBody: string, payload: any): string {
+  const lines: string[] = [`ERP HTTP ${status}`];
+  let parsed: any = null;
+  try { parsed = JSON.parse(rawBody); } catch { /* kein JSON */ }
+
+  if (parsed && typeof parsed === "object") {
+    if (parsed.title) lines.push(`Titel: ${parsed.title}`);
+    if (parsed.detail) lines.push(`Detail: ${parsed.detail}`);
+    else if (parsed.message) lines.push(`Detail: ${parsed.message}`);
+  }
+
+  const fields = extractFieldNames(parsed, rawBody);
+  if (fields.length > 0) {
+    lines.push(`Betroffene Felder: ${fields.join(", ")}`);
+    if (payload && typeof payload === "object") {
+      const empty = fields.filter((f) => {
+        const v = (payload as any)[f];
+        return v === null || v === undefined || v === "";
+      });
+      if (empty.length > 0) {
+        lines.push(`⚠ Im Payload leer/null: ${empty.join(", ")}`);
+      }
+    }
+  }
+
+  lines.push(`Body: ${rawBody.slice(0, 800)}`);
+  return lines.join(" | ");
+}
+
+function extractFieldNames(parsed: any, rawBody: string): string[] {
+  const set = new Set<string>();
+
+  // ASP.NET / RFC 7807: errors: { "FieldName": ["msg"] }
+  if (parsed?.errors && typeof parsed.errors === "object" && !Array.isArray(parsed.errors)) {
+    for (const k of Object.keys(parsed.errors)) set.add(k);
+  }
+  // validationErrors: [{ field: "X" }]
+  if (Array.isArray(parsed?.validationErrors)) {
+    for (const e of parsed.validationErrors) {
+      if (e?.field) set.add(String(e.field));
+      if (e?.propertyName) set.add(String(e.propertyName));
+    }
+  }
+
+  // Text-Heuristik: "FeldName darf nicht leer sein" / "is required" / "must not be empty"
+  const patterns = [
+    /([A-Z][A-Za-z0-9_]+)\s+darf\s+nicht\s+leer\s+sein/g,
+    /([A-Z][A-Za-z0-9_]+)\s+(?:is\s+required|must\s+not\s+be\s+empty|is\s+missing)/gi,
+    /["']([A-Z][A-Za-z0-9_]+)["']\s*:\s*\[/g,
+  ];
+  for (const re of patterns) {
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(rawBody)) !== null) set.add(m[1]);
+  }
+  return Array.from(set);
 }
 
 async function markFailed(id: string, prevTries: number, message: string) {
