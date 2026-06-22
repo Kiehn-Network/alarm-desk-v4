@@ -176,6 +176,7 @@ function OutboxCard() {
   const listFn = useServerFn(listErpOutbox);
   const retryFn = useServerFn(retryErpOutbox);
   const qc = useQueryClient();
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { data, isLoading } = useQuery({
     queryKey: ["esrp-outbox"],
     queryFn: () => listFn(),
@@ -219,9 +220,19 @@ function OutboxCard() {
               </thead>
               <tbody>
                 {(data?.jobs ?? []).map((j: any) => (
+                  <>
                   <tr key={j.id} className="border-t border-border">
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
+                        {j.last_error && (
+                          <button
+                            onClick={() => setExpanded((s) => ({ ...s, [j.id]: !s[j.id] }))}
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label="Details"
+                          >
+                            {expanded[j.id] ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                          </button>
+                        )}
                         <EsrpStatusLamp entry={{ status: j.status, tries: j.tries, last_error: j.last_error, sent_at: j.sent_at }} />
                         <Badge variant="outline" className="text-xs">{j.status}</Badge>
                       </div>
@@ -229,7 +240,9 @@ function OutboxCard() {
                     <td className="px-3 py-2 font-mono text-xs">{j.external_id}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(j.created_at).toLocaleString("de-DE")}</td>
                     <td className="px-3 py-2">{j.tries}</td>
-                    <td className="px-3 py-2 text-xs text-red-500 max-w-[300px] truncate" title={j.last_error ?? ""}>{j.last_error}</td>
+                    <td className="px-3 py-2 text-xs text-red-500 max-w-[300px] truncate" title={j.last_error ?? ""}>
+                      {firstLine(j.last_error)}
+                    </td>
                     <td className="px-3 py-2 text-right">
                       {j.status !== "sent" && (
                         <Button size="sm" variant="ghost" onClick={() => retry(j.id)} className="gap-1.5">
@@ -238,6 +251,14 @@ function OutboxCard() {
                       )}
                     </td>
                   </tr>
+                  {expanded[j.id] && j.last_error && (
+                    <tr key={j.id + "-d"} className="bg-muted/30 border-t border-border">
+                      <td colSpan={6} className="px-4 py-3">
+                        <ErrorDetails error={j.last_error} payload={j.payload} />
+                      </td>
+                    </tr>
+                  )}
+                  </>
                 ))}
                 {(data?.jobs ?? []).length === 0 && (
                   <tr><td colSpan={6} className="text-center text-muted-foreground p-6">Keine Einträge</td></tr>
