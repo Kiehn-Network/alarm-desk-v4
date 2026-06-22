@@ -317,8 +317,8 @@ function OutboxCard() {
               </thead>
               <tbody>
                 {(data?.jobs ?? []).map((j: any) => (
-                  <>
-                  <tr key={j.id} className="border-t border-border">
+                  <React.Fragment key={j.id}>
+                  <tr className="border-t border-border">
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         {j.last_error && (
@@ -349,13 +349,13 @@ function OutboxCard() {
                     </td>
                   </tr>
                   {expanded[j.id] && j.last_error && (
-                    <tr key={j.id + "-d"} className="bg-muted/30 border-t border-border">
+                    <tr className="bg-muted/30 border-t border-border">
                       <td colSpan={6} className="px-4 py-3">
                         <ErrorDetails error={j.last_error} payload={j.payload} />
                       </td>
                     </tr>
                   )}
-                  </>
+                  </React.Fragment>
                 ))}
                 {(data?.jobs ?? []).length === 0 && (
                   <tr><td colSpan={6} className="text-center text-muted-foreground p-6">Keine Einträge</td></tr>
