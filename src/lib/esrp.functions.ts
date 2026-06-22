@@ -122,8 +122,8 @@ export const retryErpOutbox = createServerFn({ method: "POST" })
         .maybeSingle();
       if (einsatz) {
         const payload = buildErpPayload(einsatz);
-        patch.payload = payload;
-        patch.external_id = payload.EinsatzId;
+        patch.payload = payload as any;
+        patch.external_id = payload.einsatzId;
       }
     }
     await supabaseAdmin.from("erp_outbox").update(patch).eq("id", data.outbox_id);
