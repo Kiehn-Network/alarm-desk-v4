@@ -51,9 +51,18 @@ export async function buildErpPayload(einsatz: any) {
     }
   }
 
+  // Bevorzugt die ursprüngliche numerische Einsatz-ID aus dem Legacy-Import (z.B. 202501059),
+  // sonst Fallback auf unsere UUID. Format bleibt "AD-<id>" wie in der alten Version.
+  const legacyId =
+    einsatz.legacy_data && typeof einsatz.legacy_data === "object"
+      ? (einsatz.legacy_data as any).id
+      : null;
+  const idPart =
+    legacyId != null && String(legacyId).trim() !== "" ? String(legacyId) : String(einsatz.id);
+
   const daten: Record<string, unknown> = {
     ...bericht,
-    permission_id: String(einsatz.id),
+    permission_id: idPart,
     fahrer,
     identNr,
     leitstelle_user: null,
@@ -64,7 +73,7 @@ export async function buildErpPayload(einsatz: any) {
   };
 
   return {
-    einsatzId: `AD-${einsatz.id}`,
+    einsatzId: `AD-${idPart}`,
     anlagenNr,
     einsatzDatum,
     daten,
