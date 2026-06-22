@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
-import { enqueueErpForEinsatz, processErpOutboxItem } from "@/lib/esrp.server";
+import { buildErpPayload, enqueueErpForEinsatz, processErpOutboxItem } from "@/lib/esrp.server";
 
 async function isDomainAdmin(userId: string, domainId: string) {
   const { data } = await supabaseAdmin
@@ -108,12 +108,25 @@ export const retryErpOutbox = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data: job } = await supabase
-      .from("erp_outbox").select("id,domain_id").eq("id", data.outbox_id).maybeSingle();
+      .from("erp_outbox").select("id,domain_id,einsatz_id").eq("id", data.outbox_id).maybeSingle();
     if (!job) throw new Error("Job nicht gefunden");
     if (job.domain_id !== domainId) throw new Error("Job gehört nicht zur Domäne");
-    await supabaseAdmin.from("erp_outbox").update({
+    const patch: any = {
       status: "pending", next_retry_at: null, last_error: null,
-    }).eq("id", data.outbox_id);
+    };
+    if (job.einsatz_id) {
+      const { data: einsatz } = await supabaseAdmin
+        .from("einsaetze")
+        .select("*")
+        .eq("id", job.einsatz_id)
+        .maybeSingle();
+      if (einsatz) {
+        const payload = buildErpPayload(einsatz);
+        patch.payload = payload;
+        patch.external_id = payload.EinsatzId;
+      }
+    }
+    await supabaseAdmin.from("erp_outbox").update(patch).eq("id", data.outbox_id);
     return processErpOutboxItem(data.outbox_id);
   });
 
