@@ -12,12 +12,30 @@ export type ErpSettings = {
 };
 
 export function buildErpPayload(einsatz: any) {
-  return {
-    EinsatzId: `AD-${einsatz.id}`,
+  // AnlagenNr ist im ERP Pflicht (> 0). Falls am Einsatz nicht gepflegt, mit 0 senden -
+  // dann liefert das ERP einen klaren Validierungsfehler statt 500.
+  const anlagenNrRaw = einsatz.anlagen_nr;
+  const anlagenNr =
+    typeof anlagenNrRaw === "number"
+      ? anlagenNrRaw
+      : anlagenNrRaw != null && anlagenNrRaw !== ""
+        ? Number(anlagenNrRaw)
+        : 0;
+
+  // EinsatzDatum ist Pflicht. Bevorzugt: tatsächliche Einsatzzeit, sonst Plan/Anlage/Erstellung.
+  const einsatzDatum =
+    einsatz.vor_ort_am ||
+    einsatz.assigned_at ||
+    einsatz.geplant_am ||
+    einsatz.abgeschlossen_am ||
+    einsatz.created_at ||
+    new Date().toISOString();
+
+  // Alle übrigen Felder als flexibles "daten"-Dictionary mitgeben.
+  const daten: Record<string, unknown> = {
     KundenName: einsatz.kunden_name ?? null,
     Address: einsatz.address ?? null,
     KeyNumber: einsatz.key_number ?? null,
-    AnlagenNr: einsatz.anlagen_nr ?? null,
     TeilnehmerId: einsatz.teilnehmer_id ?? null,
     Einsatzgrund: einsatz.einsatzgrund ?? null,
     EinsatzTyp: einsatz.einsatz_typ ?? null,
@@ -30,7 +48,18 @@ export function buildErpPayload(einsatz: any) {
     EinsatzEndeAm: einsatz.einsatz_ende_am ?? null,
     AbgeschlossenAm: einsatz.abgeschlossen_am ?? null,
     BerichtTyp: einsatz.bericht_typ ?? null,
-    BerichtData: einsatz.bericht_data ?? null,
+    BerichtData: einsatz.bericht_data
+      ? typeof einsatz.bericht_data === "string"
+        ? einsatz.bericht_data
+        : JSON.stringify(einsatz.bericht_data)
+      : null,
+  };
+
+  return {
+    einsatzId: `AD-${einsatz.id}`,
+    anlagenNr,
+    einsatzDatum,
+    daten,
   };
 }
 
