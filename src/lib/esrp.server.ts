@@ -145,7 +145,7 @@ export async function enqueueErpForEinsatz(opts: {
     .insert({
       domain_id: opts.domain_id,
       einsatz_id: opts.einsatz_id,
-      external_id: payload.einsatz_id,
+      external_id: payload.EinsatzId,
       payload,
       status: "pending",
       created_by: opts.created_by ?? null,
