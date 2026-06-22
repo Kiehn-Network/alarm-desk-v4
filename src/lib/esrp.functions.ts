@@ -121,7 +121,7 @@ export const retryErpOutbox = createServerFn({ method: "POST" })
         .eq("id", job.einsatz_id)
         .maybeSingle();
       if (einsatz) {
-        const payload = buildErpPayload(einsatz);
+        const payload = await buildErpPayload(einsatz);
         patch.payload = payload as any;
         patch.external_id = payload.einsatzId;
       }
