@@ -169,7 +169,7 @@ async function resolveOutboundPayload(job: any) {
 
   if (!einsatz) return payload;
 
-  const rebuiltPayload = buildErpPayload(einsatz);
+  const rebuiltPayload = await buildErpPayload(einsatz);
   await supabaseAdmin
     .from("erp_outbox")
     .update({ payload: rebuiltPayload as any, external_id: rebuiltPayload.einsatzId })
