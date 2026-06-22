@@ -145,8 +145,13 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
 
 async function resolveOutboundPayload(job: any) {
   const payload = job.payload;
-  const hasEinsatzId = payload && typeof payload === "object" && typeof payload.EinsatzId === "string" && payload.EinsatzId.trim() !== "";
-  if (hasEinsatzId || !job.einsatz_id) return payload;
+  const currentId = payload && typeof payload === "object"
+    ? (payload.einsatzId ?? payload.EinsatzId)
+    : null;
+  const hasEinsatzId = typeof currentId === "string" && currentId.trim() !== "";
+  const hasNewShape = payload && typeof payload === "object" && "einsatzId" in payload && "anlagenNr" in payload;
+  if (hasEinsatzId && hasNewShape) return payload;
+  if (!job.einsatz_id) return payload;
 
   const { data: einsatz } = await supabaseAdmin
     .from("einsaetze")
@@ -159,7 +164,7 @@ async function resolveOutboundPayload(job: any) {
   const rebuiltPayload = buildErpPayload(einsatz);
   await supabaseAdmin
     .from("erp_outbox")
-    .update({ payload: rebuiltPayload, external_id: rebuiltPayload.EinsatzId })
+    .update({ payload: rebuiltPayload as any, external_id: rebuiltPayload.einsatzId })
     .eq("id", job.id);
 
   return rebuiltPayload;
@@ -275,8 +280,8 @@ export async function enqueueErpForEinsatz(opts: {
     .insert({
       domain_id: opts.domain_id,
       einsatz_id: opts.einsatz_id,
-      external_id: payload.EinsatzId,
-      payload,
+      external_id: payload.einsatzId,
+      payload: payload as any,
       status: "pending",
       created_by: opts.created_by ?? null,
     })
