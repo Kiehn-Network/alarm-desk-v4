@@ -53,6 +53,19 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
     .from("erp_outbox").select("*").eq("id", outboxId).single();
   if (jErr || !job) return { ok: false, error: "Outbox-Job nicht gefunden" };
   if (job.status === "sent") return { ok: true };
+  if ((job.status as string) === "sending") return { ok: true, error: "bereits in Verarbeitung" };
+
+  // Atomar beanspruchen: nur fortfahren, wenn wir den Job exklusiv von
+  // pending/failed auf 'sending' setzen können. Verhindert Doppelversand
+  // durch parallele Worker- und Inline-Aufrufe.
+  const { data: claimed } = await supabaseAdmin
+    .from("erp_outbox")
+    .update({ status: "sending" as any })
+    .eq("id", outboxId)
+    .in("status", ["pending", "failed"])
+    .select("id")
+    .maybeSingle();
+  if (!claimed) return { ok: true, error: "bereits beansprucht" };
 
   const { data: s, error: sErr } = await supabaseAdmin
     .from("erp_settings").select("*").eq("domain_id", job.domain_id).maybeSingle();
