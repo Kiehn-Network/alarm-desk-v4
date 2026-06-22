@@ -11,7 +11,7 @@ export type ErpSettings = {
   auto_on_abschluss: boolean;
 };
 
-export function buildErpPayload(einsatz: any) {
+export async function buildErpPayload(einsatz: any) {
   // AnlagenNr ist im ERP Pflicht (> 0). Falls am Einsatz nicht gepflegt, mit 0 senden -
   // dann liefert das ERP einen klaren Validierungsfehler statt 500.
   const anlagenNrRaw = einsatz.anlagen_nr;
@@ -31,28 +31,36 @@ export function buildErpPayload(einsatz: any) {
     einsatz.created_at ||
     new Date().toISOString();
 
-  // Alle übrigen Felder als flexibles "daten"-Dictionary mitgeben.
+  // Fahrername aus Profil auflösen (Legacy-Format erwartet "fahrer" als Klartext).
+  let fahrer: string | null = null;
+  let identNr: string | null = null;
+  if (einsatz.assigned_to) {
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name")
+      .eq("id", einsatz.assigned_to)
+      .maybeSingle();
+    fahrer = prof?.display_name ?? null;
+  }
+
+  // Bericht-Daten flach in "daten" übernehmen (Legacy-Schema).
+  const bericht: Record<string, unknown> = {};
+  if (einsatz.bericht_data && typeof einsatz.bericht_data === "object") {
+    for (const [k, v] of Object.entries(einsatz.bericht_data as Record<string, unknown>)) {
+      bericht[k] = v;
+    }
+  }
+
   const daten: Record<string, unknown> = {
-    KundenName: einsatz.kunden_name ?? null,
-    Address: einsatz.address ?? null,
-    KeyNumber: einsatz.key_number ?? null,
-    TeilnehmerId: einsatz.teilnehmer_id ?? null,
-    Einsatzgrund: einsatz.einsatzgrund ?? null,
-    EinsatzTyp: einsatz.einsatz_typ ?? null,
-    Beschreibung: einsatz.beschreibung ?? null,
-    Prioritaet: einsatz.prioritaet ?? null,
-    GeplantAm: einsatz.geplant_am ?? null,
-    AssignedAt: einsatz.assigned_at ?? null,
-    VorOrtAm: einsatz.vor_ort_am ?? null,
-    AbfahrtAm: einsatz.abfahrt_am ?? null,
-    EinsatzEndeAm: einsatz.einsatz_ende_am ?? null,
-    AbgeschlossenAm: einsatz.abgeschlossen_am ?? null,
-    BerichtTyp: einsatz.bericht_typ ?? null,
-    BerichtData: einsatz.bericht_data
-      ? typeof einsatz.bericht_data === "string"
-        ? einsatz.bericht_data
-        : JSON.stringify(einsatz.bericht_data)
-      : null,
+    ...bericht,
+    permission_id: String(einsatz.id),
+    fahrer,
+    identNr,
+    leitstelle_user: null,
+    status_local: einsatz.status ?? null,
+    vorort_time: einsatz.vor_ort_am ?? null,
+    abfahrt_time: einsatz.abfahrt_am ?? null,
+    sharfschaltungs_time: einsatz.einsatz_ende_am ?? null,
   };
 
   return {
@@ -161,7 +169,7 @@ async function resolveOutboundPayload(job: any) {
 
   if (!einsatz) return payload;
 
-  const rebuiltPayload = buildErpPayload(einsatz);
+  const rebuiltPayload = await buildErpPayload(einsatz);
   await supabaseAdmin
     .from("erp_outbox")
     .update({ payload: rebuiltPayload as any, external_id: rebuiltPayload.einsatzId })
@@ -274,7 +282,7 @@ export async function enqueueErpForEinsatz(opts: {
     .from("einsaetze").select("*").eq("id", opts.einsatz_id).single();
   if (eErr || !einsatz) throw new Error("Einsatz nicht gefunden");
 
-  const payload = buildErpPayload(einsatz);
+  const payload = await buildErpPayload(einsatz);
   const { data: row, error } = await supabaseAdmin
     .from("erp_outbox")
     .insert({
