@@ -77,6 +77,12 @@ export async function buildErpPayload(einsatz: any) {
     anlagenNr,
     einsatzDatum,
     daten,
+    // PascalCase-Duplikate für case-sensitive .NET-Binder (lokaler ERP-Server).
+    // ASP.NET ignoriert unbekannte/doppelte Felder, daher schaden sie nichts.
+    EinsatzId: `AD-${idPart}`,
+    AnlagenNr: anlagenNr,
+    EinsatzDatum: einsatzDatum,
+    Daten: daten,
   };
 }
 
