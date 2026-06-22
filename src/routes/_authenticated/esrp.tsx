@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { EsrpStatusLamp } from "@/components/esrp/esrp-status-lamp";
+import { cn } from "@/lib/utils";
 import {
   getEsrpSettings,
   updateEsrpSettings,
