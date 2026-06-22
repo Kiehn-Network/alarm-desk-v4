@@ -77,6 +77,12 @@ export async function buildErpPayload(einsatz: any) {
     anlagenNr,
     einsatzDatum,
     daten,
+    // PascalCase-Duplikate für case-sensitive .NET-Binder (lokaler ERP-Server).
+    // ASP.NET ignoriert unbekannte/doppelte Felder, daher schaden sie nichts.
+    EinsatzId: `AD-${idPart}`,
+    AnlagenNr: anlagenNr,
+    EinsatzDatum: einsatzDatum,
+    Daten: daten,
   };
 }
 
@@ -167,7 +173,8 @@ async function resolveOutboundPayload(job: any) {
     : null;
   const hasEinsatzId = typeof currentId === "string" && currentId.trim() !== "";
   const hasNewShape = payload && typeof payload === "object" && "einsatzId" in payload && "anlagenNr" in payload;
-  if (hasEinsatzId && hasNewShape) return payload;
+  const hasPascalDup = payload && typeof payload === "object" && "EinsatzId" in payload;
+  if (hasEinsatzId && hasNewShape && hasPascalDup) return payload;
   if (!job.einsatz_id) return payload;
 
   const { data: einsatz } = await supabaseAdmin
