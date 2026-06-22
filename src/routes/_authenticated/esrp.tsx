@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { EsrpStatusLamp } from "@/components/esrp/esrp-status-lamp";
+import { cn } from "@/lib/utils";
 import {
   getEsrpSettings,
   updateEsrpSettings,
@@ -318,17 +319,23 @@ function OutboxCard() {
               <tbody>
                 {(data?.jobs ?? []).map((j: any) => (
                   <React.Fragment key={j.id}>
-                  <tr className="border-t border-border">
+                  <tr
+                    className={cn(
+                      "border-t border-border",
+                      j.last_error && "cursor-pointer hover:bg-muted/40",
+                    )}
+                    onClick={() => {
+                      if (j.last_error) setExpanded((s) => ({ ...s, [j.id]: !s[j.id] }));
+                    }}
+                  >
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        {j.last_error && (
-                          <button
-                            onClick={() => setExpanded((s) => ({ ...s, [j.id]: !s[j.id] }))}
-                            className="text-muted-foreground hover:text-foreground"
-                            aria-label="Details"
-                          >
-                            {expanded[j.id] ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-                          </button>
+                        {j.last_error ? (
+                          expanded[j.id]
+                            ? <ChevronDown className="size-3.5 text-muted-foreground" />
+                            : <ChevronRight className="size-3.5 text-muted-foreground" />
+                        ) : (
+                          <span className="inline-block size-3.5" />
                         )}
                         <EsrpStatusLamp entry={{ status: j.status, tries: j.tries, last_error: j.last_error, sent_at: j.sent_at }} />
                         <Badge variant="outline" className="text-xs">{j.status}</Badge>
@@ -340,12 +347,25 @@ function OutboxCard() {
                     <td className="px-3 py-2 text-xs text-red-500 max-w-[300px] truncate" title={j.last_error ?? ""}>
                       {firstLine(j.last_error)}
                     </td>
-                    <td className="px-3 py-2 text-right">
-                      {j.status !== "sent" && (
-                        <Button size="sm" variant="ghost" onClick={() => retry(j.id)} className="gap-1.5">
-                          <Send className="size-3.5" /> Erneut
-                        </Button>
-                      )}
+                    <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end gap-1">
+                        {j.last_error && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setExpanded((s) => ({ ...s, [j.id]: !s[j.id] }))}
+                            className="gap-1.5"
+                          >
+                            {expanded[j.id] ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                            Details
+                          </Button>
+                        )}
+                        {j.status !== "sent" && (
+                          <Button size="sm" variant="ghost" onClick={() => retry(j.id)} className="gap-1.5">
+                            <Send className="size-3.5" /> Erneut
+                          </Button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                   {expanded[j.id] && j.last_error && (
