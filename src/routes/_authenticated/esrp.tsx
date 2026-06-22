@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Send, Network } from "lucide-react";
+import { Loader2, RefreshCw, Send, Network, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,103 @@ import {
 export const Route = createFileRoute("/_authenticated/esrp")({
   component: EsrpPage,
 });
+
+function firstLine(s?: string | null): string {
+  if (!s) return "";
+  const i = s.indexOf(" | ");
+  return i > 0 ? s.slice(0, i) : s;
+}
+
+function parseErrorParts(error: string) {
+  // Format aus esrp.server.ts: "ERP HTTP 400 | Titel: ... | Detail: ... | Betroffene Felder: a, b | ⚠ Im Payload leer/null: a | Body: {...}"
+  const parts = error.split(" | ");
+  const out: Record<string, string> = {};
+  for (const p of parts) {
+    const idx = p.indexOf(":");
+    if (idx > 0) {
+      const k = p.slice(0, idx).trim();
+      const v = p.slice(idx + 1).trim();
+      out[k] = v;
+    } else {
+      out["_"] = p;
+    }
+  }
+  return out;
+}
+
+function ErrorDetails({ error, payload }: { error: string; payload: any }) {
+  const p = parseErrorParts(error);
+  const status = p["_"] ?? "";
+  const fields = (p["Betroffene Felder"] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const empty = (p["⚠ Im Payload leer/null"] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const body = p["Body"] ?? "";
+  let prettyBody = body;
+  try { prettyBody = JSON.stringify(JSON.parse(body), null, 2); } catch { /* keep raw */ }
+
+  const emptyPayloadKeys = payload && typeof payload === "object"
+    ? Object.keys(payload).filter((k) => {
+        const v = (payload as any)[k];
+        return v === null || v === undefined || v === "";
+      })
+    : [];
+
+  return (
+    <div className="space-y-3 text-xs">
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="destructive">{status || "Fehler"}</Badge>
+        {p["Titel"] && <span className="font-medium">{p["Titel"]}</span>}
+        {p["Detail"] && <span className="text-muted-foreground">— {p["Detail"]}</span>}
+      </div>
+
+      {fields.length > 0 && (
+        <div className="rounded-md border border-amber-500/40 bg-amber-500/5 p-2">
+          <div className="flex items-center gap-1.5 font-medium text-amber-600 dark:text-amber-400 mb-1">
+            <AlertTriangle className="size-3.5" /> Vom ERP beanstandete Felder
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {fields.map((f) => (
+              <Badge key={f} variant={empty.includes(f) ? "destructive" : "outline"} className="text-[10px]">
+                {f}{empty.includes(f) ? " · leer" : ""}
+              </Badge>
+            ))}
+          </div>
+          {empty.length > 0 && (
+            <p className="mt-1.5 text-muted-foreground">
+              Diese Felder sind im gesendeten Payload <code>null</code>/leer — wahrscheinlich Datenproblem im Einsatz.
+            </p>
+          )}
+        </div>
+      )}
+
+      {emptyPayloadKeys.length > 0 && (
+        <details>
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+            Alle leeren Payload-Felder ({emptyPayloadKeys.length})
+          </summary>
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {emptyPayloadKeys.map((k) => (
+              <Badge key={k} variant="outline" className="text-[10px] font-mono">{k}</Badge>
+            ))}
+          </div>
+        </details>
+      )}
+
+      {body && (
+        <details>
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">ERP-Response-Body</summary>
+          <pre className="mt-1.5 p-2 rounded bg-background border border-border overflow-x-auto text-[11px] max-h-64">{prettyBody}</pre>
+        </details>
+      )}
+
+      {payload && (
+        <details>
+          <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Gesendeter Payload</summary>
+          <pre className="mt-1.5 p-2 rounded bg-background border border-border overflow-x-auto text-[11px] max-h-64">{JSON.stringify(payload, null, 2)}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
 
 function EsrpPage() {
   const { isAdmin, loading } = useRole();
@@ -176,6 +273,7 @@ function OutboxCard() {
   const listFn = useServerFn(listErpOutbox);
   const retryFn = useServerFn(retryErpOutbox);
   const qc = useQueryClient();
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const { data, isLoading } = useQuery({
     queryKey: ["esrp-outbox"],
     queryFn: () => listFn(),
@@ -219,9 +317,19 @@ function OutboxCard() {
               </thead>
               <tbody>
                 {(data?.jobs ?? []).map((j: any) => (
-                  <tr key={j.id} className="border-t border-border">
+                  <React.Fragment key={j.id}>
+                  <tr className="border-t border-border">
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
+                        {j.last_error && (
+                          <button
+                            onClick={() => setExpanded((s) => ({ ...s, [j.id]: !s[j.id] }))}
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label="Details"
+                          >
+                            {expanded[j.id] ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                          </button>
+                        )}
                         <EsrpStatusLamp entry={{ status: j.status, tries: j.tries, last_error: j.last_error, sent_at: j.sent_at }} />
                         <Badge variant="outline" className="text-xs">{j.status}</Badge>
                       </div>
@@ -229,7 +337,9 @@ function OutboxCard() {
                     <td className="px-3 py-2 font-mono text-xs">{j.external_id}</td>
                     <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(j.created_at).toLocaleString("de-DE")}</td>
                     <td className="px-3 py-2">{j.tries}</td>
-                    <td className="px-3 py-2 text-xs text-red-500 max-w-[300px] truncate" title={j.last_error ?? ""}>{j.last_error}</td>
+                    <td className="px-3 py-2 text-xs text-red-500 max-w-[300px] truncate" title={j.last_error ?? ""}>
+                      {firstLine(j.last_error)}
+                    </td>
                     <td className="px-3 py-2 text-right">
                       {j.status !== "sent" && (
                         <Button size="sm" variant="ghost" onClick={() => retry(j.id)} className="gap-1.5">
@@ -238,6 +348,14 @@ function OutboxCard() {
                       )}
                     </td>
                   </tr>
+                  {expanded[j.id] && j.last_error && (
+                    <tr className="bg-muted/30 border-t border-border">
+                      <td colSpan={6} className="px-4 py-3">
+                        <ErrorDetails error={j.last_error} payload={j.payload} />
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
                 ))}
                 {(data?.jobs ?? []).length === 0 && (
                   <tr><td colSpan={6} className="text-center text-muted-foreground p-6">Keine Einträge</td></tr>
