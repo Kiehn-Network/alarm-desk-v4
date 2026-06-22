@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
-import { enqueueErpForEinsatz, processErpOutboxItem } from "@/lib/esrp.server";
+import { buildErpPayload, enqueueErpForEinsatz, processErpOutboxItem } from "@/lib/esrp.server";
 
 async function isDomainAdmin(userId: string, domainId: string) {
   const { data } = await supabaseAdmin
@@ -121,7 +121,6 @@ export const retryErpOutbox = createServerFn({ method: "POST" })
         .eq("id", job.einsatz_id)
         .maybeSingle();
       if (einsatz) {
-        const { buildErpPayload } = await import("@/lib/esrp.server");
         const payload = buildErpPayload(einsatz);
         patch.payload = payload;
         patch.external_id = payload.EinsatzId;
