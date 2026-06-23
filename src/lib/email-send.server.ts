@@ -162,7 +162,7 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
   if (cfg.provider === "smtp") {
     let WorkerMailer: any;
     try {
-      ({ WorkerMailer } = await import("worker-mailer"));
+      ({ WorkerMailer } = await import("./worker-mailer-adapter.server"));
     } catch (e: any) {
       const msg = String(e?.message ?? e);
       if (msg.includes("cloudflare:sockets")) {
