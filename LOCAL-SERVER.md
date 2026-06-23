@@ -87,73 +87,83 @@ es läuft nur in der Worker-Runtime (`workerd`). Deshalb kann der Build nicht mi
 > ausschließlich in `workerd` läuft. Lösung: lokal mit **Wrangler** (workerd)
 > ausführen, nicht mit Node.
 
-## 6. App lokal starten (Wrangler / workerd)
+## 6. App lokal starten
 
-Da die App ein Cloudflare Worker ist, brauchst du `wrangler`, um sie lokal
-laufen zu lassen. Wrangler startet `workerd` (die Worker-Runtime) auf deinem
-Server, sodass alle Worker-only-APIs (`cloudflare:sockets`, etc.) funktionieren.
+**Wichtig:** Die App benutzt TanStack Start mit virtuellen Modulen
+(`#tanstack-router-entry`, `#tanstack-start-entry`, `tanstack-start-manifest:v`).
+Diese werden **nur vom Vite-Plugin** aufgelöst. Wrangler direkt auf
+`src/server.ts` zu starten schlägt deshalb mit
+`Could not resolve "#tanstack-router-entry"` fehl.
 
-### Wrangler installieren
+Korrekter Ablauf: **immer über Vite starten** — entweder im Dev-Modus oder
+nach `vite build` über das fertige Worker-Bundle.
 
-```bash
-sudo npm install -g wrangler
-```
+### Variante A: Dev-Modus (empfohlen zum Testen)
 
-### Variante A: Dev-Modus (zum Testen)
-
-```bash
-# .env wird automatisch geladen (--env-file)
-wrangler dev --ip 0.0.0.0 --port 8080
-```
-
-Die App ist unter `http://<SERVER-IP>:8080` erreichbar. `wrangler dev` führt
-die Quellen direkt aus (kein vorheriger `bun run build` nötig).
-
-### Variante B: Produktion mit gebautem Bundle
-
-Nach `bun run build` liegt das fertige Worker-Bundle unter `dist/` (Hauptdatei
-meist `dist/_worker.js/index.js` oder `dist/server/index.js`).
+`@cloudflare/vite-plugin` führt SSR automatisch in `workerd` aus, sodass
+`cloudflare:sockets` & Co. funktionieren. `.env` wird von Vite automatisch
+geladen.
 
 ```bash
-# Genauen Pfad prüfen:
-ls dist/
-
-# Bundle mit workerd ausliefern:
-wrangler dev dist/_worker.js/index.js \
-  --ip 0.0.0.0 --port 8080 \
-  --compatibility-date 2025-09-24 \
-  --compatibility-flags nodejs_compat
+bun run dev -- --host 0.0.0.0 --port 8080
+# oder: npm run dev -- --host 0.0.0.0 --port 8080
 ```
+
+Die App ist unter `http://<SERVER-IP>:8080` erreichbar.
+
+### Variante B: Produktions-Bundle
+
+1. Build erzeugen:
+
+   ```bash
+   NODE_OPTIONS="--max-old-space-size=2048" bun run build
+   ls dist/
+   ```
+
+   Das Worker-Bundle landet typischerweise unter `dist/_worker.js/index.js`
+   oder `dist/server/index.js` — den genauen Pfad mit `ls dist/` prüfen.
+
+2. Mit Wrangler ausliefern (das **gebaute** Bundle, nicht `src/server.ts`):
+
+   ```bash
+   wrangler dev dist/_worker.js/index.js \
+     --ip 0.0.0.0 --port 8080 \
+     --compatibility-date 2025-09-24 \
+     --compatibility-flags nodejs_compat
+   ```
+
+   Wrangler liest `.env` automatisch (sichtbar an
+   `Using secrets defined in .env` im Startlog).
 
 ### Variante C: Als Dienst mit PM2
 
 ```bash
 sudo npm install -g pm2
 
+# Dev-Modus dauerhaft laufen lassen
 pm2 start --name alarmdesk \
   --interpreter none \
-  "$(which wrangler)" -- dev --ip 0.0.0.0 --port 8080
+  "$(which bun)" -- run dev -- --host 0.0.0.0 --port 8080
 
 pm2 save
 pm2 startup
 ```
 
-> Hinweis: Wenn du das Worker-Bundle stattdessen auf **Cloudflare Workers**
-> deployen möchtest, geht das mit `wrangler deploy` (Account erforderlich) —
-> dann läuft die App direkt im Cloudflare-Netz und du brauchst keinen
-> eigenen Server.
+### Hinweise zu `.env`
 
-### Umgebungsvariablen für Wrangler
+- Wrangler/Vite laden die `.env` **selbst**. Du brauchst kein
+  `set -a; . ./.env; set +a` davorzusetzen.
+- Bash bricht beim manuellen `source ./.env` mit
+  `unexpected EOF while looking for matching '"'` ab, wenn ein Wert ein
+  unmaskiertes Anführungszeichen enthält. Empfohlene Schreibweise pro Zeile:
 
-Wrangler liest standardmäßig **keine** `.env` automatisch. Trage entweder die
-Variablen in `wrangler.jsonc` unter `vars` ein, oder starte Wrangler mit
-`--env-file .env` (neue Wrangler-Versionen) bzw. exportiere die Variablen vor
-dem Start:
+  ```
+  KEY=einfacher_wert_ohne_anführungszeichen
+  KEY2="wert mit leerzeichen"
+  KEY3='wert mit "anführungszeichen" innen'
+  ```
 
-```bash
-set -a; . ./.env; set +a
-wrangler dev --ip 0.0.0.0 --port 8080
-```
+  Mehrzeilige Werte (z.B. ganze PEM-Keys) gehören nicht in `.env`.
 
 ## 7. Reverse Proxy + TLS (Caddy)
 
