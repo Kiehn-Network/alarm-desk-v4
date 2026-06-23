@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { withCors } from "@/lib/cors";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-
 export const Route = createFileRoute("/api/public/version")({
   server: {
     handlers: {
