@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { withCors } from "@/lib/cors";
 import { runExpiryNotices } from "@/lib/superadmin.functions";
 
 export const Route = createFileRoute("/api/public/hooks/license-expiry")({
