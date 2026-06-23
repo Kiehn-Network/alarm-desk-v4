@@ -30,11 +30,12 @@ sudo ufw enable
 
 ```bash
 cd ~
-git clone https://github.com/DEINE-ORG/DEIN-REPO.git alarmdesk
+git clone https://github.com/Kiehn-Network/alarm-desk-v4.git alarmdesk
 cd alarmdesk
 ```
 
-> Ersetze `DEINE-ORG/DEIN-REPO` durch das tatsächliche Repository, das du aus Lovable exportiert hast.
+> Das Repository ist privat. Stelle sicher, dass dein Server-Zugriff (z.B. ein deploy key oder persönlicher SSH-Key) dafür berechtigt ist.
+
 
 ## 3. Umgebungsvariablen konfigurieren
 
