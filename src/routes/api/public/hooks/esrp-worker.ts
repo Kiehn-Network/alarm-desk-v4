@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { withCors } from "@/lib/cors";
 import { processDueErpJobs } from "@/lib/esrp.server";
 
 export const Route = createFileRoute("/api/public/hooks/esrp-worker")({
