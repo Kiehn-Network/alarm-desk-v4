@@ -77,29 +77,82 @@ NODE_OPTIONS="--max-old-space-size=2048" bun run build
 # oder: NODE_OPTIONS="--max-old-space-size=2048" npm run build
 ```
 
-Das Ergebnis liegt anschließend unter `.output/` oder `dist/`, je nach Build-Einstellung.
+Der Build erzeugt ein **Cloudflare-Worker-Bundle** (Vite + `@cloudflare/vite-plugin`).
+Das Ergebnis liegt unter `dist/` (bzw. `.output/`) und ist **kein Node.js-Server** —
+es läuft nur in der Worker-Runtime (`workerd`). Deshalb kann der Build nicht mit
+`node` oder `bun run` als klassischer Server gestartet werden.
 
-## 6. App starten
+> Typischer Fehler beim Versuch, das Bundle mit Node zu starten:
+> `Could not resolve "cloudflare:sockets"` — kommt von `worker-mailer`, das
+> ausschließlich in `workerd` läuft. Lösung: lokal mit **Wrangler** (workerd)
+> ausführen, nicht mit Node.
 
-### Direkt im Vordergrund (zum Testen)
+## 6. App lokal starten (Wrangler / workerd)
+
+Da die App ein Cloudflare Worker ist, brauchst du `wrangler`, um sie lokal
+laufen zu lassen. Wrangler startet `workerd` (die Worker-Runtime) auf deinem
+Server, sodass alle Worker-only-APIs (`cloudflare:sockets`, etc.) funktionieren.
+
+### Wrangler installieren
 
 ```bash
-PORT=8080 HOST=0.0.0.0 bun run start
-# oder: PORT=8080 HOST=0.0.0.0 npm run start
+sudo npm install -g wrangler
 ```
 
-Die App ist dann unter `http://<SERVER-IP>:8080` erreichbar.
+### Variante A: Dev-Modus (zum Testen)
 
-### Als Dienst mit PM2 (empfohlen für Produktion)
+```bash
+# .env wird automatisch geladen (--env-file)
+wrangler dev --ip 0.0.0.0 --port 8080
+```
+
+Die App ist unter `http://<SERVER-IP>:8080` erreichbar. `wrangler dev` führt
+die Quellen direkt aus (kein vorheriger `bun run build` nötig).
+
+### Variante B: Produktion mit gebautem Bundle
+
+Nach `bun run build` liegt das fertige Worker-Bundle unter `dist/` (Hauptdatei
+meist `dist/_worker.js/index.js` oder `dist/server/index.js`).
+
+```bash
+# Genauen Pfad prüfen:
+ls dist/
+
+# Bundle mit workerd ausliefern:
+wrangler dev dist/_worker.js/index.js \
+  --ip 0.0.0.0 --port 8080 \
+  --compatibility-date 2025-09-24 \
+  --compatibility-flags nodejs_compat
+```
+
+### Variante C: Als Dienst mit PM2
 
 ```bash
 sudo npm install -g pm2
 
-pm2 start .output/server/index.mjs --name alarmdesk
-# Falls der Pfad abweicht, prüfe den Inhalt von .output/server/
+pm2 start --name alarmdesk \
+  --interpreter none \
+  "$(which wrangler)" -- dev --ip 0.0.0.0 --port 8080
 
 pm2 save
 pm2 startup
+```
+
+> Hinweis: Wenn du das Worker-Bundle stattdessen auf **Cloudflare Workers**
+> deployen möchtest, geht das mit `wrangler deploy` (Account erforderlich) —
+> dann läuft die App direkt im Cloudflare-Netz und du brauchst keinen
+> eigenen Server.
+
+### Umgebungsvariablen für Wrangler
+
+Wrangler liest standardmäßig **keine** `.env` automatisch. Trage entweder die
+Variablen in `wrangler.jsonc` unter `vars` ein, oder starte Wrangler mit
+`--env-file .env` (neue Wrangler-Versionen) bzw. exportiere die Variablen vor
+dem Start:
+
+```bash
+set -a; . ./.env; set +a
+wrangler dev --ip 0.0.0.0 --port 8080
 ```
 
 ## 7. Reverse Proxy + TLS (Caddy)
