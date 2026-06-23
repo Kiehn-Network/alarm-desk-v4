@@ -12,4 +12,17 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    optimizeDeps: {
+      exclude: ["worker-mailer"],
+      esbuildOptions: {
+        external: ["cloudflare:sockets"],
+      },
+    },
+    build: {
+      rollupOptions: {
+        external: ["cloudflare:sockets"],
+      },
+    },
+  },
 });
