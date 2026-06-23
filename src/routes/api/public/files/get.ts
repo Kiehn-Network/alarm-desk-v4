@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { withCors } from "@/lib/cors";
+
 
 export const Route = createFileRoute("/api/public/files/get")({
   server: {
