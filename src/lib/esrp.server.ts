@@ -105,28 +105,33 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
     .from("erp_outbox").select("*").eq("id", outboxId).single();
   if (jErr || !job) return { ok: false, error: "Outbox-Job nicht gefunden" };
   if (job.status === "sent") return { ok: true };
-  if ((job.status as string) === "sending") return { ok: true, error: "bereits in Verarbeitung" };
 
-  // Atomar beanspruchen: nur fortfahren, wenn wir den Job exklusiv von
-  // pending/failed auf 'sending' setzen können. Verhindert Doppelversand
-  // durch parallele Worker- und Inline-Aufrufe.
-  const { data: claimed } = await supabaseAdmin
+  // Atomar beanspruchen ohne neuen Statuswert: Die bestehende DB-Enum erlaubt
+  // nur pending/sent/failed. Deshalb nutzen wir tries + next_retry_at als Claim,
+  // damit parallele Worker denselben Job nicht doppelt senden.
+  const attemptTries = (job.tries ?? 0) + 1;
+  const claimUntil = new Date(Date.now() + 10 * 60_000).toISOString();
+  const nowIso = new Date().toISOString();
+  const { data: claimed, error: claimErr } = await supabaseAdmin
     .from("erp_outbox")
-    .update({ status: "sending" as any })
+    .update({ tries: attemptTries, next_retry_at: claimUntil, last_error: null })
     .eq("id", outboxId)
     .in("status", ["pending", "failed"])
+    .eq("tries", job.tries ?? 0)
+    .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
     .select("id")
     .maybeSingle();
-  if (!claimed) return { ok: true, error: "bereits beansprucht" };
+  if (claimErr) return { ok: false, error: `Job konnte nicht beansprucht werden: ${claimErr.message}` };
+  if (!claimed) return { ok: true, error: "bereits beansprucht oder noch nicht fällig" };
 
   const { data: s, error: sErr } = await supabaseAdmin
     .from("erp_settings").select("*").eq("domain_id", job.domain_id).maybeSingle();
   if (sErr || !s) {
-    await markFailed(outboxId, job.tries, "ERP-Konfiguration fehlt");
+    await markFailed(outboxId, attemptTries, "ERP-Konfiguration fehlt");
     return { ok: false, error: "ERP-Konfiguration fehlt" };
   }
   if (!s.aktiv) {
-    await markFailed(outboxId, job.tries, "ERP nicht aktiv");
+    await markFailed(outboxId, attemptTries, "ERP nicht aktiv");
     return { ok: false, error: "ERP nicht aktiv" };
   }
 
@@ -152,16 +157,16 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
         sent_at: new Date().toISOString(),
         last_error: null,
         next_retry_at: null,
-        tries: job.tries + 1,
+        tries: attemptTries,
       }).eq("id", outboxId);
       return { ok: true };
     }
     const msg = formatErpError(res.status, body, payload);
-    await markFailed(outboxId, job.tries, msg);
+    await markFailed(outboxId, attemptTries, msg);
     return { ok: false, error: msg };
   } catch (e: any) {
     const msg = e?.message ?? String(e);
-    await markFailed(outboxId, job.tries, msg);
+    await markFailed(outboxId, attemptTries, msg);
     return { ok: false, error: msg };
   }
 }
@@ -259,10 +264,10 @@ function extractFieldNames(parsed: any, rawBody: string): string[] {
   return Array.from(set);
 }
 
-async function markFailed(id: string, prevTries: number, message: string) {
+async function markFailed(id: string, tries: number, message: string) {
   await supabaseAdmin.from("erp_outbox").update({
     status: "failed",
-    tries: prevTries + 1,
+    tries,
     last_error: message,
     next_retry_at: new Date(Date.now() + 60_000).toISOString(),
   }).eq("id", id);
