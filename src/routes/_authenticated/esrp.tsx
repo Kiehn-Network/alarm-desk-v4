@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2, RefreshCw, Send, Network, ChevronDown, ChevronRight, AlertTriangle } from "lucide-react";
+import { Loader2, RefreshCw, Send, Network, ChevronDown, ChevronRight, AlertTriangle, Play, Radio } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +14,13 @@ import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
 import { EsrpStatusLamp } from "@/components/esrp/esrp-status-lamp";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getEsrpSettings,
   updateEsrpSettings,
   listErpOutbox,
   retryErpOutbox,
+  processErpOutboxNow,
 } from "@/lib/esrp.functions";
 
 export const Route = createFileRoute("/_authenticated/esrp")({
