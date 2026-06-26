@@ -141,6 +141,32 @@ export const listErpOutbox = createServerFn({ method: "GET" })
     return { jobs: data ?? [] };
   });
 
+export const processErpOutboxNow = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    if (!(await isDomainAdmin(userId, domainId))) {
+      throw new Error("Nur Admins dürfen die Outbox manuell verarbeiten");
+    }
+    // Nur eigene Domain: IDs vorab filtern, dann pro Job verarbeiten
+    const nowIso = new Date().toISOString();
+    const { data: jobs } = await supabaseAdmin
+      .from("erp_outbox")
+      .select("id")
+      .eq("domain_id", domainId)
+      .in("status", ["pending", "failed"])
+      .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
+      .order("created_at", { ascending: true })
+      .limit(50);
+    const results: { id: string; ok: boolean; error?: string }[] = [];
+    for (const j of jobs ?? []) {
+      const r = await processErpOutboxItem(j.id);
+      results.push({ id: j.id, ...r });
+    }
+    return { processed: results.length, results };
+  });
+
 export const listEinsatzErpStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
