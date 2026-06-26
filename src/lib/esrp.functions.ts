@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
 import { buildErpPayload, enqueueErpForEinsatz, processErpOutboxItem } from "@/lib/esrp.server";
+import { processDueErpJobs } from "@/lib/esrp.server";
 
 async function isDomainAdmin(userId: string, domainId: string) {
   const { data } = await supabaseAdmin
