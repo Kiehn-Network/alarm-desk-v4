@@ -275,13 +275,74 @@ function SettingsCard() {
 function OutboxCard() {
   const listFn = useServerFn(listErpOutbox);
   const retryFn = useServerFn(retryErpOutbox);
+  const processFn = useServerFn(processErpOutboxNow);
   const qc = useQueryClient();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [live, setLive] = useState(false);
+  const [activity, setActivity] = useState<{ ts: number; text: string; kind: "info" | "ok" | "err" }[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const [lastEvent, setLastEvent] = useState<number | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["esrp-outbox"],
     queryFn: () => listFn(),
-    refetchInterval: 10_000,
+    refetchInterval: live ? 30_000 : 5_000,
   });
+
+  function pushActivity(text: string, kind: "info" | "ok" | "err" = "info") {
+    setActivity((a) => [{ ts: Date.now(), text, kind }, ...a].slice(0, 30));
+    setLastEvent(Date.now());
+  }
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("erp-outbox-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "erp_outbox" },
+        (payload: any) => {
+          const row = (payload.new ?? payload.old) as any;
+          const ext = row?.external_id ?? row?.id?.slice(0, 8) ?? "?";
+          if (payload.eventType === "INSERT") {
+            pushActivity(`Neuer Job: ${ext}`, "info");
+          } else if (payload.eventType === "UPDATE") {
+            const status = row?.status;
+            const tries = row?.tries;
+            if (status === "sent") pushActivity(`✓ Gesendet: ${ext}`, "ok");
+            else if (status === "sending") pushActivity(`→ Sende: ${ext}`, "info");
+            else if (status === "failed") pushActivity(`✗ Fehler: ${ext} (Versuch ${tries})`, "err");
+            else if (status === "pending") pushActivity(`⟳ Erneut: ${ext}`, "info");
+          } else if (payload.eventType === "DELETE") {
+            pushActivity(`Entfernt: ${ext}`, "info");
+          }
+          qc.invalidateQueries({ queryKey: ["esrp-outbox"] });
+        },
+      )
+      .subscribe((status) => {
+        setLive(status === "SUBSCRIBED");
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
+  async function processNow() {
+    setProcessing(true);
+    pushActivity("Manuelle Verarbeitung gestartet…", "info");
+    try {
+      const r: any = await processFn();
+      const okCount = (r?.results ?? []).filter((x: any) => x.ok).length;
+      const errCount = (r?.results ?? []).filter((x: any) => !x.ok).length;
+      pushActivity(`Fertig: ${r?.processed ?? 0} Jobs (${okCount} ok, ${errCount} Fehler)`, errCount ? "err" : "ok");
+      if ((r?.processed ?? 0) === 0) toast.info("Keine fälligen Jobs");
+      else toast.success(`${r.processed} Jobs verarbeitet`);
+      qc.invalidateQueries({ queryKey: ["esrp-outbox"] });
+    } catch (e: any) {
+      pushActivity(`Fehler: ${e?.message ?? "unbekannt"}`, "err");
+      toast.error(e?.message ?? "Fehler");
+    } finally {
+      setProcessing(false);
+    }
+  }
 
   async function retry(id: string) {
     try {
@@ -296,12 +357,58 @@ function OutboxCard() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Outbox (letzte 100)</CardTitle>
-        <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["esrp-outbox"] })} className="gap-1.5">
-          <RefreshCw className="size-3.5" /> Aktualisieren
-        </Button>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <CardTitle>Outbox (letzte 100)</CardTitle>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-full border",
+              live
+                ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                : "border-muted text-muted-foreground bg-muted/30",
+            )}
+            title={live ? "Live-Verbindung aktiv" : "Live-Verbindung wird aufgebaut…"}
+          >
+            <Radio className={cn("size-3", live && "animate-pulse")} />
+            {live ? "Live" : "Offline"}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Button size="sm" onClick={processNow} disabled={processing} className="gap-1.5">
+            {processing ? <Loader2 className="size-3.5 animate-spin" /> : <Play className="size-3.5" />}
+            Jetzt verarbeiten
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => qc.invalidateQueries({ queryKey: ["esrp-outbox"] })} className="gap-1.5">
+            <RefreshCw className="size-3.5" /> Aktualisieren
+          </Button>
+        </div>
       </CardHeader>
+      {activity.length > 0 && (
+        <div className="px-6 pb-3">
+          <div className="rounded-md border bg-muted/20 max-h-40 overflow-y-auto text-xs font-mono">
+            {activity.map((a, i) => (
+              <div
+                key={a.ts + "-" + i}
+                className={cn(
+                  "px-3 py-1 border-b border-border/40 last:border-0 flex gap-2",
+                  a.kind === "ok" && "text-emerald-600 dark:text-emerald-400",
+                  a.kind === "err" && "text-red-600 dark:text-red-400",
+                )}
+              >
+                <span className="text-muted-foreground shrink-0">
+                  {new Date(a.ts).toLocaleTimeString("de-DE")}
+                </span>
+                <span>{a.text}</span>
+              </div>
+            ))}
+          </div>
+          {lastEvent && (
+            <div className="text-[10px] text-muted-foreground mt-1">
+              Letztes Ereignis: {new Date(lastEvent).toLocaleTimeString("de-DE")}
+            </div>
+          )}
+        </div>
+      )}
       <CardContent className="p-0">
         {isLoading ? (
           <div className="p-6"><Loader2 className="size-5 animate-spin" /></div>
