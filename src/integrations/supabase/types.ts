@@ -144,6 +144,59 @@ export type Database = {
         }
         Relationships: []
       }
+      auswertung_pins: {
+        Row: {
+          adresse: string | null
+          created_at: string
+          created_by: string
+          domain_id: string
+          ereignis_am: string
+          id: string
+          kategorie: string
+          lat: number
+          lng: number
+          notiz: string | null
+          titel: string
+          updated_at: string
+        }
+        Insert: {
+          adresse?: string | null
+          created_at?: string
+          created_by: string
+          domain_id: string
+          ereignis_am?: string
+          id?: string
+          kategorie?: string
+          lat: number
+          lng: number
+          notiz?: string | null
+          titel: string
+          updated_at?: string
+        }
+        Update: {
+          adresse?: string | null
+          created_at?: string
+          created_by?: string
+          domain_id?: string
+          ereignis_am?: string
+          id?: string
+          kategorie?: string
+          lat?: number
+          lng?: number
+          notiz?: string | null
+          titel?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auswertung_pins_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budeko_berichte: {
         Row: {
           anrufer_adresse: string | null
