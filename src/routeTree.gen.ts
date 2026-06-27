@@ -35,6 +35,7 @@ import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authent
 import { Route as AuthenticatedDatenImportRouteImport } from './routes/_authenticated/daten-import'
 import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticated/dateien'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAuswertungRouteImport } from './routes/_authenticated/auswertung'
 import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
@@ -203,6 +204,11 @@ const AuthenticatedDateienRoute = AuthenticatedDateienRouteImport.update({
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAuswertungRoute = AuthenticatedAuswertungRouteImport.update({
+  id: '/auswertung',
+  path: '/auswertung',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAlarmierungRoute =
@@ -404,6 +410,7 @@ export interface FileRoutesByFullPath {
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
+  '/auswertung': typeof AuthenticatedAuswertungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dateien': typeof AuthenticatedDateienRoute
   '/daten-import': typeof AuthenticatedDatenImportRoute
@@ -462,6 +469,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
+  '/auswertung': typeof AuthenticatedAuswertungRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dateien': typeof AuthenticatedDateienRoute
   '/daten-import': typeof AuthenticatedDatenImportRoute
@@ -520,6 +528,7 @@ export interface FileRoutesById {
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
+  '/_authenticated/auswertung': typeof AuthenticatedAuswertungRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dateien': typeof AuthenticatedDateienRoute
   '/_authenticated/daten-import': typeof AuthenticatedDatenImportRoute
@@ -581,6 +590,7 @@ export interface FileRouteTypes {
     | '/revier-center'
     | '/admin'
     | '/alarmierung'
+    | '/auswertung'
     | '/dashboard'
     | '/dateien'
     | '/daten-import'
@@ -639,6 +649,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/admin'
     | '/alarmierung'
+    | '/auswertung'
     | '/dashboard'
     | '/dateien'
     | '/daten-import'
@@ -696,6 +707,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center'
     | '/_authenticated/admin'
     | '/_authenticated/alarmierung'
+    | '/_authenticated/auswertung'
     | '/_authenticated/dashboard'
     | '/_authenticated/dateien'
     | '/_authenticated/daten-import'
@@ -945,6 +957,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/auswertung': {
+      id: '/_authenticated/auswertung'
+      path: '/auswertung'
+      fullPath: '/auswertung'
+      preLoaderRoute: typeof AuthenticatedAuswertungRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/alarmierung': {
@@ -1290,6 +1309,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedRevierCenterRouteRoute: typeof AuthenticatedRevierCenterRouteRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
+  AuthenticatedAuswertungRoute: typeof AuthenticatedAuswertungRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDateienRoute: typeof AuthenticatedDateienRoute
   AuthenticatedDatenImportRoute: typeof AuthenticatedDatenImportRoute
@@ -1319,6 +1339,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedRevierCenterRouteRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAlarmierungRoute: AuthenticatedAlarmierungRoute,
+  AuthenticatedAuswertungRoute: AuthenticatedAuswertungRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDateienRoute: AuthenticatedDateienRoute,
   AuthenticatedDatenImportRoute: AuthenticatedDatenImportRoute,
