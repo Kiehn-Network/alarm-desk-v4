@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
-  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy,
+  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +57,9 @@ const sections: Section[] = [
     { to: "/intervention", label: "Intervention", icon: Network, roles: ["admin", "dispatcher"], module: "intervention" },
     { to: "/admin", label: "Admin Center", icon: Settings, roles: ["admin"] },
     { to: "/superadmin", label: "SuperAdmin", icon: Crown, roles: ["superadmin"] },
+  ]},
+  { label: "Auswertung", items: [
+    { to: "/auswertung", label: "Karten-Auswertung", icon: MapIcon, roles: ["admin", "dispatcher"], module: "auswertung" },
   ]},
   { label: "Hilfe", items: [
     { to: "/hilfe", label: "Hilfe & Anleitung", icon: HelpCircle },
