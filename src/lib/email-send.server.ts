@@ -160,19 +160,35 @@ export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: Send
   }
 
   if (cfg.provider === "smtp") {
+    const secure = (cfg.smtp_secure as string) ?? "starttls";
+    // Node.js runtime (lokaler Server): nodemailer verwenden
+    const isNode = typeof process !== "undefined" && !!(process as any).versions?.node && typeof (globalThis as any).WebSocketPair === "undefined";
+    if (isNode) {
+      const nodemailer: any = await import("nodemailer");
+      const transporter = nodemailer.createTransport({
+        host: cfg.smtp_host!,
+        port: cfg.smtp_port!,
+        secure: secure === "ssl",
+        requireTLS: secure === "starttls",
+        auth: { user: cfg.smtp_username!, pass: cfg.smtp_password! },
+      });
+      const info = await transporter.sendMail({
+        from: cfg.from_name ? `"${cfg.from_name}" <${cfg.from_email}>` : cfg.from_email,
+        to: input.to,
+        bcc: input.bcc ?? undefined,
+        subject: input.subject,
+        html: input.html,
+        text: input.text,
+      });
+      return { id: info?.messageId ?? null };
+    }
+    // Cloudflare Worker: worker-mailer
     let WorkerMailer: any;
     try {
       ({ WorkerMailer } = await import("./worker-mailer-adapter.server"));
     } catch (e: any) {
-      const msg = String(e?.message ?? e);
-      if (msg.includes("cloudflare:sockets")) {
-        throw new Error(
-          "SMTP-Versand ist im lokalen Dev-Server nicht verfügbar (benötigt Cloudflare Worker). Bitte im veröffentlichten/Preview-Deployment testen oder einen HTTP-API-Provider (Resend/Mailgun/SendGrid) verwenden."
-        );
-      }
-      throw e;
+      throw new Error("SMTP-Versand nicht verfügbar: " + String(e?.message ?? e));
     }
-    const secure = (cfg.smtp_secure as string) ?? "starttls";
     const mailer = await WorkerMailer.connect({
       credentials: { username: cfg.smtp_username!, password: cfg.smtp_password! },
       authType: ["plain", "login"],
