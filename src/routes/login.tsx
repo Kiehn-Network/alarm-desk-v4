@@ -31,6 +31,23 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.classList.contains("light") ? "light" : html.classList.contains("dark") ? "dark" : null;
+    const apply = () => {
+      const h = new Date().getHours();
+      const mode = h >= 7 && h < 19 ? "light" : "dark";
+      html.classList.remove("light", "dark");
+      html.classList.add(mode);
+    };
+    apply();
+    const id = window.setInterval(apply, 60_000);
+    return () => {
+      window.clearInterval(id);
+      html.classList.remove("light", "dark");
+      if (prev) html.classList.add(prev);
+    };
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
