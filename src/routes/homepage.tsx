@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect } from "react";
 import {
   Shield, Radar, MapPin, FileText, Bell, Users, KeyRound, Activity,
   CheckCircle2, ArrowRight, Sparkles, Lock, Zap,
@@ -24,6 +25,23 @@ export const Route = createFileRoute("/homepage")({
 });
 
 function LandingPage() {
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.classList.contains("light") ? "light" : html.classList.contains("dark") ? "dark" : null;
+    const apply = () => {
+      const h = new Date().getHours();
+      const mode = h >= 7 && h < 19 ? "light" : "dark";
+      html.classList.remove("light", "dark");
+      html.classList.add(mode);
+    };
+    apply();
+    const id = window.setInterval(apply, 60_000);
+    return () => {
+      window.clearInterval(id);
+      html.classList.remove("light", "dark");
+      if (prev) html.classList.add(prev);
+    };
+  }, []);
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
