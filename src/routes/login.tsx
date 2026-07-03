@@ -34,11 +34,15 @@ function LoginPage() {
   useEffect(() => {
     const html = document.documentElement;
     const prev = html.classList.contains("light") ? "light" : html.classList.contains("dark") ? "dark" : null;
+    const prevTheme = html.getAttribute("data-theme");
     html.classList.remove("light", "dark");
     html.classList.add("light");
+    if (!html.getAttribute("data-theme")) html.setAttribute("data-theme", "midnight");
     return () => {
       html.classList.remove("light", "dark");
       if (prev) html.classList.add(prev);
+      if (prevTheme === null) html.removeAttribute("data-theme");
+      else html.setAttribute("data-theme", prevTheme);
     };
   }, []);
   const [email, setEmail] = useState("");
