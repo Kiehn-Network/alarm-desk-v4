@@ -415,7 +415,17 @@ function AlarmierungPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 align-middle whitespace-nowrap text-foreground/90">
-                        {e.assigned_to ? (profiles[e.assigned_to] ?? "–") : <span className="text-muted-foreground">–</span>}
+                        {e.assigned_to ? (
+                          profiles[e.assigned_to] ?? "–"
+                        ) : e.sub_unternehmen ? (
+                          <span className="inline-flex items-center gap-1.5 text-foreground/90">
+                            <Network className="size-3.5 text-primary" />
+                            <span className="truncate">{e.sub_unternehmen}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">Sub</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">–</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 align-middle whitespace-nowrap text-foreground/90">{fmt(start)}</td>
                       <td className="px-4 py-3 align-middle whitespace-nowrap text-foreground/90">{fmt(end)}</td>
