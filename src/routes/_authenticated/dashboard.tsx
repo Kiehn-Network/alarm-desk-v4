@@ -224,15 +224,22 @@ function DashboardContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.recent.map((r) => (
-                    <tr key={r.id} className="border-b border-border/50 last:border-0">
-                      <td className="py-3">{r.dateiname}</td>
-                      <td className="py-3 text-muted-foreground">{r.fahrer}</td>
-                      <td className="py-3 text-muted-foreground">{r.start}</td>
-                      <td className="py-3 text-muted-foreground">{r.dauer}</td>
-                      <td className="py-3"><span className="inline-flex px-2 py-0.5 rounded-full bg-success/15 text-success text-xs">{r.status}</span></td>
-                    </tr>
-                  ))}
+                  {data.recent.map((r) => {
+                    const statusMeta = getStatusMeta(r.status);
+                    return (
+                      <tr key={r.id} className="border-b border-border/50 last:border-0">
+                        <td className="py-3">{r.dateiname}</td>
+                        <td className="py-3 text-muted-foreground">{r.fahrer}</td>
+                        <td className="py-3 text-muted-foreground">{r.start}</td>
+                        <td className="py-3 text-muted-foreground">{r.dauer}</td>
+                        <td className="py-3">
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${statusMeta.classes}`}>
+                            {statusMeta.label}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
