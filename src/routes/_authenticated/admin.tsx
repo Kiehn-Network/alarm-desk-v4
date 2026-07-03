@@ -697,6 +697,7 @@ function GruendePanel() {
 
   const [editing, setEditing] = useState<any | null>(null);
   const [newName, setNewName] = useState("");
+  const [newTyp, setNewTyp] = useState<"" | "av_einsatz" | "hausnotruf">("");
   const [delTarget, setDelTarget] = useState<any | null>(null);
 
   const refresh = () => {
@@ -707,8 +708,9 @@ function GruendePanel() {
   const add = async () => {
     if (!newName.trim()) return;
     try {
-      await upsert({ data: { name: newName.trim(), aktiv: true } });
+      await upsert({ data: { name: newName.trim(), aktiv: true, einsatz_typ: newTyp || null } });
       setNewName("");
+      setNewTyp("");
       refresh();
       toast.success("Einsatzgrund hinzugefügt");
     } catch (e: any) {
@@ -718,7 +720,7 @@ function GruendePanel() {
 
   const toggle = async (g: any) => {
     try {
-      await upsert({ data: { id: g.id, name: g.name, aktiv: !g.aktiv } });
+      await upsert({ data: { id: g.id, name: g.name, aktiv: !g.aktiv, einsatz_typ: g.einsatz_typ ?? null } });
       refresh();
     } catch (e: any) {
       toast.error(e?.message ?? "Fehler");
@@ -728,7 +730,7 @@ function GruendePanel() {
   const save = async () => {
     if (!editing?.name?.trim()) return;
     try {
-      await upsert({ data: { id: editing.id, name: editing.name.trim(), aktiv: editing.aktiv } });
+      await upsert({ data: { id: editing.id, name: editing.name.trim(), aktiv: editing.aktiv, einsatz_typ: editing.einsatz_typ ?? null } });
       setEditing(null);
       refresh();
       toast.success("Gespeichert");
@@ -751,10 +753,18 @@ function GruendePanel() {
 
   return (
     <div className="rounded-xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
-      <div className="p-4 flex gap-2 border-b border-border">
-        <Input placeholder="Neuer Einsatzgrund (z. B. Einbruch)" value={newName}
+      <div className="p-4 flex flex-wrap gap-2 border-b border-border">
+        <Input className="flex-1 min-w-[220px]" placeholder="Neuer Einsatzgrund (z. B. Einbruch)" value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && add()} />
+        <Select value={newTyp || "all"} onValueChange={(v) => setNewTyp(v === "all" ? "" : v as any)}>
+          <SelectTrigger className="w-44"><SelectValue placeholder="Für Einsatztyp" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Einsatztypen</SelectItem>
+            <SelectItem value="av_einsatz">Nur AV-Einsatz</SelectItem>
+            <SelectItem value="hausnotruf">Nur Hausnotruf</SelectItem>
+          </SelectContent>
+        </Select>
         <Button onClick={add} disabled={!newName.trim()}><Plus className="size-4 mr-2" />Hinzufügen</Button>
       </div>
       <div className="divide-y divide-border">
@@ -765,7 +775,14 @@ function GruendePanel() {
         {(data?.gruende ?? []).map((g: any) => (
           <div key={g.id} className="p-4 flex items-center gap-3">
             <ShieldCheck className={`size-4 ${g.aktiv ? "text-emerald-400" : "text-muted-foreground"}`} />
-            <div className="flex-1 font-medium">{g.name}</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-medium truncate">{g.name}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">
+                {g.einsatz_typ === "av_einsatz" ? "Nur AV-Einsatz"
+                  : g.einsatz_typ === "hausnotruf" ? "Nur Hausnotruf"
+                  : "Alle Einsatztypen"}
+              </div>
+            </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Aktiv</span>
               <Switch checked={g.aktiv} onCheckedChange={() => toggle(g)} />
@@ -789,6 +806,20 @@ function GruendePanel() {
             <div>
               <Label>Name</Label>
               <Input value={editing?.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+            </div>
+            <div>
+              <Label>Für Einsatztyp</Label>
+              <Select
+                value={editing?.einsatz_typ ?? "all"}
+                onValueChange={(v) => setEditing({ ...editing, einsatz_typ: v === "all" ? null : v })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle Einsatztypen</SelectItem>
+                  <SelectItem value="av_einsatz">Nur AV-Einsatz</SelectItem>
+                  <SelectItem value="hausnotruf">Nur Hausnotruf</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center justify-between rounded-md border border-border p-3">
               <Label className="m-0">Aktiv</Label>

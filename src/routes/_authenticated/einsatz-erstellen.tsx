@@ -98,7 +98,9 @@ function EinsatzErstellenPage() {
   const results: DateiHit[] = searchData?.results ?? [];
 
   const { data: gData } = useQuery({ queryKey: ["einsatz-gruende"], queryFn: () => listG() });
-  const gruende = gData?.gruende ?? [];
+  const allGruende = (gData?.gruende ?? []) as Array<any>;
+  const activeTyp = hausnotrufEnabled ? einsatzTyp : "av_einsatz";
+  const gruende = allGruende.filter((g) => !g.einsatz_typ || g.einsatz_typ === activeTyp);
 
   const { data: fData } = useQuery({ queryKey: ["fahrer"], queryFn: () => listF() });
   const fahrer = (fData?.fahrer ?? []) as Array<{ id: string; display_name: string | null }>;
@@ -108,6 +110,15 @@ function EinsatzErstellenPage() {
   function pickGrund(name: string, id: string | null) {
     setGrund(name); setGrundId(id);
   }
+
+  // Wenn beim Wechsel des Einsatztyps ein Grund gewählt ist, der zum neuen Typ nicht passt → zurücksetzen
+  useEffect(() => {
+    if (!grundId) return;
+    const g = allGruende.find((x) => x.id === grundId);
+    if (g && g.einsatz_typ && g.einsatz_typ !== activeTyp) {
+      setGrund(""); setGrundId(null);
+    }
+  }, [activeTyp, grundId, allGruende]);
 
   if (!roleLoading && !canManage) {
     return (
