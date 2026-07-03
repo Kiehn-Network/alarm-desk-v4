@@ -178,6 +178,93 @@ function InfoDialog({
   );
 }
 
+function SubAbschlussDialog({
+  einsatz, onClose, onSave,
+}: {
+  einsatz: Einsatz | null;
+  onClose: () => void;
+  onSave: (patch: any) => Promise<void>;
+}) {
+  const [form, setForm] = useState<any>({});
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (einsatz) {
+      const nowLocal = toLocalInput(new Date().toISOString());
+      setForm({
+        vor_ort_am: toLocalInput(einsatz.vor_ort_am) || "",
+        abfahrt_am: toLocalInput(einsatz.abfahrt_am) || "",
+        einsatz_ende_am: toLocalInput(einsatz.einsatz_ende_am) || nowLocal,
+      });
+    }
+  }, [einsatz?.id]);
+
+  const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+
+  if (!einsatz) {
+    return (
+      <Dialog open={false} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <DialogContent />
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Network className="size-4 text-primary" /> Sub-Einsatz abschließen
+          </DialogTitle>
+          <DialogDescription>
+            Zeiten des Sub-Unternehmens „{einsatz.sub_unternehmen}" manuell erfassen und Einsatz abschließen.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label>Vor Ort</Label>
+              <Input type="datetime-local" value={form.vor_ort_am ?? ""} onChange={(e) => set("vor_ort_am", e.target.value)} />
+            </div>
+            <div className="space-y-1">
+              <Label>Abfahrt</Label>
+              <Input type="datetime-local" value={form.abfahrt_am ?? ""} onChange={(e) => set("abfahrt_am", e.target.value)} />
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <Label>Einsatz-Ende</Label>
+              <Input type="datetime-local" value={form.einsatz_ende_am ?? ""} onChange={(e) => set("einsatz_ende_am", e.target.value)} />
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-4">
+          <Button variant="ghost" onClick={onClose} disabled={busy}>Abbrechen</Button>
+          <Button
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                const ende = fromLocalInput(form.einsatz_ende_am ?? "");
+                await onSave({
+                  id: einsatz.id,
+                  vor_ort_am: fromLocalInput(form.vor_ort_am ?? ""),
+                  abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
+                  einsatz_ende_am: ende,
+                  abgeschlossen_am: ende ?? new Date().toISOString(),
+                  status: "abgeschlossen",
+                });
+              } catch (err: any) {
+                toast.error(err.message ?? "Fehler");
+              } finally { setBusy(false); }
+            }}
+          >
+            <CircleCheck className="size-4 mr-1.5" /> Abschließen
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function AlarmierungPage() {
   const { canManage, isAdmin } = useRole();
   const { data: modules } = useDomainModules();
