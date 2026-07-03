@@ -282,6 +282,19 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: nu
 
 function SchluesselCard({ entries }: { entries: Array<any> }) {
   const count = entries.length;
+  const rueckgabeCount = entries.filter((e) => e.status === "rueckgabe_offen").length;
+  const qc = useQueryClient();
+  const bestaetigen = useServerFn(rueckgabeBestaetigen);
+  async function doBestaetigen(id: string) {
+    try {
+      await bestaetigen({ data: { id } });
+      toast.success("Rückgabe bestätigt");
+      qc.invalidateQueries({ queryKey: ["dashboard-schluessel-unterwegs"] });
+      qc.invalidateQueries({ queryKey: ["schluesselbuch"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Fehler");
+    }
+  }
   const statusLabel: Record<string, string> = {
     ausgegeben: "Ausgegeben",
     uebernommen: "Übernommen",
@@ -348,9 +361,26 @@ function SchluesselCard({ entries }: { entries: Array<any> }) {
                         {[e.kunden_name, e.address].filter(Boolean).join(" · ")}
                       </div>
                     )}
+                    {e.status === "rueckgabe_offen" && (
+                      <button
+                        type="button"
+                        onClick={() => doBestaetigen(e.id)}
+                        className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-success/15 text-success hover:bg-success/25 text-xs font-semibold transition"
+                      >
+                        <CheckSquare className="size-3.5" /> Rückgabe annehmen
+                      </button>
+                    )}
                   </div>
                 ))
               )}
+            </div>
+            <div className="px-4 py-2 border-t border-border">
+              <Link
+                to="/schluesselbuch"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+              >
+                Schlüsselbuch öffnen <ArrowRight className="size-3.5" />
+              </Link>
             </div>
           </PopoverContent>
         </Popover>
@@ -359,6 +389,20 @@ function SchluesselCard({ entries }: { entries: Array<any> }) {
         <div className="text-4xl font-bold tabular-nums leading-none text-warning">{count}</div>
         <div className="text-xs text-muted-foreground">{count === 1 ? "Schlüssel" : "Schlüssel"} extern</div>
       </div>
+      {rueckgabeCount > 0 && (
+        <div className="mt-3 relative flex items-center justify-between gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2">
+          <div className="text-xs font-semibold text-destructive">
+            {rueckgabeCount} Rückgabe{rueckgabeCount === 1 ? "" : "n"} offen
+          </div>
+          <Link
+            to="/schluesselbuch"
+            search={{ tab: "rueckgabe" } as any}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-destructive hover:underline"
+          >
+            Bearbeiten <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
