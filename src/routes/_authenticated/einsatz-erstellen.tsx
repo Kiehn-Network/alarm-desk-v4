@@ -435,21 +435,37 @@ function EinsatzErstellenPage() {
             <span className="size-6 rounded-full bg-primary/15 text-primary text-xs font-bold grid place-items-center">4</span>
             <h2 className="font-semibold">Zuweisen</h2>
           </div>
-          {interventionOn && (
-            <div className="inline-flex rounded-lg border border-border overflow-hidden">
+          <div className="inline-flex rounded-lg border border-border overflow-hidden flex-wrap">
               <button
                 type="button"
                 onClick={() => setZielMode("fahrer")}
                 className={`px-3 py-1.5 text-sm ${zielMode === "fahrer" ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted"}`}
               >Eigener Fahrer</button>
-              <button
+              {interventionOn && <button
                 type="button"
                 onClick={() => setZielMode("partner")}
                 className={`px-3 py-1.5 text-sm inline-flex items-center gap-1.5 ${zielMode === "partner" ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted"}`}
-              ><Network className="size-3.5" /> Partner</button>
+              ><Network className="size-3.5" /> Partner</button>}
+              <button
+                type="button"
+                onClick={() => setZielMode("sub")}
+                className={`px-3 py-1.5 text-sm ${zielMode === "sub" ? "bg-primary text-primary-foreground" : "bg-muted/30 hover:bg-muted"}`}
+              >Sub-Unternehmen</button>
+          </div>
+          {zielMode === "sub" ? (
+            <div>
+              <Label>Sub-Unternehmen</Label>
+              <Input
+                value={subName}
+                onChange={(e) => setSubName(e.target.value)}
+                placeholder="Name des Sub-Unternehmens"
+                maxLength={200}
+              />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Der Einsatz wird ohne eigenen Fahrer angelegt. Im offiziellen Bericht wird kein Fahrer ausgewiesen.
+              </p>
             </div>
-          )}
-          {zielMode === "partner" ? (
+          ) : zielMode === "partner" ? (
             partners.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Noch keine Interventionspartner angelegt. Lege sie unter <b>Intervention</b> an.
@@ -490,11 +506,11 @@ function EinsatzErstellenPage() {
               onClick={submit}
               disabled={
                 saving || !grund.trim() ||
-                (zielMode === "fahrer" ? !fahrerId : !partnerId)
+                (zielMode === "fahrer" ? !fahrerId : zielMode === "partner" ? !partnerId : !subName.trim())
               }
               className="gap-2"
             >
-              <Send className="size-4" /> {zielMode === "partner" ? "Einsatz an Partner übergeben" : "Einsatz an Fahrer übergeben"}
+              <Send className="size-4" /> {zielMode === "partner" ? "Einsatz an Partner übergeben" : zielMode === "sub" ? "Einsatz an Sub-Unternehmen übergeben" : "Einsatz an Fahrer übergeben"}
             </Button>
             <Button onClick={() => navigate({ to: "/alarmierung" })} variant="ghost" className="ml-auto">
               Abbrechen
