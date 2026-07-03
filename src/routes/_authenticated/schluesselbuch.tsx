@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, CheckSquare, Search, User, MapPin, ArrowRight, ArrowLeft, Hand, Undo2 } from "lucide-react";
+import { KeyRound, CheckSquare, Search, User, MapPin, ArrowRight, ArrowLeft, Hand, Undo2, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,6 +42,7 @@ function SchluesselbuchPage() {
 
   const [tab, setTab] = useState("offen");
   const [q, setQ] = useState("");
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const entries: any[] = data?.entries ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -83,8 +84,7 @@ function SchluesselbuchPage() {
         <div className="text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
           <KeyRound className="size-3.5" /> Schlüsselverwaltung
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold">Schlüsselbuch</h1>
-        <p className="text-sm text-muted-foreground">Übersicht aller ausgegebenen Schlüssel und offenen Rückgaben.</p>
+        <h1 className="text-xl md:text-2xl font-bold">Schlüsselbuch</h1>
       </header>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -106,9 +106,10 @@ function SchluesselbuchPage() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">Keine Einträge.</div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
           {filtered.map((s) => {
             const meta = STATUS_META[s.status] ?? { label: s.status, cls: "bg-muted text-muted-foreground" };
+            const isOpen = !!expanded[s.id];
             const steps = [
               { icon: ArrowRight, label: "Ausgabe",   at: s.ausgegeben_at,           by: profiles[s.ausgegeben_by] },
               { icon: Hand,       label: "Übernahme", at: s.uebernommen_at,          by: s.traeger_name },
@@ -116,80 +117,77 @@ function SchluesselbuchPage() {
               { icon: ArrowLeft,  label: "Zurück",    at: s.zurueck_at,              by: profiles[s.zurueck_by] },
             ];
             return (
-              <li key={s.id} className="rounded-xl border border-border bg-card p-4 md:p-5" style={{ boxShadow: "var(--shadow-card)" }}>
-                {/* Header row */}
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="size-10 rounded-lg bg-primary/10 grid place-items-center shrink-0">
-                    <KeyRound className="size-5 text-primary" />
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xl font-bold tabular-nums">{s.key_number}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${meta.cls}`}>{meta.label}</span>
-                  </div>
-                  <div className="ml-auto flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground hidden md:inline">
-                      Träger: <span className="text-foreground/80 font-medium">{s.traeger_name}</span>
-                    </span>
-                    {s.status === "rueckgabe_offen" && (
-                      <Button size="sm" onClick={() => doBestaetigen(s.id)} className="gap-1.5">
-                        <CheckSquare className="size-4" /> Rückgabe bestätigen
-                      </Button>
+              <li key={s.id} className="hover:bg-muted/30 transition">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2">
+                  <button
+                    type="button"
+                    onClick={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
+                    className="size-7 rounded-md grid place-items-center hover:bg-muted text-muted-foreground shrink-0"
+                    aria-label={isOpen ? "Details schließen" : "Details öffnen"}
+                  >
+                    <ChevronDown className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  <div className="min-w-0 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <div className="flex items-center gap-2 shrink-0">
+                      <KeyRound className="size-4 text-primary" />
+                      <span className="text-base font-bold tabular-nums">{s.key_number}</span>
+                      <span className={`text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded ${meta.cls}`}>{meta.label}</span>
+                    </div>
+                    {s.traeger_name && (
+                      <span className="text-xs text-muted-foreground truncate">
+                        <User className="inline size-3 mr-1 -mt-0.5" />{s.traeger_name}
+                      </span>
                     )}
-                  </div>
-                </div>
-
-                {/* Customer row */}
-                {(s.kunden_name || s.address) && (
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                     {s.kunden_name && (
-                      <div className="inline-flex items-center gap-2 min-w-0">
-                        <User className="size-4 text-muted-foreground shrink-0" />
-                        <span className="truncate">{s.kunden_name}</span>
-                      </div>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {s.kunden_name}
+                      </span>
                     )}
                     {s.address && (
-                      <div className="inline-flex items-center gap-2 min-w-0">
-                        <MapPin className="size-4 text-muted-foreground shrink-0" />
-                        <span className="truncate">{s.address}</span>
+                      <span className="text-xs text-muted-foreground truncate hidden md:inline">
+                        <MapPin className="inline size-3 mr-1 -mt-0.5" />{s.address}
+                      </span>
+                    )}
+                  </div>
+                  {s.status === "rueckgabe_offen" && (
+                    <Button size="sm" onClick={() => doBestaetigen(s.id)} className="gap-1.5 h-8 shrink-0">
+                      <CheckSquare className="size-3.5" /> Rückgabe
+                    </Button>
+                  )}
+                </div>
+                {isOpen && (
+                  <div className="px-3 pb-3 pt-1 border-t border-border/50 bg-muted/20">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {steps.map((step, i) => {
+                        const Icon = step.icon;
+                        const done = !!step.at;
+                        return (
+                          <div
+                            key={i}
+                            className={`rounded-md border px-2.5 py-1.5 ${done ? "border-border bg-card" : "border-dashed border-border/60 opacity-60"}`}
+                          >
+                            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+                              <Icon className="size-3" /> {step.label}
+                            </div>
+                            <div className={`text-xs tabular-nums ${done ? "text-foreground" : "text-muted-foreground"}`}>
+                              {done ? fmt(step.at) : "–"}
+                            </div>
+                            {done && step.by && (
+                              <div className="text-[10px] text-muted-foreground truncate">{step.by}</div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {s.notiz && (
+                      <div className="mt-2 text-xs text-muted-foreground italic border-l-2 border-border pl-2">„{s.notiz}"</div>
+                    )}
+                    {s.address && (
+                      <div className="mt-2 text-xs text-muted-foreground md:hidden">
+                        <MapPin className="inline size-3 mr-1 -mt-0.5" />{s.address}
                       </div>
                     )}
                   </div>
-                )}
-
-                <div className="md:hidden mt-2 text-xs text-muted-foreground">
-                  Träger: <span className="text-foreground/80 font-medium">{s.traeger_name}</span>
-                </div>
-
-                {/* Timeline */}
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2">
-                  {steps.map((step, i) => {
-                    const Icon = step.icon;
-                    const done = !!step.at;
-                    return (
-                      <div
-                        key={i}
-                        className={`rounded-lg border px-3 py-2 ${
-                          done
-                            ? "border-border bg-muted/40"
-                            : "border-dashed border-border/60 bg-transparent opacity-60"
-                        }`}
-                      >
-                        <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-                          <Icon className="size-3.5" /> {step.label}
-                        </div>
-                        <div className={`mt-1 text-sm tabular-nums ${done ? "text-foreground" : "text-muted-foreground"}`}>
-                          {done ? fmt(step.at) : "–"}
-                        </div>
-                        {done && step.by && (
-                          <div className="text-[11px] text-muted-foreground truncate">{step.by}</div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {s.notiz && (
-                  <div className="mt-3 text-xs text-muted-foreground italic border-l-2 border-border pl-2">„{s.notiz}"</div>
                 )}
               </li>
             );
