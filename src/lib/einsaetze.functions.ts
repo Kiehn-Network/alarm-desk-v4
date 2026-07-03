@@ -28,8 +28,12 @@ const createSchema = z.object({
   anlagen_nr: z.string().max(100).optional().nullable(),
   teilnehmer_id: z.string().max(100).optional().nullable(),
   beschreibung: z.string().max(4000).optional().nullable(),
-  assigned_to: z.string().uuid(),
+  assigned_to: z.string().uuid().nullable().optional(),
+  sub_unternehmen: z.string().trim().max(200).nullable().optional(),
   datei_id: z.string().uuid().optional().nullable(),
+}).refine((d) => !!d.assigned_to || !!(d.sub_unternehmen && d.sub_unternehmen.length > 0), {
+  message: "Fahrer oder Sub-Unternehmen erforderlich",
+  path: ["assigned_to"],
 });
 
 const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
@@ -173,7 +177,8 @@ export const createEinsatz = createServerFn({ method: "POST" })
       status: "in_bearbeitung",
       created_by: userId,
       domain_id: domainId,
-      assigned_to: data.assigned_to,
+      assigned_to: data.assigned_to ?? null,
+      sub_unternehmen: data.sub_unternehmen ? data.sub_unternehmen.trim() : null,
       assigned_at: new Date().toISOString(),
       approved_by: userId,
       approved_at: new Date().toISOString(),
