@@ -201,6 +201,7 @@ function AlarmierungPage() {
   const [stornoGrund, setStornoGrund] = useState("");
   const [stornoBusy, setStornoBusy] = useState(false);
   const [editFor, setEditFor] = useState<Einsatz | null>(null);
+  const [subAbschlussFor, setSubAbschlussFor] = useState<Einsatz | null>(null);
   const [deleteFor, setDeleteFor] = useState<Einsatz | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -444,6 +445,10 @@ function AlarmierungPage() {
                           {canManage && aktiv && (
                             <Button size="sm" className="gap-1.5 h-8"
                               onClick={async () => {
+                                if (e.sub_unternehmen) {
+                                  setSubAbschlussFor(e);
+                                  return;
+                                }
                                 try { await abschliessen({ data: { id: e.id } }); toast.success("Abgeschlossen"); refetch(); }
                                 catch (err: any) { toast.error(err.message); }
                               }}>
@@ -519,6 +524,16 @@ function AlarmierungPage() {
           await editFull({ data: patch });
           toast.success("Gespeichert");
           setEditFor(null);
+          refetch();
+        }}
+      />
+      <SubAbschlussDialog
+        einsatz={subAbschlussFor}
+        onClose={() => setSubAbschlussFor(null)}
+        onSave={async (patch) => {
+          await editFull({ data: patch });
+          toast.success("Sub-Einsatz abgeschlossen");
+          setSubAbschlussFor(null);
           refetch();
         }}
       />
