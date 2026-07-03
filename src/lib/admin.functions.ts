@@ -239,6 +239,7 @@ export const upsertGrund = createServerFn({ method: "POST" })
       id: z.string().uuid().optional(),
       name: z.string().trim().min(1).max(200),
       aktiv: z.boolean().default(true),
+      einsatz_typ: z.enum(["av_einsatz", "hausnotruf"]).nullable().optional(),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
@@ -251,13 +252,14 @@ export const upsertGrund = createServerFn({ method: "POST" })
         throw new Error("Eintrag gehört nicht zu deiner Domäne");
       }
       const { error } = await supabaseAdmin
-        .from("einsatz_gruende").update({ name: data.name, aktiv: data.aktiv }).eq("id", data.id);
+        .from("einsatz_gruende").update({ name: data.name, aktiv: data.aktiv, einsatz_typ: data.einsatz_typ ?? null } as any).eq("id", data.id);
       if (error) throw new Error(error.message);
     } else {
       const { error } = await supabaseAdmin
         .from("einsatz_gruende").insert({
           name: data.name, aktiv: data.aktiv, created_by: context.userId, domain_id: domainId,
-        });
+          einsatz_typ: data.einsatz_typ ?? null,
+        } as any);
       if (error) throw new Error(error.message);
     }
     return { ok: true };
