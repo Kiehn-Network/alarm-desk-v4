@@ -30,6 +30,28 @@ function greeting() {
   return "Guten Abend";
 }
 
+function getStatusMeta(status: string) {
+  const s = (status ?? "").toLowerCase();
+  const labels: Record<string, string> = {
+    abgelehnt: "Storniert",
+    in_bearbeitung: "In Bearbeitung",
+    freigegeben: "Freigegeben",
+    wartet_freigabe: "Wartet Freigabe",
+    abgeschlossen: "Abgeschlossen",
+  };
+  const classes: Record<string, string> = {
+    abgelehnt: "bg-destructive/15 text-destructive",
+    in_bearbeitung: "bg-warning/15 text-warning",
+    freigegeben: "bg-warning/15 text-warning",
+    wartet_freigabe: "bg-warning/15 text-warning",
+    abgeschlossen: "bg-success/15 text-success",
+  };
+  return {
+    label: labels[s] ?? s,
+    classes: classes[s] ?? "bg-muted text-muted-foreground",
+  };
+}
+
 function DashboardPage() {
   const { isFahrer, isAdmin, isDispatcher, loading: roleLoading } = useRole();
   if (roleLoading) {
