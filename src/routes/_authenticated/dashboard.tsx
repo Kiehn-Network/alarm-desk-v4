@@ -34,6 +34,7 @@ function getStatusMeta(status: string) {
   const s = (status ?? "").toLowerCase();
   const labels: Record<string, string> = {
     abgelehnt: "Storniert",
+    storniert: "Storniert",
     in_bearbeitung: "In Bearbeitung",
     freigegeben: "Freigegeben",
     wartet_freigabe: "Wartet Freigabe",
@@ -41,6 +42,7 @@ function getStatusMeta(status: string) {
   };
   const classes: Record<string, string> = {
     abgelehnt: "bg-destructive/15 text-destructive",
+    storniert: "bg-destructive/15 text-destructive",
     in_bearbeitung: "bg-warning/15 text-warning",
     freigegeben: "bg-warning/15 text-warning",
     wartet_freigabe: "bg-warning/15 text-warning",
