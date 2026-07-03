@@ -972,6 +972,7 @@ export type Database = {
           storniert_at: string | null
           storniert_by: string | null
           storniert_grund: string | null
+          sub_unternehmen: string | null
           teilnehmer_id: string | null
           updated_at: string
           vor_ort_am: string | null
@@ -1010,6 +1011,7 @@ export type Database = {
           storniert_at?: string | null
           storniert_by?: string | null
           storniert_grund?: string | null
+          sub_unternehmen?: string | null
           teilnehmer_id?: string | null
           updated_at?: string
           vor_ort_am?: string | null
@@ -1048,6 +1050,7 @@ export type Database = {
           storniert_at?: string | null
           storniert_by?: string | null
           storniert_grund?: string | null
+          sub_unternehmen?: string | null
           teilnehmer_id?: string | null
           updated_at?: string
           vor_ort_am?: string | null
