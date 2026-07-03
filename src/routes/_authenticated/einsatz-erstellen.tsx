@@ -55,8 +55,9 @@ function EinsatzErstellenPage() {
     enabled: interventionOn,
   });
   const partners = ((partnerData?.partners ?? []) as Array<any>).filter((p) => p.aktiv);
-  const [zielMode, setZielMode] = useState<"fahrer" | "partner">("fahrer");
+  const [zielMode, setZielMode] = useState<"fahrer" | "partner" | "sub">("fahrer");
   const [partnerId, setPartnerId] = useState("");
+  const [subName, setSubName] = useState("");
 
   const [query, setQuery] = useState("");
   const [activeQuery, setActiveQuery] = useState("");
@@ -141,6 +142,7 @@ function EinsatzErstellenPage() {
     if (!grund.trim()) { toast.error("Bitte Einsatzgrund eingeben oder auswählen"); return; }
     if (zielMode === "fahrer" && !fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
     if (zielMode === "partner" && !partnerId) { toast.error("Bitte einen Partner wählen"); return; }
+    if (zielMode === "sub" && !subName.trim()) { toast.error("Bitte Sub-Unternehmen angeben"); return; }
     if (hausnotrufEnabled && einsatzTyp === "hausnotruf" && providerOptions.length > 0 && !hausnotrufProvider) {
       toast.error("Bitte einen Hausnotruf-Anbieter wählen"); return;
     }
@@ -174,13 +176,18 @@ function EinsatzErstellenPage() {
         anlagen_nr: picked.anlagen_nr,
         teilnehmer_id: picked.teilnehmer_id,
         beschreibung: null,
-        assigned_to: fahrerId,
+        assigned_to: zielMode === "sub" ? null : fahrerId,
+        sub_unternehmen: zielMode === "sub" ? subName.trim() : null,
         datei_id: picked.id,
       }});
       const f = fahrer.find((x) => x.id === fahrerId);
-      toast.success(`Einsatz an ${f?.display_name ?? "Fahrer"} übergeben`);
+      if (zielMode === "sub") {
+        toast.success(`Einsatz an Sub-Unternehmen ${subName.trim()} übergeben`);
+      } else {
+        toast.success(`Einsatz an ${f?.display_name ?? "Fahrer"} übergeben`);
+      }
       // Wenn Schlüsselbuch aktiv und Schlüssel-Nr. vorhanden → Übergabe-Dialog öffnen
-      if (schluesselbuchOn && picked.key_number && created?.id) {
+      if (zielMode !== "sub" && schluesselbuchOn && picked.key_number && created?.id) {
         setHandover({
           einsatzId: created.id,
           keyNumber: picked.key_number,
