@@ -61,7 +61,7 @@ const editSchema = z.object({
 const TRACKABLE = [
   "einsatzgrund","kunden_name","address","key_number","anlagen_nr",
   "teilnehmer_id","prioritaet","beschreibung","geplant_am","status",
-  "assigned_to","ablehnung_grund","approved_by","abgeschlossen_am",
+  "assigned_to","sub_unternehmen","ablehnung_grund","approved_by","abgeschlossen_am",
   "vor_ort_am","abfahrt_am","einsatz_ende_am",
   "bericht_typ","hausnotruf_problem","hausnotruf_loesung",
 ] as const;
