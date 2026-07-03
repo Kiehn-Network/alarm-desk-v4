@@ -17,7 +17,7 @@ async function maybeAutoErp(einsatzId: string, domainId: string, userId: string)
 
 const prioritaet = z.enum(["niedrig", "normal", "hoch", "kritisch"]);
 
-const createSchema = z.object({
+const createBase = z.object({
   einsatzgrund: z.string().trim().min(1).max(200),
   einsatzgrund_id: z.string().uuid().optional().nullable(),
   einsatz_typ: z.enum(["av_einsatz", "hausnotruf"]).optional(),
@@ -28,11 +28,16 @@ const createSchema = z.object({
   anlagen_nr: z.string().max(100).optional().nullable(),
   teilnehmer_id: z.string().max(100).optional().nullable(),
   beschreibung: z.string().max(4000).optional().nullable(),
-  assigned_to: z.string().uuid(),
+  assigned_to: z.string().uuid().nullable().optional(),
+  sub_unternehmen: z.string().trim().max(200).nullable().optional(),
   datei_id: z.string().uuid().optional().nullable(),
 });
+const createSchema = createBase.refine((d) => !!d.assigned_to || !!(d.sub_unternehmen && d.sub_unternehmen.length > 0), {
+  message: "Fahrer oder Sub-Unternehmen erforderlich",
+  path: ["assigned_to"],
+});
 
-const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
+const updateSchema = createBase.partial().extend({ id: z.string().uuid() });
 
 const isoOrNull = z.union([z.string().datetime({ offset: true }), z.literal("")]).optional().nullable();
 
@@ -56,7 +61,7 @@ const editSchema = z.object({
 const TRACKABLE = [
   "einsatzgrund","kunden_name","address","key_number","anlagen_nr",
   "teilnehmer_id","prioritaet","beschreibung","geplant_am","status",
-  "assigned_to","ablehnung_grund","approved_by","abgeschlossen_am",
+  "assigned_to","sub_unternehmen","ablehnung_grund","approved_by","abgeschlossen_am",
   "vor_ort_am","abfahrt_am","einsatz_ende_am",
   "bericht_typ","hausnotruf_problem","hausnotruf_loesung",
 ] as const;
@@ -173,7 +178,8 @@ export const createEinsatz = createServerFn({ method: "POST" })
       status: "in_bearbeitung",
       created_by: userId,
       domain_id: domainId,
-      assigned_to: data.assigned_to,
+      assigned_to: data.assigned_to ?? null,
+      sub_unternehmen: data.sub_unternehmen ? data.sub_unternehmen.trim() : null,
       assigned_at: new Date().toISOString(),
       approved_by: userId,
       approved_at: new Date().toISOString(),

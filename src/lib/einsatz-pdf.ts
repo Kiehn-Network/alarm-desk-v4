@@ -61,7 +61,9 @@ export function buildEinsatzPdf(e: any, fahrerName: string | null) {
   if (e.key_number) line(`Schlüssel-Nr.: ${e.key_number}`);
   if (e.anlagen_nr) line(`Anlagen-Nr.: ${e.anlagen_nr}`);
   if (e.teilnehmer_id) line(`Teilnehmer-ID: ${e.teilnehmer_id}`);
-  if (fahrerName) line(`Fahrer: ${fahrerName}`);
+  // Wenn der Einsatz von einem Sub-Unternehmen gefahren wurde, den Fahrer
+  // im offiziellen Bericht bewusst weglassen (weder Fahrername noch Sub-Name).
+  if (fahrerName && !e.sub_unternehmen) line(`Fahrer: ${fahrerName}`);
   if (e.beschreibung) line(`Beschreibung: ${e.beschreibung}`);
   sep();
 
