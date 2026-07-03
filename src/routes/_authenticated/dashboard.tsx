@@ -1,12 +1,14 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Suspense, useEffect } from "react";
 import {
   BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
-  Activity, Timer, Building2, Wallet,
+  Activity, Timer, Building2, Wallet, CheckSquare, ArrowRight,
 } from "lucide-react";
 import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
+import { rueckgabeBestaetigen } from "@/lib/schluesselbuch.functions";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
