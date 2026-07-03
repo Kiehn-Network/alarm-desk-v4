@@ -147,6 +147,7 @@ function InfoDialog({
               value={PROVIDER_LABEL[e.hausnotruf_provider] ?? e.hausnotruf_provider} />
           )}
           {e.assigned_to && <InfoRow icon={<Car className="size-4" />} label="Fahrer" value={profiles[e.assigned_to] ?? "–"} />}
+          {e.sub_unternehmen && <InfoRow icon={<Network className="size-4" />} label="Sub-Unternehmen" value={e.sub_unternehmen} />}
           <InfoRow icon={<User className="size-4" />} label="Erstellt von" value={profiles[e.created_by] ?? "–"} />
           <InfoRow icon={<Clock className="size-4" />} label="Erstellt am" value={fmt(e.created_at)} />
           {e.vor_ort_am && <InfoRow icon={<MapPin className="size-4" />} label="Vor Ort" value={fmt(e.vor_ort_am)} />}
