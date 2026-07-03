@@ -396,7 +396,6 @@ function SchluesselCard({ entries }: { entries: Array<any> }) {
           </div>
           <Link
             to="/schluesselbuch"
-            search={{ tab: "rueckgabe" } as any}
             className="inline-flex items-center gap-1 text-[11px] font-semibold text-destructive hover:underline"
           >
             Bearbeiten <ArrowRight className="size-3" />
