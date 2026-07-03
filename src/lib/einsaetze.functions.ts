@@ -17,7 +17,7 @@ async function maybeAutoErp(einsatzId: string, domainId: string, userId: string)
 
 const prioritaet = z.enum(["niedrig", "normal", "hoch", "kritisch"]);
 
-const createSchema = z.object({
+const createBase = z.object({
   einsatzgrund: z.string().trim().min(1).max(200),
   einsatzgrund_id: z.string().uuid().optional().nullable(),
   einsatz_typ: z.enum(["av_einsatz", "hausnotruf"]).optional(),
@@ -31,12 +31,13 @@ const createSchema = z.object({
   assigned_to: z.string().uuid().nullable().optional(),
   sub_unternehmen: z.string().trim().max(200).nullable().optional(),
   datei_id: z.string().uuid().optional().nullable(),
-}).refine((d) => !!d.assigned_to || !!(d.sub_unternehmen && d.sub_unternehmen.length > 0), {
+});
+const createSchema = createBase.refine((d) => !!d.assigned_to || !!(d.sub_unternehmen && d.sub_unternehmen.length > 0), {
   message: "Fahrer oder Sub-Unternehmen erforderlich",
   path: ["assigned_to"],
 });
 
-const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
+const updateSchema = createBase.partial().extend({ id: z.string().uuid() });
 
 const isoOrNull = z.union([z.string().datetime({ offset: true }), z.literal("")]).optional().nullable();
 
