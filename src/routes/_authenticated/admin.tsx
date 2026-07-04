@@ -31,6 +31,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { SystemSettingsPanel } from "@/components/admin/system-settings-panel";
 import { TourAdminPanel } from "@/components/admin/tour-admin-panel";
 import { EmailSettingsPanel } from "@/components/admin/email-settings-panel";
+import { EmailBrandingPanel } from "@/components/admin/email-branding-panel";
 import { SchluesselFooterPanel } from "@/components/admin/schluessel-footer-panel";
 import { SupportPanel } from "@/routes/_authenticated/support";
 import {
@@ -119,7 +120,12 @@ function AdminPage() {
         <TabsContent value="modules"><ModulesPanel /></TabsContent>
         <TabsContent value="tour"><TourAdminPanel /></TabsContent>
         <TabsContent value="system"><SystemSettingsPanel /></TabsContent>
-          <TabsContent value="email"><EmailSettingsPanel /></TabsContent>
+          <TabsContent value="email">
+            <div className="space-y-6">
+              <EmailSettingsPanel />
+              <EmailBrandingPanel />
+            </div>
+          </TabsContent>
         <TabsContent value="schluessel"><SchluesselFooterPanel /></TabsContent>
         <TabsContent value="datenloeschung"><DatenLoeschungPanel /></TabsContent>
         <TabsContent value="hilfe"><SupportPanel /></TabsContent>

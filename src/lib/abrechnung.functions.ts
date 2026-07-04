@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
 import { sendEmailForDomain } from "@/lib/email-send.server";
+import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
+import { renderBrandedEmail } from "@/lib/email-brand";
 
 const providerEnum = z.enum(["malteser", "johanniter", "lgwa"]);
 
@@ -126,19 +128,20 @@ export const sendAbrechnungEmail = createServerFn({ method: "POST" })
     const downloadUrl = signed.data.signedUrl;
 
     const subject = `Einsatzberichte ${providerLabel} – ${data.month}`;
-    const html = `
-      <div style="font-family:Arial,sans-serif;color:#222;max-width:600px;margin:auto;padding:24px">
-        <h2 style="margin:0 0 16px">Monatsbericht ${escapeHtml(providerLabel)}</h2>
-        <p>anbei der Monatsbericht für <b>${escapeHtml(data.month)}</b> mit ${data.einsatz_count} Einsätzen als PDF.</p>
-        <p style="margin:24px 0">
-          <a href="${downloadUrl}"
-             style="display:inline-block;background:#1e293b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
-            Bericht herunterladen (PDF)
-          </a>
-        </p>
-        <p style="font-size:12px;color:#666">Der Link ist 30 Tage gültig.</p>
-      </div>
-    `;
+    const branding = await loadDomainBranding(domainId);
+    const html = renderBrandedEmail({
+      branding,
+      brandName: brandName(branding),
+      statusPill: "Monatsabrechnung",
+      heading: `Monatsbericht ${providerLabel}`,
+      greetingName: null,
+      intro: `anbei der Monatsbericht für ${data.month} mit ${data.einsatz_count} Einsätzen als PDF.`,
+      metaTitle: `${providerLabel} · ${data.month}`,
+      metaSubtitle: `${data.einsatz_count} Einsätze · PDF · 30 Tage gültig`,
+      ctaLabel: "Bericht herunterladen",
+      ctaUrl: downloadUrl,
+      previewText: `Monatsbericht ${providerLabel} ${data.month}`,
+    });
 
     let status: "sent" | "failed" = "sent";
     let errorMessage: string | null = null;
