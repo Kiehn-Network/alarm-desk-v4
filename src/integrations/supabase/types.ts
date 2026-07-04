@@ -790,6 +790,7 @@ export type Database = {
           brand_footer_html: string | null
           brand_greeting: string | null
           brand_header_label: string | null
+          brand_layout: string
           brand_logo_url: string | null
           brand_primary_color: string | null
           brand_signature: string | null
@@ -814,6 +815,7 @@ export type Database = {
           brand_footer_html?: string | null
           brand_greeting?: string | null
           brand_header_label?: string | null
+          brand_layout?: string
           brand_logo_url?: string | null
           brand_primary_color?: string | null
           brand_signature?: string | null
@@ -838,6 +840,7 @@ export type Database = {
           brand_footer_html?: string | null
           brand_greeting?: string | null
           brand_header_label?: string | null
+          brand_layout?: string
           brand_logo_url?: string | null
           brand_primary_color?: string | null
           brand_signature?: string | null
