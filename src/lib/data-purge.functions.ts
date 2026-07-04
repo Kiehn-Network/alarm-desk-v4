@@ -4,6 +4,37 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
 
+// Whitelist der Tabellen, die per Tabellen-Purge (Superadmin → Admin-Bestätigung) hart
+// gelöscht werden dürfen. Alle Tabellen haben eine `domain_id`-Spalte.
+export const PURGEABLE_TABLES = [
+  "einsaetze",
+  "einsatz_historie",
+  "dateien",
+  "budeko_berichte",
+  "budeko_notdienst",
+  "budeko_mitarbeiter",
+  "rohrservice_berichte",
+  "rohrservice_notdienst",
+  "rohrservice_mitarbeiter",
+  "owks_ereignisse",
+  "owks_scans",
+  "owks_durchgaenge",
+  "owks_rundgaenge",
+  "owks_bestreifungen",
+  "owks_bestreifungsplaene",
+  "owks_kontrollpunkte",
+  "owks_objekte",
+  "schluessel_buch",
+  "schluesseluebergabe_protokolle",
+  "chat_messages",
+  "intrahub_posts",
+  "dienstplaene",
+  "auswertung_pins",
+  "driver_locations",
+] as const;
+export type PurgeableTable = (typeof PURGEABLE_TABLES)[number];
+const PURGEABLE_TABLE_SET = new Set<string>(PURGEABLE_TABLES as readonly string[]);
+
 // Domain-Admin: stellt einen Antrag, alle Dateien seiner Domäne zu löschen
 export const requestDataPurge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
