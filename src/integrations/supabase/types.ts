@@ -787,6 +787,12 @@ export type Database = {
         Row: {
           api_key: string | null
           bcc_email: string | null
+          brand_footer_html: string | null
+          brand_greeting: string | null
+          brand_header_label: string | null
+          brand_logo_url: string | null
+          brand_primary_color: string | null
+          brand_signature: string | null
           domain_id: string
           from_email: string | null
           from_name: string | null
@@ -805,6 +811,12 @@ export type Database = {
         Insert: {
           api_key?: string | null
           bcc_email?: string | null
+          brand_footer_html?: string | null
+          brand_greeting?: string | null
+          brand_header_label?: string | null
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
+          brand_signature?: string | null
           domain_id: string
           from_email?: string | null
           from_name?: string | null
@@ -823,6 +835,12 @@ export type Database = {
         Update: {
           api_key?: string | null
           bcc_email?: string | null
+          brand_footer_html?: string | null
+          brand_greeting?: string | null
+          brand_header_label?: string | null
+          brand_logo_url?: string | null
+          brand_primary_color?: string | null
+          brand_signature?: string | null
           domain_id?: string
           from_email?: string | null
           from_name?: string | null
