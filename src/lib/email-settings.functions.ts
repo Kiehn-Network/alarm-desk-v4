@@ -184,7 +184,7 @@ export const upsertDomainEmailSettings = createServerFn({ method: "POST" })
           throw new Error("SMTP-Host, Port, Benutzer und Passwort sind Pflicht.");
         }
       } else {
-        if (!finalKey) throw new Error("API-Key ist Pflicht.");
+        if (data.provider !== "resend" && !finalKey) throw new Error("API-Key ist Pflicht.");
         if (data.provider === "mailgun" && !data.mailgun_domain) throw new Error("Mailgun-Domain ist Pflicht.");
       }
     }
