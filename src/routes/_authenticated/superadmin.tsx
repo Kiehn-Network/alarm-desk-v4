@@ -1783,6 +1783,7 @@ function SuperAdminPage() {
         <TabsContent value="tickets" className="space-y-4">
           <SupportTicketsPanel />
           <DataPurgeRequestsPanel />
+          <TablePurgeAdminPanel domains={domains} />
         </TabsContent>
 
         <TabsContent value="onboard" className="space-y-4">
