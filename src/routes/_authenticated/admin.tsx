@@ -41,6 +41,7 @@ import {
 } from "@/lib/admin.functions";
 import {
   requestDataPurge, listMyPurgeRequests, cancelPurgeRequest,
+  listPendingSuperadminPurgeRequests, confirmSuperadminPurgeRequest,
 } from "@/lib/data-purge.functions";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -129,6 +130,68 @@ function AdminPage() {
 
 // ---------------- Datenlöschung (Datei-Verwaltung) ----------------
 
+function SuperadminPurgeConfirmPanel() {
+  const qc = useQueryClient();
+  const listFn = useServerFn(listPendingSuperadminPurgeRequests);
+  const confirmFn = useServerFn(confirmSuperadminPurgeRequest);
+  const lq = useQuery({
+    queryKey: ["admin-sa-purge-requests"],
+    queryFn: () => listFn(),
+    refetchInterval: 60_000,
+  });
+  const requests = (lq.data?.requests ?? []) as any[];
+  const pending = requests.filter((r) => r.status === "pending");
+
+  const m_confirm = useMutation({
+    mutationFn: (v: { id: string; decision: "approve" | "reject" }) => confirmFn({ data: v }),
+    onSuccess: (_d, v) => {
+      toast.success(v.decision === "approve" ? "Daten wurden endgültig gelöscht." : "Antrag abgelehnt.");
+      qc.invalidateQueries({ queryKey: ["admin-sa-purge-requests"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  if (pending.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-5 space-y-3">
+      <div className="flex items-center gap-2">
+        <ShieldAlert className="size-5 text-amber-500" />
+        <div className="font-semibold">Bestätigung erforderlich – Löschanträge vom SuperAdmin</div>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Der SuperAdmin hat das endgültige Löschen der folgenden Tabellendaten beantragt.
+        Nach Ihrer Freigabe werden die Datensätze <b>unwiderruflich</b> entfernt.
+      </p>
+      <div className="divide-y">
+        {pending.map((r) => (
+          <div key={r.id} className="py-3 flex items-center gap-3 flex-wrap">
+            <div className="min-w-0 flex-1">
+              <div className="font-medium">Tabelle: <span className="font-mono">{r.target_table}</span></div>
+              <div className="text-xs text-muted-foreground">
+                Beantragt am {new Date(r.requested_at).toLocaleString("de-DE")}
+              </div>
+              {r.note && <div className="text-xs italic text-muted-foreground">„{r.note}"</div>}
+            </div>
+            <Button size="sm" variant="outline"
+              onClick={() => { if (confirm("Antrag ablehnen?")) m_confirm.mutate({ id: r.id, decision: "reject" }); }}>
+              Ablehnen
+            </Button>
+            <Button size="sm" variant="destructive"
+              onClick={() => {
+                if (confirm(`ALLE Datensätze der Tabelle „${r.target_table}" endgültig löschen? Diese Aktion ist unwiderruflich.`)) {
+                  m_confirm.mutate({ id: r.id, decision: "approve" });
+                }
+              }}>
+              <Trash2 className="size-4 mr-2" /> Endgültig löschen
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DatenLoeschungPanel() {
   const qc = useQueryClient();
   const listFn = useServerFn(listMyPurgeRequests);
@@ -177,6 +240,7 @@ function DatenLoeschungPanel() {
 
   return (
     <div className="space-y-6">
+      <SuperadminPurgeConfirmPanel />
       <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 space-y-3">
         <div className="flex items-start gap-3">
           <div className="size-10 rounded-lg bg-destructive/15 grid place-items-center shrink-0">

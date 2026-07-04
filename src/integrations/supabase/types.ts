@@ -515,11 +515,13 @@ export type Database = {
           domain_id: string
           executed_at: string | null
           id: string
+          initiator: string
           note: string | null
           requested_at: string
           requested_by: string
           scope: string
           status: string
+          target_table: string | null
           updated_at: string
         }
         Insert: {
@@ -530,11 +532,13 @@ export type Database = {
           domain_id: string
           executed_at?: string | null
           id?: string
+          initiator?: string
           note?: string | null
           requested_at?: string
           requested_by: string
           scope?: string
           status?: string
+          target_table?: string | null
           updated_at?: string
         }
         Update: {
@@ -545,11 +549,13 @@ export type Database = {
           domain_id?: string
           executed_at?: string | null
           id?: string
+          initiator?: string
           note?: string | null
           requested_at?: string
           requested_by?: string
           scope?: string
           status?: string
+          target_table?: string | null
           updated_at?: string
         }
         Relationships: [
