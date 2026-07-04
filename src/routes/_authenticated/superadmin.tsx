@@ -49,7 +49,10 @@ import {
 } from "lucide-react";
 import { listSupportTickets, updateSupportTicket, getOpenTicketsCount } from "@/lib/support.functions";
 import { TicketDialog } from "@/routes/_authenticated/support";
-import { listPendingPurgeRequests, decidePurgeRequest } from "@/lib/data-purge.functions";
+import {
+  listPendingPurgeRequests, decidePurgeRequest,
+  superadminRequestTablePurge, PURGEABLE_TABLES,
+} from "@/lib/data-purge.functions";
 import { saListInterventionAllowlist, saSetInterventionAllowlist } from "@/lib/intervention.functions";
 
 export const Route = createFileRoute("/_authenticated/superadmin")({
