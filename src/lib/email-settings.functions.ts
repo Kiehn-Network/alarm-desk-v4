@@ -264,6 +264,7 @@ const brandingSchema = z.object({
   brand_greeting: z.string().max(300).nullable().optional(),
   brand_signature: z.string().max(500).nullable().optional(),
   brand_footer_html: z.string().max(2000).nullable().optional(),
+  brand_layout: z.enum(["card", "banner", "minimal", "sidebar"]).nullable().optional(),
 });
 
 export const getDomainEmailBranding = createServerFn({ method: "GET" })
@@ -273,7 +274,7 @@ export const getDomainEmailBranding = createServerFn({ method: "GET" })
     await assertDomainAdmin(context.userId, domainId);
     const { data, error } = await supabaseAdmin
       .from("domain_email_settings")
-      .select("brand_logo_url, brand_primary_color, brand_header_label, brand_greeting, brand_signature, brand_footer_html, from_name")
+      .select("brand_logo_url, brand_primary_color, brand_header_label, brand_greeting, brand_signature, brand_footer_html, brand_layout, from_name")
       .eq("domain_id", domainId).maybeSingle() as any;
     if (error) throw new Error(error.message);
     return {
@@ -285,6 +286,7 @@ export const getDomainEmailBranding = createServerFn({ method: "GET" })
         brand_greeting: data?.brand_greeting ?? null,
         brand_signature: data?.brand_signature ?? null,
         brand_footer_html: data?.brand_footer_html ?? null,
+        brand_layout: data?.brand_layout ?? null,
         from_name: data?.from_name ?? null,
       },
     };
@@ -304,6 +306,7 @@ export const upsertDomainEmailBranding = createServerFn({ method: "POST" })
       brand_greeting: data.brand_greeting ?? null,
       brand_signature: data.brand_signature ?? null,
       brand_footer_html: data.brand_footer_html ?? null,
+      brand_layout: data.brand_layout ?? "card",
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
     } as any);
