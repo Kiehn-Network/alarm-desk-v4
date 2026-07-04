@@ -15,6 +15,8 @@ export function EinsatzDateienDialog({
     queryKey: ["einsatz-dateien", einsatzId],
     queryFn: () => list({ data: { einsatz_id: einsatzId! } }),
     enabled: open && !!einsatzId,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
   const dateien = (data?.dateien ?? []) as any[];
   const [preview, setPreview] = useState<{ path: string; name: string; mime?: string | null } | null>(null);

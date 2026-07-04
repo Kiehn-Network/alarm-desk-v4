@@ -12,6 +12,8 @@ export function KundenInfoDialog({
     queryKey: ["einsatz-kunden-info", einsatzId],
     queryFn: () => list({ data: { einsatz_id: einsatzId! } }),
     enabled: open && !!einsatzId,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
   });
   const dateien = ((data?.dateien ?? []) as any[]).filter((d) => d.notiz && String(d.notiz).trim().length > 0);
 
