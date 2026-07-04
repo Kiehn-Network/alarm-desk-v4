@@ -436,7 +436,8 @@ export const sendBericht = createServerFn({ method: "POST" })
       .from("dateien")
       .createSignedUrl(path, 60 * 60 * 24 * 30);
     if (signed.error || !signed.data?.signedUrl) throw new Error("Signed URL fehlgeschlagen");
-    const downloadUrl = signed.data.signedUrl;
+    const { rewriteStorageUrl } = await import("@/lib/storage-url.server");
+    const downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
 
     const titel = `Rohrservice-Bericht #${bericht.bericht_nr}`;
     const subject = titel;
