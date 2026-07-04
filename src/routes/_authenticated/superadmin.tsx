@@ -28,6 +28,7 @@ import {
   previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
   startSchemaMigrationJob, runSchemaMigration, exportMigrationsSql,
   exportFullBootstrapSql,
+  previewSchemaDiff, applySchemaDiff, startSchemaDiffJob,
 } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,7 +161,11 @@ function DbSyncPanel() {
   const runMigFn = useServerFn(runSchemaMigration);
   const exportMigFn = useServerFn(exportMigrationsSql);
   const exportBootstrapFn = useServerFn(exportFullBootstrapSql);
+  const previewDiffFn = useServerFn(previewSchemaDiff);
+  const applyDiffFn = useServerFn(applySchemaDiff);
+  const startDiffFn = useServerFn(startSchemaDiffJob);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
+  const diffQ = useQuery({ queryKey: ["db-schema-diff"], queryFn: () => previewDiffFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [openMigConfirm, setOpenMigConfirm] = useState(false);
@@ -229,6 +234,21 @@ function DbSyncPanel() {
       toast.success(`SQL-Datei mit ${r.count} Migrations heruntergeladen`);
     },
     onError: (e: any) => toast.error(e?.message ?? "Export fehlgeschlagen"),
+  });
+
+  const m_diff = useMutation({
+    mutationFn: async () => {
+      const { jobId: newId } = await startDiffFn();
+      setJobId(newId);
+      setResult(null);
+      return applyDiffFn({ data: { confirm: "STRUCTURE ONLY", jobId: newId } });
+    },
+    onSuccess: (r: any) => {
+      diffQ.refetch();
+      if (r.ok) toast.success(`Struktur abgeglichen: ${r.applied} Änderungen angewandt`);
+      else toast.warning(`Struktur-Abgleich: ${r.applied} ok, ${r.failed} Fehler`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Struktur-Abgleich fehlgeschlagen"),
   });
 
   const m_bootstrap = useMutation({
@@ -376,6 +396,101 @@ function DbSyncPanel() {
               Vollständige Synchronisation starten
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Network className="size-5" /> Struktur-Abgleich (nur Schema, keine Daten)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm">
+          <Alert>
+            <div className="space-y-1 flex-1">
+              <AlertTitleX>Vergleicht Tabellen und Spalten zwischen Quelle und Ziel</AlertTitleX>
+              <AlertDescriptionX>
+                Fehlende Tabellen werden im Ziel neu angelegt (inkl. Standard-GRANTs und RLS aktiviert),
+                fehlende Spalten werden per <code>ALTER TABLE ... ADD COLUMN IF NOT EXISTS</code> nachgezogen.
+                Es werden <b>keine Datenzeilen</b> übertragen und <b>nichts</b> im Ziel gelöscht oder überschrieben.
+                Benötigt die Secrets <code>SUPABASE_DB_URL</code> und <code>SYNC_TARGET_DB_URL</code>.
+              </AlertDescriptionX>
+            </div>
+          </Alert>
+
+          {diffQ.isLoading && <div className="text-muted-foreground">Vergleiche Schemas…</div>}
+          {diffQ.data && !(diffQ.data as any).configured && (
+            <Alert variant="destructive-soft">
+              <AlertDescriptionX>{(diffQ.data as any).message}</AlertDescriptionX>
+            </Alert>
+          )}
+          {diffQ.data && (diffQ.data as any).error && (
+            <Alert variant="destructive-soft">
+              <AlertDescriptionX>{(diffQ.data as any).error}</AlertDescriptionX>
+            </Alert>
+          )}
+
+          {diffQ.data && (diffQ.data as any).configured && !(diffQ.data as any).error && (() => {
+            const d = (diffQ.data as any);
+            const diff = d.diff;
+            const nothing = diff.missingTables.length === 0 && diff.missingColumns.length === 0;
+            return (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                  <div className="rounded border p-2"><span className="text-muted-foreground">Tabellen Quelle:</span> <b>{d.sourceTables}</b></div>
+                  <div className="rounded border p-2"><span className="text-muted-foreground">Tabellen Ziel:</span> <b>{d.targetTables}</b></div>
+                  <div className="rounded border p-2"><span className="text-muted-foreground">Fehlende Tabellen:</span> <b className={diff.missingTables.length ? "text-amber-600" : "text-emerald-600"}>{diff.missingTables.length}</b></div>
+                  <div className="rounded border p-2"><span className="text-muted-foreground">Fehlende Spalten:</span> <b className={diff.missingColumns.length ? "text-amber-600" : "text-emerald-600"}>{diff.missingColumns.length}</b></div>
+                </div>
+                {diff.missingTables.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold mb-1">Fehlende Tabellen im Ziel</div>
+                    <div className="flex flex-wrap gap-1">
+                      {diff.missingTables.map((t: string) => (
+                        <Badge key={t} variant="outline" className="text-[10px] font-mono">{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {diff.missingColumns.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold mb-1">Fehlende Spalten im Ziel</div>
+                    <div className="max-h-48 overflow-auto rounded border font-mono text-[11px]">
+                      {diff.missingColumns.map((c: any, i: number) => (
+                        <div key={i} className="px-2 py-1 border-t first:border-t-0">
+                          <span className="text-muted-foreground">{c.table}</span>.{c.column}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(diff.extraTables.length > 0 || diff.extraColumns.length > 0) && (
+                  <div className="text-xs text-muted-foreground">
+                    Nur im Ziel: {diff.extraTables.length} Tabelle(n), {diff.extraColumns.length} Spalte(n) – bleiben unberührt.
+                  </div>
+                )}
+                {nothing && (
+                  <div className="text-xs text-emerald-600">Ziel-Schema ist auf dem Stand der Quelle.</div>
+                )}
+                <div className="flex gap-2 pt-1">
+                  <Button variant="outline" onClick={() => diffQ.refetch()} disabled={diffQ.isFetching}>
+                    <RefreshCw className="size-4 mr-2" /> Vergleich aktualisieren
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    disabled={nothing || m_diff.isPending || isRunning}
+                    onClick={() => m_diff.mutate()}
+                  >
+                    {m_diff.isPending ? (
+                      <><Loader2 className="size-4 mr-2 animate-spin" /> Wende an…</>
+                    ) : (
+                      <>Fehlende Struktur im Ziel anlegen</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
