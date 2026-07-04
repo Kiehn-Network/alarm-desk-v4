@@ -64,7 +64,7 @@ function buildConfig(source: "platform" | "domain", row: any): ResolvedEmailConf
       throw new Error("SMTP-Daten unvollständig (Host, Port, Benutzer, Passwort erforderlich).");
     }
   } else {
-    if (!row.api_key) throw new Error("API-Key fehlt in den E-Mail-Einstellungen.");
+    if (provider !== "resend" && !row.api_key) throw new Error("API-Key fehlt in den E-Mail-Einstellungen.");
     if (provider === "mailgun" && !row.mailgun_domain) throw new Error("Mailgun-Domain fehlt.");
   }
   return {
