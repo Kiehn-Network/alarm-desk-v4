@@ -6,6 +6,7 @@ import { requireEffectiveDomainId } from "@/lib/tenant.server";
 import { sendEmailForDomain } from "@/lib/email-send.server";
 import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
 import { renderBrandedEmail } from "@/lib/email-brand";
+import { rewriteStorageUrl } from "@/lib/storage-url.server";
 
 const providerEnum = z.enum(["malteser", "johanniter", "lgwa"]);
 
@@ -125,7 +126,7 @@ export const sendAbrechnungEmail = createServerFn({ method: "POST" })
     if (upload.error) throw new Error("Upload fehlgeschlagen: " + upload.error.message);
     const signed = await supabaseAdmin.storage.from("dateien").createSignedUrl(path, 60 * 60 * 24 * 30);
     if (signed.error || !signed.data?.signedUrl) throw new Error("Signed URL fehlgeschlagen");
-    const downloadUrl = signed.data.signedUrl;
+    const downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
 
     const subject = `Einsatzberichte ${providerLabel} – ${data.month}`;
     const branding = await loadDomainBranding(domainId);
