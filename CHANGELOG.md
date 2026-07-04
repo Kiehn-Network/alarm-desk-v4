@@ -1,0 +1,22 @@
+# Changelog
+
+Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
+
+Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
+
+## [Unreleased]
+
+### Added
+
+- **E-Mail-Branding pro Domäne**: Jede Domäne kann jetzt ihr eigenes E-Mail-Design anpassen – inklusive Logo, Markenfarbe, Begrüßung, Signatur, Fußtext und Absender-Name.
+- **E-Mail-Themes**: Vorgefertigte Design-Presets als Startpunkt, die Farben und Textbausteine auf einmal übernehmen.
+- **E-Mail-Layouts**: Vier unterschiedliche Layout-Varianten für E-Mails: Card, Banner, Minimal und Sidebar.
+- **Live-Vorschau**: Das Admin-Panel zeigt eine Echtzeit-Vorschau der E-Mail direkt neben den Einstellungen an.
+
+### Changed
+
+- **Header-Label optional**: Der kleine Text unter dem Firmennamen im E-Mail-Header kann jetzt leer gelassen werden. Ist das Feld leer, wird im Versand nur der Firmenname ohne Unterzeile angezeigt.
+
+### Fixed
+
+- Header-Label fällt nicht mehr automatisch auf den Standardtext zurück, wenn es bewusst geleert wird.
