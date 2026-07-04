@@ -9,7 +9,8 @@ export function KundenInfoDialog({
 }: { einsatzId: string | null; open: boolean; onClose: () => void }) {
   const list = useServerFn(listDateienForEinsatz);
   const { data, isLoading } = useQuery({
-    queryKey: ["einsatz-kunden-info", einsatzId],
+    // Gleicher Key wie Dateien-Dialog → Cache-Sharing, keine Doppel-Anfrage.
+    queryKey: ["einsatz-dateien", einsatzId],
     queryFn: () => list({ data: { einsatz_id: einsatzId! } }),
     enabled: open && !!einsatzId,
     staleTime: 60_000,
