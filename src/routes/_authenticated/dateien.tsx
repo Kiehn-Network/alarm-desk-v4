@@ -28,6 +28,7 @@ import {
   listDateien, createDatei, softDeleteDatei,
   linkDateien, unlinkDateien, getDateiSignedUrl,
   updateDatei, listDateiHistorie, softDeleteDateienBulk,
+  findDuplikate,
 } from "@/lib/dateien.functions";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
@@ -72,7 +73,7 @@ function DateienPage() {
   const [linkFor, setLinkFor] = useState<Datei | null>(null);
   const [detailFor, setDetailFor] = useState<Datei | null>(null);
   const [editFor, setEditFor] = useState<Datei | null>(null);
-  const [tab, setTab] = useState<"dateien" | "kunden">("dateien");
+  const [tab, setTab] = useState<"dateien" | "kunden" | "duplikate">("dateien");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -175,9 +176,19 @@ function DateienPage() {
         >
           <Users className="size-4" /> Kunden
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => setTab("duplikate")}
+            className={`px-3 py-1.5 text-sm rounded-md inline-flex items-center gap-2 transition ${tab === "duplikate" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+          >
+            <Trash2 className="size-4" /> Duplikate
+          </button>
+        )}
       </div>
 
-      {tab === "kunden" ? (
+      {tab === "duplikate" && isAdmin ? (
+        <DuplikateTab onDone={refresh} />
+      ) : tab === "kunden" ? (
         <KundenListe
           dateien={dateien}
           search={search}
@@ -511,6 +522,207 @@ function UploadDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ------------------------------------------------------------
+// Duplikate-Tab: Kunden- und Datei-Duplikate für Admins
+// ------------------------------------------------------------
+function DuplikateTab({ onDone }: { onDone: () => void }) {
+  const qc = useQueryClient();
+  const find = useServerFn(findDuplikate);
+  const delOne = useServerFn(softDeleteDatei);
+  const delBulk = useServerFn(softDeleteDateienBulk);
+  const { data, isLoading, refetch, isFetching } = useQuery({
+    queryKey: ["dateien-duplikate"],
+    queryFn: () => find(),
+  });
+
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+  const [confirmVariant, setConfirmVariant] = useState<null | { kunden_name: string; address: string | null; ids: string[] }>(null);
+  const [busyVariant, setBusyVariant] = useState(false);
+
+  const refresh = () => {
+    qc.invalidateQueries({ queryKey: ["dateien"] });
+    refetch();
+    onDone();
+  };
+
+  const removeFile = async (id: string) => {
+    if (!confirm("Diese Datei wirklich löschen?")) return;
+    setBusyIds((prev) => new Set(prev).add(id));
+    try {
+      await delOne({ data: { id, reason: "Duplikat" } });
+      toast.success("Datei gelöscht");
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Löschen fehlgeschlagen");
+    } finally {
+      setBusyIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    }
+  };
+
+  const removeVariant = async () => {
+    if (!confirmVariant) return;
+    setBusyVariant(true);
+    try {
+      const res = await delBulk({ data: { ids: confirmVariant.ids, reason: "Kunden-Duplikat" } });
+      toast.success(`${res.deleted} Datei(en) gelöscht`);
+      setConfirmVariant(null);
+      refresh();
+    } catch (e: any) {
+      toast.error(e.message ?? "Löschen fehlgeschlagen");
+    } finally {
+      setBusyVariant(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-12 text-center">
+        <Loader2 className="size-6 animate-spin mx-auto text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const kundenGroups = data?.kundenGroups ?? [];
+  const dateiGroups = data?.dateiGroups ?? [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {kundenGroups.length} Kunden-Duplikat-{kundenGroups.length === 1 ? "Gruppe" : "Gruppen"} ·
+          {" "}{dateiGroups.length} Datei-Duplikat-{dateiGroups.length === 1 ? "Gruppe" : "Gruppen"}
+        </p>
+        <Button size="sm" variant="outline" onClick={() => refetch()} disabled={isFetching} className="gap-2">
+          {isFetching && <Loader2 className="size-4 animate-spin" />} Neu prüfen
+        </Button>
+      </div>
+
+      {/* Kunden-Duplikate */}
+      <section className="rounded-xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="px-4 lg:px-5 py-3 border-b border-border">
+          <h2 className="font-semibold text-sm flex items-center gap-2">
+            <Users className="size-4 text-primary" /> Kunden-Duplikate
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Gleicher Kunde (Name + Adresse) in unterschiedlicher Schreibweise. Wähle die Variante(n), die gelöscht werden sollen.
+          </p>
+        </div>
+        {kundenGroups.length === 0 ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">Keine Kunden-Duplikate gefunden.</div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {kundenGroups.map((g) => (
+              <li key={g.key} className="p-4 lg:p-5 space-y-2">
+                <div className="text-xs text-muted-foreground">
+                  {g.variants.length} Schreibweisen · gesamt {g.variants.reduce((s, v) => s + v.count, 0)} Dateien
+                </div>
+                <ul className="divide-y divide-border/60 rounded-md border border-border/60 bg-muted/20">
+                  {g.variants.map((v, i) => (
+                    <li key={i} className="px-3 py-2 flex flex-wrap items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate flex items-center gap-2">
+                          {v.kunden_name}
+                          {i === 0 && <Badge variant="secondary" className="text-[10px]">meiste Dateien</Badge>}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {v.address ?? "— keine Adresse —"} · {v.count} {v.count === 1 ? "Datei" : "Dateien"}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm" variant="ghost"
+                        className="gap-1.5 text-destructive hover:text-destructive"
+                        onClick={() => setConfirmVariant({ kunden_name: v.kunden_name, address: v.address, ids: v.ids })}
+                      >
+                        <Trash2 className="size-4" /> Diese Variante löschen
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* Datei-Duplikate */}
+      <section className="rounded-xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="px-4 lg:px-5 py-3 border-b border-border">
+          <h2 className="font-semibold text-sm flex items-center gap-2">
+            <FileText className="size-4 text-primary" /> Datei-Duplikate
+          </h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Gleiche Dateigröße + Dateiname. Ältester Eintrag ist als Original markiert – lösche die überflüssigen Kopien.
+          </p>
+        </div>
+        {dateiGroups.length === 0 ? (
+          <div className="p-8 text-center text-sm text-muted-foreground">Keine Datei-Duplikate gefunden.</div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {dateiGroups.map((g) => (
+              <li key={g.key} className="p-4 lg:p-5 space-y-2">
+                <div className="text-sm font-medium truncate">
+                  {g.filename}
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {formatSize(g.size_bytes)} · {g.items.length} Kopien
+                  </span>
+                </div>
+                <ul className="divide-y divide-border/60 rounded-md border border-border/60 bg-muted/20">
+                  {g.items.map((it, i) => (
+                    <li key={it.id} className="px-3 py-2 flex flex-wrap items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium truncate flex items-center gap-2">
+                          {it.filename}
+                          {i === 0 && <Badge variant="secondary" className="text-[10px]">Original</Badge>}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {[it.kunden_name, it.address, it.key_number && `🔑 ${it.key_number}`, it.anlagen_nr && `🏷️ ${it.anlagen_nr}`]
+                            .filter(Boolean).join(" · ") || "—"}
+                        </div>
+                        <div className="text-[11px] text-muted-foreground">
+                          angelegt {new Date(it.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm" variant="ghost"
+                        className="gap-1.5 text-destructive hover:text-destructive"
+                        disabled={busyIds.has(it.id)}
+                        onClick={() => removeFile(it.id)}
+                      >
+                        {busyIds.has(it.id) ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                        Löschen
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <Dialog open={!!confirmVariant} onOpenChange={(v) => !v && !busyVariant && setConfirmVariant(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Kunden-Variante löschen</DialogTitle>
+            <DialogDescription>
+              {confirmVariant && (
+                <>Alle {confirmVariant.ids.length} Datei(en) mit dem Kunden „{confirmVariant.kunden_name}"
+                {confirmVariant.address ? ` (${confirmVariant.address})` : ""} werden in den Papierkorb verschoben.</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmVariant(null)} disabled={busyVariant}>Abbrechen</Button>
+            <Button variant="destructive" onClick={removeVariant} disabled={busyVariant} className="gap-2">
+              {busyVariant && <Loader2 className="size-4 animate-spin" />} Löschen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 

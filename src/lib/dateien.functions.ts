@@ -242,3 +242,107 @@ export const softDeleteDateienBulk = createServerFn({ method: "POST" })
     }
     return { ok: true, deleted };
   });
+
+// ------------------------------------------------------------
+// Duplikat-Erkennung (Kunden + Dateien) für Domänen-Admins
+// ------------------------------------------------------------
+
+function normalizeText(v: string | null | undefined): string {
+  return (v ?? "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\s\-_,.]+/g, " ")
+    .trim();
+}
+
+async function assertDomainAdmin(userId: string, domainId: string) {
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles").select("role, domain_id").eq("user_id", userId);
+  const ok = (roles ?? []).some((r: any) =>
+    r.role === "superadmin" || (r.role === "admin" && r.domain_id === domainId));
+  if (!ok) throw new Error("Nur Domänen-Admins dürfen Duplikate verwalten");
+}
+
+export const findDuplikate = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertDomainAdmin(userId, domainId);
+
+    // Alle nicht-gelöschten Dateien der Domäne laden (paginiert)
+    const pageSize = 1000;
+    let from = 0;
+    const all: any[] = [];
+    while (true) {
+      const { data, error } = await supabase
+        .from("dateien")
+        .select("id, filename, size_bytes, kunden_name, address, key_number, anlagen_nr, storage_path, created_at")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: true })
+        .range(from, from + pageSize - 1);
+      if (error) throw new Error(error.message);
+      if (!data || data.length === 0) break;
+      all.push(...data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+
+    // --- Kunden-Duplikate: normalisiert (Name + Adresse) ---
+    type Variant = { kunden_name: string; address: string | null; count: number; ids: string[] };
+    const kMap = new Map<string, Map<string, Variant>>();
+    for (const d of all) {
+      const rawName = (d.kunden_name ?? "").trim();
+      if (!rawName) continue;
+      const key = `${normalizeText(rawName)}|${normalizeText(d.address)}`;
+      if (!kMap.has(key)) kMap.set(key, new Map());
+      const vMap = kMap.get(key)!;
+      const vKey = `${rawName}|${d.address ?? ""}`;
+      const v: Variant = vMap.get(vKey) ?? { kunden_name: rawName, address: d.address ?? null, count: 0, ids: [] };
+      v.count += 1;
+      v.ids.push(d.id);
+      vMap.set(vKey, v);
+    }
+    const kundenGroups = Array.from(kMap.entries())
+      .map(([key, vMap]) => ({
+        key,
+        variants: Array.from(vMap.values()).sort((a, b) => b.count - a.count),
+      }))
+      .filter((g) => g.variants.length > 1)
+      .sort((a, b) => (b.variants.reduce((s, v) => s + v.count, 0)) - (a.variants.reduce((s, v) => s + v.count, 0)));
+
+    // --- Datei-Duplikate: gleiche Größe + normalisierter Dateiname ---
+    const dMap = new Map<string, any[]>();
+    for (const d of all) {
+      if (!d.size_bytes || d.size_bytes <= 0) continue;
+      const key = `${d.size_bytes}|${normalizeText(d.filename)}`;
+      if (!dMap.has(key)) dMap.set(key, []);
+      dMap.get(key)!.push(d);
+    }
+    const dateiGroups = Array.from(dMap.entries())
+      .filter(([, items]) => items.length > 1)
+      .map(([key, items]) => ({
+        key,
+        size_bytes: items[0].size_bytes as number,
+        filename: items[0].filename as string,
+        items: items.map((x) => ({
+          id: x.id,
+          filename: x.filename,
+          size_bytes: x.size_bytes,
+          kunden_name: x.kunden_name,
+          address: x.address,
+          key_number: x.key_number,
+          anlagen_nr: x.anlagen_nr,
+          created_at: x.created_at,
+          storage_path: x.storage_path,
+        })),
+      }))
+      .sort((a, b) => b.items.length - a.items.length);
+
+    return {
+      kundenGroups,
+      dateiGroups,
+      totalFiles: all.length,
+    };
+  });
