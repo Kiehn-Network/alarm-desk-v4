@@ -177,6 +177,7 @@ const SKIP_IF_PARENT_SKIPPED: Record<string, { column: string; parent: string }[
 type TargetPrep = {
   domainIdBySourceId: Map<string, string>;
   targetUserIds: Set<string>;
+  userCheckAvailable: boolean;
   warnings: string[];
 };
 
@@ -293,19 +294,21 @@ async function prepareTargetSync(targetUrl: string, serviceKey: string): Promise
   }
 
   let targetUserIds = new Set<string>();
+  let userCheckAvailable = false;
   try {
     targetUserIds = await listTargetUserIds(targetUrl, serviceKey);
+    userCheckAvailable = true;
     warnings.push(`${targetUserIds.size} Auth-Benutzer in der Zielinstanz gefunden`);
   } catch (e) {
     warnings.push(`Auth-Benutzer der Zielinstanz konnten nicht geprüft werden: ${(e as Error).message}`);
   }
 
-  return { domainIdBySourceId, targetUserIds, warnings };
+  return { domainIdBySourceId, targetUserIds, userCheckAvailable, warnings };
 }
 
 async function reloadTargetSchemaCache(dbUrl: string | undefined, pushLog: (level: LogLine["level"], msg: string, extra?: unknown) => Promise<void>) {
   if (!dbUrl) return;
-  let sql: ReturnType<typeof import("postgres").default> | null = null;
+  let sql: any = null;
   try {
     const { default: postgres } = await import("postgres");
     sql = postgres(dbUrl, { ssl: "require", max: 1, idle_timeout: 5, connect_timeout: 10, prepare: false });
@@ -339,7 +342,7 @@ function transformRowsForTarget(
 
     for (const ref of AUTH_USER_REFS[table] ?? []) {
       const value = row[ref.column];
-      if (typeof value !== "string" || prep.targetUserIds.has(value)) continue;
+      if (!prep.userCheckAvailable || typeof value !== "string" || prep.targetUserIds.has(value)) continue;
       if (ref.nullable) {
         row[ref.column] = null;
       } else {
