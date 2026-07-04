@@ -178,6 +178,7 @@ function DatenLoeschungPanel() {
 
   return (
     <div className="space-y-6">
+      <SuperadminPurgeConfirmPanel />
       <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 space-y-3">
         <div className="flex items-start gap-3">
           <div className="size-10 rounded-lg bg-destructive/15 grid place-items-center shrink-0">
