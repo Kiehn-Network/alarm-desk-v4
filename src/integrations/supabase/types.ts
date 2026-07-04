@@ -3017,6 +3017,8 @@ export type Database = {
         }[]
       }
       regenerate_support_pin: { Args: { _domain_id: string }; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       superadmin_cron_jobs: {
         Args: never
         Returns: {

@@ -403,33 +403,42 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ einsatz_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: e } = await supabase
-      .from("einsaetze")
-      .select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id,assigned_to,status")
-      .eq("id", data.einsatz_id).single();
+    // Einsatz + Rollen parallel laden (spart 4 RPC-Roundtrips).
+    const [einsatzRes, rolesRes] = await Promise.all([
+      supabase
+        .from("einsaetze")
+        .select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id,assigned_to,status")
+        .eq("id", data.einsatz_id).single(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+    ]);
+    const e = einsatzRes.data;
     if (!e) return { dateien: [] };
-    // Fahrer dürfen NUR während eines aktiven, ihnen zugewiesenen Einsatzes sehen.
-    const { data: isFahrer } = await supabase.rpc("has_role", { _user_id: userId, _role: "fahrer" });
-    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-    const { data: isDispatcher } = await supabase.rpc("has_role", { _user_id: userId, _role: "dispatcher" });
-    const { data: isSuper } = await supabase.rpc("has_role", { _user_id: userId, _role: "superadmin" });
-    const elevated = Boolean(isAdmin || isDispatcher || isSuper);
+    const roles = new Set((rolesRes.data ?? []).map((r: any) => r.role));
+    const isFahrer = roles.has("fahrer");
+    const elevated = roles.has("admin") || roles.has("dispatcher") || roles.has("superadmin");
     if (isFahrer && !elevated) {
       if (e.assigned_to !== userId) return { dateien: [] };
       if (e.status !== "in_bearbeitung") return { dateien: [] };
     }
+    // Exakte Treffer (indiziert) für ID-artige Felder, Trigramm-ILIKE für Text.
     const ors: string[] = [];
-    const add = (col: string, val: any) => {
+    const addIlike = (col: string, val: any) => {
       if (!val) return;
       const v = String(val).replace(/[%_,()]/g, "").trim();
-      if (v.length === 0) return;
+      if (v.length < 2) return;
       ors.push(`${col}.ilike.%${v}%`);
     };
-    add("kunden_name", e.kunden_name);
-    add("address", e.address);
-    add("key_number", e.key_number);
-    add("anlagen_nr", e.anlagen_nr);
-    add("teilnehmer_id", e.teilnehmer_id);
+    const addEq = (col: string, val: any) => {
+      if (val == null) return;
+      const v = String(val).replace(/[,()]/g, "").trim();
+      if (v.length === 0) return;
+      ors.push(`${col}.eq.${v}`);
+    };
+    addIlike("kunden_name", e.kunden_name);
+    addIlike("address", e.address);
+    addEq("key_number", e.key_number);
+    addEq("anlagen_nr", e.anlagen_nr);
+    addEq("teilnehmer_id", e.teilnehmer_id);
     if (ors.length === 0) return { dateien: [] };
     const { data: rows, error } = await supabase
       .from("dateien")
@@ -452,16 +461,18 @@ export const getEinsatzDateiSignedUrl = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: e } = await supabase
-      .from("einsaetze")
-      .select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id,assigned_to,status")
-      .eq("id", data.einsatz_id).single();
+    const [einsatzRes, rolesRes] = await Promise.all([
+      supabase
+        .from("einsaetze")
+        .select("kunden_name,address,key_number,anlagen_nr,teilnehmer_id,assigned_to,status")
+        .eq("id", data.einsatz_id).single(),
+      supabase.from("user_roles").select("role").eq("user_id", userId),
+    ]);
+    const e = einsatzRes.data;
     if (!e) throw new Error("Einsatz nicht gefunden");
-    const { data: isFahrer } = await supabase.rpc("has_role", { _user_id: userId, _role: "fahrer" });
-    const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-    const { data: isDispatcher } = await supabase.rpc("has_role", { _user_id: userId, _role: "dispatcher" });
-    const { data: isSuper } = await supabase.rpc("has_role", { _user_id: userId, _role: "superadmin" });
-    const elevated = Boolean(isAdmin || isDispatcher || isSuper);
+    const roles = new Set((rolesRes.data ?? []).map((r: any) => r.role));
+    const isFahrer = roles.has("fahrer");
+    const elevated = roles.has("admin") || roles.has("dispatcher") || roles.has("superadmin");
     if (isFahrer && !elevated) {
       if (e.assigned_to !== userId) throw new Error("Kein Zugriff");
       if (e.status !== "in_bearbeitung") throw new Error("Einsatz beendet – kein Zugriff mehr");
