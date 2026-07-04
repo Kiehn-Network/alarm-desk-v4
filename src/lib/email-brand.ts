@@ -39,7 +39,7 @@ export function normalizeBranding(input: Partial<EmailBranding> | null | undefin
   return {
     logo_url: (b.logo_url ?? null) || null,
     primary_color: (b.primary_color ?? "").trim() || DEFAULT_BRANDING.primary_color,
-    header_label: (b.header_label ?? "").trim() || DEFAULT_BRANDING.header_label,
+    header_label: (b.header_label ?? "").trim(), // explicitly allowed to be empty
     greeting: (b.greeting ?? "").trim() || DEFAULT_BRANDING.greeting,
     signature: (b.signature ?? "").trim() || DEFAULT_BRANDING.signature,
     footer_html: (b.footer_html ?? "").trim() || DEFAULT_BRANDING.footer_html,
