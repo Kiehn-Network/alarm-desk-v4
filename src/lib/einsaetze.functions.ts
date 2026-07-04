@@ -420,25 +420,37 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
       if (e.assigned_to !== userId) return { dateien: [] };
       if (e.status !== "in_bearbeitung") return { dateien: [] };
     }
-    // Exakte Treffer (indiziert) für ID-artige Felder, Trigramm-ILIKE für Text.
+    // Zuordnung Datei ↔ Kunde:
+    //  - Fahrer: NUR eindeutige Kunden-Identifikatoren (Schlüssel-Nr., Anlagen-Nr.,
+    //    Teilnehmer-ID, exakter Kundenname). Keine Adress-/Teiltreffer, damit
+    //    Nachbarn oder Namensvarianten nicht sichtbar werden.
+    //  - Admin/Dispatcher/Superadmin: zusätzlich unscharfe Text-Treffer.
     const ors: string[] = [];
-    const addIlike = (col: string, val: any) => {
-      if (!val) return;
-      const v = String(val).replace(/[%_,()]/g, "").trim();
-      if (v.length < 2) return;
-      ors.push(`${col}.ilike.%${v}%`);
-    };
     const addEq = (col: string, val: any) => {
       if (val == null) return;
       const v = String(val).replace(/[,()]/g, "").trim();
       if (v.length === 0) return;
       ors.push(`${col}.eq.${v}`);
     };
-    addIlike("kunden_name", e.kunden_name);
-    addIlike("address", e.address);
+    const addIlike = (col: string, val: any) => {
+      if (!val) return;
+      const v = String(val).replace(/[%_,()]/g, "").trim();
+      if (v.length < 2) return;
+      ors.push(`${col}.ilike.%${v}%`);
+    };
     addEq("key_number", e.key_number);
     addEq("anlagen_nr", e.anlagen_nr);
     addEq("teilnehmer_id", e.teilnehmer_id);
+    if (elevated) {
+      addIlike("kunden_name", e.kunden_name);
+      addIlike("address", e.address);
+    } else {
+      // Fahrer: exakter Kundenname (Groß-/Kleinschreibung egal)
+      if (e.kunden_name && String(e.kunden_name).trim().length > 0) {
+        const name = String(e.kunden_name).replace(/[,()]/g, "").trim();
+        ors.push(`kunden_name.ilike.${name}`);
+      }
+    }
     if (ors.length === 0) return { dateien: [] };
     const { data: rows, error } = await supabase
       .from("dateien")
@@ -448,6 +460,21 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
+    // Fahrer: harte Nachfilterung – die Datei muss eindeutig zum Einsatz-Kunden gehören.
+    if (isFahrer && !elevated) {
+      const norm = (s: any) => String(s ?? "").trim().toLowerCase();
+      const eName = norm(e.kunden_name);
+      const eKey = norm(e.key_number);
+      const eAnl = norm(e.anlagen_nr);
+      const eTn = norm(e.teilnehmer_id);
+      const filtered = (rows ?? []).filter((d: any) =>
+        (eKey && norm(d.key_number) === eKey) ||
+        (eAnl && norm(d.anlagen_nr) === eAnl) ||
+        (eTn && norm(d.teilnehmer_id) === eTn) ||
+        (eName && norm(d.kunden_name) === eName)
+      );
+      return { dateien: filtered };
+    }
     return { dateien: rows ?? [] };
   });
 
@@ -486,13 +513,18 @@ export const getEinsatzDateiSignedUrl = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Datei nicht gefunden");
     const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-    const match =
-      (e.kunden_name && norm(row.kunden_name).includes(norm(e.kunden_name))) ||
-      (e.address && norm(row.address).includes(norm(e.address))) ||
+    // Fahrer: nur eindeutige Kunden-Identifikatoren (kein Adress-Teiltreffer).
+    // Admin/Dispatcher/Superadmin: weiterhin auch Adress-/Namens-Teiltreffer erlaubt.
+    const strictMatch =
       (e.key_number && norm(row.key_number) === norm(e.key_number)) ||
       (e.anlagen_nr && norm(row.anlagen_nr) === norm(e.anlagen_nr)) ||
-      (e.teilnehmer_id && norm(row.teilnehmer_id) === norm(e.teilnehmer_id));
-    if (!match) throw new Error("Datei gehört nicht zu diesem Einsatz");
+      (e.teilnehmer_id && norm(row.teilnehmer_id) === norm(e.teilnehmer_id)) ||
+      (e.kunden_name && norm(row.kunden_name) === norm(e.kunden_name));
+    const looseMatch = elevated && (
+      (e.kunden_name && norm(row.kunden_name).includes(norm(e.kunden_name))) ||
+      (e.address && norm(row.address).includes(norm(e.address)))
+    );
+    if (!strictMatch && !looseMatch) throw new Error("Datei gehört nicht zu diesem Kunden");
     const { signFileToken } = await import("@/lib/file-proxy.server");
     // Für Fahrer: kein Download (inline erzwungen). Für andere: gleiches Verhalten ok.
     const token = await signFileToken(data.storage_path, 60, { noDownload: true });
