@@ -7,6 +7,8 @@ import {
   maskKey, resolveEmailConfigForDomain, sendEmailViaProvider,
   type EmailProvider,
 } from "@/lib/email-send.server";
+import { loadDomainBranding, brandName as brandNameFor } from "@/lib/email-brand.server";
+import { renderBrandedEmail, normalizeBranding } from "@/lib/email-brand";
 
 const providerEnum = z.enum(["resend", "mailgun", "sendgrid", "smtp"]);
 const regionEnum = z.enum(["us", "eu"]);
@@ -100,10 +102,19 @@ export const sendPlatformTestEmail = createServerFn({ method: "POST" })
       .from("platform_email_settings").select("*").eq("id", true).maybeSingle() as any;
     if (!ps?.from_email || !ps?.provider) throw new Error("Plattform-E-Mail noch nicht konfiguriert.");
     const cfg = buildResolved("platform", ps);
+    const branding = normalizeBranding({ from_name: ps.from_name ?? null });
+    const html = renderBrandedEmail({
+      branding,
+      brandName: branding.from_name ?? "AlarmDesk",
+      statusPill: "Testmail · Plattform",
+      heading: "Plattform-Testmail",
+      intro: `Dies ist eine Testmail vom Plattform-Versand über ${cfg.provider.toUpperCase()}. Wenn Sie diese E-Mail sehen, funktioniert der Versand.`,
+      previewText: "Testmail vom Plattform-Versand",
+    });
     await sendEmailViaProvider(cfg, {
       to: data.to,
       subject: "AlarmDesk – Testmail (Plattform)",
-      html: `<p>Dies ist eine Testmail vom Plattform-Versand (${cfg.provider}).</p>`,
+      html,
       text: `Testmail vom Plattform-Versand (${cfg.provider}).`,
     });
     return { ok: true };
@@ -220,11 +231,82 @@ export const sendDomainTestEmail = createServerFn({ method: "POST" })
     const domainId = await requireEffectiveDomainId(context.supabase, context.userId);
     await assertDomainAdmin(context.userId, domainId);
     const cfg = await resolveEmailConfigForDomain(domainId);
+    const branding = await loadDomainBranding(domainId);
+    const html = renderBrandedEmail({
+      branding,
+      brandName: brandNameFor(branding),
+      statusPill: "Testmail",
+      heading: "Test-E-Mail Ihres Brandings",
+      greetingName: null,
+      intro: `Dies ist eine Vorschau des aktuell hinterlegten E-Mail-Designs Ihrer Domäne. Versand über ${cfg.source === "domain" ? "eigenen" : "Plattform-"}Provider ${cfg.provider.toUpperCase()}.`,
+      metaTitle: "Beispiel-Info-Panel",
+      metaSubtitle: "So sehen Anhänge / Downloads in E-Mails aus",
+      ctaLabel: "Beispiel-Button",
+      ctaUrl: "https://example.com",
+      closingNote: "Über den Bereich „E-Mail-Design & Branding“ passen Sie Logo, Farbe, Begrüßung, Signatur und Fußtext an.",
+      previewText: "AlarmDesk Test-Mail",
+    });
     await sendEmailViaProvider(cfg, {
       to: data.to,
       subject: "AlarmDesk – Testmail",
-      html: `<p>Dies ist eine Testmail vom AlarmDesk-Versand (Quelle: ${cfg.source}, Provider: ${cfg.provider}).</p>`,
+      html,
       text: `Testmail – Quelle: ${cfg.source}, Provider: ${cfg.provider}.`,
     });
     return { ok: true, source: cfg.source, provider: cfg.provider };
+  });
+
+// ---------- Domain Branding ----------
+
+const brandingSchema = z.object({
+  brand_logo_url: z.string().max(1000).nullable().optional(),
+  brand_primary_color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Farbe muss als #RRGGBB angegeben werden").nullable().optional(),
+  brand_header_label: z.string().max(80).nullable().optional(),
+  brand_greeting: z.string().max(300).nullable().optional(),
+  brand_signature: z.string().max(500).nullable().optional(),
+  brand_footer_html: z.string().max(2000).nullable().optional(),
+});
+
+export const getDomainEmailBranding = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const domainId = await requireEffectiveDomainId(context.supabase, context.userId);
+    await assertDomainAdmin(context.userId, domainId);
+    const { data, error } = await supabaseAdmin
+      .from("domain_email_settings")
+      .select("brand_logo_url, brand_primary_color, brand_header_label, brand_greeting, brand_signature, brand_footer_html, from_name")
+      .eq("domain_id", domainId).maybeSingle() as any;
+    if (error) throw new Error(error.message);
+    return {
+      domain_id: domainId,
+      branding: {
+        brand_logo_url: data?.brand_logo_url ?? null,
+        brand_primary_color: data?.brand_primary_color ?? null,
+        brand_header_label: data?.brand_header_label ?? null,
+        brand_greeting: data?.brand_greeting ?? null,
+        brand_signature: data?.brand_signature ?? null,
+        brand_footer_html: data?.brand_footer_html ?? null,
+        from_name: data?.from_name ?? null,
+      },
+    };
+  });
+
+export const upsertDomainEmailBranding = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => brandingSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const domainId = await requireEffectiveDomainId(context.supabase, context.userId);
+    await assertDomainAdmin(context.userId, domainId);
+    const { error } = await supabaseAdmin.from("domain_email_settings").upsert({
+      domain_id: domainId,
+      brand_logo_url: data.brand_logo_url ?? null,
+      brand_primary_color: data.brand_primary_color ?? null,
+      brand_header_label: data.brand_header_label ?? null,
+      brand_greeting: data.brand_greeting ?? null,
+      brand_signature: data.brand_signature ?? null,
+      brand_footer_html: data.brand_footer_html ?? null,
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    } as any);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
