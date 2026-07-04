@@ -105,8 +105,8 @@ export function PlatformEmailPanel() {
             </SelectContent>
           </Select>
         </div>
-        {provider !== "smtp" && provider !== "resend" && <div className="space-y-1.5">
-          <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> API-Key</Label>
+        {provider !== "smtp" && <div className="space-y-1.5">
+          <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> API-Key{provider === "resend" ? " (optional bei Self-Hosting)" : ""}</Label>
           <Input
             type="password"
             value={apiKey}
@@ -116,9 +116,8 @@ export function PlatformEmailPanel() {
         </div>}
         {provider === "resend" && (
           <div className="space-y-1.5">
-            <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> Resend</Label>
             <div className="text-xs text-muted-foreground rounded-md border border-border bg-muted/30 px-3 py-2">
-              Läuft über den Lovable Resend-Connector – kein API-Key nötig.
+              Cloud: Lovable Resend-Connector (kein Key nötig). Self-Hosting: eigenen Resend-API-Key hinterlegen.
             </div>
           </div>
         )}

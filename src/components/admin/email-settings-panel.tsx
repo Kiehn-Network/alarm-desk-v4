@@ -137,8 +137,8 @@ export function EmailSettingsPanel() {
                   </SelectContent>
                 </Select>
               </div>
-              {provider !== "smtp" && provider !== "resend" && <div className="space-y-1.5">
-                <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> API-Key</Label>
+              {provider !== "smtp" && <div className="space-y-1.5">
+                <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> API-Key{provider === "resend" ? " (optional bei Self-Hosting)" : ""}</Label>
                 <Input
                   type="password"
                   value={apiKey}
@@ -148,9 +148,8 @@ export function EmailSettingsPanel() {
               </div>}
               {provider === "resend" && (
                 <div className="space-y-1.5 md:col-span-2">
-                  <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> Resend</Label>
                   <div className="text-xs text-muted-foreground rounded-md border border-border bg-muted/30 px-3 py-2">
-                    Resend läuft über die zentrale AlarmDesk-Anbindung (Lovable Connector) – du musst keinen eigenen API-Key hinterlegen. Trage nur eine bei Resend <strong>verifizierte</strong> Absender-E-Mail deiner Domäne ein.
+                    In der gehosteten AlarmDesk-Cloud läuft Resend automatisch über den Lovable Connector – ein API-Key ist dann nicht nötig. Auf einem <strong>selbst gehosteten</strong> Server trage bitte deinen eigenen Resend-API-Key oben ein. Absender-E-Mail muss bei Resend verifiziert sein.
                   </div>
                 </div>
               )}
