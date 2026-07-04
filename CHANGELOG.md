@@ -16,6 +16,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 ### Changed
 
 - **Header-Label optional**: Der kleine Text unter dem Firmennamen im E-Mail-Header kann jetzt leer gelassen werden. Ist das Feld leer, wird im Versand nur der Firmenname ohne Unterzeile angezeigt.
+- **PDF-Download-Links in E-Mails**: Signed URLs aus dem Supabase Storage werden jetzt für versendete E-Mails (Einsatzberichte, Abrechnungen, Budeko-Berichte, Rohrservice-Berichte) auf die eigene Domain `data.alarmdesk-software.de` umgeschrieben. Steuerbar über die Umgebungsvariable `PUBLIC_STORAGE_URL`.
 
 ### Fixed
 
