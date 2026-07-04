@@ -1,92 +1,50 @@
-# Interventions-Modul
+# E-Mail-Branding pro Domäne
 
-Ermöglicht es, einen Einsatz an einen externen **Interventionspartner** (eigene AlarmDesk-Domain) zu übergeben. Beide Seiten sehen den Einsatz und arbeiten parallel daran.
+Jede Domäne kann im Admin-Bereich das Aussehen ihrer ausgehenden E-Mails selbst festlegen. Alle E-Mails (Einsatzbericht, Monatsabrechnung, Testmail) verwenden dann automatisch das Branding dieser Domäne.
 
-## Datenmodell (Migration)
+## Was der Domänen-Admin einstellen kann
 
-**`app_modules`-Eintrag**: `key='intervention'`, `name='Intervention'`.
+- **Logo** (Bild-Upload in den bereits vorhandenen `logos`-Bucket, öffentlich zugänglich für E-Mail-Clients)
+- **Markenfarbe** (Farb-Picker, wird für Header-Kachel, CTA-Button und Akzente verwendet)
+- **Header-Label** (kleine Zeile unter dem Firmennamen, z. B. „EINSATZVERWALTUNG“)
+- **Absender-Name & -Adresse** (nutzt die bereits vorhandenen Felder `from_name` / `from_email`)
+- **Begrüßung** (Vorlage mit Platzhalter `{{kunde}}`, Fallback wenn kein Kunde bekannt ist)
+- **Signatur** (z. B. „Mit freundlichen Grüßen · Ihr AlarmDesk-Team“)
+- **Fußtext** (mehrzeiliger Text unter der Trennlinie, z. B. Firmenanschrift, Impressum-Kurzform)
 
-**`intervention_partners`** (vom Admin gepflegte Partner-Liste pro Domain)
-- `id`, `domain_id` (FK domains, der Besitzer der Liste), `partner_domain_id` (FK domains, das Ziel), `display_name` (Anzeige im Dialog), `kontakt_email`, `kontakt_telefon`, `notiz`, `aktiv` (bool), `created_at`, `updated_at`.
-- UNIQUE `(domain_id, partner_domain_id)`.
-- RLS: SELECT/INSERT/UPDATE/DELETE nur Domain-Admin der `domain_id` oder Superadmin.
+Sinnvolle Defaults, damit ohne Konfiguration weiterhin das aktuelle AlarmDesk-Design gerendert wird.
 
-**`einsatz_partner_shares`** (Verknüpfung „Einsatz X wurde an Partner Y geteilt")
-- `id`, `einsatz_id` (FK einsaetze), `owner_domain_id` (der Sender), `partner_domain_id` (der Empfänger), `status` enum `offen|angenommen|in_bearbeitung|abgeschlossen|abgelehnt`, `partner_assigned_to` (FK auth.users, Fahrer des Partners), `partner_notiz`, `created_by`, `created_at`, `updated_at`.
-- UNIQUE `(einsatz_id, partner_domain_id)`.
-- Index `(partner_domain_id, status)` für Dashboard-Query des Partners.
-- RLS: SELECT/UPDATE wenn `current_effective_domain_id() IN (owner_domain_id, partner_domain_id)`. INSERT nur Admin/Dispatcher der `owner_domain_id`.
+## Live-Vorschau
 
-**`einsaetze` erweitern**: keine Schema-Änderung. Sichtbarkeit für Partner via zusätzlicher RLS-Policy auf `einsaetze`:
-```
-USING (
-  current_effective_domain_id() = domain_id  -- bisherige Regel
-  OR EXISTS (
-    SELECT 1 FROM einsatz_partner_shares s
-    WHERE s.einsatz_id = einsaetze.id
-      AND s.partner_domain_id = current_effective_domain_id()
-  )
-)
-```
-Analog für `einsatz_historie` und `dateien`-Verknüpfung (über `datei_verknuepfungen`), damit der Partner Bericht/Anhänge sieht. UPDATE auf `einsaetze` bleibt auf `owner_domain_id` beschränkt — Partner schreibt nur in `einsatz_partner_shares` (`partner_assigned_to`, `status`, `partner_notiz`) und in eigene Felder wie `vor_ort_am`/`abfahrt_am` über Server-Fn (siehe unten).
+Im Panel wird rechts eine Live-Vorschau der Bericht-E-Mail gezeigt, die sich beim Tippen sofort aktualisiert — so sieht der Admin genau, was der Kunde erhalten wird, ohne eine Testmail zu senden.
 
-## Server-Funktionen — `src/lib/intervention.functions.ts`
+Zusätzlich bleibt der bestehende „Testmail senden“-Knopf: verschickt jetzt eine gebrandete Beispiel-E-Mail an eine beliebige Adresse.
 
-- `listMyPartners()` — Partner der eigenen Domain (für Dialog beim Einsatz-Erstellen).
-- `listAvailablePartnerDomains()` — Admin-only; alle Domains außer eigener, für Auswahl beim Anlegen eines Partners.
-- `upsertPartner({ id?, partner_domain_id, display_name, kontakt_email?, kontakt_telefon?, notiz?, aktiv })` — Admin-only.
-- `deletePartner({ id })` — Admin-only.
-- `shareEinsatzWithPartner({ einsatz_id, partner_id })` — Admin/Dispatcher; legt `einsatz_partner_shares` an, schreibt `einsatz_historie`-Eintrag.
-- `unshareEinsatz({ share_id })` — Admin/Dispatcher der Owner-Domain; entfernt Share.
-- `partnerAcceptEinsatz({ share_id })` / `partnerDeclineEinsatz({ share_id, grund? })` — Partner-Admin/Dispatcher.
-- `partnerAssignFahrer({ share_id, fahrer_id })` — setzt `partner_assigned_to`, Status `in_bearbeitung`.
-- `listSharedToMe()` — Einsätze, die meiner Domain als Partner geteilt wurden (für Partner-Dashboard).
-- `listSharesForEinsatz({ einsatz_id })` — Status pro Share (für Owner-Sicht / Status-Lampe).
+## Wo im UI
 
-## UI
+Im Admin-Bereich unter dem Tab **E-Mail** entsteht ein neuer Bereich **„E-Mail-Design & Branding“** unterhalb der bestehenden Versand-Einstellungen. Nur Domänen-Admins (und Superadmins) sehen und bearbeiten ihn.
 
-**1) Admin-Seite — `src/routes/_authenticated/intervention.tsx`** (Admin/Superadmin):
-- Tabelle der Interventionspartner mit Spalten Name, Partner-Domain, Kontakt, Aktiv.
-- Dialog „Partner hinzufügen": Combobox aller anderen Domains (`listAvailablePartnerDomains`) + Anzeige-Name, Kontaktdaten, Notiz.
-- Bearbeiten / Aktivieren-Toggle / Löschen.
+## Welche E-Mails werden gebrandet
 
-**2) Sidebar-Eintrag** „Intervention" unter Center, sichtbar wenn Modul `intervention` für Domain aktiv ist.
+Alle vom System an Kunden versendeten transaktionalen E-Mails:
 
-**3) Einsatz-Erstellen** — `src/routes/_authenticated/einsatz-erstellen.tsx`:
-- Im Fahrer-Auswahl-Bereich neuer Tab/Toggle „Eigene Fahrer" ↔ „Partner".
-- „Partner": Liste aus `listMyPartners()` (nur aktive). Auswahl speichert nach Einsatz-Create direkt `shareEinsatzWithPartner`. `assigned_to` bleibt leer beim Owner.
-- Nur sichtbar wenn Modul aktiv.
+- Einsatzbericht (mit PDF-Download-Link)
+- Monats-Abrechnung Hausnotruf (mit PDF-Download-Link)
+- Testmail (Vorschau des Brandings)
 
-**4) Owner-Sicht im Einsatz**:
-- In Einsatz-Liste (Dashboard / Meine Einsätze): kleine Komponente `<PartnerShareBadge einsatzId />` zeigt „Partner: <Name> · <Status>".
-- Im Bericht-Dialog: Sektion mit Partner-Status + zugewiesenem Partner-Fahrer (read-only).
+Auth-E-Mails (Login, Passwort-Reset …) sind ausdrücklich nicht Teil dieses Schritts.
 
-**5) Partner-Dashboard** — Erweiterung `src/routes/_authenticated/dashboard.tsx`:
-- Neue Section „Von Partnern erhaltene Einsätze" — Query `listSharedToMe()` (nur wenn Modul aktiv).
-- Pro Eintrag: Annehmen/Ablehnen-Buttons; nach Annahme „Fahrer zuweisen"-Combobox (`partnerAssignFahrer`).
-- Angenommene Einsätze landen zusätzlich in „Meine Einsätze" des zugewiesenen Fahrers (über erweiterte RLS-Sicht + Filter auf `partner_assigned_to`).
+## Technische Umsetzung
 
-**6) Fahrer-Sicht (Partner)**:
-- In `meine-einsaetze.tsx` Query erweitern: Einsätze, bei denen entweder `assigned_to = me` ODER ein `einsatz_partner_shares.partner_assigned_to = me`. Beide Seiten sehen Vor-Ort-/Abfahrt-/Ende-Zeiten in Echtzeit (Realtime auf `einsaetze` ist bereits aktiv).
+Nur zur Referenz.
 
-## Berechtigungs-Detail
+- **Schema**: neue Spalten in `domain_email_settings` — `brand_logo_url`, `brand_primary_color`, `brand_header_label`, `brand_greeting`, `brand_signature`, `brand_footer_html`. Alle optional mit sinnvollen Defaults im Renderer.
+- **Neue Server-Fns** in `src/lib/email-settings.functions.ts`: `getDomainEmailBranding`, `upsertDomainEmailBranding` (beide gated per `assertDomainAdmin`).
+- **Neuer gemeinsamer Renderer** `src/lib/email-brand.ts` (pure, browserfähig für Live-Preview) mit Funktion `renderBrandedEmail({ branding, heading, intro, metaTitle, metaSubtitle, ctaLabel, ctaUrl, greetingName, signature, footerHint })`. Kapselt das gesamte HTML-Shell inkl. Header (Logo/Farbe), Card, Info-Panel, Gradient-CTA und Footer.
+- **Neuer Server-Helper** `src/lib/email-brand.server.ts`: `loadDomainBranding(domainId)` — liest `domain_email_settings` mit `supabaseAdmin` und liefert ein normalisiertes Branding-Objekt.
+- **Refactor** `src/lib/bericht-email.functions.ts` und `src/lib/abrechnung.functions.ts`: laden Branding, rufen `renderBrandedEmail(...)` auf — kein Inline-HTML mehr.
+- **Refactor Testmail** in `email-settings.functions.ts`: nutzt ebenfalls den gemeinsamen Renderer.
+- **UI**: neue Komponente `src/components/admin/email-branding-panel.tsx` mit Formfeldern, Logo-Upload in `logos`-Bucket (Pfad `email-branding/{domain_id}/logo-{ts}.{ext}`), Farb-Picker (native `<input type="color">`), Textarea für Fußtext, plus Live-Preview via `dangerouslySetInnerHTML` aus `renderBrandedEmail(...)`. Panel wird in `src/routes/_authenticated/admin.tsx` im `email`-Tab unter dem bestehenden Panel eingefügt.
+- **Rechte**: Bearbeitung nur für Domänen-Admins der eigenen Domäne (bestehendes `assertDomainAdmin`). Superadmins können via Impersonation bearbeiten (bereits durch `requireEffectiveDomainId` abgedeckt).
 
-- Partner-Fahrer schreibt `abfahrt_am`/`vor_ort_am`/`einsatz_ende_am` über bestehende Server-Fn → diese muss erweitert werden, sodass auch der zugewiesene Partner-Fahrer schreiben darf (Check: existiert Share mit `partner_assigned_to = userId`).
-- Bericht-Schreiben (Owner-only) bleibt beim Owner. Diskussion: oder darf Partner-Fahrer den Bericht schreiben? **Default: Partner-Fahrer schreibt den Bericht**, Owner sieht ihn nur (typischer Fall: Partner fährt tatsächlich raus). → Update-Policy auf `einsaetze` für Bericht-Felder analog erweitern.
-
-## Schritte
-
-1. Migration: `app_modules`-Eintrag, Tabellen `intervention_partners`, `einsatz_partner_shares`, RLS-Policies, Erweiterung der `einsaetze`-Policies.
-2. Server-Funktionen + Erweiterung bestehender Einsatz-Update-Fns für Partner-Fahrer.
-3. Admin-Route + Sidebar-Eintrag.
-4. Einsatz-Erstellen-Dialog: Partner-Tab.
-5. Partner-Dashboard-Section + `meine-einsaetze` erweitern.
-6. PartnerShareBadge in Listen.
-
-## Offene Fragen
-
-- **Bericht**: Soll der Partner-Fahrer den Bericht schreiben (Default oben) oder nur der Owner?
-- **Sichtbarkeit Kunde**: Sieht der Partner die vollen Kundendaten (Adresse/Telefon)? Default: ja, sonst kann er nicht hinfahren.
-- **Abrechnung**: Soll der geteilte Einsatz beim Partner in seiner Abrechnung auftauchen, oder nur beim Owner? Default: nur Owner.
-
-Soll ich diese Defaults so umsetzen oder anpassen?
+Nach Freigabe implementiere ich das direkt.
