@@ -11,7 +11,8 @@ import {
   getDomainEmailBranding, upsertDomainEmailBranding,
 } from "@/lib/email-settings.functions";
 import {
-  DEFAULT_BRANDING, normalizeBranding, renderBrandedEmail,
+  DEFAULT_BRANDING, EMAIL_LAYOUTS, normalizeBranding, renderBrandedEmail,
+  type EmailLayout,
 } from "@/lib/email-brand";
 import { EMAIL_THEMES, type EmailThemePreset } from "@/lib/email-themes";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +25,7 @@ type Form = {
   brand_greeting: string;
   brand_signature: string;
   brand_footer_html: string;
+  brand_layout: EmailLayout;
 };
 
 const EMPTY: Form = {
@@ -33,6 +35,7 @@ const EMPTY: Form = {
   brand_greeting: DEFAULT_BRANDING.greeting,
   brand_signature: DEFAULT_BRANDING.signature,
   brand_footer_html: DEFAULT_BRANDING.footer_html,
+  brand_layout: DEFAULT_BRANDING.layout,
 };
 
 export function EmailBrandingPanel() {
@@ -62,6 +65,7 @@ export function EmailBrandingPanel() {
       brand_greeting: b.brand_greeting || DEFAULT_BRANDING.greeting,
       brand_signature: b.brand_signature || DEFAULT_BRANDING.signature,
       brand_footer_html: b.brand_footer_html || DEFAULT_BRANDING.footer_html,
+      brand_layout: (b as any).brand_layout || DEFAULT_BRANDING.layout,
     });
   }, [q.data?.branding]);
 
@@ -75,6 +79,7 @@ export function EmailBrandingPanel() {
           brand_greeting: form.brand_greeting.trim() || null,
           brand_signature: form.brand_signature.trim() || null,
           brand_footer_html: form.brand_footer_html.trim() || null,
+          brand_layout: form.brand_layout,
         },
       }),
     onSuccess: () => {
@@ -121,6 +126,7 @@ export function EmailBrandingPanel() {
       signature: form.brand_signature,
       footer_html: form.brand_footer_html,
       from_name: fromName,
+      layout: form.brand_layout,
     });
     return renderBrandedEmail({
       branding,
@@ -141,6 +147,7 @@ export function EmailBrandingPanel() {
   function applyPreset(p: EmailThemePreset) {
     setForm((s) => ({
       ...s,
+      brand_layout: p.values.brand_layout,
       brand_primary_color: p.values.brand_primary_color,
       brand_header_label: p.values.brand_header_label,
       brand_greeting: p.values.brand_greeting,
@@ -256,6 +263,32 @@ export function EmailBrandingPanel() {
             <p className="text-xs text-muted-foreground">
               Wird links im E-Mail-Header angezeigt. Empfohlen: quadratisch, ≥ 128 px. Max. 2 MB.
             </p>
+          </div>
+
+          {/* Layout */}
+          <div className="space-y-2">
+            <Label>Layout</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {EMAIL_LAYOUTS.map((l) => {
+                const active = form.brand_layout === l.id;
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => setForm((s) => ({ ...s, brand_layout: l.id }))}
+                    className={`text-left rounded-lg border p-3 transition hover:border-primary/60 hover:bg-accent/40 ${
+                      active ? "border-primary ring-1 ring-primary/40 bg-accent/30" : "border-border bg-background"
+                    }`}
+                    title={l.description}
+                  >
+                    <div className="text-sm font-medium leading-tight">{l.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                      {l.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Farbe */}
