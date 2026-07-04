@@ -778,6 +778,319 @@ function pgQuote(s: string): string {
   return `'${s.replace(/'/g, "''")}'`;
 }
 
+// ============================================================
+// Struktur-Abgleich: vergleicht Tabellen/Spalten Quelle ↔ Ziel
+// und legt Fehlendes im Ziel an (KEINE Datenübertragung).
+// ============================================================
+
+type ColumnInfo = {
+  table_name: string;
+  column_name: string;
+  data_type: string;          // information_schema.data_type (z. B. 'text', 'USER-DEFINED')
+  udt_name: string;           // z. B. 'uuid', 'app_role', 'int4'
+  is_nullable: "YES" | "NO";
+  column_default: string | null;
+  character_maximum_length: number | null;
+  numeric_precision: number | null;
+  numeric_scale: number | null;
+};
+
+type SchemaDiff = {
+  missingTables: string[];              // Tabellen, die im Ziel komplett fehlen
+  extraTables: string[];                // Tabellen, die nur im Ziel existieren
+  missingColumns: { table: string; column: string; ddl: string }[];
+  extraColumns: { table: string; column: string }[];
+};
+
+function pgIdent(s: string): string {
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+function buildColumnType(col: ColumnInfo): string {
+  // Für 'USER-DEFINED' (Enums, custom types) den udt_name direkt verwenden.
+  if (col.data_type === "USER-DEFINED") return pgIdent(col.udt_name);
+  if (col.data_type === "ARRAY") return `${col.udt_name.replace(/^_/, "")}[]`;
+  if (col.data_type === "character varying" && col.character_maximum_length) {
+    return `varchar(${col.character_maximum_length})`;
+  }
+  if (col.data_type === "numeric" && col.numeric_precision) {
+    return col.numeric_scale != null
+      ? `numeric(${col.numeric_precision},${col.numeric_scale})`
+      : `numeric(${col.numeric_precision})`;
+  }
+  // information_schema.data_type liefert kanonische Namen wie 'timestamp with time zone'
+  return col.data_type;
+}
+
+function buildAddColumnDdl(col: ColumnInfo): string {
+  const type = buildColumnType(col);
+  const parts = [`ADD COLUMN IF NOT EXISTS ${pgIdent(col.column_name)} ${type}`];
+  if (col.column_default != null) parts.push(`DEFAULT ${col.column_default}`);
+  // NOT NULL nur setzen, wenn ein Default existiert (sonst schlägt es bei bestehenden Zeilen fehl).
+  if (col.is_nullable === "NO" && col.column_default != null) parts.push(`NOT NULL`);
+  return parts.join(" ");
+}
+
+function buildCreateTableDdl(table: string, cols: ColumnInfo[]): string {
+  const colDefs = cols.map((c) => {
+    const type = buildColumnType(c);
+    const bits = [`${pgIdent(c.column_name)} ${type}`];
+    if (c.column_default != null) bits.push(`DEFAULT ${c.column_default}`);
+    if (c.is_nullable === "NO") bits.push(`NOT NULL`);
+    return `  ${bits.join(" ")}`;
+  });
+  return `CREATE TABLE IF NOT EXISTS public.${pgIdent(table)} (\n${colDefs.join(",\n")}\n);`;
+}
+
+async function readSchemaColumns(dbUrl: string): Promise<ColumnInfo[]> {
+  const { default: postgres } = await import("postgres");
+  const sql = postgres(dbUrl, { ssl: "require", max: 1, idle_timeout: 5, connect_timeout: 15, prepare: false });
+  try {
+    const rows = await sql<ColumnInfo[]>`
+      SELECT
+        table_name,
+        column_name,
+        data_type,
+        udt_name,
+        is_nullable,
+        column_default,
+        character_maximum_length,
+        numeric_precision,
+        numeric_scale
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+      ORDER BY table_name, ordinal_position
+    `;
+    return rows.map((r) => ({ ...r }));
+  } finally {
+    try { await sql.end({ timeout: 5 }); } catch {}
+  }
+}
+
+function computeSchemaDiff(source: ColumnInfo[], target: ColumnInfo[]): SchemaDiff {
+  const bySrcTable = new Map<string, ColumnInfo[]>();
+  for (const c of source) {
+    const list = bySrcTable.get(c.table_name) ?? [];
+    list.push(c); bySrcTable.set(c.table_name, list);
+  }
+  const byTgtTable = new Map<string, ColumnInfo[]>();
+  for (const c of target) {
+    const list = byTgtTable.get(c.table_name) ?? [];
+    list.push(c); byTgtTable.set(c.table_name, list);
+  }
+
+  const missingTables: string[] = [];
+  const extraTables: string[] = [];
+  const missingColumns: SchemaDiff["missingColumns"] = [];
+  const extraColumns: SchemaDiff["extraColumns"] = [];
+
+  for (const [table, cols] of bySrcTable) {
+    if (!byTgtTable.has(table)) {
+      missingTables.push(table);
+      continue;
+    }
+    const tgtCols = new Set(byTgtTable.get(table)!.map((c) => c.column_name));
+    for (const col of cols) {
+      if (!tgtCols.has(col.column_name)) {
+        missingColumns.push({
+          table,
+          column: col.column_name,
+          ddl: `ALTER TABLE public.${pgIdent(table)} ${buildAddColumnDdl(col)};`,
+        });
+      }
+    }
+  }
+  for (const [table, cols] of byTgtTable) {
+    if (!bySrcTable.has(table)) {
+      extraTables.push(table);
+      continue;
+    }
+    const srcCols = new Set(bySrcTable.get(table)!.map((c) => c.column_name));
+    for (const col of cols) {
+      if (!srcCols.has(col.column_name)) extraColumns.push({ table, column: col.column_name });
+    }
+  }
+
+  missingTables.sort();
+  extraTables.sort();
+  missingColumns.sort((a, b) => (a.table + a.column).localeCompare(b.table + b.column));
+  return { missingTables, extraTables, missingColumns, extraColumns };
+}
+
+export const previewSchemaDiff = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperadmin(context.userId);
+    const sourceUrl = process.env.SUPABASE_DB_URL;
+    const targetUrl = process.env.SYNC_TARGET_DB_URL;
+    if (!sourceUrl || !targetUrl) {
+      return {
+        configured: false as const,
+        message: "SUPABASE_DB_URL und SYNC_TARGET_DB_URL müssen gesetzt sein.",
+      };
+    }
+    try {
+      const [source, target] = await Promise.all([
+        readSchemaColumns(sourceUrl),
+        readSchemaColumns(targetUrl),
+      ]);
+      const diff = computeSchemaDiff(source, target);
+      return {
+        configured: true as const,
+        sourceTables: new Set(source.map((c) => c.table_name)).size,
+        targetTables: new Set(target.map((c) => c.table_name)).size,
+        diff,
+      };
+    } catch (e) {
+      return { configured: true as const, error: (e as Error).message };
+    }
+  });
+
+export const applySchemaDiff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ confirm: z.literal("STRUCTURE ONLY"), jobId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertSuperadmin(context.userId);
+    const sourceUrl = process.env.SUPABASE_DB_URL;
+    const targetUrl = process.env.SYNC_TARGET_DB_URL;
+    if (!sourceUrl || !targetUrl) {
+      throw new Error("SUPABASE_DB_URL und SYNC_TARGET_DB_URL müssen gesetzt sein.");
+    }
+    const jobId = data.jobId;
+    const started = Date.now();
+    const logs: LogLine[] = [];
+    const persist = async (patch: Record<string, unknown>) => {
+      try { await (supabaseAdmin as any).from("sync_jobs").update(patch).eq("id", jobId); } catch {}
+    };
+    const pushLog = async (level: LogLine["level"], msg: string, extra?: unknown) => {
+      logs.push(logLine(level, msg, extra));
+      await persist({ logs: logs as never });
+    };
+
+    await pushLog("info", "Struktur-Abgleich gestartet (keine Daten werden übertragen)");
+
+    const [source, target] = await Promise.all([
+      readSchemaColumns(sourceUrl),
+      readSchemaColumns(targetUrl),
+    ]);
+    const diff = computeSchemaDiff(source, target);
+
+    await pushLog("info", `${diff.missingTables.length} fehlende Tabellen, ${diff.missingColumns.length} fehlende Spalten`);
+    if (diff.extraTables.length) await pushLog("warn", `Nur im Ziel: ${diff.extraTables.length} Tabelle(n) – werden nicht angefasst`);
+    if (diff.extraColumns.length) await pushLog("warn", `Nur im Ziel: ${diff.extraColumns.length} Spalte(n) – werden nicht angefasst`);
+
+    // Statements aufbauen
+    const bySrcTable = new Map<string, ColumnInfo[]>();
+    for (const c of source) {
+      const list = bySrcTable.get(c.table_name) ?? [];
+      list.push(c); bySrcTable.set(c.table_name, list);
+    }
+    const statements: { label: string; sql: string }[] = [];
+    for (const t of diff.missingTables) {
+      statements.push({ label: `CREATE TABLE public.${t}`, sql: buildCreateTableDdl(t, bySrcTable.get(t) ?? []) });
+      statements.push({
+        label: `GRANT public.${t}`,
+        sql: `GRANT SELECT, INSERT, UPDATE, DELETE ON public.${pgIdent(t)} TO authenticated; GRANT ALL ON public.${pgIdent(t)} TO service_role;`,
+      });
+      statements.push({
+        label: `RLS public.${t}`,
+        sql: `ALTER TABLE public.${pgIdent(t)} ENABLE ROW LEVEL SECURITY;`,
+      });
+    }
+    for (const c of diff.missingColumns) {
+      statements.push({ label: `ADD COLUMN ${c.table}.${c.column}`, sql: c.ddl });
+    }
+
+    if (statements.length === 0) {
+      await pushLog("info", "Ziel-Schema ist bereits auf dem Stand der Quelle.");
+      await persist({
+        status: "done",
+        finished_at: new Date().toISOString(),
+        current_table: null,
+        total_tables: 0,
+        processed_tables: 0,
+      });
+      return { ok: true, applied: 0, failed: 0, diff, jobId, durationMs: Date.now() - started };
+    }
+
+    await persist({ total_tables: statements.length, processed_tables: 0 });
+
+    const { default: postgres } = await import("postgres");
+    const sql = postgres(targetUrl, { ssl: "require", max: 1, idle_timeout: 10, connect_timeout: 15, prepare: false });
+    let applied = 0;
+    let failed = 0;
+    const failures: { label: string; error: string }[] = [];
+    try {
+      for (const stmt of statements) {
+        try {
+          await sql.unsafe(stmt.sql);
+          applied++;
+          await pushLog("info", `✓ ${stmt.label}`);
+        } catch (e) {
+          failed++;
+          const msg = (e as Error).message;
+          failures.push({ label: stmt.label, error: msg });
+          await pushLog("error", `✗ ${stmt.label}: ${msg}`);
+        }
+        await persist({ processed_tables: applied + failed, current_table: stmt.label });
+      }
+      try { await sql.unsafe("NOTIFY pgrst, 'reload schema'"); } catch {}
+    } finally {
+      try { await sql.end({ timeout: 5 }); } catch {}
+    }
+
+    await pushLog(
+      failed === 0 ? "info" : "warn",
+      `Fertig in ${Date.now() - started}ms – ${applied} angewandt, ${failed} fehlgeschlagen`,
+    );
+    await persist({
+      status: failed === 0 ? "done" : "error",
+      finished_at: new Date().toISOString(),
+      current_table: null,
+      failed_count: failed,
+    });
+
+    try {
+      await supabaseAdmin.from("superadmin_audit_log").insert({
+        actor_id: context.userId,
+        actor_email: context.claims?.email ?? null,
+        action: "db_schema_diff_apply",
+        target_type: "database",
+        target_id: null,
+        target_label: process.env.SYNC_TARGET_SUPABASE_URL ?? "(db-url)",
+        metadata: {
+          duration_ms: Date.now() - started,
+          applied, failed, failures,
+          missing_tables: diff.missingTables,
+          missing_columns: diff.missingColumns.map((c) => `${c.table}.${c.column}`),
+          job_id: jobId,
+        } as never,
+      });
+    } catch {}
+
+    return { ok: failed === 0, applied, failed, failures, diff, jobId, durationMs: Date.now() - started };
+  });
+
+export const startSchemaDiffJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertSuperadmin(context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("sync_jobs")
+      .insert({
+        started_by: context.userId,
+        status: "running",
+        target_url: process.env.SYNC_TARGET_SUPABASE_URL ?? "(db-url)",
+        total_tables: 0,
+        logs: [logLine("info", "Struktur-Abgleich gestartet")] as never,
+      })
+      .select("id").single();
+    if (error) throw new Error(`sync_jobs insert: ${error.message}`);
+    return { jobId: (data as { id: string }).id };
+  });
+
 export const exportFullBootstrapSql = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
