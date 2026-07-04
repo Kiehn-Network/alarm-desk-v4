@@ -156,7 +156,7 @@ export const upsertDomainEmailSettings = createServerFn({ method: "POST" })
     mode: z.enum(["platform", "own"]),
     provider: providerEnum.nullable().optional(),
     api_key: z.string().min(0).max(500).optional(), // empty = keep existing
-    from_email: z.string().email().max(200).nullable().optional(),
+    from_email: z.union([z.string().email().max(200), z.literal("")]).nullable().optional(),
     from_name: z.string().max(200).nullable().optional(),
     mailgun_domain: z.string().max(200).nullable().optional(),
     mailgun_region: regionEnum.nullable().optional(),
