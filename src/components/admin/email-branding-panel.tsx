@@ -13,6 +13,7 @@ import {
 import {
   DEFAULT_BRANDING, normalizeBranding, renderBrandedEmail,
 } from "@/lib/email-brand";
+import { EMAIL_THEMES, type EmailThemePreset } from "@/lib/email-themes";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -137,6 +138,18 @@ export function EmailBrandingPanel() {
     });
   }, [form, fromName]);
 
+  function applyPreset(p: EmailThemePreset) {
+    setForm((s) => ({
+      ...s,
+      brand_primary_color: p.values.brand_primary_color,
+      brand_header_label: p.values.brand_header_label,
+      brand_greeting: p.values.brand_greeting,
+      brand_signature: p.values.brand_signature,
+      brand_footer_html: p.values.brand_footer_html,
+    }));
+    toast.success(`Theme "${p.name}" übernommen — nicht vergessen zu speichern`);
+  }
+
   if (q.isLoading) {
     return (
       <div className="rounded-xl border border-border bg-card p-6 flex items-center gap-2 text-muted-foreground">
@@ -163,6 +176,45 @@ export function EmailBrandingPanel() {
       <div className="grid gap-6 lg:grid-cols-2 p-6">
         {/* --- Form --- */}
         <div className="space-y-5">
+          {/* Themes / Presets */}
+          <div className="space-y-2">
+            <Label>Themes</Label>
+            <p className="text-xs text-muted-foreground">
+              Wähle ein vorgefertigtes Design als Startpunkt. Alle Felder bleiben danach frei anpassbar.
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {EMAIL_THEMES.map((p) => {
+                const active =
+                  form.brand_primary_color.toLowerCase() === p.values.brand_primary_color.toLowerCase();
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => applyPreset(p)}
+                    className={`text-left rounded-lg border p-3 transition hover:border-primary/60 hover:bg-accent/40 ${
+                      active ? "border-primary ring-1 ring-primary/40 bg-accent/30" : "border-border bg-background"
+                    }`}
+                    title={p.description}
+                  >
+                    <div className="flex items-center gap-1 mb-2">
+                      {p.swatches.map((c, i) => (
+                        <span
+                          key={i}
+                          className="h-4 w-4 rounded-full border border-border/60"
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                    <div className="text-sm font-medium leading-tight">{p.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                      {p.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Logo */}
           <div className="space-y-2">
             <Label>Logo</Label>

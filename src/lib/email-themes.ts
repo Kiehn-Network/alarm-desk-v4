@@ -1,0 +1,103 @@
+// Vorgefertigte E-Mail-Themes (Presets) für das Domänen-Branding.
+// Wendet Farbe + Header-Label + Begrüßung + Signatur + Fußtext an.
+
+export type EmailThemePreset = {
+  id: string;
+  name: string;
+  description: string;
+  swatches: string[]; // 2-3 Farben für die Preset-Karte
+  values: {
+    brand_primary_color: string;
+    brand_header_label: string;
+    brand_greeting: string;
+    brand_signature: string;
+    brand_footer_html: string;
+  };
+};
+
+export const EMAIL_THEMES: EmailThemePreset[] = [
+  {
+    id: "classic-blue",
+    name: "Klassisch Blau",
+    description: "Sachlich, seriös, professionell — der Standard.",
+    swatches: ["#2563eb", "#dbeafe", "#0f172a"],
+    values: {
+      brand_primary_color: "#2563eb",
+      brand_header_label: "EINSATZVERWALTUNG",
+      brand_greeting: "Guten Tag {{kunde}},",
+      brand_signature: "Mit freundlichen Grüßen",
+      brand_footer_html:
+        "Diese E-Mail wurde automatisch versendet. Bitte nicht antworten.",
+    },
+  },
+  {
+    id: "midnight",
+    name: "Midnight Elegant",
+    description: "Dunkles Marineblau mit ruhigem, hochwertigem Look.",
+    swatches: ["#0f172a", "#1e293b", "#94a3b8"],
+    values: {
+      brand_primary_color: "#0f172a",
+      brand_header_label: "SICHERHEITSDIENST",
+      brand_greeting: "Sehr geehrte Damen und Herren {{kunde}},",
+      brand_signature: "Mit besten Grüßen",
+      brand_footer_html:
+        "Vertraulich · Diese E-Mail ist ausschließlich für den genannten Empfänger bestimmt.",
+    },
+  },
+  {
+    id: "emergency-red",
+    name: "Alarm Rot",
+    description: "Signalfarbe für Notdienst und dringende Kommunikation.",
+    swatches: ["#dc2626", "#fee2e2", "#7f1d1d"],
+    values: {
+      brand_primary_color: "#dc2626",
+      brand_header_label: "NOTDIENST · 24/7",
+      brand_greeting: "Guten Tag {{kunde}},",
+      brand_signature: "Ihr Notdienst-Team",
+      brand_footer_html:
+        "Bei akuten Notfällen erreichen Sie uns rund um die Uhr unter Ihrer Notdienst-Nummer.",
+    },
+  },
+  {
+    id: "warm-orange",
+    name: "Warm Orange",
+    description: "Freundlich und zugänglich, gut für Kundenkommunikation.",
+    swatches: ["#ea580c", "#ffedd5", "#7c2d12"],
+    values: {
+      brand_primary_color: "#ea580c",
+      brand_header_label: "IHR SERVICE-TEAM",
+      brand_greeting: "Hallo {{kunde}},",
+      brand_signature: "Herzliche Grüße",
+      brand_footer_html:
+        "Fragen zu dieser E-Mail? Antworten Sie einfach — wir sind für Sie da.",
+    },
+  },
+  {
+    id: "forest-green",
+    name: "Corporate Grün",
+    description: "Ruhig, vertrauenswürdig — passend für nachhaltige Marken.",
+    swatches: ["#15803d", "#dcfce7", "#052e16"],
+    values: {
+      brand_primary_color: "#15803d",
+      brand_header_label: "SERVICE & QUALITÄT",
+      brand_greeting: "Guten Tag {{kunde}},",
+      brand_signature: "Mit freundlichen Grüßen",
+      brand_footer_html:
+        "Diese E-Mail wurde automatisch versendet. Bitte nicht antworten.",
+    },
+  },
+  {
+    id: "minimal-graphite",
+    name: "Minimal Graphit",
+    description: "Neutral, zurückhaltend — überzeugt durch Klarheit.",
+    swatches: ["#334155", "#e2e8f0", "#0f172a"],
+    values: {
+      brand_primary_color: "#334155",
+      brand_header_label: "MITTEILUNG",
+      brand_greeting: "Guten Tag {{kunde}},",
+      brand_signature: "Freundliche Grüße",
+      brand_footer_html:
+        "Automatisch generierte Nachricht · Antworten werden nicht bearbeitet.",
+    },
+  },
+];
