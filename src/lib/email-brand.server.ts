@@ -4,7 +4,7 @@ import { normalizeBranding, type EmailBranding } from "@/lib/email-brand";
 export async function loadDomainBranding(domainId: string): Promise<EmailBranding> {
   const { data } = await supabaseAdmin
     .from("domain_email_settings")
-    .select("brand_logo_url, brand_primary_color, brand_header_label, brand_greeting, brand_signature, brand_footer_html, from_name")
+    .select("brand_logo_url, brand_primary_color, brand_header_label, brand_greeting, brand_signature, brand_footer_html, brand_layout, from_name")
     .eq("domain_id", domainId)
     .maybeSingle() as any;
   return normalizeBranding({
@@ -15,6 +15,7 @@ export async function loadDomainBranding(domainId: string): Promise<EmailBrandin
     signature: data?.brand_signature ?? "",
     footer_html: data?.brand_footer_html ?? "",
     from_name: data?.from_name ?? null,
+    layout: data?.brand_layout ?? "card",
   });
 }
 
