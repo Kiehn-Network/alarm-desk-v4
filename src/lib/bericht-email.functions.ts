@@ -4,6 +4,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
 import { sendEmailForDomain } from "@/lib/email-send.server";
+import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
+import { renderBrandedEmail } from "@/lib/email-brand";
 
 const inputSchema = z.object({
   einsatz_id: z.string().uuid(),
@@ -48,10 +50,20 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
     const downloadUrl = signed.data.signedUrl;
 
     const subject = `Einsatzbericht: ${einsatz.einsatzgrund}`;
-    const html = renderBerichtEmail({
-      kundenName: einsatz.kunden_name ?? null,
-      einsatzgrund: einsatz.einsatzgrund ?? "Einsatz",
-      downloadUrl,
+    const branding = await loadDomainBranding(domainId);
+    const html = renderBrandedEmail({
+      branding,
+      brandName: brandName(branding),
+      statusPill: "Einsatzbericht",
+      heading: "Ihr Einsatzbericht",
+      greetingName: einsatz.kunden_name ?? null,
+      intro: `anbei erhalten Sie den Bericht zu Ihrem Einsatz "${einsatz.einsatzgrund ?? "Einsatz"}" als PDF-Dokument.`,
+      metaTitle: einsatz.einsatzgrund ?? "Einsatzbericht",
+      metaSubtitle: "PDF · Download 30 Tage gültig",
+      ctaLabel: "Bericht herunterladen",
+      ctaUrl: downloadUrl,
+      closingNote: "Bei Rückfragen zum Einsatz wenden Sie sich bitte an die für Sie zuständige Ansprechperson.",
+      previewText: "Ihr Einsatzbericht als PDF",
     });
 
     let status: "sent" | "failed" = "sent";
@@ -88,130 +100,4 @@ function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as any)[c],
   );
-}
-
-function renderBerichtEmail(opts: {
-  kundenName: string | null;
-  einsatzgrund: string;
-  downloadUrl: string;
-}) {
-  const { kundenName, einsatzgrund, downloadUrl } = opts;
-  const greeting = kundenName
-    ? `Guten Tag ${escapeHtml(kundenName)},`
-    : "Guten Tag,";
-  const year = new Date().getFullYear();
-
-  return `<!DOCTYPE html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="color-scheme" content="light" />
-    <title>Einsatzbericht</title>
-  </head>
-  <body style="margin:0;padding:24px 12px;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Ihr Einsatzbericht als PDF</div>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;">
-      <tr>
-        <td align="center">
-          <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
-            <!-- Header -->
-            <tr>
-              <td style="padding:8px 4px 20px;">
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td style="vertical-align:middle;">
-                      <table role="presentation" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width:40px;height:40px;background:linear-gradient(135deg,#2563eb,#3b82f6);border-radius:10px;text-align:center;vertical-align:middle;">
-                            <span style="color:#ffffff;font-size:20px;font-weight:800;line-height:40px;">A</span>
-                          </td>
-                          <td style="padding-left:12px;vertical-align:middle;">
-                            <div style="color:#0f172a;font-size:16px;font-weight:700;line-height:20px;">AlarmDesk</div>
-                            <div style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:0.18em;line-height:12px;margin-top:2px;">EINSATZVERWALTUNG</div>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                    <td style="text-align:right;vertical-align:middle;">
-                      <span style="display:inline-block;font-size:11px;font-weight:600;color:#10b981;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:999px;padding:4px 10px;letter-spacing:0.05em;">● Einsatzbericht</span>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-            <!-- Card -->
-            <tr>
-              <td style="background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;padding:32px 28px;box-shadow:0 1px 2px rgba(15,23,42,0.04);">
-                <div style="color:#0f172a;font-size:24px;font-weight:700;margin:0 0 12px;letter-spacing:-0.01em;">Ihr Einsatzbericht</div>
-                <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 8px;">${greeting}</p>
-                <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 20px;">
-                  anbei erhalten Sie den Bericht zu Ihrem Einsatz
-                  <strong style="color:#0f172a;">${escapeHtml(einsatzgrund)}</strong>
-                  als PDF-Dokument.
-                </p>
-
-                <!-- Info panel -->
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;">
-                  <tr>
-                    <td style="padding:14px 16px;">
-                      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                        <tr>
-                          <td style="width:36px;vertical-align:middle;">
-                            <div style="width:32px;height:32px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;text-align:center;line-height:30px;color:#2563eb;font-size:16px;font-weight:700;">📄</div>
-                          </td>
-                          <td style="padding-left:12px;vertical-align:middle;">
-                            <div style="color:#0f172a;font-size:13px;font-weight:600;line-height:18px;">${escapeHtml(einsatzgrund)}</div>
-                            <div style="color:#64748b;font-size:12px;line-height:16px;margin-top:2px;">PDF · Download 30 Tage gültig</div>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- CTA -->
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td align="center" style="padding:8px 0 8px;">
-                      <a href="${downloadUrl}" style="display:inline-block;background:linear-gradient(135deg,#2563eb,#3b82f6);background-color:#2563eb;color:#ffffff;font-size:15px;font-weight:700;border-radius:12px;padding:14px 28px;text-decoration:none;box-shadow:0 4px 14px rgba(37,99,235,0.35);">
-                        Bericht herunterladen →
-                      </a>
-                    </td>
-                  </tr>
-                </table>
-
-                <p style="color:#94a3b8;font-size:12px;margin:20px 0 6px;text-align:center;">
-                  Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:
-                </p>
-                <p style="margin:0;text-align:center;word-break:break-all;">
-                  <a href="${downloadUrl}" style="color:#2563eb;font-size:12px;text-decoration:underline;">${downloadUrl}</a>
-                </p>
-
-                <div style="border-top:1px solid #f1f5f9;margin:24px 0 16px;"></div>
-
-                <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0;">
-                  Bei Rückfragen zum Einsatz wenden Sie sich bitte an die für Sie zuständige Ansprechperson.
-                </p>
-                <p style="color:#0f172a;font-size:14px;font-weight:600;margin:16px 0 0;">
-                  Mit freundlichen Grüßen
-                </p>
-              </td>
-            </tr>
-
-            <!-- Footer -->
-            <tr>
-              <td style="padding:20px 4px 0;text-align:center;">
-                <div style="border-top:1px solid #f1f5f9;margin:0 0 16px;"></div>
-                <p style="color:#94a3b8;font-size:11px;margin:4px 0 0;">© ${year} AlarmDesk · Einsatzverwaltung</p>
-                <p style="color:#94a3b8;font-size:11px;margin:4px 0 0;">Diese E-Mail wurde automatisch versendet. Bitte nicht antworten.</p>
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
-</html>`;
 }
