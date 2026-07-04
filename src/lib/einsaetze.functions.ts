@@ -513,13 +513,18 @@ export const getEinsatzDateiSignedUrl = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!row) throw new Error("Datei nicht gefunden");
     const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-    const match =
-      (e.kunden_name && norm(row.kunden_name).includes(norm(e.kunden_name))) ||
-      (e.address && norm(row.address).includes(norm(e.address))) ||
+    // Fahrer: nur eindeutige Kunden-Identifikatoren (kein Adress-Teiltreffer).
+    // Admin/Dispatcher/Superadmin: weiterhin auch Adress-/Namens-Teiltreffer erlaubt.
+    const strictMatch =
       (e.key_number && norm(row.key_number) === norm(e.key_number)) ||
       (e.anlagen_nr && norm(row.anlagen_nr) === norm(e.anlagen_nr)) ||
-      (e.teilnehmer_id && norm(row.teilnehmer_id) === norm(e.teilnehmer_id));
-    if (!match) throw new Error("Datei gehört nicht zu diesem Einsatz");
+      (e.teilnehmer_id && norm(row.teilnehmer_id) === norm(e.teilnehmer_id)) ||
+      (e.kunden_name && norm(row.kunden_name) === norm(e.kunden_name));
+    const looseMatch = elevated && (
+      (e.kunden_name && norm(row.kunden_name).includes(norm(e.kunden_name))) ||
+      (e.address && norm(row.address).includes(norm(e.address)))
+    );
+    if (!strictMatch && !looseMatch) throw new Error("Datei gehört nicht zu diesem Kunden");
     const { signFileToken } = await import("@/lib/file-proxy.server");
     // Für Fahrer: kein Download (inline erzwungen). Für andere: gleiches Verhalten ok.
     const token = await signFileToken(data.storage_path, 60, { noDownload: true });
