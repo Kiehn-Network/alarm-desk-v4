@@ -95,9 +95,3 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
 
     return { ok: true, downloadUrl };
   });
-
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as any)[c],
-  );
-}
