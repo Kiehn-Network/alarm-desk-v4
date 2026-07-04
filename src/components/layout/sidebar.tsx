@@ -190,6 +190,7 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
         ))}
       </nav>
       <div className="p-3 border-t border-sidebar-border">
+        <AppVersionBadge />
         <button
           onClick={() => supabase.auth.signOut()}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-colors"
@@ -197,6 +198,24 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
           <LogOut className="size-4" /> Abmelden
         </button>
       </div>
+    </div>
+  );
+}
+
+function AppVersionBadge() {
+  const { data } = useQuery({
+    queryKey: ["app-version"],
+    queryFn: async () => {
+      const r = await fetch("/api/public/version", { cache: "no-store" });
+      if (!r.ok) throw new Error("version");
+      return (await r.json()) as { current_version: string };
+    },
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
+  return (
+    <div className="px-3 pb-2 text-[10px] uppercase tracking-widest text-muted-foreground/70">
+      Version <span className="font-mono text-muted-foreground">v{data?.current_version ?? "…"}</span>
     </div>
   );
 }
