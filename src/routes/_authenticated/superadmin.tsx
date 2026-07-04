@@ -161,7 +161,11 @@ function DbSyncPanel() {
   const runMigFn = useServerFn(runSchemaMigration);
   const exportMigFn = useServerFn(exportMigrationsSql);
   const exportBootstrapFn = useServerFn(exportFullBootstrapSql);
+  const previewDiffFn = useServerFn(previewSchemaDiff);
+  const applyDiffFn = useServerFn(applySchemaDiff);
+  const startDiffFn = useServerFn(startSchemaDiffJob);
   const pq = useQuery({ queryKey: ["db-sync-preview"], queryFn: () => previewFn() });
+  const diffQ = useQuery({ queryKey: ["db-schema-diff"], queryFn: () => previewDiffFn() });
   const [openConfirm, setOpenConfirm] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [openMigConfirm, setOpenMigConfirm] = useState(false);
@@ -230,6 +234,21 @@ function DbSyncPanel() {
       toast.success(`SQL-Datei mit ${r.count} Migrations heruntergeladen`);
     },
     onError: (e: any) => toast.error(e?.message ?? "Export fehlgeschlagen"),
+  });
+
+  const m_diff = useMutation({
+    mutationFn: async () => {
+      const { jobId: newId } = await startDiffFn();
+      setJobId(newId);
+      setResult(null);
+      return applyDiffFn({ data: { confirm: "STRUCTURE ONLY", jobId: newId } });
+    },
+    onSuccess: (r: any) => {
+      diffQ.refetch();
+      if (r.ok) toast.success(`Struktur abgeglichen: ${r.applied} Änderungen angewandt`);
+      else toast.warning(`Struktur-Abgleich: ${r.applied} ok, ${r.failed} Fehler`);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Struktur-Abgleich fehlgeschlagen"),
   });
 
   const m_bootstrap = useMutation({
