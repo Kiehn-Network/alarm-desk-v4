@@ -299,7 +299,7 @@ export const findDuplikate = createServerFn({ method: "GET" })
       if (!kMap.has(key)) kMap.set(key, new Map());
       const vMap = kMap.get(key)!;
       const vKey = `${rawName}|${d.address ?? ""}`;
-      const v = vMap.get(vKey) ?? { kunden_name: rawName, address: d.address ?? null, count: 0, ids: [] };
+      const v: Variant = vMap.get(vKey) ?? { kunden_name: rawName, address: d.address ?? null, count: 0, ids: [] };
       v.count += 1;
       v.ids.push(d.id);
       vMap.set(vKey, v);
