@@ -907,6 +907,103 @@ function DataPurgeRequestsPanel() {
   );
 }
 
+function TablePurgeAdminPanel({ domains }: { domains: Array<{ id: string; name: string; slug?: string }> }) {
+  const reqFn = useServerFn(superadminRequestTablePurge);
+  const [domainId, setDomainId] = useState<string>("");
+  const [tableName, setTableName] = useState<string>("");
+  const [note, setNote] = useState<string>("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const m_create = useMutation({
+    mutationFn: () => reqFn({ data: { domainId, tableName, note: note || null } }),
+    onSuccess: () => {
+      toast.success("Löschantrag erstellt — wartet auf Bestätigung durch den Domain-Admin.");
+      setConfirmOpen(false); setNote("");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  const selectedDomain = domains.find((d) => d.id === domainId);
+  const canSubmit = !!domainId && !!tableName;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Trash2 className="size-4 text-destructive" />
+          Tabellen-Daten endgültig löschen
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Wählen Sie eine Domäne und eine Tabelle. Nach dem Erstellen des Antrags muss der
+          Domain-Admin die Löschung bestätigen. Danach werden <b>alle Datensätze</b> der Tabelle
+          für diese Domäne <b>unwiderruflich</b> entfernt.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1">
+            <Label>Domäne</Label>
+            <Select value={domainId} onValueChange={setDomainId}>
+              <SelectTrigger><SelectValue placeholder="Domäne wählen" /></SelectTrigger>
+              <SelectContent>
+                {domains.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1">
+            <Label>Tabelle</Label>
+            <Select value={tableName} onValueChange={setTableName}>
+              <SelectTrigger><SelectValue placeholder="Tabelle wählen" /></SelectTrigger>
+              <SelectContent>
+                {PURGEABLE_TABLES.map((t) => (
+                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label>Notiz (optional)</Label>
+          <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+            placeholder="Grund für die Löschung …" />
+        </div>
+        <div className="flex justify-end">
+          <Button variant="destructive" disabled={!canSubmit || m_create.isPending}
+            onClick={() => setConfirmOpen(true)}>
+            {m_create.isPending ? <Loader2 className="size-4 animate-spin mr-2" /> : <Trash2 className="size-4 mr-2" />}
+            Löschantrag erstellen
+          </Button>
+        </div>
+
+        <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Löschantrag bestätigen</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 text-sm">
+              <div>
+                Domäne: <b>{selectedDomain?.name ?? "?"}</b>
+              </div>
+              <div>Tabelle: <b>{tableName}</b></div>
+              <div className="text-muted-foreground">
+                Der Domain-Admin muss die Löschung im Adminbereich bestätigen, bevor Daten entfernt werden.
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setConfirmOpen(false)}>Abbrechen</Button>
+              <Button variant="destructive" onClick={() => m_create.mutate()} disabled={m_create.isPending}>
+                Antrag stellen
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+}
+
 const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }[] = [
   { label: "Start", items: [
     { value: "overview", label: "Übersicht" },
