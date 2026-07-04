@@ -41,6 +41,7 @@ import {
 } from "@/lib/admin.functions";
 import {
   requestDataPurge, listMyPurgeRequests, cancelPurgeRequest,
+  listPendingSuperadminPurgeRequests, confirmSuperadminPurgeRequest,
 } from "@/lib/data-purge.functions";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
