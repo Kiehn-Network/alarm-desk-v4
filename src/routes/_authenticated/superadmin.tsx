@@ -405,9 +405,10 @@ function DbSyncPanel() {
               <div className="h-2 rounded bg-muted overflow-hidden">
                 <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs pt-2">
+              <div className="grid grid-cols-4 gap-2 text-xs pt-2">
                 <div className="rounded border p-2"><span className="text-muted-foreground">Gelesen:</span> <b>{job.total_read}</b></div>
                 <div className="rounded border p-2"><span className="text-muted-foreground">Geschrieben:</span> <b>{job.total_written}</b></div>
+                <div className="rounded border p-2"><span className="text-muted-foreground">Übersprungen:</span> <b>{(job.tables ?? []).reduce((s: number, t: any) => s + (t.skipped ?? 0), 0)}</b></div>
                 <div className="rounded border p-2"><span className="text-muted-foreground">Fehler:</span> <b className={job.failed_count ? "text-destructive" : ""}>{job.failed_count}</b></div>
               </div>
             </div>
@@ -441,6 +442,7 @@ function DbSyncPanel() {
                         <th className="text-left p-2">Tabelle</th>
                         <th className="text-right p-2">Gelesen</th>
                         <th className="text-right p-2">Geschrieben</th>
+                        <th className="text-right p-2">Übersprungen</th>
                         <th className="text-left p-2">Status</th>
                       </tr>
                     </thead>
@@ -450,6 +452,7 @@ function DbSyncPanel() {
                           <td className="p-2 font-mono">{t.table}</td>
                           <td className="p-2 text-right">{t.read}</td>
                           <td className="p-2 text-right">{t.written}</td>
+                          <td className="p-2 text-right">{t.skipped ?? 0}</td>
                           <td className="p-2">
                             {t.error ? (
                               <button
@@ -493,6 +496,10 @@ function DbSyncPanel() {
                 <div className="text-lg font-semibold">{result.totalWritten}</div>
               </div>
               <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Übersprungen</div>
+                <div className="text-lg font-semibold">{result.totalSkipped ?? 0}</div>
+              </div>
+              <div className="rounded-md border p-3">
                 <div className="text-xs text-muted-foreground">Fehlerhafte Tabellen</div>
                 <div className={`text-lg font-semibold ${result.failedCount ? "text-destructive" : "text-emerald-600"}`}>
                   {result.failedCount}
@@ -506,6 +513,7 @@ function DbSyncPanel() {
                     <th className="text-left p-2">Tabelle</th>
                     <th className="text-right p-2">Gelesen</th>
                     <th className="text-right p-2">Geschrieben</th>
+                    <th className="text-right p-2">Übersprungen</th>
                     <th className="text-left p-2">Fehler</th>
                   </tr>
                 </thead>
@@ -515,6 +523,7 @@ function DbSyncPanel() {
                       <td className="p-2 font-mono">{t.table}</td>
                       <td className="p-2 text-right">{t.read}</td>
                       <td className="p-2 text-right">{t.written}</td>
+                      <td className="p-2 text-right">{t.skipped ?? 0}</td>
                       <td className="p-2 text-destructive">{t.error ?? ""}</td>
                     </tr>
                   ))}
@@ -536,7 +545,8 @@ function DbSyncPanel() {
               <br />
               <code className="text-xs">{preview?.targetUrl}</code>
               <br />
-              geschrieben. Bestehende Datensätze mit gleicher ID werden überschrieben.
+              geschrieben. Bestehende Datensätze mit gleicher ID oder fachlichem Schlüssel werden aktualisiert.
+              Nicht übertragbare Zeilen, z. B. mit fehlenden Benutzern in der Zielinstanz, werden übersprungen und im Log markiert.
             </p>
             <p>
               Bitte tippe zur Bestätigung: <b className="font-mono">SYNC NOW</b>
