@@ -73,7 +73,7 @@ function DateienPage() {
   const [linkFor, setLinkFor] = useState<Datei | null>(null);
   const [detailFor, setDetailFor] = useState<Datei | null>(null);
   const [editFor, setEditFor] = useState<Datei | null>(null);
-  const [tab, setTab] = useState<"dateien" | "kunden">("dateien");
+  const [tab, setTab] = useState<"dateien" | "kunden" | "duplikate">("dateien");
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -176,9 +176,19 @@ function DateienPage() {
         >
           <Users className="size-4" /> Kunden
         </button>
+        {isAdmin && (
+          <button
+            onClick={() => setTab("duplikate")}
+            className={`px-3 py-1.5 text-sm rounded-md inline-flex items-center gap-2 transition ${tab === "duplikate" ? "bg-primary text-primary-foreground" : "hover:bg-muted"}`}
+          >
+            <Trash2 className="size-4" /> Duplikate
+          </button>
+        )}
       </div>
 
-      {tab === "kunden" ? (
+      {tab === "duplikate" && isAdmin ? (
+        <DuplikateTab onDone={refresh} />
+      ) : tab === "kunden" ? (
         <KundenListe
           dateien={dateien}
           search={search}
