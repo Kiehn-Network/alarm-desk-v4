@@ -28,6 +28,7 @@ import {
   previewSyncTarget, runFullSync, startSyncJob, getSyncJob,
   startSchemaMigrationJob, runSchemaMigration, exportMigrationsSql,
   exportFullBootstrapSql,
+  previewSchemaDiff, applySchemaDiff, startSchemaDiffJob,
 } from "@/lib/db-sync.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
