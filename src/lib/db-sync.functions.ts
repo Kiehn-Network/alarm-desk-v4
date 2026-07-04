@@ -646,11 +646,12 @@ export const runFullSync = createServerFn({ method: "POST" })
 
     const totalRead = results.reduce((s, r) => s + r.read, 0);
     const totalWritten = results.reduce((s, r) => s + r.written, 0);
+    const totalSkipped = results.reduce((s, r) => s + (r.skipped ?? 0), 0);
     const failed = results.filter((r) => r.error);
     const ok = failed.length === 0;
     await pushLog(
       ok ? "info" : "warn",
-      ok ? `Fertig in ${Date.now() - started}ms – ${totalWritten} Zeilen geschrieben`
+      ok ? `Fertig in ${Date.now() - started}ms – ${totalWritten} Zeilen geschrieben${totalSkipped ? `, ${totalSkipped} übersprungen` : ""}`
          : `Fertig mit ${failed.length} Fehler-Tabellen`,
     );
     await persist({
@@ -672,13 +673,14 @@ export const runFullSync = createServerFn({ method: "POST" })
         metadata: {
           duration_ms: Date.now() - started,
           total_read: totalRead, total_written: totalWritten,
+           total_skipped: totalSkipped,
           failed_tables: failed.map((f) => f.table),
           job_id: jobId,
         } as never,
       });
     } catch {}
 
-    return { ok, durationMs: Date.now() - started, totalRead, totalWritten,
+    return { ok, durationMs: Date.now() - started, totalRead, totalWritten, totalSkipped,
       tables: results, failedCount: failed.length, jobId };
   });
 
