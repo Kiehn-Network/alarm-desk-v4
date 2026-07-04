@@ -265,6 +265,32 @@ export function EmailBrandingPanel() {
             </p>
           </div>
 
+          {/* Layout */}
+          <div className="space-y-2">
+            <Label>Layout</Label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {EMAIL_LAYOUTS.map((l) => {
+                const active = form.brand_layout === l.id;
+                return (
+                  <button
+                    key={l.id}
+                    type="button"
+                    onClick={() => setForm((s) => ({ ...s, brand_layout: l.id }))}
+                    className={`text-left rounded-lg border p-3 transition hover:border-primary/60 hover:bg-accent/40 ${
+                      active ? "border-primary ring-1 ring-primary/40 bg-accent/30" : "border-border bg-background"
+                    }`}
+                    title={l.description}
+                  >
+                    <div className="text-sm font-medium leading-tight">{l.name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                      {l.description}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Farbe */}
           <div className="space-y-2">
             <Label>Markenfarbe</Label>
