@@ -90,12 +90,23 @@ function formatFrom(cfg: ResolvedEmailConfig): string {
 /** Send a single email using the resolved config. Returns provider message id on success, throws on failure. */
 export async function sendEmailViaProvider(cfg: ResolvedEmailConfig, input: SendInput): Promise<{ id: string | null }> {
   if (cfg.provider === "resend") {
-    const res = await fetch("https://api.resend.com/emails", {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const connectorKey = process.env.RESEND_API_KEY;
+    const useGateway = !!(lovableKey && connectorKey);
+    const url = useGateway
+      ? "https://connector-gateway.lovable.dev/resend/emails"
+      : "https://api.resend.com/emails";
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (useGateway) {
+      headers.Authorization = `Bearer ${lovableKey}`;
+      headers["X-Connection-Api-Key"] = connectorKey!;
+    } else {
+      if (!cfg.api_key) throw new Error("Resend API-Key fehlt (weder Connector noch manueller Key konfiguriert).");
+      headers.Authorization = `Bearer ${cfg.api_key}`;
+    }
+    const res = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${cfg.api_key}`,
-      },
+      headers,
       body: JSON.stringify({
         from: formatFrom(cfg),
         to: [input.to],
