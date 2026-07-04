@@ -53,7 +53,7 @@
         "leaflet": "^1.9.4",
         "lucide-react": "^0.575.0",
         "nitro": "3.0.260603-beta",
-        "nodemailer": "^9.0.1",
+        "nodemailer": "^9.0.3",
         "postgres": "^3.4.9",
         "react": "^19.2.0",
         "react-day-picker": "^9.14.0",
@@ -1297,7 +1297,7 @@
 
     "node-releases": ["node-releases@2.0.38", "", {}, "sha512-3qT/88Y3FbH/Kx4szpQQ4HzUbVrHPKTLVpVocKiLfoYvw9XSGOX2FmD2d6DrXbVYyAQTF2HeF6My8jmzx7/CRw=="],
 
-    "nodemailer": ["nodemailer@9.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/nodemailer/-/nodemailer-9.0.1.tgz", {}, "sha512-Gwv8SQewT616ZM/URn0H54b8PWo/Wum7md3EW2aWy1lO27+WZCX+Xyak3J+NlmHUjDh5ME+uesJUDRbR3Ye8Bw=="],
+    "nodemailer": ["nodemailer@9.0.3", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/nodemailer/-/nodemailer-9.0.3.tgz", {}, "sha512-n+YP+NKwR5zRWa60k3GiQ6Q3B4KXCoAw40dAKeCtYn020iNN74aWK2liXIC3ZEATeGql7we3tE3t8QwhY0eskw=="],
 
     "normalize-path": ["normalize-path@3.0.0", "", {}, "sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA=="],
 
