@@ -181,7 +181,7 @@ type TargetPrep = {
   warnings: string[];
 };
 
-type PushResult = { written: number; skipped: number; warnings: string[] };
+type PushResult = { written: number; skipped: number; warnings: string[]; skippedKeys?: string[] };
 
 type RestError = {
   status: number;
@@ -400,7 +400,7 @@ async function fetchAllRows(table: string): Promise<Record<string, unknown>[]> {
 async function pushBatch(
   targetUrl: string, serviceKey: string, table: string, rows: Record<string, unknown>[],
 ): Promise<PushResult> {
-  if (rows.length === 0) return { written: 0, skipped: 0, warnings: [] };
+  if (rows.length === 0) return { written: 0, skipped: 0, warnings: [], skippedKeys: [] };
   const warnings: string[] = [];
   let currentRows = rows;
 
@@ -418,18 +418,21 @@ async function pushBatch(
     if (currentRows.length > 1 && ["23503", "23505", "23502"].includes(error.code ?? "")) {
       let written = 0;
       let skipped = 0;
+      const skippedKeys: string[] = [];
       for (const row of currentRows) {
         const result = await pushBatch(targetUrl, serviceKey, table, [row]);
         written += result.written;
         skipped += result.skipped;
         warnings.push(...result.warnings);
+        skippedKeys.push(...(result.skippedKeys ?? []));
       }
-      return { written, skipped, warnings };
+      return { written, skipped, warnings, skippedKeys };
     }
 
     if (currentRows.length === 1 && ["23503", "23505", "23502"].includes(error.code ?? "")) {
       warnings.push(`${table}: Zeile übersprungen – ${restErrorMessage(error)}`);
-      return { written: 0, skipped: 1, warnings };
+      const key = keyForRow(table, currentRows[0]);
+      return { written: 0, skipped: 1, warnings, skippedKeys: key ? [key] : [] };
     }
 
     throw new Error(restErrorMessage(error));
@@ -560,13 +563,18 @@ export const runFullSync = createServerFn({ method: "POST" })
       await persist({ logs: logs as never });
     };
 
+    const prep = await prepareTargetSync(targetUrl, serviceKey);
+    for (const warning of prep.warnings) await pushLog("warn", warning);
+    await reloadTargetSchemaCache(process.env.SYNC_TARGET_DB_URL, pushLog);
+
     let pending = [...SYNC_TABLES];
+    const skippedKeysByTable = new Map<string, Set<string>>();
     try {
       for (let pass = 1; pass <= MAX_PASSES; pass++) {
         await pushLog("info", `Pass ${pass}/${MAX_PASSES} – ${pending.length} Tabellen`);
         const stillFailed: string[] = [];
         for (const table of pending) {
-          let read = 0, written = 0;
+          let read = 0, written = 0, skipped = 0;
           let lastError: string | undefined;
           let lastErrorDetail: string | undefined;
           await persist({ current_table: table, current_pass: pass });
@@ -575,11 +583,30 @@ export const runFullSync = createServerFn({ method: "POST" })
             const rows = await fetchAllRows(table);
             read = rows.length;
             await pushLog("info", `${table}: ${rows.length} Zeilen gelesen`);
-            for (let i = 0; i < rows.length; i += BATCH) {
-              const slice = rows.slice(i, i + BATCH);
-              written += await pushBatch(targetUrl, serviceKey, table, slice);
+            const transformed = transformRowsForTarget(table, rows, prep, skippedKeysByTable);
+            skipped += transformed.skipped;
+            if (transformed.skippedKeys.length > 0) {
+              skippedKeysByTable.set(table, new Set(transformed.skippedKeys));
             }
-            await pushLog("info", `${table}: ${written} Zeilen geschrieben (${Date.now() - tStart}ms)`);
+            const compacted = compactWarnings(transformed.warnings);
+            for (const warning of compacted.slice(0, 20)) await pushLog("warn", warning);
+            if (compacted.length > 20) await pushLog("warn", `${table}: ${compacted.length - 20} weitere Überspring-Hinweise ausgeblendet`);
+
+            for (let i = 0; i < transformed.rows.length; i += BATCH) {
+              const slice = transformed.rows.slice(i, i + BATCH);
+              const batch = await pushBatch(targetUrl, serviceKey, table, slice);
+              written += batch.written;
+              skipped += batch.skipped;
+              if (batch.skippedKeys?.length) {
+                const set = skippedKeysByTable.get(table) ?? new Set<string>();
+                for (const key of batch.skippedKeys) set.add(key);
+                skippedKeysByTable.set(table, set);
+              }
+              const batchWarnings = compactWarnings(batch.warnings);
+              for (const warning of batchWarnings.slice(0, 20)) await pushLog("warn", warning);
+              if (batchWarnings.length > 20) await pushLog("warn", `${table}: ${batchWarnings.length - 20} weitere Batch-Hinweise ausgeblendet`);
+            }
+            await pushLog("info", `${table}: ${written} Zeilen geschrieben${skipped ? `, ${skipped} übersprungen` : ""} (${Date.now() - tStart}ms)`);
           } catch (e) {
             const err = e as Error;
             lastError = err.message;
@@ -589,10 +616,10 @@ export const runFullSync = createServerFn({ method: "POST" })
 
           const existing = results.find((r) => r.table === table);
           if (existing) {
-            existing.read = read; existing.written = written;
+            existing.read = read; existing.written = written; existing.skipped = skipped;
             existing.error = lastError; existing.errorDetail = lastErrorDetail;
           } else {
-            results.push({ table, read, written, error: lastError, errorDetail: lastErrorDetail });
+            results.push({ table, read, written, skipped, error: lastError, errorDetail: lastErrorDetail });
           }
           if (lastError) stillFailed.push(table);
 
