@@ -18,6 +18,7 @@ import {
 import { useRole } from "@/hooks/use-role";
 import {
   listMeineEinsaetze, abschliessenEinsatz, listEinsatzHistorie, setEinsatzZeit,
+  listDateienForEinsatz,
 } from "@/lib/einsaetze.functions";
 import {
   listSchluesselForEinsatz, uebernehmenSchluessel, rueckgabeAnfragen,
@@ -54,6 +55,7 @@ function MeineEinsaetzePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const list = useServerFn(listMeineEinsaetze);
+  const prefetchDateien = useServerFn(listDateienForEinsatz);
   const { data: modules } = useDomainModules();
   const schluesselbuchOn = modules?.has("schluesselbuch") ?? false;
   const { online } = useOfflineQueue();
@@ -93,6 +95,18 @@ function MeineEinsaetzePage() {
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
+
+  // Prefetch Kunden-Dateien für alle aktiven Einsätze → Dialog öffnet ohne Wartezeit.
+  useEffect(() => {
+    const aktive = einsaetze.filter((e) => ["in_bearbeitung", "freigegeben"].includes(e.status));
+    aktive.forEach((e) => {
+      qc.prefetchQuery({
+        queryKey: ["einsatz-dateien", e.id],
+        queryFn: () => prefetchDateien({ data: { einsatz_id: e.id } }),
+        staleTime: 60_000,
+      });
+    });
+  }, [einsaetze, qc, prefetchDateien]);
 
   const isAktiv = (e: Einsatz) => ["in_bearbeitung", "freigegeben"].includes(e.status);
   const isErledigt = (e: Einsatz) => ["abgeschlossen", "abgelehnt"].includes(e.status);
