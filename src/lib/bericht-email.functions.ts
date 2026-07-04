@@ -6,6 +6,7 @@ import { requireEffectiveDomainId } from "@/lib/tenant.server";
 import { sendEmailForDomain } from "@/lib/email-send.server";
 import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
 import { renderBrandedEmail } from "@/lib/email-brand";
+import { rewriteStorageUrl } from "@/lib/storage-url.server";
 
 const inputSchema = z.object({
   einsatz_id: z.string().uuid(),
@@ -47,7 +48,7 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
     if (signed.error || !signed.data?.signedUrl) {
       throw new Error("Signed URL fehlgeschlagen");
     }
-    const downloadUrl = signed.data.signedUrl;
+    const downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
 
     const subject = `Einsatzbericht: ${einsatz.einsatzgrund}`;
     const branding = await loadDomainBranding(domainId);
