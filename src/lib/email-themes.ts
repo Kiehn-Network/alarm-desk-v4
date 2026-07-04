@@ -1,5 +1,7 @@
 // Vorgefertigte E-Mail-Themes (Presets) für das Domänen-Branding.
-// Wendet Farbe + Header-Label + Begrüßung + Signatur + Fußtext an.
+// Wendet Layout + Farbe + Header-Label + Begrüßung + Signatur + Fußtext an.
+
+import type { EmailLayout } from "./email-brand";
 
 export type EmailThemePreset = {
   id: string;
@@ -7,6 +9,7 @@ export type EmailThemePreset = {
   description: string;
   swatches: string[]; // 2-3 Farben für die Preset-Karte
   values: {
+    brand_layout: EmailLayout;
     brand_primary_color: string;
     brand_header_label: string;
     brand_greeting: string;
@@ -18,10 +21,11 @@ export type EmailThemePreset = {
 export const EMAIL_THEMES: EmailThemePreset[] = [
   {
     id: "classic-blue",
-    name: "Klassisch Blau",
-    description: "Sachlich, seriös, professionell — der Standard.",
+    name: "Klassisch Blau (Card)",
+    description: "Sachlich, seriös — weiße Karte auf grauem Hintergrund.",
     swatches: ["#2563eb", "#dbeafe", "#0f172a"],
     values: {
+      brand_layout: "card",
       brand_primary_color: "#2563eb",
       brand_header_label: "EINSATZVERWALTUNG",
       brand_greeting: "Guten Tag {{kunde}},",
@@ -32,10 +36,11 @@ export const EMAIL_THEMES: EmailThemePreset[] = [
   },
   {
     id: "midnight",
-    name: "Midnight Elegant",
-    description: "Dunkles Marineblau mit ruhigem, hochwertigem Look.",
+    name: "Midnight Banner",
+    description: "Dunkles Marineblau als großzügiger Header-Banner.",
     swatches: ["#0f172a", "#1e293b", "#94a3b8"],
     values: {
+      brand_layout: "banner",
       brand_primary_color: "#0f172a",
       brand_header_label: "SICHERHEITSDIENST",
       brand_greeting: "Sehr geehrte Damen und Herren {{kunde}},",
@@ -46,10 +51,11 @@ export const EMAIL_THEMES: EmailThemePreset[] = [
   },
   {
     id: "emergency-red",
-    name: "Alarm Rot",
-    description: "Signalfarbe für Notdienst und dringende Kommunikation.",
+    name: "Alarm Rot (Banner)",
+    description: "Signalfarbe für Notdienst — mit auffälligem Farbbanner.",
     swatches: ["#dc2626", "#fee2e2", "#7f1d1d"],
     values: {
+      brand_layout: "banner",
       brand_primary_color: "#dc2626",
       brand_header_label: "NOTDIENST · 24/7",
       brand_greeting: "Guten Tag {{kunde}},",
@@ -60,10 +66,11 @@ export const EMAIL_THEMES: EmailThemePreset[] = [
   },
   {
     id: "warm-orange",
-    name: "Warm Orange",
-    description: "Freundlich und zugänglich, gut für Kundenkommunikation.",
+    name: "Warm Orange (Sidebar)",
+    description: "Freundlich, mit farbigem Seitenstreifen als Akzent.",
     swatches: ["#ea580c", "#ffedd5", "#7c2d12"],
     values: {
+      brand_layout: "sidebar",
       brand_primary_color: "#ea580c",
       brand_header_label: "IHR SERVICE-TEAM",
       brand_greeting: "Hallo {{kunde}},",
@@ -74,10 +81,11 @@ export const EMAIL_THEMES: EmailThemePreset[] = [
   },
   {
     id: "forest-green",
-    name: "Corporate Grün",
-    description: "Ruhig, vertrauenswürdig — passend für nachhaltige Marken.",
+    name: "Corporate Grün (Sidebar)",
+    description: "Ruhig, vertrauenswürdig — mit grünem Seitenakzent.",
     swatches: ["#15803d", "#dcfce7", "#052e16"],
     values: {
+      brand_layout: "sidebar",
       brand_primary_color: "#15803d",
       brand_header_label: "SERVICE & QUALITÄT",
       brand_greeting: "Guten Tag {{kunde}},",
@@ -89,9 +97,10 @@ export const EMAIL_THEMES: EmailThemePreset[] = [
   {
     id: "minimal-graphite",
     name: "Minimal Graphit",
-    description: "Neutral, zurückhaltend — überzeugt durch Klarheit.",
+    description: "Reduziert, ohne Rahmen — nur Text, dünner Akzentstrich.",
     swatches: ["#334155", "#e2e8f0", "#0f172a"],
     values: {
+      brand_layout: "minimal",
       brand_primary_color: "#334155",
       brand_header_label: "MITTEILUNG",
       brand_greeting: "Guten Tag {{kunde}},",
