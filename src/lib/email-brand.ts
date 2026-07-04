@@ -1,6 +1,15 @@
 // Pure, browser-safe email HTML renderer + defaults.
 // Used by server functions AND by the admin UI for a live preview.
 
+export type EmailLayout = "card" | "banner" | "minimal" | "sidebar";
+
+export const EMAIL_LAYOUTS: { id: EmailLayout; name: string; description: string }[] = [
+  { id: "card",     name: "Card",     description: "Klassisch mit weißer Karte auf grauem Hintergrund." },
+  { id: "banner",   name: "Banner",   description: "Großer farbiger Header-Banner mit Titel." },
+  { id: "minimal",  name: "Minimal",  description: "Reduziert, ohne Rahmen — nur Text und CTA." },
+  { id: "sidebar",  name: "Sidebar",  description: "Farbiger linker Seitenstreifen als Akzent." },
+];
+
 export type EmailBranding = {
   logo_url: string | null;
   primary_color: string;
@@ -9,6 +18,7 @@ export type EmailBranding = {
   signature: string;
   footer_html: string; // plain text with \n allowed; escaped on render
   from_name: string | null;
+  layout: EmailLayout;
 };
 
 export const DEFAULT_BRANDING: EmailBranding = {
@@ -19,10 +29,13 @@ export const DEFAULT_BRANDING: EmailBranding = {
   signature: "Mit freundlichen Grüßen",
   footer_html: "Diese E-Mail wurde automatisch versendet. Bitte nicht antworten.",
   from_name: null,
+  layout: "card",
 };
 
 export function normalizeBranding(input: Partial<EmailBranding> | null | undefined): EmailBranding {
   const b = input ?? {};
+  const layoutIn = (b.layout ?? "").toString();
+  const layout: EmailLayout = (["card","banner","minimal","sidebar"].includes(layoutIn) ? layoutIn : DEFAULT_BRANDING.layout) as EmailLayout;
   return {
     logo_url: (b.logo_url ?? null) || null,
     primary_color: (b.primary_color ?? "").trim() || DEFAULT_BRANDING.primary_color,
@@ -31,6 +44,7 @@ export function normalizeBranding(input: Partial<EmailBranding> | null | undefin
     signature: (b.signature ?? "").trim() || DEFAULT_BRANDING.signature,
     footer_html: (b.footer_html ?? "").trim() || DEFAULT_BRANDING.footer_html,
     from_name: (b.from_name ?? null) || null,
+    layout,
   };
 }
 
