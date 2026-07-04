@@ -105,7 +105,7 @@ export function PlatformEmailPanel() {
             </SelectContent>
           </Select>
         </div>
-        {provider !== "smtp" && <div className="space-y-1.5">
+        {provider !== "smtp" && provider !== "resend" && <div className="space-y-1.5">
           <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> API-Key</Label>
           <Input
             type="password"
@@ -114,6 +114,14 @@ export function PlatformEmailPanel() {
             placeholder={s?.has_api_key ? "•••• gespeichert (zum Ändern neu eingeben)" : "API-Key einfügen"}
           />
         </div>}
+        {provider === "resend" && (
+          <div className="space-y-1.5">
+            <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> Resend</Label>
+            <div className="text-xs text-muted-foreground rounded-md border border-border bg-muted/30 px-3 py-2">
+              Läuft über den Lovable Resend-Connector – kein API-Key nötig.
+            </div>
+          </div>
+        )}
         <div className="space-y-1.5">
           <Label className="text-xs">Absender E-Mail</Label>
           <Input type="email" value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} placeholder="versand@alarmdesk-software.de" />

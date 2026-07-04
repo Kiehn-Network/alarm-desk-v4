@@ -137,7 +137,7 @@ export function EmailSettingsPanel() {
                   </SelectContent>
                 </Select>
               </div>
-              {provider !== "smtp" && <div className="space-y-1.5">
+              {provider !== "smtp" && provider !== "resend" && <div className="space-y-1.5">
                 <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> API-Key</Label>
                 <Input
                   type="password"
@@ -146,6 +146,14 @@ export function EmailSettingsPanel() {
                   placeholder={s?.has_api_key ? "•••• gespeichert (zum Ändern neu eingeben)" : "API-Key einfügen"}
                 />
               </div>}
+              {provider === "resend" && (
+                <div className="space-y-1.5 md:col-span-2">
+                  <Label className="text-xs flex items-center gap-1"><KeyRound className="size-3" /> Resend</Label>
+                  <div className="text-xs text-muted-foreground rounded-md border border-border bg-muted/30 px-3 py-2">
+                    Resend läuft über die zentrale AlarmDesk-Anbindung (Lovable Connector) – du musst keinen eigenen API-Key hinterlegen. Trage nur eine bei Resend <strong>verifizierte</strong> Absender-E-Mail deiner Domäne ein.
+                  </div>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label className="text-xs">Absender E-Mail</Label>
                 <Input type="email" value={fromEmail} onChange={(e) => setFromEmail(e.target.value)} placeholder="versand@deine-domain.de" />
