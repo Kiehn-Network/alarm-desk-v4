@@ -159,7 +159,7 @@ export function renderBrandedEmail(input: RenderBrandedInput): string {
           <td style="vertical-align:middle;">${logoBlock}</td>
           <td style="padding-left:12px;vertical-align:middle;">
             <div style="color:#0f172a;font-size:16px;font-weight:700;line-height:20px;">${escapeHtml(input.brandName)}</div>
-            <div style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:0.18em;line-height:12px;margin-top:2px;">${escapeHtml(b.header_label)}</div>
+            ${b.header_label ? `<div style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:0.18em;line-height:12px;margin-top:2px;">${escapeHtml(b.header_label)}</div>` : ""}
           </td>
         </tr></table>
       </td>
@@ -196,7 +196,7 @@ export function renderBrandedEmail(input: RenderBrandedInput): string {
       <td style="vertical-align:middle;">${logoBlock}</td>
       <td style="padding-left:12px;vertical-align:middle;">
         <div style="color:#ffffff;font-size:16px;font-weight:700;line-height:20px;">${escapeHtml(input.brandName)}</div>
-        <div style="color:rgba(255,255,255,0.85);font-size:10px;font-weight:700;letter-spacing:0.18em;line-height:12px;margin-top:2px;">${escapeHtml(b.header_label)}</div>
+        ${b.header_label ? `<div style="color:rgba(255,255,255,0.85);font-size:10px;font-weight:700;letter-spacing:0.18em;line-height:12px;margin-top:2px;">${escapeHtml(b.header_label)}</div>` : ""}
       </td>
     </tr></table>
     <div style="color:#ffffff;font-size:26px;font-weight:800;margin:20px 0 0;letter-spacing:-0.01em;">${escapeHtml(input.heading)}</div>

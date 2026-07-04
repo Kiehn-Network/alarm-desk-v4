@@ -316,13 +316,16 @@ export function EmailBrandingPanel() {
 
           {/* Header-Label */}
           <div className="space-y-2">
-            <Label>Header-Label (kleiner Text unter Firmenname)</Label>
+            <Label>Header-Label (kleiner Text unter Firmenname, optional)</Label>
             <Input
               value={form.brand_header_label}
               onChange={(e) => setForm((s) => ({ ...s, brand_header_label: e.target.value }))}
               placeholder={DEFAULT_BRANDING.header_label}
               maxLength={80}
             />
+            <p className="text-xs text-muted-foreground">
+              Kann leer gelassen werden — dann erscheint nur der Firmenname im Header.
+            </p>
           </div>
 
           {/* Begrüßung */}
