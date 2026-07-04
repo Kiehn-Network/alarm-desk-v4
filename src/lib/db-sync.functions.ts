@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
@@ -66,6 +67,7 @@ type TableResult = {
   table: string;
   read: number;
   written: number;
+  skipped?: number;
   error?: string;
   errorDetail?: string;
 };
@@ -74,6 +76,302 @@ type LogLine = { t: string; level: "info" | "warn" | "error"; msg: string; extra
 
 function logLine(level: LogLine["level"], msg: string, extra?: unknown): LogLine {
   return { t: new Date().toISOString(), level, msg, ...(extra !== undefined ? { extra } : {}) };
+}
+
+const NATURAL_CONFLICT_TARGETS: Record<string, string[]> = {
+  domains: ["slug"],
+  app_modules: ["key"],
+  einsatz_gruende: ["name"],
+  licenses: ["license_key"],
+  email_unsubscribe_tokens: ["email"],
+  suppressed_emails: ["email"],
+  user_roles: ["user_id", "role"],
+};
+
+const PRIMARY_KEY_COLUMNS: Record<string, string[]> = {
+  app_settings: ["domain_id"],
+  chat_participants: ["conversation_id", "user_id"],
+  domain_modules: ["domain_id", "module_key"],
+  driver_locations: ["user_id"],
+  erp_settings: ["domain_id"],
+  hausnotruf_provider_settings: ["domain_id", "provider_key"],
+  schluesseluebergabe_settings: ["domain_id"],
+  superadmin_impersonation: ["superadmin_id"],
+  user_tour_settings: ["user_id"],
+};
+
+const AUTH_USER_REFS: Record<string, { column: string; nullable: boolean }[]> = {
+  app_versions: [{ column: "created_by", nullable: true }],
+  auswertung_pins: [{ column: "created_by", nullable: false }],
+  budeko_berichte: [{ column: "created_by", nullable: true }],
+  budeko_mitarbeiter: [{ column: "created_by", nullable: true }],
+  budeko_notdienst: [{ column: "created_by", nullable: true }],
+  budeko_notiz_dateien: [{ column: "created_by", nullable: true }],
+  chat_conversations: [{ column: "created_by", nullable: true }],
+  chat_participants: [{ column: "user_id", nullable: false }],
+  data_purge_requests: [{ column: "requested_by", nullable: true }, { column: "decided_by", nullable: true }],
+  datei_verknuepfungen: [{ column: "created_by", nullable: true }],
+  dateien: [{ column: "uploaded_by", nullable: true }, { column: "deleted_by", nullable: true }],
+  dienstplaene: [{ column: "uploaded_by", nullable: true }],
+  einsaetze: [{ column: "created_by", nullable: false }, { column: "assigned_to", nullable: true }],
+  einsatz_gruende: [{ column: "created_by", nullable: true }],
+  einsatz_partner_shares: [{ column: "created_by", nullable: true }, { column: "partner_assigned_to", nullable: true }],
+  erp_outbox: [{ column: "created_by", nullable: true }],
+  intervention_allowlist: [{ column: "created_by", nullable: true }],
+  intrahub_posts: [{ column: "created_by", nullable: false }],
+  owks_bestreifungen: [{ column: "created_by", nullable: true }],
+  owks_bestreifungsplaene: [{ column: "created_by", nullable: true }],
+  owks_ereignisse: [{ column: "created_by", nullable: true }],
+  owks_kontrollpunkte: [{ column: "created_by", nullable: true }],
+  owks_objekte: [{ column: "created_by", nullable: true }],
+  owks_rundgaenge: [{ column: "created_by", nullable: true }],
+  profiles: [{ column: "id", nullable: false }],
+  rohrservice_berichte: [{ column: "created_by", nullable: true }],
+  rohrservice_mitarbeiter: [{ column: "created_by", nullable: true }],
+  rohrservice_notdienst: [{ column: "created_by", nullable: true }],
+  rohrservice_notiz_dateien: [{ column: "created_by", nullable: true }],
+  schluesseluebergabe_protokolle: [{ column: "created_by", nullable: true }],
+  support_ticket_messages: [{ column: "author_id", nullable: false }],
+  support_tickets: [{ column: "created_by", nullable: false }],
+  user_roles: [{ column: "user_id", nullable: false }],
+  user_tour_settings: [{ column: "user_id", nullable: false }],
+};
+
+const SKIP_IF_PARENT_SKIPPED: Record<string, { column: string; parent: string }[]> = {
+  chat_messages: [{ column: "conversation_id", parent: "chat_conversations" }],
+  chat_participants: [{ column: "conversation_id", parent: "chat_conversations" }],
+  datei_historie: [{ column: "datei_id", parent: "dateien" }],
+  datei_verknuepfungen: [
+    { column: "datei_a_id", parent: "dateien" },
+    { column: "datei_b_id", parent: "dateien" },
+  ],
+  einsatz_historie: [{ column: "einsatz_id", parent: "einsaetze" }],
+  einsatz_partner_shares: [{ column: "einsatz_id", parent: "einsaetze" }],
+  owks_bestreifungen: [
+    { column: "objekt_id", parent: "owks_objekte" },
+    { column: "plan_id", parent: "owks_bestreifungsplaene" },
+    { column: "rundgang_id", parent: "owks_rundgaenge" },
+  ],
+  owks_bestreifungsplaene: [
+    { column: "objekt_id", parent: "owks_objekte" },
+    { column: "rundgang_id", parent: "owks_rundgaenge" },
+  ],
+  owks_durchgaenge: [{ column: "bestreifung_id", parent: "owks_bestreifungen" }],
+  owks_ereignisse: [
+    { column: "bestreifung_id", parent: "owks_bestreifungen" },
+    { column: "durchgang_id", parent: "owks_durchgaenge" },
+    { column: "kontrollpunkt_id", parent: "owks_kontrollpunkte" },
+  ],
+  owks_kontrollpunkte: [
+    { column: "objekt_id", parent: "owks_objekte" },
+    { column: "rundgang_id", parent: "owks_rundgaenge" },
+  ],
+  owks_rundgaenge: [{ column: "objekt_id", parent: "owks_objekte" }],
+  owks_scans: [
+    { column: "durchgang_id", parent: "owks_durchgaenge" },
+    { column: "kontrollpunkt_id", parent: "owks_kontrollpunkte" },
+  ],
+  support_ticket_messages: [{ column: "ticket_id", parent: "support_tickets" }],
+};
+
+type TargetPrep = {
+  domainIdBySourceId: Map<string, string>;
+  targetUserIds: Set<string>;
+  userCheckAvailable: boolean;
+  warnings: string[];
+};
+
+type PushResult = { written: number; skipped: number; warnings: string[]; skippedKeys?: string[] };
+
+type RestError = {
+  status: number;
+  statusText: string;
+  body: string;
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string | null;
+};
+
+function keyForRow(table: string, row: Record<string, unknown>): string | null {
+  const cols = PRIMARY_KEY_COLUMNS[table] ?? ["id"];
+  const parts = cols.map((col) => row[col]);
+  if (parts.some((value) => value === null || value === undefined || value === "")) return null;
+  return parts.join("|");
+}
+
+function restErrorMessage(error: RestError): string {
+  return `HTTP ${error.status} ${error.statusText} – ${error.body.slice(0, 1500)}`;
+}
+
+function parseMissingColumn(error: RestError): string | null {
+  if (error.code !== "PGRST204") return null;
+  const text = `${error.message ?? ""} ${error.body}`;
+  return text.match(/'([^']+)' column/)?.[1] ?? null;
+}
+
+function compactWarnings(warnings: string[]): string[] {
+  const counts = new Map<string, number>();
+  for (const warning of warnings) counts.set(warning, (counts.get(warning) ?? 0) + 1);
+  return [...counts.entries()].map(([warning, count]) => count > 1 ? `${warning} (${count}x)` : warning);
+}
+
+function applyDomainMapping(row: Record<string, unknown>, domainIdBySourceId: Map<string, string>) {
+  for (const column of ["domain_id", "owner_domain_id", "partner_domain_id", "target_domain_id"]) {
+    const value = row[column];
+    if (typeof value === "string") row[column] = domainIdBySourceId.get(value) ?? value;
+  }
+}
+
+async function fetchTargetRows(
+  targetUrl: string,
+  serviceKey: string,
+  table: string,
+  select = "*",
+): Promise<Record<string, unknown>[]> {
+  const out: Record<string, unknown>[] = [];
+  let from = 0;
+  const pageSize = 1000;
+  while (true) {
+    const url = new URL(`${targetUrl}/rest/v1/${table}`);
+    url.searchParams.set("select", select);
+    const res = await fetch(url, {
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        Range: `${from}-${from + pageSize - 1}`,
+      },
+    });
+    if (!res.ok) throw new Error(`${table}: Ziel lesen fehlgeschlagen – HTTP ${res.status}`);
+    const data = await res.json() as Record<string, unknown>[];
+    if (!data || data.length === 0) break;
+    out.push(...data);
+    if (data.length < pageSize) break;
+    from += pageSize;
+  }
+  return out;
+}
+
+async function listTargetUserIds(targetUrl: string, serviceKey: string): Promise<Set<string>> {
+  const client = createClient(targetUrl, serviceKey, {
+    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+  });
+  const ids = new Set<string>();
+  for (let page = 1; page <= 100; page++) {
+    const { data, error } = await client.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    const users = data?.users ?? [];
+    for (const user of users) ids.add(user.id);
+    if (users.length < 1000) break;
+  }
+  return ids;
+}
+
+async function prepareTargetSync(targetUrl: string, serviceKey: string): Promise<TargetPrep> {
+  const warnings: string[] = [];
+  const domainIdBySourceId = new Map<string, string>();
+
+  try {
+    const [sourceDomains, targetDomains] = await Promise.all([
+      fetchAllRows("domains"),
+      fetchTargetRows(targetUrl, serviceKey, "domains", "id,slug"),
+    ]);
+    const targetIdBySlug = new Map(
+      targetDomains
+        .filter((row) => typeof row.slug === "string" && typeof row.id === "string")
+        .map((row) => [row.slug as string, row.id as string]),
+    );
+    for (const source of sourceDomains) {
+      if (typeof source.id !== "string" || typeof source.slug !== "string") continue;
+      const targetId = targetIdBySlug.get(source.slug);
+      if (targetId && targetId !== source.id) domainIdBySourceId.set(source.id, targetId);
+    }
+    if (domainIdBySourceId.size > 0) {
+      warnings.push(`${domainIdBySourceId.size} Domain-ID-Zuordnung(en) über slug erkannt`);
+    }
+  } catch (e) {
+    warnings.push(`Domain-Vorabprüfung nicht möglich: ${(e as Error).message}`);
+  }
+
+  let targetUserIds = new Set<string>();
+  let userCheckAvailable = false;
+  try {
+    targetUserIds = await listTargetUserIds(targetUrl, serviceKey);
+    userCheckAvailable = true;
+    warnings.push(`${targetUserIds.size} Auth-Benutzer in der Zielinstanz gefunden`);
+  } catch (e) {
+    warnings.push(`Auth-Benutzer der Zielinstanz konnten nicht geprüft werden: ${(e as Error).message}`);
+  }
+
+  return { domainIdBySourceId, targetUserIds, userCheckAvailable, warnings };
+}
+
+async function reloadTargetSchemaCache(dbUrl: string | undefined, pushLog: (level: LogLine["level"], msg: string, extra?: unknown) => Promise<void>) {
+  if (!dbUrl) return;
+  let sql: any = null;
+  try {
+    const { default: postgres } = await import("postgres");
+    sql = postgres(dbUrl, { ssl: "require", max: 1, idle_timeout: 5, connect_timeout: 10, prepare: false });
+    await sql.unsafe("NOTIFY pgrst, 'reload schema'");
+    await pushLog("info", "Ziel-Schema-Cache neu geladen");
+  } catch (e) {
+    await pushLog("warn", `Ziel-Schema-Cache konnte nicht neu geladen werden: ${(e as Error).message}`);
+  } finally {
+    try { if (sql) await sql.end({ timeout: 5 }); } catch {}
+  }
+}
+
+function transformRowsForTarget(
+  table: string,
+  rows: Record<string, unknown>[],
+  prep: TargetPrep,
+  skippedKeysByTable: Map<string, Set<string>>,
+): { rows: Record<string, unknown>[]; skipped: number; warnings: string[]; skippedKeys: string[] } {
+  const out: Record<string, unknown>[] = [];
+  const warnings: string[] = [];
+  const skippedKeys: string[] = [];
+
+  for (const sourceRow of rows) {
+    const row = { ...sourceRow };
+    let skipReason: string | null = null;
+
+    if (table === "domains" && typeof row.id === "string" && prep.domainIdBySourceId.has(row.id)) {
+      row.id = prep.domainIdBySourceId.get(row.id)!;
+    }
+    applyDomainMapping(row, prep.domainIdBySourceId);
+
+    for (const ref of AUTH_USER_REFS[table] ?? []) {
+      const value = row[ref.column];
+      if (!prep.userCheckAvailable || typeof value !== "string" || prep.targetUserIds.has(value)) continue;
+      if (ref.nullable) {
+        row[ref.column] = null;
+      } else {
+        skipReason = `Auth-Benutzer fehlt (${ref.column})`;
+        break;
+      }
+    }
+
+    if (!skipReason) {
+      for (const ref of SKIP_IF_PARENT_SKIPPED[table] ?? []) {
+        const value = row[ref.column];
+        const parentSkipped = typeof value === "string" && skippedKeysByTable.get(ref.parent)?.has(value);
+        if (parentSkipped) {
+          skipReason = `abhängiger Datensatz fehlt (${ref.parent})`;
+          break;
+        }
+      }
+    }
+
+    if (skipReason) {
+      const key = keyForRow(table, row);
+      if (key) skippedKeys.push(key);
+      warnings.push(`${table}: Zeile übersprungen – ${skipReason}`);
+    } else {
+      out.push(row);
+    }
+  }
+
+  return { rows: out, skipped: rows.length - out.length, warnings, skippedKeys };
 }
 
 async function assertSuperadmin(userId: string) {
@@ -101,9 +399,58 @@ async function fetchAllRows(table: string): Promise<Record<string, unknown>[]> {
 
 async function pushBatch(
   targetUrl: string, serviceKey: string, table: string, rows: Record<string, unknown>[],
-): Promise<number> {
-  if (rows.length === 0) return 0;
-  const res = await fetch(`${targetUrl}/rest/v1/${table}`, {
+): Promise<PushResult> {
+  if (rows.length === 0) return { written: 0, skipped: 0, warnings: [], skippedKeys: [] };
+  const warnings: string[] = [];
+  let currentRows = rows;
+
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const error = await postRows(targetUrl, serviceKey, table, currentRows);
+    if (!error) return { written: rows.length, skipped: 0, warnings };
+
+    const missingColumn = parseMissingColumn(error);
+    if (missingColumn && currentRows.some((row) => Object.prototype.hasOwnProperty.call(row, missingColumn))) {
+      currentRows = currentRows.map(({ [missingColumn]: _missing, ...rest }) => rest);
+      warnings.push(`${table}: Zielspalte '${missingColumn}' fehlt – Spalte beim Sync ausgelassen`);
+      continue;
+    }
+
+    if (currentRows.length > 1 && ["23503", "23505", "23502"].includes(error.code ?? "")) {
+      let written = 0;
+      let skipped = 0;
+      const skippedKeys: string[] = [];
+      for (const row of currentRows) {
+        const result = await pushBatch(targetUrl, serviceKey, table, [row]);
+        written += result.written;
+        skipped += result.skipped;
+        warnings.push(...result.warnings);
+        skippedKeys.push(...(result.skippedKeys ?? []));
+      }
+      return { written, skipped, warnings, skippedKeys };
+    }
+
+    if (currentRows.length === 1 && ["23503", "23505", "23502"].includes(error.code ?? "")) {
+      warnings.push(`${table}: Zeile übersprungen – ${restErrorMessage(error)}`);
+      const key = keyForRow(table, currentRows[0]);
+      return { written: 0, skipped: 1, warnings, skippedKeys: key ? [key] : [] };
+    }
+
+    throw new Error(restErrorMessage(error));
+  }
+
+  throw new Error(`${table}: zu viele automatische Wiederholungen wegen Schema-Unterschieden`);
+}
+
+async function postRows(
+  targetUrl: string,
+  serviceKey: string,
+  table: string,
+  rows: Record<string, unknown>[],
+): Promise<RestError | null> {
+  const url = new URL(`${targetUrl}/rest/v1/${table}`);
+  const conflictTarget = NATURAL_CONFLICT_TARGETS[table];
+  if (conflictTarget) url.searchParams.set("on_conflict", conflictTarget.join(","));
+  const res = await fetch(url, {
     method: "POST",
     headers: {
       apikey: serviceKey,
@@ -113,11 +460,20 @@ async function pushBatch(
     },
     body: JSON.stringify(rows),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status} ${res.statusText} – ${text.slice(0, 1500)}`);
-  }
-  return rows.length;
+  if (res.ok) return null;
+
+  const body = await res.text();
+  let parsed: Partial<RestError> = {};
+  try { parsed = JSON.parse(body) as Partial<RestError>; } catch {}
+  return {
+    status: res.status,
+    statusText: res.statusText,
+    body,
+    code: parsed.code,
+    message: parsed.message,
+    details: parsed.details,
+    hint: parsed.hint,
+  };
 }
 
 export const previewSyncTarget = createServerFn({ method: "GET" })
@@ -207,13 +563,18 @@ export const runFullSync = createServerFn({ method: "POST" })
       await persist({ logs: logs as never });
     };
 
+    const prep = await prepareTargetSync(targetUrl, serviceKey);
+    for (const warning of prep.warnings) await pushLog("warn", warning);
+    await reloadTargetSchemaCache(process.env.SYNC_TARGET_DB_URL, pushLog);
+
     let pending = [...SYNC_TABLES];
+    const skippedKeysByTable = new Map<string, Set<string>>();
     try {
       for (let pass = 1; pass <= MAX_PASSES; pass++) {
         await pushLog("info", `Pass ${pass}/${MAX_PASSES} – ${pending.length} Tabellen`);
         const stillFailed: string[] = [];
         for (const table of pending) {
-          let read = 0, written = 0;
+          let read = 0, written = 0, skipped = 0;
           let lastError: string | undefined;
           let lastErrorDetail: string | undefined;
           await persist({ current_table: table, current_pass: pass });
@@ -222,11 +583,30 @@ export const runFullSync = createServerFn({ method: "POST" })
             const rows = await fetchAllRows(table);
             read = rows.length;
             await pushLog("info", `${table}: ${rows.length} Zeilen gelesen`);
-            for (let i = 0; i < rows.length; i += BATCH) {
-              const slice = rows.slice(i, i + BATCH);
-              written += await pushBatch(targetUrl, serviceKey, table, slice);
+            const transformed = transformRowsForTarget(table, rows, prep, skippedKeysByTable);
+            skipped += transformed.skipped;
+            if (transformed.skippedKeys.length > 0) {
+              skippedKeysByTable.set(table, new Set(transformed.skippedKeys));
             }
-            await pushLog("info", `${table}: ${written} Zeilen geschrieben (${Date.now() - tStart}ms)`);
+            const compacted = compactWarnings(transformed.warnings);
+            for (const warning of compacted.slice(0, 20)) await pushLog("warn", warning);
+            if (compacted.length > 20) await pushLog("warn", `${table}: ${compacted.length - 20} weitere Überspring-Hinweise ausgeblendet`);
+
+            for (let i = 0; i < transformed.rows.length; i += BATCH) {
+              const slice = transformed.rows.slice(i, i + BATCH);
+              const batch = await pushBatch(targetUrl, serviceKey, table, slice);
+              written += batch.written;
+              skipped += batch.skipped;
+              if (batch.skippedKeys?.length) {
+                const set = skippedKeysByTable.get(table) ?? new Set<string>();
+                for (const key of batch.skippedKeys) set.add(key);
+                skippedKeysByTable.set(table, set);
+              }
+              const batchWarnings = compactWarnings(batch.warnings);
+              for (const warning of batchWarnings.slice(0, 20)) await pushLog("warn", warning);
+              if (batchWarnings.length > 20) await pushLog("warn", `${table}: ${batchWarnings.length - 20} weitere Batch-Hinweise ausgeblendet`);
+            }
+            await pushLog("info", `${table}: ${written} Zeilen geschrieben${skipped ? `, ${skipped} übersprungen` : ""} (${Date.now() - tStart}ms)`);
           } catch (e) {
             const err = e as Error;
             lastError = err.message;
@@ -236,10 +616,10 @@ export const runFullSync = createServerFn({ method: "POST" })
 
           const existing = results.find((r) => r.table === table);
           if (existing) {
-            existing.read = read; existing.written = written;
+            existing.read = read; existing.written = written; existing.skipped = skipped;
             existing.error = lastError; existing.errorDetail = lastErrorDetail;
           } else {
-            results.push({ table, read, written, error: lastError, errorDetail: lastErrorDetail });
+            results.push({ table, read, written, skipped, error: lastError, errorDetail: lastErrorDetail });
           }
           if (lastError) stillFailed.push(table);
 
@@ -266,11 +646,12 @@ export const runFullSync = createServerFn({ method: "POST" })
 
     const totalRead = results.reduce((s, r) => s + r.read, 0);
     const totalWritten = results.reduce((s, r) => s + r.written, 0);
+    const totalSkipped = results.reduce((s, r) => s + (r.skipped ?? 0), 0);
     const failed = results.filter((r) => r.error);
     const ok = failed.length === 0;
     await pushLog(
       ok ? "info" : "warn",
-      ok ? `Fertig in ${Date.now() - started}ms – ${totalWritten} Zeilen geschrieben`
+      ok ? `Fertig in ${Date.now() - started}ms – ${totalWritten} Zeilen geschrieben${totalSkipped ? `, ${totalSkipped} übersprungen` : ""}`
          : `Fertig mit ${failed.length} Fehler-Tabellen`,
     );
     await persist({
@@ -292,13 +673,14 @@ export const runFullSync = createServerFn({ method: "POST" })
         metadata: {
           duration_ms: Date.now() - started,
           total_read: totalRead, total_written: totalWritten,
+           total_skipped: totalSkipped,
           failed_tables: failed.map((f) => f.table),
           job_id: jobId,
         } as never,
       });
     } catch {}
 
-    return { ok, durationMs: Date.now() - started, totalRead, totalWritten,
+    return { ok, durationMs: Date.now() - started, totalRead, totalWritten, totalSkipped,
       tables: results, failedCount: failed.length, jobId };
   });
 
