@@ -4,7 +4,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
-## [Unreleased]
+## [4.0.16] - 2026-07-04
 
 ### Added
 
@@ -21,3 +21,5 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 ### Fixed
 
 - Header-Label fällt nicht mehr automatisch auf den Standardtext zurück, wenn es bewusst geleert wird.
+
+## [Unreleased]
