@@ -215,6 +215,13 @@ export async function startWalkthrough(key: string): Promise<void> {
     doneBtnText: "Fertig",
     progressText: "{{current}} / {{total}}",
     steps,
+    onDestroyStarted: () => {
+      // Rundgang wurde entweder komplett durchgeklickt oder geschlossen
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("walkthrough-finished", { detail: { key } }));
+      }
+      d.destroy();
+    },
   });
   d.drive();
 }

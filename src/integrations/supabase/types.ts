@@ -209,6 +209,7 @@ export type Database = {
           diensthabender_alarmzentrale: string | null
           domain_id: string
           id: string
+          is_demo: boolean
           mieter_name: string | null
           mieter_ort: string | null
           mieter_strasse: string | null
@@ -234,6 +235,7 @@ export type Database = {
           diensthabender_alarmzentrale?: string | null
           domain_id: string
           id?: string
+          is_demo?: boolean
           mieter_name?: string | null
           mieter_ort?: string | null
           mieter_strasse?: string | null
@@ -259,6 +261,7 @@ export type Database = {
           diensthabender_alarmzentrale?: string | null
           domain_id?: string
           id?: string
+          is_demo?: boolean
           mieter_name?: string | null
           mieter_ort?: string | null
           mieter_strasse?: string | null
@@ -397,6 +400,7 @@ export type Database = {
           created_by: string | null
           domain_id: string
           id: string
+          is_demo: boolean
           kind: string
           title: string | null
           updated_at: string
@@ -406,6 +410,7 @@ export type Database = {
           created_by?: string | null
           domain_id: string
           id?: string
+          is_demo?: boolean
           kind: string
           title?: string | null
           updated_at?: string
@@ -415,6 +420,7 @@ export type Database = {
           created_by?: string | null
           domain_id?: string
           id?: string
+          is_demo?: boolean
           kind?: string
           title?: string | null
           updated_at?: string
@@ -677,6 +683,7 @@ export type Database = {
           filename: string
           folder: string | null
           id: string
+          is_demo: boolean
           key_number: string | null
           kunden_name: string | null
           legacy_id: string | null
@@ -699,6 +706,7 @@ export type Database = {
           filename: string
           folder?: string | null
           id?: string
+          is_demo?: boolean
           key_number?: string | null
           kunden_name?: string | null
           legacy_id?: string | null
@@ -721,6 +729,7 @@ export type Database = {
           filename?: string
           folder?: string | null
           id?: string
+          is_demo?: boolean
           key_number?: string | null
           kunden_name?: string | null
           legacy_id?: string | null
@@ -749,6 +758,7 @@ export type Database = {
           file_path: string
           file_size: number | null
           id: string
+          is_demo: boolean
           title: string
           updated_at: string
           uploaded_by: string | null
@@ -759,6 +769,7 @@ export type Database = {
           file_path: string
           file_size?: number | null
           id?: string
+          is_demo?: boolean
           title: string
           updated_at?: string
           uploaded_by?: string | null
@@ -769,6 +780,7 @@ export type Database = {
           file_path?: string
           file_size?: number | null
           id?: string
+          is_demo?: boolean
           title?: string
           updated_at?: string
           uploaded_by?: string | null
@@ -990,6 +1002,7 @@ export type Database = {
           hausnotruf_problem: string | null
           hausnotruf_provider: string | null
           id: string
+          is_demo: boolean
           key_number: string | null
           kunden_email: string | null
           kunden_name: string | null
@@ -1029,6 +1042,7 @@ export type Database = {
           hausnotruf_problem?: string | null
           hausnotruf_provider?: string | null
           id?: string
+          is_demo?: boolean
           key_number?: string | null
           kunden_email?: string | null
           kunden_name?: string | null
@@ -1068,6 +1082,7 @@ export type Database = {
           hausnotruf_problem?: string | null
           hausnotruf_provider?: string | null
           id?: string
+          is_demo?: boolean
           key_number?: string | null
           kunden_email?: string | null
           kunden_name?: string | null
@@ -2298,6 +2313,8 @@ export type Database = {
           display_name: string | null
           domain_id: string | null
           id: string
+          onboarding_completed_at: string | null
+          onboarding_demo_mode: boolean
           updated_at: string
         }
         Insert: {
@@ -2306,6 +2323,8 @@ export type Database = {
           display_name?: string | null
           domain_id?: string | null
           id: string
+          onboarding_completed_at?: string | null
+          onboarding_demo_mode?: boolean
           updated_at?: string
         }
         Update: {
@@ -2314,6 +2333,8 @@ export type Database = {
           display_name?: string | null
           domain_id?: string | null
           id?: string
+          onboarding_completed_at?: string | null
+          onboarding_demo_mode?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -2338,6 +2359,7 @@ export type Database = {
           diensthabender_alarmzentrale: string | null
           domain_id: string
           id: string
+          is_demo: boolean
           mieter_name: string | null
           mieter_ort: string | null
           mieter_strasse: string | null
@@ -2368,6 +2390,7 @@ export type Database = {
           diensthabender_alarmzentrale?: string | null
           domain_id: string
           id?: string
+          is_demo?: boolean
           mieter_name?: string | null
           mieter_ort?: string | null
           mieter_strasse?: string | null
@@ -2398,6 +2421,7 @@ export type Database = {
           diensthabender_alarmzentrale?: string | null
           domain_id?: string
           id?: string
+          is_demo?: boolean
           mieter_name?: string | null
           mieter_ort?: string | null
           mieter_strasse?: string | null
@@ -2544,6 +2568,7 @@ export type Database = {
           domain_id: string
           einsatz_id: string
           id: string
+          is_demo: boolean
           key_number: string
           kunden_name: string | null
           notiz: string | null
@@ -2566,6 +2591,7 @@ export type Database = {
           domain_id: string
           einsatz_id: string
           id?: string
+          is_demo?: boolean
           key_number: string
           kunden_name?: string | null
           notiz?: string | null
@@ -2588,6 +2614,7 @@ export type Database = {
           domain_id?: string
           einsatz_id?: string
           id?: string
+          is_demo?: boolean
           key_number?: string
           kunden_name?: string | null
           notiz?: string | null
@@ -2991,6 +3018,10 @@ export type Database = {
     }
     Functions: {
       can_access_conversation: { Args: { _conv_id: string }; Returns: boolean }
+      cleanup_all_demo_for_domain: {
+        Args: { _domain_id: string }
+        Returns: undefined
+      }
       current_effective_domain_id: { Args: never; Returns: string }
       current_user_domain_id: { Args: never; Returns: string }
       delete_email: {
