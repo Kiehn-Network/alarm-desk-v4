@@ -68,7 +68,13 @@ export function TourLauncher() {
     const onFinished = (e: Event) => {
       const key = (e as CustomEvent).detail?.key as string | undefined;
       if (!key) return;
-      setWalkthroughsDone((prev) => (prev.includes(key) ? prev : [...prev, key]));
+      // Alias: der geführte Schlüsselbuch-Testlauf zählt auch für den Schritt "schluesselbuch".
+      const keys = key === "schluesselbuch-demo" ? [key, "schluesselbuch"] : [key];
+      setWalkthroughsDone((prev) => {
+        const next = [...prev];
+        for (const k of keys) if (!next.includes(k)) next.push(k);
+        return next;
+      });
       // Dialog danach wieder öffnen, damit der Nutzer den Fortschritt sieht
       setOpen(true);
     };
@@ -118,9 +124,14 @@ export function TourLauncher() {
         onCheckedChange={setChecked}
         walkthroughsDone={walkthroughsDone}
         onCompleted={() => {
-          if (mandatory) setSplashOpen(true);
+          // Zuerst den Einführungs-Dialog sicher schließen, damit er beim Splash weg ist
+          setOpen(false);
           // Fortschritt aufräumen
           if (storageKey) { try { localStorage.removeItem(storageKey); } catch { /* ignore */ } }
+          if (mandatory) {
+            // Kurze Verzögerung, damit der Dialog wirklich unmounted ist, bevor der Splash erscheint
+            setTimeout(() => setSplashOpen(true), 250);
+          }
         }}
       />
       {splashOpen && (
