@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
-  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon,
+  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,7 @@ type Item = {
   roles?: AppRole[];
   module?: string;
   tab?: string;
+  external?: string;
 };
 type Section = { label: string; items: Item[] };
 
@@ -40,6 +41,7 @@ const sections: Section[] = [
     { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice", roles: ["admin", "dispatcher"] },
     { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko", roles: ["admin", "dispatcher"] },
     { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz", roles: ["admin", "dispatcher"] },
+    { to: "/notdienst/lutz/pisaweb", label: "Lutz · PisaWeb", icon: ExternalLink, module: "notdienst_lutz", roles: ["admin", "dispatcher"], external: "https://pisaweb.lutz-aufzuege.de/pisasales/pisasales" },
   ]},
   { label: "Abrechnung Hausnotruf", items: [
     { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser", roles: ["admin", "dispatcher"] },
@@ -165,6 +167,26 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
                 const active = it.tab
                   ? location.pathname === it.to && (currentTab ?? "overview") === it.tab
                   : location.pathname === it.to || location.pathname.startsWith(it.to + "/");
+                if (it.external) {
+                  return (
+                    <li key={`${it.to}:ext`}>
+                      <a
+                        href={it.external}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={onNavigate}
+                        className={cn(
+                          "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
+                          "text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <it.icon className="size-4 shrink-0" />
+                        <span className="truncate">{it.label}</span>
+                        <ExternalLink className="ml-auto size-3 text-muted-foreground" />
+                      </a>
+                    </li>
+                  );
+                }
                 return (
                   <li key={`${it.to}:${it.tab ?? ""}`}>
                     <Link
