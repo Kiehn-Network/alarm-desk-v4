@@ -39,6 +39,7 @@ import {
   resetUserPassword, deleteUser, impersonateUser,
   listAllGruende, upsertGrund, deleteGrund,
   getSupportPin, regenerateSupportPin, getForcedImpersonation,
+  setUserEinsatzSelectable,
 } from "@/lib/admin.functions";
 import {
   requestDataPurge, listMyPurgeRequests, cancelPurgeRequest,
@@ -444,6 +445,7 @@ function UsersPanel() {
   const { user: me } = useAuth();
   const fetchUsers = useServerFn(listUsers);
   const impersonate = useServerFn(impersonateUser);
+  const setSelectable = useServerFn(setUserEinsatzSelectable);
   const navigate = useNavigate();
   const [impBusy, setImpBusy] = useState<string | null>(null);
   const { data, isLoading } = useQuery({ queryKey: ["admin-users"], queryFn: () => fetchUsers() });
@@ -468,6 +470,16 @@ function UsersPanel() {
     qc.invalidateQueries({ queryKey: ["admin-users"] });
     qc.invalidateQueries({ queryKey: ["admin-stats"] });
   };
+
+  const selectableMut = useMutation({
+    mutationFn: (v: { user_id: string; selectable: boolean }) => setSelectable({ data: v }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      qc.invalidateQueries({ queryKey: ["fahrer"] });
+      toast.success("Auswahl-Status aktualisiert");
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
 
   return (
     <div className="rounded-xl border border-border bg-card" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -511,6 +523,16 @@ function UsersPanel() {
                   Letzter Login: {fmt(u.last_sign_in_at)}
                 </span>
               </div>
+              {role === "fahrer" && (
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-1.5">
+                  <Truck className="size-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Für Einsatz auswählbar</span>
+                  <Switch
+                    checked={u.einsatz_selectable !== false}
+                    onCheckedChange={(v) => selectableMut.mutate({ user_id: u.id, selectable: v })}
+                  />
+                </div>
+              )}
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"

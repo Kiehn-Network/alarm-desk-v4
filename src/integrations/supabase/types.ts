@@ -2312,6 +2312,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           domain_id: string | null
+          einsatz_selectable: boolean
           id: string
           onboarding_completed_at: string | null
           onboarding_demo_mode: boolean
@@ -2322,6 +2323,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           domain_id?: string | null
+          einsatz_selectable?: boolean
           id: string
           onboarding_completed_at?: string | null
           onboarding_demo_mode?: boolean
@@ -2332,6 +2334,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           domain_id?: string | null
+          einsatz_selectable?: boolean
           id?: string
           onboarding_completed_at?: string | null
           onboarding_demo_mode?: boolean
