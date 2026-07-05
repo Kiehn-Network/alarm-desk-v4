@@ -172,6 +172,8 @@ function SchluesselbuchPage() {
           {filtered.map((s) => {
             const meta = STATUS_META[s.status] ?? { label: s.status, cls: "bg-muted text-muted-foreground" };
             const isOpen = !!expanded[s.id];
+            const isDemo = typeof s.key_number === "string" && s.key_number.startsWith("DEMO-");
+            const isDemoRueck = isDemo && s.status === "rueckgabe_offen";
             const steps = [
               { icon: ArrowRight, label: "Ausgabe",   at: s.ausgegeben_at,           by: profiles[s.ausgegeben_by] },
               { icon: Hand,       label: "Übernahme", at: s.uebernommen_at,          by: s.traeger_name },
@@ -179,13 +181,18 @@ function SchluesselbuchPage() {
               { icon: ArrowLeft,  label: "Zurück",    at: s.zurueck_at,              by: profiles[s.zurueck_by] },
             ];
             return (
-              <li key={s.id} className="hover:bg-muted/30 transition">
+              <li
+                key={s.id}
+                className="hover:bg-muted/30 transition"
+                data-tour={isDemoRueck ? "sb-demo-row" : undefined}
+              >
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-2">
                   <button
                     type="button"
                     onClick={() => setExpanded((p) => ({ ...p, [s.id]: !p[s.id] }))}
                     className="size-7 rounded-md grid place-items-center hover:bg-muted text-muted-foreground shrink-0"
                     aria-label={isOpen ? "Details schließen" : "Details öffnen"}
+                    data-tour={isDemoRueck ? "sb-demo-chevron" : undefined}
                   >
                     <ChevronDown className={`size-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
                   </button>
@@ -212,7 +219,12 @@ function SchluesselbuchPage() {
                     )}
                   </div>
                   {s.status === "rueckgabe_offen" && (
-                    <Button size="sm" onClick={() => doBestaetigen(s.id)} className="gap-1.5 h-8 shrink-0">
+                    <Button
+                      size="sm"
+                      onClick={() => doBestaetigen(s.id)}
+                      className="gap-1.5 h-8 shrink-0"
+                      data-tour={isDemoRueck ? "sb-demo-bestaetigen" : undefined}
+                    >
                       <CheckSquare className="size-3.5" /> Rückgabe
                     </Button>
                   )}
