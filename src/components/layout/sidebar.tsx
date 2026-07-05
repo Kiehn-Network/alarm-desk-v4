@@ -172,6 +172,7 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
                       search={it.tab ? { tab: it.tab } : undefined as any}
                       onClick={onNavigate}
                       data-active={active ? "true" : undefined}
+                      data-tour={`nav-${it.to}${it.tab ? `?tab=${it.tab}` : ""}`}
                       className={cn(
                         "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
                         active
