@@ -159,3 +159,103 @@ export const listSchluesselForEinsatz = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { entries: rows ?? [] };
   });
+
+// =================================================================
+// Rückgabe-offen-Reminder — verschickt Erinnerungen, wenn der
+// Status "rueckgabe_offen" länger als 1 Tag besteht. Aufruf via
+// pg_cron → /api/public/hooks/schluessel-rueckgabe-reminder
+// =================================================================
+export async function runSchluesselRueckgabeReminders() {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: rows, error } = await supabaseAdmin
+    .from("schluessel_buch")
+    .select("id, domain_id, key_number, kunden_name, address, traeger_name, rueckgabe_angefragt_at")
+    .eq("status", "rueckgabe_offen")
+    .not("rueckgabe_angefragt_at", "is", null)
+    .lt("rueckgabe_angefragt_at", cutoff);
+  if (error) throw new Error(error.message);
+  if (!rows || rows.length === 0) return { ok: true, checked: 0, sent: 0 };
+
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const tag = "schluessel_rueckgabe_reminder";
+
+  // Empfänger pro Domain cachen
+  const domainRecipients = new Map<string, { name: string | null; emails: string[] }>();
+  const { data: authList } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const usersById = new Map<string, string>();
+  (authList?.users ?? []).forEach((u) => { if (u.email) usersById.set(u.id, u.email); });
+
+  let sent = 0;
+  for (const r of rows as any[]) {
+    // Dedupe: nur einmal pro Tag pro Schlüsseleintrag
+    const { data: dupe } = await supabaseAdmin
+      .from("email_send_log")
+      .select("id")
+      .eq("template_name", tag)
+      .gte("created_at", todayStart)
+      .contains("metadata", { schluessel_id: r.id })
+      .limit(1)
+      .maybeSingle();
+    if (dupe) continue;
+
+    let bucket = domainRecipients.get(r.domain_id);
+    if (!bucket) {
+      const { data: dom } = await supabaseAdmin
+        .from("domains").select("name").eq("id", r.domain_id).maybeSingle();
+      const { data: roles } = await supabaseAdmin
+        .from("user_roles").select("user_id")
+        .eq("domain_id", r.domain_id)
+        .in("role", ["admin", "dispatcher"]);
+      const emails = Array.from(new Set(
+        (roles ?? []).map((x: any) => usersById.get(x.user_id)).filter(Boolean) as string[],
+      ));
+      bucket = { name: (dom as any)?.name ?? null, emails };
+      domainRecipients.set(r.domain_id, bucket);
+    }
+    if (bucket.emails.length === 0) continue;
+
+    const offenSeit = Math.max(
+      1,
+      Math.floor((now.getTime() - new Date(r.rueckgabe_angefragt_at).getTime()) / 86400000),
+    );
+
+    for (const recipient of bucket.emails) {
+      const payload = {
+        recipient,
+        template: tag,
+        subject: `Schlüssel-Rückgabe offen seit ${offenSeit} Tag(en) — ${r.key_number}`,
+        data: {
+          domain: bucket.name,
+          schluessel_id: r.id,
+          key_number: r.key_number,
+          kunden_name: r.kunden_name,
+          address: r.address,
+          traeger_name: r.traeger_name,
+          rueckgabe_angefragt_at: r.rueckgabe_angefragt_at,
+          offen_seit_tage: offenSeit,
+        },
+      };
+      const { error: enqErr } = await supabaseAdmin.rpc("enqueue_email", {
+        queue_name: "transactional_emails",
+        payload,
+      });
+      await supabaseAdmin.from("email_send_log").insert({
+        template_name: tag,
+        recipient_email: recipient,
+        status: enqErr ? "failed" : "pending",
+        error_message: enqErr?.message ?? null,
+        metadata: {
+          schluessel_id: r.id,
+          domain_id: r.domain_id,
+          offen_seit_tage: offenSeit,
+          queue_name: "transactional_emails",
+          payload,
+        },
+      });
+      if (!enqErr) sent++;
+    }
+  }
+  return { ok: true, checked: rows.length, sent };
+}
