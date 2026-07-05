@@ -39,6 +39,7 @@ import {
   resetUserPassword, deleteUser, impersonateUser,
   listAllGruende, upsertGrund, deleteGrund,
   getSupportPin, regenerateSupportPin, getForcedImpersonation,
+  setUserEinsatzSelectable,
 } from "@/lib/admin.functions";
 import {
   requestDataPurge, listMyPurgeRequests, cancelPurgeRequest,
