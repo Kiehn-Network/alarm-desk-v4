@@ -305,10 +305,14 @@ function AlarmierungPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const dateOf = (d?: string | null) => (d ? new Date(d).toISOString().split("T")[0] : null);
     const list = einsaetze.filter((e) => {
       if (tab === "aktiv" && !isAktiv(e)) return false;
       if (tab === "erledigt" && !isErledigt(e)) return false;
       if (hausnotrufEnabled && typFilter !== "alle" && (e.einsatz_typ ?? "av_einsatz") !== typFilter) return false;
+      const d = dateOf(e.created_at);
+      if (dateFrom && (!d || d < dateFrom)) return false;
+      if (dateTo && (!d || d > dateTo)) return false;
       if (!q) return true;
       return [e.einsatzgrund, e.kunden_name, e.address, e.key_number, e.anlagen_nr, e.teilnehmer_id]
         .filter(Boolean).join(" ").toLowerCase().includes(q);
@@ -323,7 +327,7 @@ function AlarmierungPage() {
       });
     }
     return list;
-  }, [einsaetze, search, tab, typFilter, hausnotrufEnabled]);
+  }, [einsaetze, search, tab, typFilter, hausnotrufEnabled, dateFrom, dateTo]);
 
   const counts = useMemo(() => ({
     aktiv: einsaetze.filter(isAktiv).length,
