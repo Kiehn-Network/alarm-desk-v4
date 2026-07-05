@@ -40,7 +40,7 @@ export function EinsatzBerichtDialog({
   useEffect(() => {
     if (!einsatz) return;
     setTyp((einsatz.bericht_typ as BerichtTyp) ?? guessTyp(einsatz));
-    setHnProblem(einsatz.hausnotruf_problem ?? "");
+    setHnProblem(einsatz.hausnotruf_problem ?? einsatz.einsatzgrund ?? "");
     setHnLoesung(einsatz.hausnotruf_loesung ?? "");
     setAv(einsatz.bericht_data ?? {});
   }, [einsatz?.id, open]);
