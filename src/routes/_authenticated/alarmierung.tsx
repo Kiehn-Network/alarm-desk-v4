@@ -352,7 +352,7 @@ function AlarmierungPage() {
       return next;
     });
   // Reset selection when filter scope changes
-  useEffect(() => { setSelected(new Set()); }, [tab, typFilter, search]);
+  useEffect(() => { setSelected(new Set()); }, [tab, typFilter, search, dateFrom, dateTo]);
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
