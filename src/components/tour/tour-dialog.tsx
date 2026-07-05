@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, Sparkles, CheckCircle2, Circle, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Sparkles, CheckCircle2, Circle, X, Play } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { TOUR_STEPS, stepsForRole } from "@/lib/tour-steps";
 import { markTourCompleted } from "@/lib/tour.functions";
 import { useRole } from "@/hooks/use-role";
+import { hasWalkthrough, schedulePendingWalkthrough, startWalkthrough } from "@/lib/walkthroughs";
 
 export function TourDialog({
   open, onOpenChange, enabledKeys, onCompleted,
@@ -34,6 +35,7 @@ export function TourDialog({
   const isLast = idx >= steps.length - 1;
   const stepChecks = checked[step.key] ?? new Set<number>();
   const allChecked = step.details.length === 0 || stepChecks.size >= step.details.length;
+  const canInteract = hasWalkthrough(step.key);
 
   const totalDone = useMemo(() => {
     let done = 0;
@@ -122,12 +124,28 @@ export function TourDialog({
                 Alle als verstanden markieren
               </Button>
             )}
-            {step.route && (
+            {canInteract && (
+              <Button
+                size="sm"
+                onClick={() => {
+                  onOpenChange(false);
+                  if (step.route) {
+                    schedulePendingWalkthrough(step.key);
+                    navigate({ to: step.route });
+                  } else {
+                    void startWalkthrough(step.key);
+                  }
+                }}
+              >
+                <Play className="size-3.5 mr-1" /> Interaktiv ausprobieren
+              </Button>
+            )}
+            {!canInteract && step.route && (
               <Button
                 variant="outline" size="sm"
                 onClick={() => { onOpenChange(false); navigate({ to: step.route! }); }}
               >
-                Jetzt ausprobieren →
+                Jetzt ansehen →
               </Button>
             )}
           </div>
