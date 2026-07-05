@@ -13,7 +13,7 @@ type Step = {
   selector: string;
   title: string;
   description: string;
-  side?: "top" | "right" | "bottom" | "left" | "over";
+  side?: "top" | "right" | "bottom" | "left";
   align?: "start" | "center" | "end";
 };
 
