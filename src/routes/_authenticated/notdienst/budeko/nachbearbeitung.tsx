@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Send, CheckCircle2, Trash2, Pencil, ClipboardList } from "lucide-react";
+import { Send, CheckCircle2, Trash2, Pencil, ClipboardList, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useAppSettings } from "@/hooks/use-app-settings";
+import { useRole } from "@/hooks/use-role";
 
 export const Route = createFileRoute("/_authenticated/notdienst/budeko/nachbearbeitung")({
   component: Nachbearbeitung,
@@ -29,6 +30,7 @@ function fmtDe(d?: string | null) {
 
 function Nachbearbeitung() {
   const qc = useQueryClient();
+  const { isAdmin } = useRole();
   const listFn = useServerFn(listBudekoBerichte);
   const delFn = useServerFn(deleteBudekoBericht);
   const sendFn = useServerFn(sendBudekoBericht);
@@ -67,9 +69,16 @@ function Nachbearbeitung() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <ClipboardList className="size-4" />
-        <span>{berichte.length} {berichte.length === 1 ? "Bericht" : "Berichte"}</span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <ClipboardList className="size-4" />
+          <span>{berichte.length} {berichte.length === 1 ? "Bericht" : "Berichte"}</span>
+        </div>
+        {isAdmin && (
+          <Link to="/notdienst/budeko/import">
+            <Button size="sm" variant="secondary"><Upload className="size-4 mr-1.5" /> Import</Button>
+          </Link>
+        )}
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-x-auto" style={{ boxShadow: "var(--shadow-card)" }}>
