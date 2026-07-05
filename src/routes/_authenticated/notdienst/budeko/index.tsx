@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { useRole } from "@/hooks/use-role";
 import DOMPurify from "isomorphic-dompurify";
+import { TestlaufButton } from "@/components/onboarding/testlauf-button";
 
 export const Route = createFileRoute("/_authenticated/notdienst/budeko/")({
   component: Dashboard,
@@ -58,7 +59,11 @@ function Dashboard() {
   const aktiv = current?.eintrag as any;
 
   return (
-    <div className="grid sm:grid-cols-2 gap-4">
+    <div className="space-y-4">
+      <div className="flex justify-end">
+        <TestlaufButton walkthrough="notdienst" label="Geführter Testlauf" />
+      </div>
+      <div className="grid sm:grid-cols-2 gap-4">
       <Tile
         icon={FileText}
         tone="info"
@@ -114,6 +119,7 @@ function Dashboard() {
         }
         cta={<NotizDialog cfg={cfg} />}
       />
+      </div>
     </div>
   );
 }
