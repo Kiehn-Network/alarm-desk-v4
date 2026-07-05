@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,12 +13,14 @@ import { useRole } from "@/hooks/use-role";
 import { hasWalkthrough, schedulePendingWalkthrough, startWalkthrough } from "@/lib/walkthroughs";
 
 export function TourDialog({
-  open, onOpenChange, enabledKeys, onCompleted,
+  open, onOpenChange, enabledKeys, onCompleted, mandatory = false,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   enabledKeys?: string[] | null;
   onCompleted?: () => void;
+  /** Wenn true: kein Überspringen, kein Schließen möglich. Walkthrough muss pro Schritt gelaufen sein. */
+  mandatory?: boolean;
 }) {
   const { role } = useRole();
   const steps = stepsForRole(role, enabledKeys ?? null);
@@ -26,6 +28,8 @@ export function TourDialog({
   const [idx, setIdx] = useState(0);
   // pro Schritt merken, welche Details bereits abgehakt sind
   const [checked, setChecked] = useState<Record<string, Set<number>>>({});
+  // Für Pflicht-Modus: welche Walkthroughs sind bereits einmal komplett gelaufen
+  const [walkthroughsDone, setWalkthroughsDone] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
   const qc = useQueryClient();
   const finish = useServerFn(markTourCompleted);
@@ -36,6 +40,22 @@ export function TourDialog({
   const stepChecks = checked[step.key] ?? new Set<number>();
   const allChecked = step.details.length === 0 || stepChecks.size >= step.details.length;
   const canInteract = hasWalkthrough(step.key);
+  const walkthroughRequired = mandatory && canInteract && !walkthroughsDone.has(step.key);
+  const canAdvance = allChecked && !walkthroughRequired;
+
+  useEffect(() => {
+    if (!mandatory) return;
+    const onFinished = (e: Event) => {
+      const key = (e as CustomEvent).detail?.key as string | undefined;
+      if (!key) return;
+      setWalkthroughsDone((prev) => {
+        if (prev.has(key)) return prev;
+        const next = new Set(prev); next.add(key); return next;
+      });
+    };
+    window.addEventListener("walkthrough-finished", onFinished as EventListener);
+    return () => window.removeEventListener("walkthrough-finished", onFinished as EventListener);
+  }, [mandatory]);
 
   const totalDone = useMemo(() => {
     let done = 0;
@@ -70,12 +90,21 @@ export function TourDialog({
   if (steps.length === 0) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) void handleClose(); else onOpenChange(true); }}>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={open} onOpenChange={(v) => {
+      if (mandatory) return; // Pflicht-Modus: kein Schließen per ESC / Klick außerhalb
+      if (!v) void handleClose(); else onOpenChange(true);
+    }}>
+      <DialogContent
+        className="max-w-2xl"
+        onEscapeKeyDown={mandatory ? (e) => e.preventDefault() : undefined}
+        onInteractOutside={mandatory ? (e) => e.preventDefault() : undefined}
+        onPointerDownOutside={mandatory ? (e) => e.preventDefault() : undefined}
+        showCloseButton={!mandatory}
+      >
         <DialogHeader>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Sparkles className="size-3.5" />
-            <span>Einführung</span>
+            <span>{mandatory ? "Willkommen – bitte kurz durchklicken" : "Einführung"}</span>
             <span className="ml-auto">
               Schritt {idx + 1} / {total} · {totalDone} erledigt
             </span>
@@ -127,6 +156,7 @@ export function TourDialog({
             {canInteract && (
               <Button
                 size="sm"
+                variant={walkthroughRequired ? "default" : "secondary"}
                 onClick={() => {
                   onOpenChange(false);
                   if (step.route) {
@@ -137,7 +167,10 @@ export function TourDialog({
                   }
                 }}
               >
-                <Play className="size-3.5 mr-1" /> Interaktiv ausprobieren
+                <Play className="size-3.5 mr-1" />
+                {walkthroughsDone.has(step.key)
+                  ? "Nochmal ausprobieren"
+                  : mandatory ? "Geführter Testlauf starten" : "Interaktiv ausprobieren"}
               </Button>
             )}
             {!canInteract && step.route && (
@@ -148,6 +181,11 @@ export function TourDialog({
                 Jetzt ansehen →
               </Button>
             )}
+            {walkthroughRequired && (
+              <span className="text-xs text-muted-foreground self-center">
+                Bitte einmal komplett durchklicken, dann geht es weiter.
+              </span>
+            )}
           </div>
         </div>
 
@@ -157,20 +195,22 @@ export function TourDialog({
         </div>
 
         <div className="flex items-center justify-between gap-2 mt-2">
-          <Button variant="ghost" size="sm" onClick={() => void handleClose()}>
-            <X className="size-4 mr-1" /> Überspringen
-          </Button>
+          {mandatory ? <div /> : (
+            <Button variant="ghost" size="sm" onClick={() => void handleClose()}>
+              <X className="size-4 mr-1" /> Überspringen
+            </Button>
+          )}
           <div className="flex gap-2">
             <Button variant="outline" size="sm" disabled={idx === 0}
               onClick={() => setIdx((i) => Math.max(0, i - 1))}>
               <ChevronLeft className="size-4 mr-1" /> Zurück
             </Button>
             {isLast ? (
-              <Button size="sm" disabled={!allChecked} onClick={() => void handleClose()}>
+              <Button size="sm" disabled={!canAdvance} onClick={() => void handleClose()}>
                 Fertig <CheckCircle2 className="size-4 ml-1" />
               </Button>
             ) : (
-              <Button size="sm" disabled={!allChecked}
+              <Button size="sm" disabled={!canAdvance}
                 onClick={() => setIdx((i) => Math.min(steps.length - 1, i + 1))}>
                 Weiter <ChevronRight className="size-4 ml-1" />
               </Button>
