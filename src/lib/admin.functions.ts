@@ -82,7 +82,7 @@ export const listUsers = createServerFn({ method: "GET" })
     const domainId = await requireDomainAdmin(context.userId);
     // Only profiles within this domain.
     const { data: profiles } = await supabaseAdmin
-      .from("profiles").select("id, display_name, avatar_url").eq("domain_id", domainId);
+      .from("profiles").select("id, display_name, avatar_url, einsatz_selectable").eq("domain_id", domainId);
     const ids = (profiles ?? []).map((p: any) => p.id);
     if (ids.length === 0) return { users: [] };
     const { data: roles } = await supabaseAdmin
@@ -108,6 +108,7 @@ export const listUsers = createServerFn({ method: "GET" })
           banned_until: u.banned_until ?? null,
           display_name: profMap[id]?.display_name ?? null,
           avatar_url: profMap[id]?.avatar_url ?? null,
+          einsatz_selectable: (profMap[id] as any)?.einsatz_selectable !== false,
           roles: roleMap[id] ?? [],
         };
       }),
