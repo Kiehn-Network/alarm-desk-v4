@@ -178,6 +178,23 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const setUserEinsatzSelectable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({
+    user_id: z.string().uuid(),
+    selectable: z.boolean(),
+  }).parse(i))
+  .handler(async ({ data, context }) => {
+    const domainId = await requireDomainAdmin(context.userId);
+    await assertUserInDomain(data.user_id, domainId);
+    const { error } = await (supabaseAdmin as any)
+      .from("profiles")
+      .update({ einsatz_selectable: data.selectable })
+      .eq("id", data.user_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
