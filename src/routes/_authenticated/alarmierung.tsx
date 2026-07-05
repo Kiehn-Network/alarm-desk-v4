@@ -473,7 +473,7 @@ function AlarmierungPage() {
                   const typ = e.einsatz_typ ?? "av_einsatz";
                   const isHausnotruf = typ === "hausnotruf";
                   const aktiv = isAktiv(e);
-                  const start = e.vor_ort_am ?? e.created_at;
+                  const start = e.created_at;
                   const end = e.einsatz_ende_am ?? e.abgeschlossen_am ?? null;
                   return (
                     <tr key={e.id} className="hover:bg-muted/30 transition-colors">
