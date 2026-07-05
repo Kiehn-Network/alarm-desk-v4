@@ -88,7 +88,7 @@ function SchluesselbuchPage() {
       </header>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Tabs value={tab} onValueChange={setTab}>
+        <Tabs value={tab} onValueChange={setTab} data-tour="sb-tabs">
           <TabsList>
             <TabsTrigger value="offen" className="gap-2">Offen <Badge variant="secondary">{counts.offen}</Badge></TabsTrigger>
             <TabsTrigger value="rueckgabe" className="gap-2">Rückgabe wartet <Badge variant="secondary">{counts.rueckgabe}</Badge></TabsTrigger>
@@ -106,7 +106,7 @@ function SchluesselbuchPage() {
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-10 text-center text-sm text-muted-foreground">Keine Einträge.</div>
       ) : (
-        <ul className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
+        <ul data-tour="sb-liste" className="rounded-xl border border-border bg-card divide-y divide-border overflow-hidden" style={{ boxShadow: "var(--shadow-card)" }}>
           {filtered.map((s) => {
             const meta = STATUS_META[s.status] ?? { label: s.status, cls: "bg-muted text-muted-foreground" };
             const isOpen = !!expanded[s.id];
