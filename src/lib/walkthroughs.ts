@@ -158,7 +158,7 @@ const WALKTHROUGHS: Record<string, Step[]> = {
   ],
 };
 
-const PENDING_KEY = "lovable_pending_walkthrough";
+export const PENDING_KEY = "lovable_pending_walkthrough";
 
 /** Merkt sich einen Rundgang, der nach der nächsten Navigation gestartet werden soll. */
 export function schedulePendingWalkthrough(key: string): boolean {
