@@ -7,6 +7,7 @@ import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { ThemeApplier } from "@/components/theme-applier";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { TourLauncher } from "@/components/tour/tour-launcher";
+import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocationTracker } from "@/hooks/use-location-tracker";
 import { useSupportNotifications } from "@/hooks/use-support-notifications";
@@ -49,6 +50,7 @@ function AuthLayout() {
         <Topbar displayName={name} />
         <ImpersonationBanner />
         <MaintenanceBanner />
+        <DemoModeBanner />
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
