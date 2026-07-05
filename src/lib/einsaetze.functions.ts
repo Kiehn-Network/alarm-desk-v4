@@ -545,7 +545,8 @@ export const listFahrer = createServerFn({ method: "GET" })
     if (ids.length === 0) return { fahrer: [] };
     const { data: profiles } = await supabaseAdmin
       .from("profiles").select("id, display_name")
-      .in("id", ids).eq("domain_id", domainId);
+      .in("id", ids).eq("domain_id", domainId)
+      .neq("einsatz_selectable", false);
     return { fahrer: profiles ?? [] };
   });
 
