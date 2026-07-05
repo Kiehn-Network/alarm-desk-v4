@@ -3,14 +3,18 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { KeyRound, CheckSquare, Search, User, MapPin, ArrowRight, ArrowLeft, Hand, Undo2, ChevronDown } from "lucide-react";
+import { KeyRound, CheckSquare, Search, User, MapPin, ArrowRight, ArrowLeft, Hand, Undo2, ChevronDown, PlayCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useRole } from "@/hooks/use-role";
 import { AccessDenied } from "@/components/layout/access-denied";
-import { listSchluesselbuch, rueckgabeBestaetigen } from "@/lib/schluesselbuch.functions";
+import {
+  listSchluesselbuch, rueckgabeBestaetigen,
+  seedSchluesselDemo, cleanupSchluesselDemo,
+} from "@/lib/schluesselbuch.functions";
+import { startWalkthrough } from "@/lib/walkthroughs";
 
 export const Route = createFileRoute("/_authenticated/schluesselbuch")({
   component: SchluesselbuchPage,
@@ -33,6 +37,10 @@ function SchluesselbuchPage() {
   const qc = useQueryClient();
   const listFn = useServerFn(listSchluesselbuch);
   const bestaetigen = useServerFn(rueckgabeBestaetigen);
+  const seedDemo = useServerFn(seedSchluesselDemo);
+  const cleanupDemo = useServerFn(cleanupSchluesselDemo);
+  const [demoActive, setDemoActive] = useState(false);
+  const [demoBusy, setDemoBusy] = useState(false);
 
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["schluesselbuch"],
@@ -46,6 +54,10 @@ function SchluesselbuchPage() {
 
   const entries: any[] = data?.entries ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
+  const hasDemo = useMemo(
+    () => entries.some((e) => typeof e.key_number === "string" && e.key_number.startsWith("DEMO-")),
+    [entries],
+  );
 
   const counts = useMemo(() => ({
     offen: entries.filter((e) => e.status !== "zurueck").length,
@@ -78,20 +90,70 @@ function SchluesselbuchPage() {
     } catch (e: any) { toast.error(e.message ?? "Fehler"); }
   }
 
+  async function startDemo() {
+    setDemoBusy(true);
+    try {
+      await seedDemo();
+      setDemoActive(true);
+      setTab("rueckgabe");
+      await refetch();
+      // Kurz warten, damit die neuen Rows im DOM sind, dann Rundgang starten
+      setTimeout(() => { void startWalkthrough("schluesselbuch-demo"); }, 400);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Testlauf konnte nicht gestartet werden");
+    } finally {
+      setDemoBusy(false);
+    }
+  }
+  async function stopDemo() {
+    setDemoBusy(true);
+    try {
+      await cleanupDemo();
+      setDemoActive(false);
+      await refetch();
+      toast.success("Demo-Daten entfernt");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Aufräumen fehlgeschlagen");
+    } finally {
+      setDemoBusy(false);
+    }
+  }
+
   return (
     <div className="p-6 lg:p-8 space-y-5 max-w-6xl">
       <header className="space-y-1">
-        <div className="text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-          <KeyRound className="size-3.5" /> Schlüsselverwaltung
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+              <KeyRound className="size-3.5" /> Schlüsselverwaltung
+            </div>
+            <h1 className="text-xl md:text-2xl font-bold">Schlüsselbuch</h1>
+          </div>
+          <div className="flex gap-2">
+            {(demoActive || hasDemo) ? (
+              <Button variant="outline" size="sm" onClick={stopDemo} disabled={demoBusy} className="gap-1.5">
+                <Trash2 className="size-3.5" /> Demo aufräumen
+              </Button>
+            ) : null}
+            <Button size="sm" onClick={startDemo} disabled={demoBusy} className="gap-1.5" data-tour="sb-demo-start">
+              <PlayCircle className="size-3.5" /> Geführter Testlauf
+            </Button>
+          </div>
         </div>
-        <h1 className="text-xl md:text-2xl font-bold">Schlüsselbuch</h1>
       </header>
+
+      {(demoActive || hasDemo) && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 flex items-center gap-2">
+          <PlayCircle className="size-4" />
+          Testlauf aktiv – Demo-Einträge sind mit <code className="mx-1">DEMO-</code> gekennzeichnet und lassen sich jederzeit über „Demo aufräumen" entfernen.
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <Tabs value={tab} onValueChange={setTab} data-tour="sb-tabs">
           <TabsList>
             <TabsTrigger value="offen" className="gap-2">Offen <Badge variant="secondary">{counts.offen}</Badge></TabsTrigger>
-            <TabsTrigger value="rueckgabe" className="gap-2">Rückgabe wartet <Badge variant="secondary">{counts.rueckgabe}</Badge></TabsTrigger>
+            <TabsTrigger value="rueckgabe" data-tour="sb-tab-rueckgabe" className="gap-2">Rückgabe wartet <Badge variant="secondary">{counts.rueckgabe}</Badge></TabsTrigger>
             <TabsTrigger value="alle">Alle ({counts.alle})</TabsTrigger>
           </TabsList>
         </Tabs>
