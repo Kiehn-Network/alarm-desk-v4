@@ -52,6 +52,7 @@ import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiPublicHooksSchluesselRueckgabeReminderRouteImport } from './routes/api/public/hooks/schluessel-rueckgabe-reminder'
 import { Route as ApiPublicHooksLicenseExpiryRouteImport } from './routes/api/public/hooks/license-expiry'
 import { Route as ApiPublicHooksEsrpWorkerRouteImport } from './routes/api/public/hooks/esrp-worker'
 import { Route as ApiPublicFilesGetRouteImport } from './routes/api/public/files/get'
@@ -303,6 +304,12 @@ const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksSchluesselRueckgabeReminderRoute =
+  ApiPublicHooksSchluesselRueckgabeReminderRouteImport.update({
+    id: '/api/public/hooks/schluessel-rueckgabe-reminder',
+    path: '/api/public/hooks/schluessel-rueckgabe-reminder',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksLicenseExpiryRoute =
   ApiPublicHooksLicenseExpiryRouteImport.update({
     id: '/api/public/hooks/license-expiry',
@@ -452,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/api/public/files/get': typeof ApiPublicFilesGetRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
+  '/api/public/hooks/schluessel-rueckgabe-reminder': typeof ApiPublicHooksSchluesselRueckgabeReminderRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -508,6 +516,7 @@ export interface FileRoutesByTo {
   '/api/public/files/get': typeof ApiPublicFilesGetRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
+  '/api/public/hooks/schluessel-rueckgabe-reminder': typeof ApiPublicHooksSchluesselRueckgabeReminderRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -570,6 +579,7 @@ export interface FileRoutesById {
   '/api/public/files/get': typeof ApiPublicFilesGetRoute
   '/api/public/hooks/esrp-worker': typeof ApiPublicHooksEsrpWorkerRoute
   '/api/public/hooks/license-expiry': typeof ApiPublicHooksLicenseExpiryRoute
+  '/api/public/hooks/schluessel-rueckgabe-reminder': typeof ApiPublicHooksSchluesselRueckgabeReminderRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -632,6 +642,7 @@ export interface FileRouteTypes {
     | '/api/public/files/get'
     | '/api/public/hooks/esrp-worker'
     | '/api/public/hooks/license-expiry'
+    | '/api/public/hooks/schluessel-rueckgabe-reminder'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -688,6 +699,7 @@ export interface FileRouteTypes {
     | '/api/public/files/get'
     | '/api/public/hooks/esrp-worker'
     | '/api/public/hooks/license-expiry'
+    | '/api/public/hooks/schluessel-rueckgabe-reminder'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -749,6 +761,7 @@ export interface FileRouteTypes {
     | '/api/public/files/get'
     | '/api/public/hooks/esrp-worker'
     | '/api/public/hooks/license-expiry'
+    | '/api/public/hooks/schluessel-rueckgabe-reminder'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -770,6 +783,7 @@ export interface RootRouteChildren {
   ApiPublicFilesGetRoute: typeof ApiPublicFilesGetRoute
   ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
   ApiPublicHooksLicenseExpiryRoute: typeof ApiPublicHooksLicenseExpiryRoute
+  ApiPublicHooksSchluesselRueckgabeReminderRoute: typeof ApiPublicHooksSchluesselRueckgabeReminderRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1078,6 +1092,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/schluessel-rueckgabe-reminder': {
+      id: '/api/public/hooks/schluessel-rueckgabe-reminder'
+      path: '/api/public/hooks/schluessel-rueckgabe-reminder'
+      fullPath: '/api/public/hooks/schluessel-rueckgabe-reminder'
+      preLoaderRoute: typeof ApiPublicHooksSchluesselRueckgabeReminderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/license-expiry': {
       id: '/api/public/hooks/license-expiry'
       path: '/api/public/hooks/license-expiry'
@@ -1384,6 +1405,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicFilesGetRoute: ApiPublicFilesGetRoute,
   ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,
   ApiPublicHooksLicenseExpiryRoute: ApiPublicHooksLicenseExpiryRoute,
+  ApiPublicHooksSchluesselRueckgabeReminderRoute:
+    ApiPublicHooksSchluesselRueckgabeReminderRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
