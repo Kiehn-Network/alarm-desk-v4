@@ -111,7 +111,7 @@ export const importNotdienstBerichte = createServerFn({ method: "POST" })
     let inserted = 0;
     for (let i = 0; i < mapped.length; i += CHUNK) {
       const slice = mapped.slice(i, i + CHUNK);
-      const { error, count } = await supabase.from(table).insert(slice, { count: "exact" });
+      const { error, count } = await (supabase.from(table) as any).insert(slice, { count: "exact" });
       if (error) throw new Error(`Import fehlgeschlagen bei Zeile ${i + 1}: ${error.message}`);
       inserted += count ?? slice.length;
     }
