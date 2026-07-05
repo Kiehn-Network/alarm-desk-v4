@@ -161,6 +161,103 @@ export const listSchluesselForEinsatz = createServerFn({ method: "POST" })
   });
 
 // =================================================================
+// Geführter Testlauf — legt Demo-Schlüsseleinträge an, die man im
+// UI durchklicken kann, und räumt sie wieder auf.
+// Erkennung: key_number beginnt mit "DEMO-" und notiz beginnt mit "[DEMO]".
+// =================================================================
+const DEMO_PREFIX = "DEMO-";
+const DEMO_NOTE = "[DEMO] Testlauf – kann gefahrlos gelöscht werden.";
+
+export const seedSchluesselDemo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+
+    // Bestehende Demo-Daten dieser Domain zuerst aufräumen (idempotent).
+    await cleanupDemoInternal(domainId);
+
+    // Demo-Einsatz anlegen
+    const { data: einsatz, error: eErr } = await supabase
+      .from("einsaetze")
+      .insert({
+        domain_id: domainId,
+        einsatzgrund: "DEMO-Schlüsselbuch",
+        kunden_name: "Demo-Kunde GmbH",
+        address: "Musterweg 1, 12345 Musterstadt",
+        prioritaet: "normal",
+        beschreibung: "[DEMO] Nur für den geführten Testlauf",
+        created_by: userId,
+      })
+      .select("id")
+      .single();
+    if (eErr) throw new Error(eErr.message);
+
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 26 * 60 * 60 * 1000);
+    const twoDaysAgo = new Date(now.getTime() - 50 * 60 * 60 * 1000);
+
+    // Eintrag 1: bereits als Rückgabe offen markiert (der Klick-Höhepunkt)
+    const rows = [
+      {
+        domain_id: domainId,
+        einsatz_id: einsatz.id,
+        key_number: `${DEMO_PREFIX}RÜCKGABE`,
+        kunden_name: "Demo-Kunde GmbH",
+        address: "Musterweg 1, 12345 Musterstadt",
+        traeger_name: "Demo-Träger Meier",
+        status: "rueckgabe_offen" as const,
+        ausgegeben_by: userId,
+        ausgegeben_at: twoDaysAgo.toISOString(),
+        uebernommen_at: twoDaysAgo.toISOString(),
+        uebernommen_by: userId,
+        rueckgabe_angefragt_at: yesterday.toISOString(),
+        rueckgabe_angefragt_by: userId,
+        notiz: DEMO_NOTE,
+      },
+      {
+        domain_id: domainId,
+        einsatz_id: einsatz.id,
+        key_number: `${DEMO_PREFIX}OFFEN`,
+        kunden_name: "Demo-Kunde GmbH",
+        address: "Musterweg 1, 12345 Musterstadt",
+        traeger_name: "Demo-Träger Schulz",
+        status: "ausgegeben" as const,
+        ausgegeben_by: userId,
+        ausgegeben_at: now.toISOString(),
+        notiz: DEMO_NOTE,
+      },
+    ];
+    const { error: sErr } = await supabase.from("schluessel_buch").insert(rows);
+    if (sErr) throw new Error(sErr.message);
+    return { ok: true, einsatz_id: einsatz.id };
+  });
+
+export const cleanupSchluesselDemo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    await cleanupDemoInternal(domainId);
+    return { ok: true };
+  });
+
+async function cleanupDemoInternal(domainId: string) {
+  // Alle Demo-Schlüsseleinträge dieser Domain löschen
+  await supabaseAdmin
+    .from("schluessel_buch")
+    .delete()
+    .eq("domain_id", domainId)
+    .like("key_number", `${DEMO_PREFIX}%`);
+  // Demo-Einsätze dieser Domain löschen
+  await supabaseAdmin
+    .from("einsaetze")
+    .delete()
+    .eq("domain_id", domainId)
+    .eq("einsatzgrund", "DEMO-Schlüsselbuch");
+}
+
+// =================================================================
 // Rückgabe-offen-Reminder — verschickt Erinnerungen, wenn der
 // Status "rueckgabe_offen" länger als 1 Tag besteht. Aufruf via
 // pg_cron → /api/public/hooks/schluessel-rueckgabe-reminder
