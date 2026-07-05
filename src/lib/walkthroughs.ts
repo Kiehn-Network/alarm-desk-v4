@@ -122,6 +122,40 @@ const WALKTHROUGHS: Record<string, Step[]> = {
       side: "right",
     },
   ],
+  // Geführter Testlauf direkt auf der Schlüsselbuch-Seite.
+  // Wird nach seedSchluesselDemo() gestartet, wenn Demo-Zeilen im DOM sind.
+  "schluesselbuch-demo": [
+    {
+      selector: '[data-tour="sb-tab-rueckgabe"]',
+      title: "Reiter „Rückgabe wartet"",
+      description: "Hier landen alle Schlüssel, deren Rückgabe der Träger angefragt hat. Wir haben dir einen Demo-Eintrag vorbereitet.",
+      side: "bottom",
+    },
+    {
+      selector: '[data-tour="sb-demo-row"]',
+      title: "Demo-Eintrag",
+      description: "Das ist ein Schlüssel, den „Demo-Träger Meier" gestern zur Rückgabe angemeldet hat.",
+      side: "top",
+    },
+    {
+      selector: '[data-tour="sb-demo-chevron"]',
+      title: "Bewegungshistorie öffnen",
+      description: "Klicke auf den Pfeil, um die vollständige Zeitleiste (Ausgabe → Übernahme → Rückgabe-Anfrage → Zurück) einzusehen.",
+      side: "right",
+    },
+    {
+      selector: '[data-tour="sb-demo-bestaetigen"]',
+      title: "Rückgabe bestätigen",
+      description: "Als Zentrale bestätigst du hier den Empfang. Der Schlüssel wechselt danach auf Status „Zurück".",
+      side: "left",
+    },
+    {
+      selector: '[data-tour="sb-tabs"]',
+      title: "Fertig – Status prüfen",
+      description: "Wechsle zurück auf „Offen" oder „Alle", um den neuen Status zu sehen. Über „Demo aufräumen" oben rechts löschst du die Testdaten wieder.",
+      side: "bottom",
+    },
+  ],
 };
 
 const PENDING_KEY = "lovable_pending_walkthrough";
