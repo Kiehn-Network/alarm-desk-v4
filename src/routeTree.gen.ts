@@ -69,6 +69,7 @@ import { Route as AuthenticatedNotdienstRohrserviceImportRouteImport } from './r
 import { Route as AuthenticatedNotdienstBudekoNeuRouteImport } from './routes/_authenticated/notdienst/budeko/neu'
 import { Route as AuthenticatedNotdienstBudekoNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/budeko/nachbearbeitung'
 import { Route as AuthenticatedNotdienstBudekoMitarbeiterRouteImport } from './routes/_authenticated/notdienst/budeko/mitarbeiter'
+import { Route as AuthenticatedNotdienstBudekoImportRouteImport } from './routes/_authenticated/notdienst/budeko/import'
 import { Route as AuthenticatedAbrechnungProviderVersandRouteImport } from './routes/_authenticated/abrechnung.$provider.versand'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -406,6 +407,12 @@ const AuthenticatedNotdienstBudekoMitarbeiterRoute =
     path: '/mitarbeiter',
     getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
   } as any)
+const AuthenticatedNotdienstBudekoImportRoute =
+  AuthenticatedNotdienstBudekoImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
+  } as any)
 const AuthenticatedAbrechnungProviderVersandRoute =
   AuthenticatedAbrechnungProviderVersandRouteImport.update({
     id: '/versand',
@@ -451,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
+  '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -509,6 +517,7 @@ export interface FileRoutesByTo {
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
+  '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -573,6 +582,7 @@ export interface FileRoutesById {
   '/api/public/version': typeof ApiPublicVersionRoute
   '/_authenticated/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/_authenticated/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
+  '/_authenticated/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
   '/_authenticated/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/_authenticated/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/_authenticated/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -637,6 +647,7 @@ export interface FileRouteTypes {
     | '/api/public/version'
     | '/revier-center/'
     | '/abrechnung/$provider/versand'
+    | '/notdienst/budeko/import'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
     | '/notdienst/budeko/neu'
@@ -695,6 +706,7 @@ export interface FileRouteTypes {
     | '/api/public/version'
     | '/revier-center'
     | '/abrechnung/$provider/versand'
+    | '/notdienst/budeko/import'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
     | '/notdienst/budeko/neu'
@@ -758,6 +770,7 @@ export interface FileRouteTypes {
     | '/api/public/version'
     | '/_authenticated/revier-center/'
     | '/_authenticated/abrechnung/$provider/versand'
+    | '/_authenticated/notdienst/budeko/import'
     | '/_authenticated/notdienst/budeko/mitarbeiter'
     | '/_authenticated/notdienst/budeko/nachbearbeitung'
     | '/_authenticated/notdienst/budeko/neu'
@@ -1224,6 +1237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRouteImport
       parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
     }
+    '/_authenticated/notdienst/budeko/import': {
+      id: '/_authenticated/notdienst/budeko/import'
+      path: '/import'
+      fullPath: '/notdienst/budeko/import'
+      preLoaderRoute: typeof AuthenticatedNotdienstBudekoImportRouteImport
+      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
+    }
     '/_authenticated/abrechnung/$provider/versand': {
       id: '/_authenticated/abrechnung/$provider/versand'
       path: '/versand'
@@ -1285,6 +1305,7 @@ const AuthenticatedRevierCenterRouteRouteWithChildren =
   )
 
 interface AuthenticatedNotdienstBudekoRouteRouteChildren {
+  AuthenticatedNotdienstBudekoImportRoute: typeof AuthenticatedNotdienstBudekoImportRoute
   AuthenticatedNotdienstBudekoMitarbeiterRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   AuthenticatedNotdienstBudekoNachbearbeitungRoute: typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   AuthenticatedNotdienstBudekoNeuRoute: typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -1293,6 +1314,8 @@ interface AuthenticatedNotdienstBudekoRouteRouteChildren {
 
 const AuthenticatedNotdienstBudekoRouteRouteChildren: AuthenticatedNotdienstBudekoRouteRouteChildren =
   {
+    AuthenticatedNotdienstBudekoImportRoute:
+      AuthenticatedNotdienstBudekoImportRoute,
     AuthenticatedNotdienstBudekoMitarbeiterRoute:
       AuthenticatedNotdienstBudekoMitarbeiterRoute,
     AuthenticatedNotdienstBudekoNachbearbeitungRoute:
