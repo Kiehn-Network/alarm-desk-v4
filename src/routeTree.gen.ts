@@ -65,9 +65,11 @@ import { Route as AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport } f
 import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
 import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
 import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from './routes/_authenticated/notdienst/rohrservice/mitarbeiter'
+import { Route as AuthenticatedNotdienstRohrserviceImportRouteImport } from './routes/_authenticated/notdienst/rohrservice/import'
 import { Route as AuthenticatedNotdienstBudekoNeuRouteImport } from './routes/_authenticated/notdienst/budeko/neu'
 import { Route as AuthenticatedNotdienstBudekoNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/budeko/nachbearbeitung'
 import { Route as AuthenticatedNotdienstBudekoMitarbeiterRouteImport } from './routes/_authenticated/notdienst/budeko/mitarbeiter'
+import { Route as AuthenticatedNotdienstBudekoImportRouteImport } from './routes/_authenticated/notdienst/budeko/import'
 import { Route as AuthenticatedAbrechnungProviderVersandRouteImport } from './routes/_authenticated/abrechnung.$provider.versand'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -381,6 +383,12 @@ const AuthenticatedNotdienstRohrserviceMitarbeiterRoute =
     path: '/mitarbeiter',
     getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
   } as any)
+const AuthenticatedNotdienstRohrserviceImportRoute =
+  AuthenticatedNotdienstRohrserviceImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
 const AuthenticatedNotdienstBudekoNeuRoute =
   AuthenticatedNotdienstBudekoNeuRouteImport.update({
     id: '/neu',
@@ -397,6 +405,12 @@ const AuthenticatedNotdienstBudekoMitarbeiterRoute =
   AuthenticatedNotdienstBudekoMitarbeiterRouteImport.update({
     id: '/mitarbeiter',
     path: '/mitarbeiter',
+    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
+  } as any)
+const AuthenticatedNotdienstBudekoImportRoute =
+  AuthenticatedNotdienstBudekoImportRouteImport.update({
+    id: '/import',
+    path: '/import',
     getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
   } as any)
 const AuthenticatedAbrechnungProviderVersandRoute =
@@ -444,9 +458,11 @@ export interface FileRoutesByFullPath {
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
+  '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
+  '/notdienst/rohrservice/import': typeof AuthenticatedNotdienstRohrserviceImportRoute
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
@@ -501,9 +517,11 @@ export interface FileRoutesByTo {
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
+  '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
   '/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
+  '/notdienst/rohrservice/import': typeof AuthenticatedNotdienstRohrserviceImportRoute
   '/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
@@ -564,9 +582,11 @@ export interface FileRoutesById {
   '/api/public/version': typeof ApiPublicVersionRoute
   '/_authenticated/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/_authenticated/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
+  '/_authenticated/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
   '/_authenticated/notdienst/budeko/mitarbeiter': typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   '/_authenticated/notdienst/budeko/nachbearbeitung': typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   '/_authenticated/notdienst/budeko/neu': typeof AuthenticatedNotdienstBudekoNeuRoute
+  '/_authenticated/notdienst/rohrservice/import': typeof AuthenticatedNotdienstRohrserviceImportRoute
   '/_authenticated/notdienst/rohrservice/mitarbeiter': typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   '/_authenticated/notdienst/rohrservice/nachbearbeitung': typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   '/_authenticated/notdienst/rohrservice/neu': typeof AuthenticatedNotdienstRohrserviceNeuRoute
@@ -627,9 +647,11 @@ export interface FileRouteTypes {
     | '/api/public/version'
     | '/revier-center/'
     | '/abrechnung/$provider/versand'
+    | '/notdienst/budeko/import'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
     | '/notdienst/budeko/neu'
+    | '/notdienst/rohrservice/import'
     | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
@@ -684,9 +706,11 @@ export interface FileRouteTypes {
     | '/api/public/version'
     | '/revier-center'
     | '/abrechnung/$provider/versand'
+    | '/notdienst/budeko/import'
     | '/notdienst/budeko/mitarbeiter'
     | '/notdienst/budeko/nachbearbeitung'
     | '/notdienst/budeko/neu'
+    | '/notdienst/rohrservice/import'
     | '/notdienst/rohrservice/mitarbeiter'
     | '/notdienst/rohrservice/nachbearbeitung'
     | '/notdienst/rohrservice/neu'
@@ -746,9 +770,11 @@ export interface FileRouteTypes {
     | '/api/public/version'
     | '/_authenticated/revier-center/'
     | '/_authenticated/abrechnung/$provider/versand'
+    | '/_authenticated/notdienst/budeko/import'
     | '/_authenticated/notdienst/budeko/mitarbeiter'
     | '/_authenticated/notdienst/budeko/nachbearbeitung'
     | '/_authenticated/notdienst/budeko/neu'
+    | '/_authenticated/notdienst/rohrservice/import'
     | '/_authenticated/notdienst/rohrservice/mitarbeiter'
     | '/_authenticated/notdienst/rohrservice/nachbearbeitung'
     | '/_authenticated/notdienst/rohrservice/neu'
@@ -1183,6 +1209,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport
       parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
     }
+    '/_authenticated/notdienst/rohrservice/import': {
+      id: '/_authenticated/notdienst/rohrservice/import'
+      path: '/import'
+      fullPath: '/notdienst/rohrservice/import'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceImportRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
     '/_authenticated/notdienst/budeko/neu': {
       id: '/_authenticated/notdienst/budeko/neu'
       path: '/neu'
@@ -1202,6 +1235,13 @@ declare module '@tanstack/react-router' {
       path: '/mitarbeiter'
       fullPath: '/notdienst/budeko/mitarbeiter'
       preLoaderRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRouteImport
+      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
+    }
+    '/_authenticated/notdienst/budeko/import': {
+      id: '/_authenticated/notdienst/budeko/import'
+      path: '/import'
+      fullPath: '/notdienst/budeko/import'
+      preLoaderRoute: typeof AuthenticatedNotdienstBudekoImportRouteImport
       parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
     }
     '/_authenticated/abrechnung/$provider/versand': {
@@ -1265,6 +1305,7 @@ const AuthenticatedRevierCenterRouteRouteWithChildren =
   )
 
 interface AuthenticatedNotdienstBudekoRouteRouteChildren {
+  AuthenticatedNotdienstBudekoImportRoute: typeof AuthenticatedNotdienstBudekoImportRoute
   AuthenticatedNotdienstBudekoMitarbeiterRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRoute
   AuthenticatedNotdienstBudekoNachbearbeitungRoute: typeof AuthenticatedNotdienstBudekoNachbearbeitungRoute
   AuthenticatedNotdienstBudekoNeuRoute: typeof AuthenticatedNotdienstBudekoNeuRoute
@@ -1273,6 +1314,8 @@ interface AuthenticatedNotdienstBudekoRouteRouteChildren {
 
 const AuthenticatedNotdienstBudekoRouteRouteChildren: AuthenticatedNotdienstBudekoRouteRouteChildren =
   {
+    AuthenticatedNotdienstBudekoImportRoute:
+      AuthenticatedNotdienstBudekoImportRoute,
     AuthenticatedNotdienstBudekoMitarbeiterRoute:
       AuthenticatedNotdienstBudekoMitarbeiterRoute,
     AuthenticatedNotdienstBudekoNachbearbeitungRoute:
@@ -1288,6 +1331,7 @@ const AuthenticatedNotdienstBudekoRouteRouteWithChildren =
   )
 
 interface AuthenticatedNotdienstRohrserviceRouteRouteChildren {
+  AuthenticatedNotdienstRohrserviceImportRoute: typeof AuthenticatedNotdienstRohrserviceImportRoute
   AuthenticatedNotdienstRohrserviceMitarbeiterRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRoute
   AuthenticatedNotdienstRohrserviceNachbearbeitungRoute: typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRoute
   AuthenticatedNotdienstRohrserviceNeuRoute: typeof AuthenticatedNotdienstRohrserviceNeuRoute
@@ -1296,6 +1340,8 @@ interface AuthenticatedNotdienstRohrserviceRouteRouteChildren {
 
 const AuthenticatedNotdienstRohrserviceRouteRouteChildren: AuthenticatedNotdienstRohrserviceRouteRouteChildren =
   {
+    AuthenticatedNotdienstRohrserviceImportRoute:
+      AuthenticatedNotdienstRohrserviceImportRoute,
     AuthenticatedNotdienstRohrserviceMitarbeiterRoute:
       AuthenticatedNotdienstRohrserviceMitarbeiterRoute,
     AuthenticatedNotdienstRohrserviceNachbearbeitungRoute:
