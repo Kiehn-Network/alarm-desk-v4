@@ -278,6 +278,8 @@ function AlarmierungPage() {
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [tab, setTab] = useState<string>("aktiv");
   const [typFilter, setTypFilter] = useState<string>("alle");
   const [history, setHistory] = useState<Einsatz | null>(null);
