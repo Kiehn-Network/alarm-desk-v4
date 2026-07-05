@@ -4,7 +4,7 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
-## [4.0.16] - 2026-07-04
+## [4.0.18] - 2026-07-05
 
 ### Added
 
