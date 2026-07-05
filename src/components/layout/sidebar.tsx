@@ -167,6 +167,26 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
                 const active = it.tab
                   ? location.pathname === it.to && (currentTab ?? "overview") === it.tab
                   : location.pathname === it.to || location.pathname.startsWith(it.to + "/");
+                if (it.external) {
+                  return (
+                    <li key={`${it.to}:ext`}>
+                      <a
+                        href={it.external}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={onNavigate}
+                        className={cn(
+                          "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all",
+                          "text-sidebar-foreground/75 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        <it.icon className="size-4 shrink-0" />
+                        <span className="truncate">{it.label}</span>
+                        <ExternalLink className="ml-auto size-3 text-muted-foreground" />
+                      </a>
+                    </li>
+                  );
+                }
                 return (
                   <li key={`${it.to}:${it.tab ?? ""}`}>
                     <Link
