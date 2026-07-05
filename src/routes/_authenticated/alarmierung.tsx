@@ -399,6 +399,35 @@ function AlarmierungPage() {
           />
         </div>
 
+        <div className="flex items-center gap-2">
+          <Calendar className="size-4 text-muted-foreground" />
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-9 w-auto"
+            aria-label="Datum von"
+          />
+          <span className="text-sm text-muted-foreground">–</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-9 w-auto"
+            aria-label="Datum bis"
+          />
+          {(dateFrom || dateTo) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2"
+              onClick={() => { setDateFrom(""); setDateTo(""); }}
+            >
+              Zurücksetzen
+            </Button>
+          )}
+        </div>
+
         {hausnotrufEnabled && (
           <div className="flex items-center gap-2">
             <Filter className="size-4 text-muted-foreground" />
