@@ -14,6 +14,8 @@ import { hasWalkthrough, schedulePendingWalkthrough, startWalkthrough } from "@/
 
 export function TourDialog({
   open, onOpenChange, enabledKeys, onCompleted, mandatory = false,
+  idx: idxProp, onIdxChange, checked: checkedProp, onCheckedChange,
+  walkthroughsDone: walkthroughsDoneProp,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
@@ -21,15 +23,30 @@ export function TourDialog({
   onCompleted?: () => void;
   /** Wenn true: kein Überspringen, kein Schließen möglich. Walkthrough muss pro Schritt gelaufen sein. */
   mandatory?: boolean;
+  /** Optional persistenter Zustand vom Parent (TourLauncher). */
+  idx?: number;
+  onIdxChange?: (i: number) => void;
+  checked?: Record<string, number[]>;
+  onCheckedChange?: (v: Record<string, number[]>) => void;
+  walkthroughsDone?: string[];
 }) {
   const { role } = useRole();
   const steps = stepsForRole(role, enabledKeys ?? null);
   const total = Math.max(1, steps.length);
-  const [idx, setIdx] = useState(0);
+  const [idxLocal, setIdxLocal] = useState(0);
+  const idx = idxProp ?? idxLocal;
+  const setIdx = (updater: number | ((prev: number) => number)) => {
+    const next = typeof updater === "function" ? (updater as (p: number) => number)(idx) : updater;
+    if (onIdxChange) onIdxChange(next); else setIdxLocal(next);
+  };
   // pro Schritt merken, welche Details bereits abgehakt sind
-  const [checked, setChecked] = useState<Record<string, Set<number>>>({});
-  // Für Pflicht-Modus: welche Walkthroughs sind bereits einmal komplett gelaufen
-  const [walkthroughsDone, setWalkthroughsDone] = useState<Set<string>>(new Set());
+  const [checkedLocal, setCheckedLocal] = useState<Record<string, number[]>>({});
+  const checkedRaw = checkedProp ?? checkedLocal;
+  const setChecked = (updater: (prev: Record<string, number[]>) => Record<string, number[]>) => {
+    const next = updater(checkedRaw);
+    if (onCheckedChange) onCheckedChange(next); else setCheckedLocal(next);
+  };
+  const walkthroughsDone = walkthroughsDoneProp ?? [];
   const navigate = useNavigate();
   const qc = useQueryClient();
   const finish = useServerFn(markTourCompleted);
@@ -37,46 +54,32 @@ export function TourDialog({
   const step = steps[Math.min(idx, steps.length - 1)] ?? TOUR_STEPS[0];
   const Icon = step.icon;
   const isLast = idx >= steps.length - 1;
-  const stepChecks = checked[step.key] ?? new Set<number>();
+  const stepChecks = new Set<number>(checkedRaw[step.key] ?? []);
   const allChecked = step.details.length === 0 || stepChecks.size >= step.details.length;
   const canInteract = hasWalkthrough(step.key);
-  const walkthroughRequired = mandatory && canInteract && !walkthroughsDone.has(step.key);
+  const walkthroughRequired = mandatory && canInteract && !walkthroughsDone.includes(step.key);
   const canAdvance = allChecked && !walkthroughRequired;
-
-  useEffect(() => {
-    if (!mandatory) return;
-    const onFinished = (e: Event) => {
-      const key = (e as CustomEvent).detail?.key as string | undefined;
-      if (!key) return;
-      setWalkthroughsDone((prev) => {
-        if (prev.has(key)) return prev;
-        const next = new Set(prev); next.add(key); return next;
-      });
-    };
-    window.addEventListener("walkthrough-finished", onFinished as EventListener);
-    return () => window.removeEventListener("walkthrough-finished", onFinished as EventListener);
-  }, [mandatory]);
 
   const totalDone = useMemo(() => {
     let done = 0;
     for (const s of steps) {
-      const c = checked[s.key];
-      if (s.details.length === 0 || (c && c.size >= s.details.length)) done++;
+      const c = checkedRaw[s.key];
+      if (s.details.length === 0 || (c && c.length >= s.details.length)) done++;
     }
     return done;
-  }, [checked, steps]);
+  }, [checkedRaw, steps]);
 
   const toggleDetail = (i: number) => {
     setChecked((prev) => {
       const next = new Set(prev[step.key] ?? []);
       if (next.has(i)) next.delete(i); else next.add(i);
-      return { ...prev, [step.key]: next };
+      return { ...prev, [step.key]: Array.from(next) };
     });
   };
   const markAll = () => {
     setChecked((prev) => ({
       ...prev,
-      [step.key]: new Set(step.details.map((_, i) => i)),
+      [step.key]: step.details.map((_, i) => i),
     }));
   };
 
@@ -168,7 +171,7 @@ export function TourDialog({
                 }}
               >
                 <Play className="size-3.5 mr-1" />
-                {walkthroughsDone.has(step.key)
+                {walkthroughsDone.includes(step.key)
                   ? "Nochmal ausprobieren"
                   : mandatory ? "Geführter Testlauf starten" : "Interaktiv ausprobieren"}
               </Button>
