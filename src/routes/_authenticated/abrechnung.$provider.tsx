@@ -2,13 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Printer, Search, Send, ClipboardList, Timer, Calendar } from "lucide-react";
+import { ArrowLeft, Printer, Search, Send, ClipboardList, Timer, Calendar, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import { listProviderEinsaetze } from "@/lib/abrechnung.functions";
+import { buildAbrechnungPdf } from "@/lib/abrechnung-pdf";
 
 const PROVIDER_LABEL: Record<string, string> = {
   malteser: "Malteser",
@@ -100,6 +101,22 @@ function AbrechnungUebersicht() {
           </Link>
           <Button onClick={() => window.print()} className="gap-2">
             <Printer className="size-4" /> Drucken
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={einsaetze.length === 0}
+            onClick={() => {
+              const doc = buildAbrechnungPdf({
+                providerLabel,
+                monthLabel: monthLabel(activeMonth),
+                einsaetze,
+                profiles: {},
+              });
+              doc.save(`abrechnung-${providerKey}-${activeMonth}.pdf`);
+            }}
+          >
+            <Download className="size-4" /> PDF
           </Button>
         </div>
       </div>
