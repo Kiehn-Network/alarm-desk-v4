@@ -4,6 +4,7 @@ import {
   HeadContent, Scripts,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
+import { consumePendingWalkthrough } from "@/lib/walkthroughs";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
@@ -86,6 +87,14 @@ function RootComponent() {
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
+  useEffect(() => {
+    // Nach jeder Navigation prüfen, ob ein interaktiver Rundgang wartet.
+    const unsub = router.subscribe("onResolved", () => {
+      // kurze Verzögerung, damit die Zielseite gerendert ist
+      setTimeout(() => consumePendingWalkthrough(), 200);
+    });
+    return () => unsub();
+  }, [router]);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
