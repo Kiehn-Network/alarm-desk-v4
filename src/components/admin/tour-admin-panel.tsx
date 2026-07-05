@@ -14,6 +14,7 @@ import { listUsers } from "@/lib/admin.functions";
 import {
   adminListTourSettings, adminUpdateUserTour, adminResetUserTour,
 } from "@/lib/tour.functions";
+import { adminListOnboarding, adminSetUserOnboarding } from "@/lib/onboarding.functions";
 import { TOUR_STEPS } from "@/lib/tour-steps";
 
 export function TourAdminPanel() {
@@ -22,9 +23,12 @@ export function TourAdminPanel() {
   const fetchSettings = useServerFn(adminListTourSettings);
   const update = useServerFn(adminUpdateUserTour);
   const reset = useServerFn(adminResetUserTour);
+  const fetchOnb = useServerFn(adminListOnboarding);
+  const setOnb = useServerFn(adminSetUserOnboarding);
 
   const usersQ = useQuery({ queryKey: ["admin-users"], queryFn: () => fetchUsers() });
   const settingsQ = useQuery({ queryKey: ["admin-tour-settings"], queryFn: () => fetchSettings() });
+  const onbQ = useQuery({ queryKey: ["admin-onboarding"], queryFn: () => fetchOnb() });
 
   const [search, setSearch] = useState("");
   const [edit, setEdit] = useState<{ user_id: string; display_name: string } | null>(null);
@@ -34,6 +38,12 @@ export function TourAdminPanel() {
     (settingsQ.data?.settings ?? []).forEach((s: any) => { m[s.user_id] = s; });
     return m;
   }, [settingsQ.data]);
+
+  const onbMap = useMemo(() => {
+    const m: Record<string, any> = {};
+    (onbQ.data?.profiles ?? []).forEach((p: any) => { m[p.id] = p; });
+    return m;
+  }, [onbQ.data]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -58,6 +68,15 @@ export function TourAdminPanel() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-tour-settings"] });
       toast.success("Tour zurückgesetzt – Nutzer sieht sie beim nächsten Login");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const onbMutation = useMutation({
+    mutationFn: (vars: { user_id: string; completed: boolean }) => setOnb({ data: vars }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-onboarding"] });
+      toast.success("Einführungs-Status aktualisiert");
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -87,6 +106,7 @@ export function TourAdminPanel() {
               <tr className="border-b border-border">
                 <th className="text-left py-2 pr-3">Nutzer</th>
                 <th className="text-left py-2 pr-3">Tour aktiv</th>
+                <th className="text-left py-2 pr-3">Einführung erledigt</th>
                 <th className="text-left py-2 pr-3">Status</th>
                 <th className="text-left py-2 pr-3">Schritte</th>
                 <th className="text-right py-2 pl-3">Aktionen</th>
@@ -98,6 +118,7 @@ export function TourAdminPanel() {
                 const enabled = s?.tour_enabled ?? true;
                 const completed = !!s?.completed_at;
                 const stepsCount = s?.enabled_steps?.length ?? 0;
+                const onbDone = !!onbMap[u.id]?.onboarding_completed_at;
                 return (
                   <tr key={u.id} className="border-b border-border/50 hover:bg-muted/30">
                     <td className="py-2 pr-3">
@@ -110,6 +131,15 @@ export function TourAdminPanel() {
                           user_id: u.id, tour_enabled: v,
                           enabled_steps: s?.enabled_steps ?? [],
                         })} />
+                    </td>
+                    <td className="py-2 pr-3">
+                      <div className="flex items-center gap-2">
+                        <Switch checked={onbDone}
+                          onCheckedChange={(v) => onbMutation.mutate({ user_id: u.id, completed: v })} />
+                        <span className="text-xs text-muted-foreground">
+                          {onbDone ? "Übersprungen" : "Pflicht beim Login"}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-2 pr-3">
                       {completed ? (
@@ -141,7 +171,7 @@ export function TourAdminPanel() {
                 );
               })}
               {filtered.length === 0 && (
-                <tr><td colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                <tr><td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                   Keine Nutzer.
                 </td></tr>
               )}
