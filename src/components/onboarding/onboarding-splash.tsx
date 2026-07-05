@@ -32,7 +32,7 @@ export function OnboardingSplash({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     const start = Date.now();
-    const total = 5000;
+    const total = 8000;
     const t = setInterval(() => {
       const pct = Math.min(100, ((Date.now() - start) / total) * 100);
       setProgress(pct);

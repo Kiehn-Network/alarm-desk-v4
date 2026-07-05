@@ -163,7 +163,9 @@ export function TourDialog({
                 onClick={() => {
                   onOpenChange(false);
                   if (step.route) {
-                    schedulePendingWalkthrough(step.key);
+                    // Für das Schlüsselbuch wird der geführte Demo-Rundgang (mit Seed) gestartet.
+                    const walkKey = step.key === "schluesselbuch" ? "schluesselbuch-demo" : step.key;
+                    schedulePendingWalkthrough(walkKey);
                     navigate({ to: step.route });
                   } else {
                     void startWalkthrough(step.key);
