@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -14,7 +14,7 @@ import {
   listSchluesselbuch, rueckgabeBestaetigen,
   seedSchluesselDemo, cleanupSchluesselDemo,
 } from "@/lib/schluesselbuch.functions";
-import { startWalkthrough } from "@/lib/walkthroughs";
+import { startWalkthrough, PENDING_KEY } from "@/lib/walkthroughs";
 
 export const Route = createFileRoute("/_authenticated/schluesselbuch")({
   component: SchluesselbuchPage,
@@ -41,12 +41,28 @@ function SchluesselbuchPage() {
   const cleanupDemo = useServerFn(cleanupSchluesselDemo);
   const [demoActive, setDemoActive] = useState(false);
   const [demoBusy, setDemoBusy] = useState(false);
+  const autoDemoTriggered = useRef(false);
 
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["schluesselbuch"],
     queryFn: () => listFn(),
     enabled: !loading && !isFahrer,
   });
+
+  // Falls der Nutzer den Testlauf über die Einführung angefordert hat (Pflicht-Modus),
+  // seed + Rundgang direkt beim Öffnen der Seite starten.
+  useEffect(() => {
+    if (loading || isFahrer) return;
+    if (autoDemoTriggered.current) return;
+    if (typeof window === "undefined") return;
+    const pending = sessionStorage.getItem(PENDING_KEY);
+    if (pending !== "schluesselbuch-demo") return;
+    sessionStorage.removeItem(PENDING_KEY);
+    autoDemoTriggered.current = true;
+    void startDemo();
+    // startDemo ist stabil im Scope; wir wollen den Effekt nur einmal auslösen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, isFahrer]);
 
   const [tab, setTab] = useState("offen");
   const [q, setQ] = useState("");
