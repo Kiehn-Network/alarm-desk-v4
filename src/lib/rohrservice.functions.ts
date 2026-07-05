@@ -3,6 +3,10 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
+import { sendEmailForDomain } from "@/lib/email-send.server";
+import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
+import { renderBrandedEmail } from "@/lib/email-brand";
+import { rewriteStorageUrl } from "@/lib/storage-url.server";
 
 // ---------- Notiz / Variante ----------
 
@@ -405,12 +409,6 @@ const sendSchema = z.object({
   filename: z.string().min(1).max(200).regex(/^[A-Za-z0-9_\-\.]+$/),
 });
 
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as any)[c],
-  );
-}
-
 export const sendBericht = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => sendSchema.parse(i))
@@ -436,48 +434,41 @@ export const sendBericht = createServerFn({ method: "POST" })
       .from("dateien")
       .createSignedUrl(path, 60 * 60 * 24 * 30);
     if (signed.error || !signed.data?.signedUrl) throw new Error("Signed URL fehlgeschlagen");
-    const { rewriteStorageUrl } = await import("@/lib/storage-url.server");
     const downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
 
     const titel = `Rohrservice-Bericht #${bericht.bericht_nr}`;
     const subject = titel;
-    const html = `
-      <div style="font-family:Arial,sans-serif;color:#222;max-width:600px;margin:auto;padding:24px">
-        <h2 style="margin:0 0 16px">${escapeHtml(titel)}</h2>
-        <p>Guten Tag,</p>
-        <p>anbei finden Sie den Bericht zum Rohrservice-Einsatz als PDF.</p>
-        <p style="margin:24px 0">
-          <a href="${downloadUrl}"
-             style="display:inline-block;background:#1e293b;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600">
-            Bericht herunterladen (PDF)
-          </a>
-        </p>
-        <p style="font-size:12px;color:#666">Der Link ist 30 Tage gültig.</p>
-        <p>Mit freundlichen Grüßen</p>
-      </div>
-    `;
+    const branding = await loadDomainBranding(domainId);
+    const empfaengerName =
+      (bericht as any).anrufer_name ||
+      (bericht as any).rechnung_name ||
+      (bericht as any).mieter_name ||
+      null;
+    const html = renderBrandedEmail({
+      branding,
+      brandName: brandName(branding),
+      statusPill: "Rohrservice-Bericht",
+      heading: titel,
+      greetingName: empfaengerName,
+      intro: "anbei finden Sie den Bericht zum Rohrservice-Einsatz als PDF-Dokument.",
+      metaTitle: titel,
+      metaSubtitle: "PDF · Download 30 Tage gültig",
+      ctaLabel: "Bericht herunterladen",
+      ctaUrl: downloadUrl,
+      closingNote: "Bei Rückfragen zum Einsatz wenden Sie sich bitte an die für Sie zuständige Ansprechperson.",
+      previewText: "Ihr Rohrservice-Bericht als PDF",
+    });
 
-    const SENDER_DOMAIN = "notify.einsatz-bericht.de";
-    const FROM = `Rohrservice <bericht@${SENDER_DOMAIN}>`;
-    const messageId = crypto.randomUUID();
-    const idempotencyKey = `rohrservice-bericht-${data.id}-${Date.now()}`;
-
-    const { error: enqErr } = await (supabaseAdmin as any).rpc("enqueue_email", {
-      queue_name: "transactional_emails",
-      payload: {
-        message_id: messageId,
+    try {
+      await sendEmailForDomain(domainId, {
         to: data.recipient_email,
-        from: FROM,
-        sender_domain: SENDER_DOMAIN,
         subject,
         html,
-        purpose: "transactional",
         label: "rohrservice-bericht",
-        idempotency_key: idempotencyKey,
-        queued_at: new Date().toISOString(),
-      },
-    });
-    if (enqErr) throw new Error("Versand fehlgeschlagen: " + enqErr.message);
+      });
+    } catch (e: any) {
+      throw new Error("Versand fehlgeschlagen: " + String(e?.message ?? e).slice(0, 500));
+    }
 
     await supabase
       .from("rohrservice_berichte")
