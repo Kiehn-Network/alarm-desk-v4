@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail, User, MapPin, Key, Hash, Tag, Car, CircleCheck,
-  MoreHorizontal, FileText, Filter, Info, Pencil, Trash2, Network,
+  MoreHorizontal, FileText, Filter, Info, Pencil, Trash2, Network, Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -278,6 +278,8 @@ function AlarmierungPage() {
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
 
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [tab, setTab] = useState<string>("aktiv");
   const [typFilter, setTypFilter] = useState<string>("alle");
   const [history, setHistory] = useState<Einsatz | null>(null);
@@ -303,10 +305,14 @@ function AlarmierungPage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const dateOf = (d?: string | null) => (d ? new Date(d).toISOString().split("T")[0] : null);
     const list = einsaetze.filter((e) => {
       if (tab === "aktiv" && !isAktiv(e)) return false;
       if (tab === "erledigt" && !isErledigt(e)) return false;
       if (hausnotrufEnabled && typFilter !== "alle" && (e.einsatz_typ ?? "av_einsatz") !== typFilter) return false;
+      const d = dateOf(e.created_at);
+      if (dateFrom && (!d || d < dateFrom)) return false;
+      if (dateTo && (!d || d > dateTo)) return false;
       if (!q) return true;
       return [e.einsatzgrund, e.kunden_name, e.address, e.key_number, e.anlagen_nr, e.teilnehmer_id]
         .filter(Boolean).join(" ").toLowerCase().includes(q);
@@ -321,7 +327,7 @@ function AlarmierungPage() {
       });
     }
     return list;
-  }, [einsaetze, search, tab, typFilter, hausnotrufEnabled]);
+  }, [einsaetze, search, tab, typFilter, hausnotrufEnabled, dateFrom, dateTo]);
 
   const counts = useMemo(() => ({
     aktiv: einsaetze.filter(isAktiv).length,
@@ -346,7 +352,7 @@ function AlarmierungPage() {
       return next;
     });
   // Reset selection when filter scope changes
-  useEffect(() => { setSelected(new Set()); }, [tab, typFilter, search]);
+  useEffect(() => { setSelected(new Set()); }, [tab, typFilter, search, dateFrom, dateTo]);
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
@@ -391,6 +397,35 @@ function AlarmierungPage() {
             placeholder="Suche Kunde, Adresse, Grund..."
             className="pl-9 h-9"
           />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Calendar className="size-4 text-muted-foreground" />
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="h-9 w-auto"
+            aria-label="Datum von"
+          />
+          <span className="text-sm text-muted-foreground">–</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="h-9 w-auto"
+            aria-label="Datum bis"
+          />
+          {(dateFrom || dateTo) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 px-2"
+              onClick={() => { setDateFrom(""); setDateTo(""); }}
+            >
+              Zurücksetzen
+            </Button>
+          )}
         </div>
 
         {hausnotrufEnabled && (

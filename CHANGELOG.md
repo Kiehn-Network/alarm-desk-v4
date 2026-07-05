@@ -23,3 +23,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 - Header-Label fällt nicht mehr automatisch auf den Standardtext zurück, wenn es bewusst geleert wird.
 
 ## [Unreleased]
+
+### Added
+
+- **Datum-Filter in Alarmierung**: Einsätze lassen sich jetzt zusätzlich nach einem Zeitraum (von/bis) filtern.
