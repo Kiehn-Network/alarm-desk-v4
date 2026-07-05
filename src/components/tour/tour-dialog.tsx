@@ -99,7 +99,7 @@ export function TourDialog({
         onEscapeKeyDown={mandatory ? (e) => e.preventDefault() : undefined}
         onInteractOutside={mandatory ? (e) => e.preventDefault() : undefined}
         onPointerDownOutside={mandatory ? (e) => e.preventDefault() : undefined}
-        showCloseButton={!mandatory}
+        hideClose={mandatory}
       >
         <DialogHeader>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
