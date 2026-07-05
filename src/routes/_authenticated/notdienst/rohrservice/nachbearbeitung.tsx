@@ -100,15 +100,14 @@ function Nachbearbeitung() {
                 <td className="px-4 py-3 text-xs text-muted-foreground">{fmtDe(b.created_at)}</td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                    {b.versendet ? (
+                    {b.versendet && (
                       <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-success/15 text-success">
                         <CheckCircle2 className="size-3" /> Versendet
                       </span>
-                    ) : (
-                      <Button size="sm" variant="default" onClick={() => setSendId(b.id)}>
-                        <Send className="size-3.5 mr-1" /> Versand
-                      </Button>
                     )}
+                    <Button size="sm" variant={b.versendet ? "outline" : "default"} onClick={() => setSendId(b.id)}>
+                      <Send className="size-3.5 mr-1" /> {b.versendet ? "Nachsenden" : "Versand"}
+                    </Button>
                     <Button size="sm" variant="secondary" onClick={() => setEditId(b.id)}>
                       <Pencil className="size-3.5 mr-1" /> Bearbeiten
                     </Button>
