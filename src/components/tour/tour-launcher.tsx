@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyTourSettings } from "@/lib/tour.functions";
@@ -29,6 +29,52 @@ export function TourLauncher() {
   const [open, setOpen] = useState(false);
   const [splashOpen, setSplashOpen] = useState(false);
   const [demoStarted, setDemoStarted] = useState(false);
+
+  // ---- Persistenter Einführungs-Fortschritt (überlebt Remount/Reload) ----
+  const storageKey = useMemo(
+    () => (session?.user?.id ? `onboarding-progress:${session.user.id}` : null),
+    [session?.user?.id],
+  );
+  const [idx, setIdx] = useState(0);
+  const [checked, setChecked] = useState<Record<string, number[]>>({});
+  const [walkthroughsDone, setWalkthroughsDone] = useState<string[]>([]);
+  const [loadedFromStorage, setLoadedFromStorage] = useState(false);
+
+  // Beim Mount aus localStorage laden
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (typeof p.idx === "number") setIdx(p.idx);
+        if (p.checked && typeof p.checked === "object") setChecked(p.checked);
+        if (Array.isArray(p.walkthroughsDone)) setWalkthroughsDone(p.walkthroughsDone);
+      }
+    } catch { /* ignore */ }
+    setLoadedFromStorage(true);
+  }, [storageKey]);
+
+  // Jede Änderung persistieren
+  useEffect(() => {
+    if (!storageKey || !loadedFromStorage) return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ idx, checked, walkthroughsDone }));
+    } catch { /* ignore */ }
+  }, [storageKey, loadedFromStorage, idx, checked, walkthroughsDone]);
+
+  // Globaler Listener: Walkthrough abgeschlossen (auch wenn Dialog geschlossen ist)
+  useEffect(() => {
+    const onFinished = (e: Event) => {
+      const key = (e as CustomEvent).detail?.key as string | undefined;
+      if (!key) return;
+      setWalkthroughsDone((prev) => (prev.includes(key) ? prev : [...prev, key]));
+      // Dialog danach wieder öffnen, damit der Nutzer den Fortschritt sieht
+      setOpen(true);
+    };
+    window.addEventListener("walkthrough-finished", onFinished as EventListener);
+    return () => window.removeEventListener("walkthrough-finished", onFinished as EventListener);
+  }, []);
 
   useEffect(() => {
     if (isSuperAdmin && !isImpersonating) return;
@@ -66,8 +112,15 @@ export function TourLauncher() {
         onOpenChange={setOpen}
         enabledKeys={data?.enabled_steps && data.enabled_steps.length > 0 ? data.enabled_steps : null}
         mandatory={mandatory}
+        idx={idx}
+        onIdxChange={setIdx}
+        checked={checked}
+        onCheckedChange={setChecked}
+        walkthroughsDone={walkthroughsDone}
         onCompleted={() => {
           if (mandatory) setSplashOpen(true);
+          // Fortschritt aufräumen
+          if (storageKey) { try { localStorage.removeItem(storageKey); } catch { /* ignore */ } }
         }}
       />
       {splashOpen && (
