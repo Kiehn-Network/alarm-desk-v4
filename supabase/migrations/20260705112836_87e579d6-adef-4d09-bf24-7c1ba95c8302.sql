@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS einsatz_selectable boolean NOT NULL DEFAULT true;
