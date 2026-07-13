@@ -86,6 +86,32 @@ function MeineEinsaetzePage() {
     return () => { supabase.removeChannel(channel); };
   }, [user?.id, qc]);
 
+  // Live-Updates für Schlüssel-Übergaben durch die Zentrale.
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`schluessel-fahrer-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "schluessel_buch" },
+        (payload) => {
+          const row: any = payload.new ?? payload.old;
+          if (row?.einsatz_id) {
+            qc.invalidateQueries({ queryKey: ["schluessel-einsatz", row.einsatz_id] });
+          } else {
+            qc.invalidateQueries({ queryKey: ["schluessel-einsatz"] });
+          }
+          if (payload.eventType === "INSERT" && (payload.new as any)?.traeger_id === user.id) {
+            toast.success(`Schlüssel ${(payload.new as any).key_number ?? ""} übergeben`, {
+              description: "Bitte Übernahme bestätigen.",
+            });
+          }
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, qc]);
+
   const [tab, setTab] = useState("aktiv");
   const [history, setHistory] = useState<Einsatz | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
