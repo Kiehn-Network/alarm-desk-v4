@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   History as HistoryIcon, Plus, Search, Ban, Clock, Flag, CheckSquare,
   ClipboardList, Mail, User, MapPin, Key, Hash, Tag, Car, CircleCheck,
@@ -276,6 +277,28 @@ function AlarmierungPage() {
   const loeschen = useServerFn(deleteEinsatz);
   const loeschenBulk = useServerFn(deleteEinsaetzeBulk);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
+
+  // Live-Updates: Fahrer-Änderungen (Zeiten, Bericht, Status) sofort in der Zentrale.
+  useEffect(() => {
+    const channel = supabase
+      .channel("alarmierung-einsaetze-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "einsaetze" },
+        (payload) => {
+          refetch();
+          if (payload.eventType === "UPDATE") {
+            const before: any = payload.old;
+            const after: any = payload.new;
+            if (before && after && !before.bericht_data && after.bericht_data) {
+              toast.info(`Bericht eingegangen${after.kunden_name ? ` · ${after.kunden_name}` : ""}`);
+            }
+          }
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [refetch]);
 
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
