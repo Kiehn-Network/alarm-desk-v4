@@ -37,6 +37,7 @@ export const getEsrpSettings = createServerFn({ method: "GET" })
       use_api_prefix: false,
       aktiv: false,
       auto_on_abschluss: true,
+      aender_personal_nr: null as number | null,
     };
     return {
       ...base,
@@ -53,6 +54,7 @@ const updateSchema = z.object({
   use_api_prefix: z.boolean(),
   aktiv: z.boolean(),
   auto_on_abschluss: z.boolean(),
+  aender_personal_nr: z.number().int().positive().nullable().optional(),
 });
 
 export const updateEsrpSettings = createServerFn({ method: "POST" })
@@ -72,6 +74,7 @@ export const updateEsrpSettings = createServerFn({ method: "POST" })
       use_api_prefix: data.use_api_prefix,
       aktiv: data.aktiv,
       auto_on_abschluss: data.auto_on_abschluss,
+      aender_personal_nr: data.aender_personal_nr ?? null,
       updated_by: userId,
     };
     if (data.api_token !== undefined && data.api_token !== "") {

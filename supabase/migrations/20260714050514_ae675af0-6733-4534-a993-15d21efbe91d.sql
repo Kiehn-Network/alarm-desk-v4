@@ -1,0 +1,1 @@
+ALTER TABLE public.erp_settings ADD COLUMN IF NOT EXISTS aender_personal_nr INTEGER;

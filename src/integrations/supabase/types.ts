@@ -1442,6 +1442,7 @@ export type Database = {
       }
       erp_settings: {
         Row: {
+          aender_personal_nr: number | null
           aktiv: boolean
           api_base: string
           api_token: string
@@ -1454,6 +1455,7 @@ export type Database = {
           use_api_prefix: boolean
         }
         Insert: {
+          aender_personal_nr?: number | null
           aktiv?: boolean
           api_base?: string
           api_token?: string
@@ -1466,6 +1468,7 @@ export type Database = {
           use_api_prefix?: boolean
         }
         Update: {
+          aender_personal_nr?: number | null
           aktiv?: boolean
           api_base?: string
           api_token?: string
