@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { einsatzPdfBase64 } from "./einsatz-pdf";
 
 export type ErpSettings = {
   domain_id: string;
@@ -9,7 +10,21 @@ export type ErpSettings = {
   use_api_prefix: boolean;
   aktiv: boolean;
   auto_on_abschluss: boolean;
+  aender_personal_nr?: number | null;
 };
+
+function toIsoOrNull(v: any): string | null {
+  if (!v) return null;
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+function ynBool(v: any): boolean | null {
+  if (v === true || v === "ja" || v === 1 || v === "1") return true;
+  if (v === false || v === "nein" || v === 0 || v === "0") return false;
+  return null;
+}
 
 export async function buildErpPayload(einsatz: any) {
   // AnlagenNr ist im ERP Pflicht (> 0). Falls am Einsatz nicht gepflegt, mit 0 senden -
@@ -24,35 +39,69 @@ export async function buildErpPayload(einsatz: any) {
 
   // EinsatzDatum ist Pflicht. Bevorzugt: tatsächliche Einsatzzeit, sonst Plan/Anlage/Erstellung.
   const einsatzDatum =
-    einsatz.vor_ort_am ||
-    einsatz.assigned_at ||
-    einsatz.geplant_am ||
-    einsatz.abgeschlossen_am ||
-    einsatz.created_at ||
+    toIsoOrNull(einsatz.vor_ort_am) ||
+    toIsoOrNull(einsatz.assigned_at) ||
+    toIsoOrNull(einsatz.geplant_am) ||
+    toIsoOrNull(einsatz.abgeschlossen_am) ||
+    toIsoOrNull(einsatz.created_at) ||
     new Date().toISOString();
 
-  // Fahrername aus Profil auflösen (Legacy-Format erwartet "fahrer" als Klartext).
-  let fahrer: string | null = null;
-  let identNr: string | null = null;
+  // Fahrername + personalEmail aus Profil/Auth auflösen
+  let fahrerName: string | null = null;
+  let personalEmail = "";
   if (einsatz.assigned_to) {
     const { data: prof } = await supabaseAdmin
       .from("profiles")
       .select("display_name")
       .eq("id", einsatz.assigned_to)
       .maybeSingle();
-    fahrer = prof?.display_name ?? null;
+    fahrerName = prof?.display_name ?? null;
+    try {
+      const { data: u } = await supabaseAdmin.auth.admin.getUserById(einsatz.assigned_to);
+      personalEmail = u?.user?.email ?? "";
+    } catch { /* ignore */ }
   }
 
-  // Bericht-Daten flach in "daten" übernehmen (Legacy-Schema).
-  const bericht: Record<string, unknown> = {};
-  if (einsatz.bericht_data && typeof einsatz.bericht_data === "object") {
-    for (const [k, v] of Object.entries(einsatz.bericht_data as Record<string, unknown>)) {
-      bericht[k] = v;
-    }
+  // Ersteller-/Änderer-Personalnummer aus ERP-Einstellungen
+  let aenderPersonalNr = 0;
+  if (einsatz.domain_id) {
+    const { data: s } = await supabaseAdmin
+      .from("erp_settings")
+      .select("aender_personal_nr")
+      .eq("domain_id", einsatz.domain_id)
+      .maybeSingle();
+    const raw = (s as any)?.aender_personal_nr;
+    if (typeof raw === "number") aenderPersonalNr = raw;
+    else if (raw != null && raw !== "") aenderPersonalNr = Number(raw);
   }
 
-  // Bevorzugt die ursprüngliche numerische Einsatz-ID aus dem Legacy-Import (z.B. 202501059),
-  // sonst Fallback auf unsere UUID. Format bleibt "AD-<id>" wie in der alten Version.
+  // Arbeitszeit — vier verpflichtende Zeitpunkte mit monoton wachsender Reihenfolge.
+  const rawBB = toIsoOrNull(einsatz.assigned_at) || toIsoOrNull(einsatz.vor_ort_am) || toIsoOrNull(einsatz.created_at) || einsatzDatum;
+  const rawBN = toIsoOrNull(einsatz.vor_ort_am) || rawBB;
+  const rawEN = toIsoOrNull(einsatz.abfahrt_am) || toIsoOrNull(einsatz.einsatz_ende_am) || rawBN;
+  const rawEB = toIsoOrNull(einsatz.einsatz_ende_am) || toIsoOrNull(einsatz.abgeschlossen_am) || rawEN;
+  const ts = [rawBB, rawBN, rawEN, rawEB].map((v) => new Date(v).getTime());
+  for (let i = 1; i < ts.length; i++) if (ts[i] < ts[i - 1]) ts[i] = ts[i - 1];
+  const [bB, bN, eN, eB] = ts.map((t) => new Date(t).toISOString());
+  const arbeitszeit = {
+    beginnBrutto: bB,
+    beginnNetto: bN,
+    endeNetto: eN,
+    endeBrutto: eB,
+    pauseMinuten: 0,
+  };
+
+  // Scharfmeldung — nur wenn Scharfschaltung durchgeführt UND Errichter + Zeit vorhanden.
+  const bd: any = einsatz.bericht_data && typeof einsatz.bericht_data === "object" ? einsatz.bericht_data : {};
+  const errichter = bd.errichter === "mit" ? "mit Errichter" : bd.errichter === "ohne" ? "ohne Errichter" : null;
+  const schZeit = toIsoOrNull(einsatz.einsatz_ende_am) || toIsoOrNull(einsatz.abgeschlossen_am);
+  const scharfmeldung =
+    ynBool(bd.scharfschaltung) === true && schZeit && errichter
+      ? { zeit: schZeit, bei: errichter }
+      : null;
+
+  // Bevorzugt die ursprüngliche numerische Einsatz-ID aus dem Legacy-Import,
+  // sonst Fallback auf unsere UUID. Format bleibt "AD-<id>".
   const legacyId =
     einsatz.legacy_data && typeof einsatz.legacy_data === "object"
       ? (einsatz.legacy_data as any).id
@@ -60,30 +109,55 @@ export async function buildErpPayload(einsatz: any) {
   const idPart =
     legacyId != null && String(legacyId).trim() !== "" ? String(legacyId) : String(einsatz.id);
 
-  const daten: Record<string, unknown> = {
-    ...bericht,
-    permission_id: idPart,
-    fahrer,
-    identNr,
-    leitstelle_user: null,
-    status_local: einsatz.status ?? null,
-    vorort_time: einsatz.vor_ort_am ?? null,
-    abfahrt_time: einsatz.abfahrt_am ?? null,
-    sharfschaltungs_time: einsatz.einsatz_ende_am ?? null,
+  // customFields — nur bekannte Ziel-Felder aus CUST_ArbBeri befüllen.
+  const customFields: Record<string, unknown> = {};
+  const setBool = (k: string, v: any) => {
+    const b = ynBool(v);
+    if (b !== null) customFields[k] = b;
   };
+  if (fahrerName) customFields.Fahrer = fahrerName;
+  if (bd.linie_nr) customFields.LinieNr = String(bd.linie_nr).slice(0, 255);
+  if (bd.errichter) customFields.Errichter = String(bd.errichter).slice(0, 80);
+  setBool("AlarmLinie", bd.alarm_linie);
+  if (einsatz.status) customFields.StatusLocal = String(einsatz.status).slice(0, 50);
+  customFields.PermissionId = String(einsatz.id);
+  setBool("Rueckstellung", bd.rueckstellung);
+  setBool("Innenkontrolle", bd.innenkontrolle);
+  const fremd = bd.fremdeinwirkung;
+  if (fremd === true || fremd === "ja") customFields.Fremdeinwirkung = true;
+  else if (fremd === false || fremd === "nein") customFields.Fremdeinwirkung = false;
+  else if (typeof fremd === "string" && fremd) customFields.Fremdeinwirkung = true;
+  setBool("Scharfschaltung", bd.scharfschaltung);
+  setBool("MeldungZentrale", bd.meldung_zentrale);
+  if (bd.weitere_massnahmen) customFields.WeitereMassnahmen = String(bd.weitere_massnahmen).slice(0, 2000);
+  setBool("AussenkontrolleNegativ", bd.aussenkontrolle_negativ);
 
-  return {
+  // Optionales PDF-Dokument (Arbeitsbericht) als Base64.
+  let pdf: { titel: string; dateiname: string; base64: string } | null = null;
+  try {
+    const base64 = einsatzPdfBase64(einsatz, fahrerName);
+    if (base64 && base64.length > 0) {
+      const idSafe = idPart.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40) || "einsatz";
+      pdf = {
+        titel: `Arbeitsbericht AD-${idPart}`.slice(0, 80),
+        dateiname: `arbeitsbericht-ad-${idSafe}.pdf`,
+        base64,
+      };
+    }
+  } catch { /* PDF optional – niemals blockieren */ }
+
+  const payload: Record<string, unknown> = {
     einsatzId: `AD-${idPart}`,
     anlagenNr,
     einsatzDatum,
-    daten,
-    // PascalCase-Duplikate für case-sensitive .NET-Binder (lokaler ERP-Server).
-    // ASP.NET ignoriert unbekannte/doppelte Felder, daher schaden sie nichts.
-    EinsatzId: `AD-${idPart}`,
-    AnlagenNr: anlagenNr,
-    EinsatzDatum: einsatzDatum,
-    Daten: daten,
+    personalEmail,
+    aenderPersonalNr,
+    arbeitszeit,
+    customFields,
   };
+  if (scharfmeldung) payload.scharfmeldung = scharfmeldung;
+  if (pdf) payload.pdf = pdf;
+  return payload;
 }
 
 async function getJwt(s: ErpSettings): Promise<string> {
