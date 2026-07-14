@@ -313,10 +313,6 @@ function VersionBadge({ info }: { info: VersionInfo | null }) {
   const version = info?.current_version ?? "…";
   return (
     <div className="flex flex-col items-center gap-3 text-[11px] text-muted-foreground">
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/60">
-        <span className="opacity-80">Ein Produkt vom</span>
-        <span className="font-semibold text-foreground">Kiehn Network</span>
-      </div>
       <div className="flex items-center gap-2">
         <span>© 2026 AlarmDesk</span>
         <span className="text-border">·</span>
@@ -351,6 +347,10 @@ function VersionBadge({ info }: { info: VersionInfo | null }) {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/60">
+        <span className="opacity-80">Ein Produkt vom</span>
+        <span className="font-semibold text-foreground">Kiehn Network</span>
       </div>
     </div>
   );
