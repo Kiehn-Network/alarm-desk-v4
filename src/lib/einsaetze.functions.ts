@@ -334,6 +334,7 @@ export const setEinsatzZeit = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       feld: z.enum(["vor_ort", "abfahrt", "ende"]),
+        .or(z.enum(["abfahrt_zentrale", "vor_ort", "abfahrt", "ende"])) as any,
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
