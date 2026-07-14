@@ -333,3 +333,80 @@ function ThemeSettings() {
     </section>
   );
 }
+
+// ============ Fahrer-Zeiten (per-domain) ============
+
+type ZeitKey = "abfahrt_zentrale" | "vor_ort" | "abfahrt_objekt";
+const ZEIT_LABELS: Record<ZeitKey, string> = {
+  abfahrt_zentrale: "Abfahrt Zentrale",
+  vor_ort: "Vor Ort",
+  abfahrt_objekt: "Abfahrt Objekt",
+};
+const DEFAULT_ZEITEN = {
+  abfahrt_zentrale: { enabled: false, required: false },
+  vor_ort: { enabled: true, required: true },
+  abfahrt_objekt: { enabled: true, required: false },
+};
+
+function FahrerZeitenSettings() {
+  const qc = useQueryClient();
+  const fetchFn = useServerFn(getAppSettings);
+  const updateFn = useServerFn(updateFahrerZeitenConfig);
+  const { data } = useQuery({ queryKey: ["app-settings"], queryFn: () => fetchFn() });
+
+  const [cfg, setCfg] = useState(DEFAULT_ZEITEN);
+  useEffect(() => {
+    const c = (data as any)?.fahrer_zeiten_config;
+    if (c) setCfg({ ...DEFAULT_ZEITEN, ...c });
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: async () => updateFn({ data: cfg }),
+    onSuccess: () => {
+      toast.success("Fahrer-Zeiten aktualisiert");
+      qc.invalidateQueries({ queryKey: ["app-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  const toggle = (k: ZeitKey, field: "enabled" | "required", v: boolean) =>
+    setCfg((prev) => {
+      const next = { ...prev, [k]: { ...prev[k], [field]: v } };
+      if (field === "enabled" && !v) next[k].required = false;
+      if (field === "required" && v) next[k].enabled = true;
+      return next;
+    });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <header className="flex items-center gap-2 pb-4 border-b border-border mb-5">
+        <Clock className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold uppercase tracking-wide">Fahrer-Zeiten</h3>
+      </header>
+      <p className="text-sm text-muted-foreground mb-4">
+        Lege fest, welche Zeitpunkte der Fahrer während eines Einsatzes erfassen kann und welche
+        davon zwingend erforderlich sind, bevor der Einsatz abgeschlossen werden darf.
+      </p>
+      <div className="space-y-3">
+        {(Object.keys(ZEIT_LABELS) as ZeitKey[]).map((k) => (
+          <div key={k} className="rounded-lg border border-border bg-muted/20 p-4 flex flex-wrap items-center gap-6">
+            <div className="flex-1 min-w-[160px] text-sm font-medium">{ZEIT_LABELS[k]}</div>
+            <label className="flex items-center gap-2 text-sm">
+              <Switch checked={cfg[k].enabled} onCheckedChange={(v) => toggle(k, "enabled", v)} />
+              <span>Anzeigen</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Switch checked={cfg[k].required} onCheckedChange={(v) => toggle(k, "required", v)} />
+              <span>Pflicht</span>
+            </label>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-end mt-5">
+        <Button onClick={() => save.mutate()} disabled={save.isPending}>
+          <Save className="size-4 mr-2" />{save.isPending ? "Speichere…" : "Speichern"}
+        </Button>
+      </div>
+    </section>
+  );
+}
