@@ -313,7 +313,7 @@ function VersionBadge({ info }: { info: VersionInfo | null }) {
   const version = info?.current_version ?? "…";
   return (
     <div className="text-xs text-muted-foreground">
-      © 2026 AlarmDesk ·{" "}
+      © 2026 AlarmDesk · Ein Produkt vom Kiehn Network ·{" "}
       <Dialog>
         <DialogTrigger asChild>
           <button className="text-primary hover:underline font-medium">v{version}</button>
