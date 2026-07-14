@@ -402,6 +402,7 @@ export type Database = {
           id: string
           is_demo: boolean
           kind: string
+          restricted_roles: Database["public"]["Enums"]["app_role"][] | null
           title: string | null
           updated_at: string
         }
@@ -412,6 +413,7 @@ export type Database = {
           id?: string
           is_demo?: boolean
           kind: string
+          restricted_roles?: Database["public"]["Enums"]["app_role"][] | null
           title?: string | null
           updated_at?: string
         }
@@ -422,6 +424,7 @@ export type Database = {
           id?: string
           is_demo?: boolean
           kind?: string
+          restricted_roles?: Database["public"]["Enums"]["app_role"][] | null
           title?: string | null
           updated_at?: string
         }
@@ -3045,6 +3048,7 @@ export type Database = {
       }
       get_or_create_dm: { Args: { _other_user: string }; Returns: string }
       get_or_create_domain_channel: { Args: never; Returns: string }
+      get_or_create_zentrale_channel: { Args: never; Returns: string }
       has_active_license: { Args: { _domain_id: string }; Returns: boolean }
       has_role: {
         Args: {
