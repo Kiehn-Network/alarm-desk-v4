@@ -38,6 +38,33 @@ const settingsSchema = z.object({
   theme: z.enum(["midnight", "emerald", "slate", "sunset", "crimson", "violet", "ocean", "mono", "lavender"]).optional(),
 });
 
+const zeitFeldSchema = z.object({
+  enabled: z.boolean(),
+  required: z.boolean(),
+});
+const fahrerZeitenSchema = z.object({
+  abfahrt_zentrale: zeitFeldSchema,
+  vor_ort: zeitFeldSchema,
+  abfahrt_objekt: zeitFeldSchema,
+});
+
+export const updateFahrerZeitenConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => fahrerZeitenSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        { domain_id: domainId, fahrer_zeiten_config: data, updated_by: userId } as any,
+        { onConflict: "domain_id" },
+      );
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const updateAppSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => settingsSchema.parse(d))
