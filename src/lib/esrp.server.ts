@@ -17,7 +17,26 @@ function toIsoOrNull(v: any): string | null {
   if (!v) return null;
   const d = new Date(v);
   if (isNaN(d.getTime())) return null;
-  return d.toISOString();
+  return toBerlinIso(d);
+}
+
+// Formatiert ein Datum als ISO-8601 in Europa/Berlin-Ortszeit mit korrektem Offset
+// (+01:00 im Winter, +02:00 im Sommer). Das ERP interpretiert "Z" als UTC –
+// für deutsche Ortszeit muss der Offset explizit gesetzt sein.
+function toBerlinIso(d: Date): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false, timeZoneName: "longOffset",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  const tz = get("timeZoneName"); // e.g. "GMT+02:00" or "GMT"
+  const m = tz.match(/GMT([+-]\d{2}:?\d{2})?/);
+  let offset = "+00:00";
+  if (m && m[1]) offset = m[1].includes(":") ? m[1] : `${m[1].slice(0, 3)}:${m[1].slice(3)}`;
+  return `${get("year")}-${get("month")}-${get("day")}T${hour}:${get("minute")}:${get("second")}${offset}`;
 }
 
 function ynBool(v: any): boolean | null {
@@ -62,8 +81,10 @@ export async function buildErpPayload(einsatz: any) {
     } catch { /* ignore */ }
   }
 
-  // Ersteller-/Änderer-Personalnummer aus ERP-Einstellungen
-  let aenderPersonalNr = 0;
+  // Ersteller-/Änderer-Personalnummer aus ERP-Einstellungen.
+  // Das ERP verlangt eine positive Nummer – 0 ist unzulässig.
+  // Fallback bis zur finalen Abstimmung: 999.
+  let aenderPersonalNr = 999;
   if (einsatz.domain_id) {
     const { data: s } = await supabaseAdmin
       .from("erp_settings")
@@ -71,8 +92,8 @@ export async function buildErpPayload(einsatz: any) {
       .eq("domain_id", einsatz.domain_id)
       .maybeSingle();
     const raw = (s as any)?.aender_personal_nr;
-    if (typeof raw === "number") aenderPersonalNr = raw;
-    else if (raw != null && raw !== "") aenderPersonalNr = Number(raw);
+    const num = typeof raw === "number" ? raw : raw != null && raw !== "" ? Number(raw) : NaN;
+    if (Number.isFinite(num) && num > 0) aenderPersonalNr = num;
   }
 
   // Arbeitszeit — vier verpflichtende Zeitpunkte mit monoton wachsender Reihenfolge.
@@ -82,7 +103,7 @@ export async function buildErpPayload(einsatz: any) {
   const rawEB = toIsoOrNull(einsatz.einsatz_ende_am) || toIsoOrNull(einsatz.abgeschlossen_am) || rawEN;
   const ts = [rawBB, rawBN, rawEN, rawEB].map((v) => new Date(v).getTime());
   for (let i = 1; i < ts.length; i++) if (ts[i] < ts[i - 1]) ts[i] = ts[i - 1];
-  const [bB, bN, eN, eB] = ts.map((t) => new Date(t).toISOString());
+  const [bB, bN, eN, eB] = ts.map((t) => toBerlinIso(new Date(t)));
   const arbeitszeit = {
     beginnBrutto: bB,
     beginnNetto: bN,
