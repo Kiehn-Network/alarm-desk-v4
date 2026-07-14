@@ -188,3 +188,72 @@ export const listEinsatzErpStatus = createServerFn({ method: "POST" })
     }
     return { status: map };
   });
+
+export const previewErpPayload = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({ einsatz_id: z.string().uuid().optional() }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    let einsatzId = data.einsatz_id;
+    if (!einsatzId) {
+      const { data: latest } = await supabaseAdmin
+        .from("einsaetze")
+        .select("id")
+        .eq("domain_id", domainId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!latest) throw new Error("Kein Einsatz vorhanden");
+      einsatzId = latest.id;
+    }
+    const { data: einsatz, error } = await supabaseAdmin
+      .from("einsaetze")
+      .select("*")
+      .eq("id", einsatzId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!einsatz) throw new Error("Einsatz nicht gefunden");
+    if (einsatz.domain_id !== domainId) {
+      throw new Error("Einsatz gehört nicht zur Domäne");
+    }
+    const payload = await buildErpPayload(einsatz);
+    const pdf = (payload as any).pdf as
+      | { titel: string; dateiname: string; base64: string }
+      | undefined;
+    const pdfMeta = pdf
+      ? {
+          titel: pdf.titel,
+          dateiname: pdf.dateiname,
+          base64Length: pdf.base64.length,
+          base64Preview: pdf.base64.slice(0, 120),
+          approxKb: Math.round((pdf.base64.length * 3) / 4 / 1024),
+        }
+      : null;
+    return {
+      einsatz: {
+        id: einsatz.id,
+        anlagen_nr: einsatz.anlagen_nr,
+        status: einsatz.status,
+        created_at: einsatz.created_at,
+      },
+      payload,
+      pdfMeta,
+    };
+  });
+
+export const listEinsaetzeForPreview = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { data } = await supabaseAdmin
+      .from("einsaetze")
+      .select("id,anlagen_nr,status,created_at,assigned_to")
+      .eq("domain_id", domainId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    return { einsaetze: data ?? [] };
+  });
