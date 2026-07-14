@@ -251,9 +251,10 @@ async function resolveOutboundPayload(job: any) {
     ? (payload.einsatzId ?? payload.EinsatzId)
     : null;
   const hasEinsatzId = typeof currentId === "string" && currentId.trim() !== "";
-  const hasNewShape = payload && typeof payload === "object" && "einsatzId" in payload && "anlagenNr" in payload;
-  const hasPascalDup = payload && typeof payload === "object" && "EinsatzId" in payload;
-  if (hasEinsatzId && hasNewShape && hasPascalDup) return payload;
+  const hasV2Shape =
+    payload && typeof payload === "object" &&
+    "customFields" in payload && "arbeitszeit" in payload && "personalEmail" in payload;
+  if (hasEinsatzId && hasV2Shape) return payload;
   if (!job.einsatz_id) return payload;
 
   const { data: einsatz } = await supabaseAdmin
