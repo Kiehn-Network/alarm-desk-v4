@@ -4,6 +4,21 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [4.0.20] - 2026-07-14
+
+### Added
+
+- **Chat-System erweitert**: Persistenter Kanal „#Allgemein“ für alle Nutzer, rollen-geschützter Kanal „#Zentrale“ für Admins und Disponenten sowie private Direktnachrichten mit beliebigen Personen der eigenen Domäne. Inklusive Ungelesen-Badges pro Konversation und Push-/Sound-Benachrichtigungen.
+- **Benutzer-Export für Domänen-Admins**: Admins können die Benutzerliste ihrer Domäne gefiltert nach Rolle als CSV exportieren.
+- **ESRP Payload-Preview**: Neue Vorschau-Karte in der ESRP-Ansicht zeigt das exakt gebaute JSON inklusive Metadaten zur Base64-PDF vor dem Versand.
+- **Homepage-Redesign („Enterprise Indigo“)**: Neue Landing-Page mit Midnight-Indigo-Palette, Sora/Manrope-Typografie und überarbeiteten Sektionen (Hero, Features, Module, Security, CTA).
+
+### Changed
+
+- **ESRP `aenderPersonalNr`**: Default auf `999` gesetzt (positive ERP-Personalnummer), der bisher mögliche Wert `0` wird nicht mehr übergeben.
+- **ESRP Zeitangaben**: Alle Zeitpunkte (Arbeitszeit, `einsatzDatum`) werden jetzt in Europa/Berlin-Ortszeit mit korrektem Offset (`+01:00` / `+02:00`, inkl. Sommerzeit) statt in UTC (`Z`) übergeben.
+- **Login-Footer**: Kompakteres, responsives Versions-Badge mit dem Hinweis „Ein Produkt vom Kiehn Network“.
+
 ## [4.0.19] - 2026-07-13
 
 ### Added
