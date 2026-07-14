@@ -267,7 +267,7 @@ async function resolveOutboundPayload(job: any) {
   const rebuiltPayload = await buildErpPayload(einsatz);
   await supabaseAdmin
     .from("erp_outbox")
-    .update({ payload: rebuiltPayload as any, external_id: rebuiltPayload.einsatzId })
+    .update({ payload: rebuiltPayload as any, external_id: String(rebuiltPayload.einsatzId) })
     .eq("id", job.id);
 
   return rebuiltPayload;
@@ -383,7 +383,7 @@ export async function enqueueErpForEinsatz(opts: {
     .insert({
       domain_id: opts.domain_id,
       einsatz_id: opts.einsatz_id,
-      external_id: payload.einsatzId,
+      external_id: String(payload.einsatzId),
       payload: payload as any,
       status: "pending",
       created_by: opts.created_by ?? null,
