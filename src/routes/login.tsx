@@ -312,13 +312,13 @@ function LoginPage() {
 function VersionBadge({ info }: { info: VersionInfo | null }) {
   const version = info?.current_version ?? "…";
   return (
-    <div className="flex flex-col items-center gap-3 text-[11px] text-muted-foreground">
-      <div className="flex items-center gap-2">
+    <div className="inline-flex flex-col items-center gap-1 px-4 py-2.5 rounded-xl bg-card/70 border border-border/60 backdrop-blur-sm">
+      <div className="flex items-center gap-2 text-xs font-semibold text-foreground tracking-tight">
         <span>© 2026 AlarmDesk</span>
         <span className="text-border">·</span>
         <Dialog>
           <DialogTrigger asChild>
-            <button className="text-primary hover:underline font-medium">v{version}</button>
+            <button className="text-primary hover:underline">v{version}</button>
           </DialogTrigger>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
             <DialogHeader>
@@ -348,9 +348,8 @@ function VersionBadge({ info }: { info: VersionInfo | null }) {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/60">
-        <span className="opacity-80">Ein Produkt vom</span>
-        <span className="font-semibold text-foreground">Kiehn Network</span>
+      <div className="text-[10px] text-muted-foreground">
+        Ein Produkt vom <span className="font-medium text-foreground/80">Kiehn Network</span>
       </div>
     </div>
   );
