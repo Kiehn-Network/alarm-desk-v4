@@ -15,6 +15,7 @@ import { sendBerichtEmail } from "@/lib/bericht-email.functions";
 import { updateKundenEmail } from "@/lib/einsaetze.functions";
 import { enqueueEinsatzToErp, getEsrpSettings } from "@/lib/esrp.functions";
 import { useDomainModules } from "@/hooks/use-domain-modules";
+import { useAppSettings } from "@/hooks/use-app-settings";
 
 export function BerichtSendDialog({
   einsatz, fahrerName, open, onClose,
@@ -30,6 +31,8 @@ export function BerichtSendDialog({
   const getErp = useServerFn(getEsrpSettings);
   const { data: modules } = useDomainModules();
   const esrpEnabled = !!modules?.has("esrp");
+  const { data: appSettings } = useAppSettings();
+  const pdfZeiten = ((appSettings as any)?.pdf_zeiten_config ?? null) as any;
   const { data: erpSettings } = useQuery({
     queryKey: ["esrp-settings", "dialog"],
     queryFn: () => getErp(),
@@ -56,7 +59,7 @@ export function BerichtSendDialog({
   if (!einsatz) return null;
 
   function handleDownload() {
-    downloadEinsatzPdf(einsatz, fahrerName);
+    downloadEinsatzPdf(einsatz, fahrerName, pdfZeiten);
   }
 
   async function handleSend() {
@@ -71,7 +74,7 @@ export function BerichtSendDialog({
     setBusy(true);
     try {
       if (sendPdf) {
-        const base64 = einsatzPdfBase64(einsatz, fahrerName);
+        const base64 = einsatzPdfBase64(einsatz, fahrerName, pdfZeiten);
         const filename = `Einsatzbericht_${String(einsatz.id).slice(0, 8)}.pdf`;
         await send({
           data: {
