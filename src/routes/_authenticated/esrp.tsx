@@ -293,6 +293,126 @@ function SettingsCard() {
   );
 }
 
+function PayloadPreviewCard() {
+  const listFn = useServerFn(listEinsaetzeForPreview);
+  const previewFn = useServerFn(previewErpPayload);
+  const { data: listData } = useQuery({
+    queryKey: ["esrp-preview-list"],
+    queryFn: () => listFn(),
+  });
+  const [selected, setSelected] = useState<string>("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [showBase64, setShowBase64] = useState(false);
+
+  async function run() {
+    setBusy(true);
+    setErr(null);
+    try {
+      const r: any = await previewFn({
+        data: selected ? { einsatz_id: selected } : {},
+      });
+      setResult(r);
+    } catch (e: any) {
+      setErr(e?.message ?? "Fehler");
+      setResult(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const displayPayload = React.useMemo(() => {
+    if (!result?.payload) return null;
+    const clone: any = JSON.parse(JSON.stringify(result.payload));
+    if (clone.pdf && !showBase64) {
+      clone.pdf = {
+        ...clone.pdf,
+        base64: `[Base64 ausgeblendet – ${result.pdfMeta?.base64Length ?? clone.pdf.base64?.length ?? 0} Zeichen, ~${result.pdfMeta?.approxKb ?? "?"} KB]`,
+      };
+    }
+    return clone;
+  }, [result, showBase64]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Payload-Vorschau</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
+          <div className="flex-1 space-y-1.5">
+            <Label>Einsatz</Label>
+            <select
+              className="w-full h-9 rounded-md border bg-background px-2 text-sm"
+              value={selected}
+              onChange={(e) => setSelected(e.target.value)}
+            >
+              <option value="">Neuester Einsatz</option>
+              {(listData?.einsaetze ?? []).map((e: any) => (
+                <option key={e.id} value={e.id}>
+                  {(e.anlagen_nr ? `#${e.anlagen_nr} · ` : "")}
+                  {e.status ?? "?"} · {new Date(e.created_at).toLocaleString("de-DE")}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button onClick={run} disabled={busy} className="gap-2">
+            {busy && <Loader2 className="size-4 animate-spin" />} Vorschau bauen
+          </Button>
+        </div>
+
+        {err && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/5 p-2 text-xs text-destructive">
+            {err}
+          </div>
+        )}
+
+        {result && (
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {result.pdfMeta ? (
+                <>
+                  <Badge variant="outline">
+                    PDF: {result.pdfMeta.dateiname}
+                  </Badge>
+                  <Badge variant="outline">
+                    Base64: {result.pdfMeta.base64Length} Zeichen (~{result.pdfMeta.approxKb} KB)
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setShowBase64((v) => !v)}
+                  >
+                    {showBase64 ? "Base64 ausblenden" : "Base64 anzeigen"}
+                  </Button>
+                </>
+              ) : (
+                <Badge variant="outline">Kein PDF im Payload</Badge>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  navigator.clipboard
+                    .writeText(JSON.stringify(result.payload, null, 2))
+                    .then(() => toast.success("Payload in Zwischenablage kopiert"))
+                    .catch(() => toast.error("Kopieren fehlgeschlagen"));
+                }}
+              >
+                JSON kopieren
+              </Button>
+            </div>
+            <pre className="p-3 rounded-md bg-muted/40 border overflow-x-auto text-[11px] max-h-[480px]">
+{JSON.stringify(displayPayload, null, 2)}
+            </pre>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function OutboxCard() {
   const listFn = useServerFn(listErpOutbox);
   const retryFn = useServerFn(retryErpOutbox);
