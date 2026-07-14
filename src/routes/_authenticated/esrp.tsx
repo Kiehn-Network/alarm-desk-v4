@@ -160,6 +160,7 @@ function SettingsCard() {
         use_api_prefix: !!data.use_api_prefix,
         aktiv: !!data.aktiv,
         auto_on_abschluss: !!data.auto_on_abschluss,
+        aender_personal_nr: (data as any).aender_personal_nr ?? "",
       });
       setTokenChanged(false);
     }
@@ -178,6 +179,10 @@ function SettingsCard() {
           use_api_prefix: form.use_api_prefix,
           aktiv: form.aktiv,
           auto_on_abschluss: form.auto_on_abschluss,
+          aender_personal_nr:
+            form.aender_personal_nr === "" || form.aender_personal_nr === null || form.aender_personal_nr === undefined
+              ? null
+              : Number(form.aender_personal_nr),
         },
       });
       toast.success("Einstellungen gespeichert");
@@ -235,6 +240,19 @@ function SettingsCard() {
             {!tokenChanged && form.token_display && (
               <p className="text-xs text-muted-foreground">Gespeichert: {form.token_display}</p>
             )}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Ersteller-/Änderer-Personalnummer (aenderPersonalNr)</Label>
+            <Input
+              type="number"
+              min={1}
+              value={form.aender_personal_nr ?? ""}
+              onChange={(e) => setForm({ ...form, aender_personal_nr: e.target.value })}
+              placeholder="z. B. 123"
+            />
+            <p className="text-xs text-muted-foreground">
+              ERP-Personalnummer, die als Ersteller/Änderer für Aufträge, Arbeitsberichte und Arbeitszeit verwendet wird.
+            </p>
           </div>
         </div>
 
