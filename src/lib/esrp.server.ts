@@ -17,7 +17,26 @@ function toIsoOrNull(v: any): string | null {
   if (!v) return null;
   const d = new Date(v);
   if (isNaN(d.getTime())) return null;
-  return d.toISOString();
+  return toBerlinIso(d);
+}
+
+// Formatiert ein Datum als ISO-8601 in Europa/Berlin-Ortszeit mit korrektem Offset
+// (+01:00 im Winter, +02:00 im Sommer). Das ERP interpretiert "Z" als UTC –
+// für deutsche Ortszeit muss der Offset explizit gesetzt sein.
+function toBerlinIso(d: Date): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Berlin",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    hour12: false, timeZoneName: "longOffset",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  const tz = get("timeZoneName"); // e.g. "GMT+02:00" or "GMT"
+  const m = tz.match(/GMT([+-]\d{2}:?\d{2})?/);
+  let offset = "+00:00";
+  if (m && m[1]) offset = m[1].includes(":") ? m[1] : `${m[1].slice(0, 3)}:${m[1].slice(3)}`;
+  return `${get("year")}-${get("month")}-${get("day")}T${hour}:${get("minute")}:${get("second")}${offset}`;
 }
 
 function ynBool(v: any): boolean | null {
