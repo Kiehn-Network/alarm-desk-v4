@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  MessageCircle, X, Send, Paperclip, Hash,
-  Pencil, Trash2, Check, Download,
+  MessageCircle, X, Send, Paperclip, Hash, Shield, Users,
+  Pencil, Trash2, Check, Download, ArrowLeft, Search, Plus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,7 @@ type Conversation = {
   kind: "channel" | "dm";
   title: string | null;
   domain_id: string;
+  restricted_roles?: string[] | null;
 };
 type Message = {
   id: string;
