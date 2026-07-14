@@ -8,7 +8,7 @@ import {
 } from "@/lib/einsaetze.functions";
 
 export type QueuedAction =
-  | { kind: "setEinsatzZeit"; data: { id: string; feld: "vor_ort" | "abfahrt" | "ende" } }
+  | { kind: "setEinsatzZeit"; data: { id: string; feld: "abfahrt_zentrale" | "vor_ort" | "abfahrt" | "ende" } }
   | { kind: "abschliessenEinsatz"; data: { id: string } }
   | {
       kind: "updateEinsatzBericht";
