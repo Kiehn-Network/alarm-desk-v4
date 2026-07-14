@@ -81,8 +81,10 @@ export async function buildErpPayload(einsatz: any) {
     } catch { /* ignore */ }
   }
 
-  // Ersteller-/Änderer-Personalnummer aus ERP-Einstellungen
-  let aenderPersonalNr = 0;
+  // Ersteller-/Änderer-Personalnummer aus ERP-Einstellungen.
+  // Das ERP verlangt eine positive Nummer – 0 ist unzulässig.
+  // Fallback bis zur finalen Abstimmung: 999.
+  let aenderPersonalNr = 999;
   if (einsatz.domain_id) {
     const { data: s } = await supabaseAdmin
       .from("erp_settings")
@@ -90,8 +92,8 @@ export async function buildErpPayload(einsatz: any) {
       .eq("domain_id", einsatz.domain_id)
       .maybeSingle();
     const raw = (s as any)?.aender_personal_nr;
-    if (typeof raw === "number") aenderPersonalNr = raw;
-    else if (raw != null && raw !== "") aenderPersonalNr = Number(raw);
+    const num = typeof raw === "number" ? raw : raw != null && raw !== "" ? Number(raw) : NaN;
+    if (Number.isFinite(num) && num > 0) aenderPersonalNr = num;
   }
 
   // Arbeitszeit — vier verpflichtende Zeitpunkte mit monoton wachsender Reihenfolge.
@@ -101,7 +103,7 @@ export async function buildErpPayload(einsatz: any) {
   const rawEB = toIsoOrNull(einsatz.einsatz_ende_am) || toIsoOrNull(einsatz.abgeschlossen_am) || rawEN;
   const ts = [rawBB, rawBN, rawEN, rawEB].map((v) => new Date(v).getTime());
   for (let i = 1; i < ts.length; i++) if (ts[i] < ts[i - 1]) ts[i] = ts[i - 1];
-  const [bB, bN, eN, eB] = ts.map((t) => new Date(t).toISOString());
+  const [bB, bN, eN, eB] = ts.map((t) => toBerlinIso(new Date(t)));
   const arbeitszeit = {
     beginnBrutto: bB,
     beginnNetto: bN,
