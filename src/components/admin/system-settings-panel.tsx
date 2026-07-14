@@ -12,13 +12,15 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { getAppSettings, updateAppSettings } from "@/lib/settings.functions";
+import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig } from "@/lib/settings.functions";
+import { Clock } from "lucide-react";
 
 export function SystemSettingsPanel() {
   return (
     <div className="space-y-6">
       <GeneralSettings />
       <ThemeSettings />
+      <FahrerZeitenSettings />
       <MaintenanceSettings />
     </div>
   );
