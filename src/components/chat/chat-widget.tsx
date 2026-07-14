@@ -83,14 +83,11 @@ type View = "list" | "thread" | "newdm";
 
 export function ChatWidget() {
   const { user } = useAuth();
-  const { domainId, roles } = useRole();
+  const { domainId, isSuperAdmin, isAdmin, isDispatcher } = useRole();
   const { data: modules } = useDomainModules();
   const chatEnabled = modules?.has("chat") ?? false;
 
-  const canAccessZentrale = useMemo(() => {
-    if (!roles) return false;
-    return roles.includes("superadmin") || roles.includes("admin") || roles.includes("dispatcher");
-  }, [roles]);
+  const canAccessZentrale = isSuperAdmin || isAdmin || isDispatcher;
 
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<View>("list");
