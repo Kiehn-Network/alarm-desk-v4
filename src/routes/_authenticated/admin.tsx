@@ -7,7 +7,7 @@ import {
   Users, ShieldCheck, FileText, Siren, Tag, Plus, Pencil, Trash2,
   KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
   Boxes, CheckCircle2, GraduationCap,
-  LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert,
+  LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert, Download,
 } from "lucide-react";
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -451,6 +451,7 @@ function UsersPanel() {
   const { data, isLoading } = useQuery({ queryKey: ["admin-users"], queryFn: () => fetchUsers() });
 
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | AppRole>("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<any | null>(null);
   const [pwUser, setPwUser] = useState<any | null>(null);
@@ -459,12 +460,44 @@ function UsersPanel() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const list = data?.users ?? [];
-    if (!q) return list;
-    return list.filter((u: any) =>
-      (u.email ?? "").toLowerCase().includes(q) ||
-      (u.display_name ?? "").toLowerCase().includes(q),
-    );
-  }, [data, search]);
+    return list.filter((u: any) => {
+      const role = (u.roles?.[0] as AppRole) ?? "fahrer";
+      if (roleFilter !== "all" && role !== roleFilter) return false;
+      if (!q) return true;
+      return (
+        (u.email ?? "").toLowerCase().includes(q) ||
+        (u.display_name ?? "").toLowerCase().includes(q)
+      );
+    });
+  }, [data, search, roleFilter]);
+
+  const exportCsv = () => {
+    const rows = filtered.map((u: any) => ({
+      name: u.display_name ?? "",
+      email: u.email ?? "",
+      rolle: (u.roles?.[0] as string) ?? "fahrer",
+      erstellt_am: u.created_at ?? "",
+      letzter_login: u.last_sign_in_at ?? "",
+      einsatz_auswaehlbar: u.einsatz_selectable ? "ja" : "nein",
+    }));
+    const headers = ["name", "email", "rolle", "erstellt_am", "letzter_login", "einsatz_auswaehlbar"];
+    const esc = (v: any) => {
+      const s = String(v ?? "");
+      return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => esc((r as any)[h])).join(";"))].join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const suffix = roleFilter === "all" ? "alle" : roleFilter;
+    a.href = url;
+    a.download = `benutzer_${suffix}_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    toast.success(`${rows.length} Benutzer exportiert`);
+  };
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["admin-users"] });
@@ -488,6 +521,21 @@ function UsersPanel() {
           <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input className="pl-9" placeholder="Suchen nach Name oder E-Mail…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as any)}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Rolle" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle Rollen</SelectItem>
+            <SelectItem value="admin">Administrator</SelectItem>
+            <SelectItem value="dispatcher">Dispatcher</SelectItem>
+            <SelectItem value="fahrer">Fahrer</SelectItem>
+            <SelectItem value="user">Benutzer</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline" onClick={exportCsv} disabled={filtered.length === 0}>
+          <Download className="size-4 mr-2" />Exportieren ({filtered.length})
+        </Button>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4 mr-2" />Benutzer anlegen
         </Button>
