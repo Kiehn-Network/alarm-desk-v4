@@ -12,8 +12,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig } from "@/lib/settings.functions";
-import { Clock } from "lucide-react";
+import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig, updatePdfZeitenConfig } from "@/lib/settings.functions";
+import { Clock, FileText } from "lucide-react";
 
 export function SystemSettingsPanel() {
   return (
@@ -21,6 +21,7 @@ export function SystemSettingsPanel() {
       <GeneralSettings />
       <ThemeSettings />
       <FahrerZeitenSettings />
+      <PdfZeitenSettings />
       <MaintenanceSettings />
     </div>
   );
@@ -400,6 +401,73 @@ function FahrerZeitenSettings() {
               <span>Pflicht</span>
             </label>
           </div>
+        ))}
+      </div>
+      <div className="flex justify-end mt-5">
+        <Button onClick={() => save.mutate()} disabled={save.isPending}>
+          <Save className="size-4 mr-2" />{save.isPending ? "Speichere…" : "Speichern"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+// ============ PDF-Zeiten (per-domain) ============
+
+type PdfZeitKey = "created" | "abfahrt_zentrale" | "vor_ort" | "abfahrt_objekt" | "einsatz_ende" | "abgeschlossen";
+const PDF_LABELS: Record<PdfZeitKey, string> = {
+  created: "Erstellt",
+  abfahrt_zentrale: "Abfahrt Zentrale",
+  vor_ort: "Vor Ort",
+  abfahrt_objekt: "Abfahrt Objekt",
+  einsatz_ende: "Einsatz-Ende",
+  abgeschlossen: "Abgeschlossen",
+};
+const DEFAULT_PDF_ZEITEN: Record<PdfZeitKey, boolean> = {
+  created: true,
+  abfahrt_zentrale: false,
+  vor_ort: true,
+  abfahrt_objekt: true,
+  einsatz_ende: true,
+  abgeschlossen: true,
+};
+
+function PdfZeitenSettings() {
+  const qc = useQueryClient();
+  const fetchFn = useServerFn(getAppSettings);
+  const updateFn = useServerFn(updatePdfZeitenConfig);
+  const { data } = useQuery({ queryKey: ["app-settings"], queryFn: () => fetchFn() });
+
+  const [cfg, setCfg] = useState(DEFAULT_PDF_ZEITEN);
+  useEffect(() => {
+    const c = (data as any)?.pdf_zeiten_config;
+    if (c) setCfg({ ...DEFAULT_PDF_ZEITEN, ...c });
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: async () => updateFn({ data: cfg }),
+    onSuccess: () => {
+      toast.success("PDF-Zeiten aktualisiert");
+      qc.invalidateQueries({ queryKey: ["app-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <header className="flex items-center gap-2 pb-4 border-b border-border mb-5">
+        <FileText className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold uppercase tracking-wide">PDF-Bericht Zeiten</h3>
+      </header>
+      <p className="text-sm text-muted-foreground mb-4">
+        Wähle, welche Zeitangaben im generierten Einsatzbericht-PDF (Download &amp; E-Mail) erscheinen.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {(Object.keys(PDF_LABELS) as PdfZeitKey[]).map((k) => (
+          <label key={k} className="rounded-lg border border-border bg-muted/20 p-3 flex items-center justify-between gap-3">
+            <span className="text-sm">{PDF_LABELS[k]}</span>
+            <Switch checked={cfg[k]} onCheckedChange={(v) => setCfg((p) => ({ ...p, [k]: v }))} />
+          </label>
         ))}
       </div>
       <div className="flex justify-end mt-5">

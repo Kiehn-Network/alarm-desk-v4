@@ -69,6 +69,7 @@ export type Database = {
           fahrer_zeiten_config: Json
           firmenname: string
           logo_url: string | null
+          pdf_zeiten_config: Json
           rohrservice_notiz: string | null
           rohrservice_variante: string
           theme: string
@@ -85,6 +86,7 @@ export type Database = {
           fahrer_zeiten_config?: Json
           firmenname?: string
           logo_url?: string | null
+          pdf_zeiten_config?: Json
           rohrservice_notiz?: string | null
           rohrservice_variante?: string
           theme?: string
@@ -101,6 +103,7 @@ export type Database = {
           fahrer_zeiten_config?: Json
           firmenname?: string
           logo_url?: string | null
+          pdf_zeiten_config?: Json
           rohrservice_notiz?: string | null
           rohrservice_variante?: string
           theme?: string

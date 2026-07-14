@@ -156,7 +156,16 @@ export async function buildErpPayload(einsatz: any) {
   // Optionales PDF-Dokument (Arbeitsbericht) als Base64.
   let pdf: { titel: string; dateiname: string; base64: string } | null = null;
   try {
-    const base64 = einsatzPdfBase64(einsatz, fahrerName);
+    let pdfZeiten: any = null;
+    if (einsatz.domain_id) {
+      const { data: as } = await supabaseAdmin
+        .from("app_settings")
+        .select("pdf_zeiten_config")
+        .eq("domain_id", einsatz.domain_id)
+        .maybeSingle();
+      pdfZeiten = (as as any)?.pdf_zeiten_config ?? null;
+    }
+    const base64 = einsatzPdfBase64(einsatz, fahrerName, pdfZeiten);
     if (base64 && base64.length > 0) {
       const idSafe = idPart.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40) || "einsatz";
       pdf = {

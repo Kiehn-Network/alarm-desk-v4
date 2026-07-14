@@ -15,7 +15,26 @@ function yn(v?: string | boolean | null) {
   return "–";
 }
 
-export function buildEinsatzPdf(e: any, fahrerName: string | null) {
+export type PdfZeitenConfig = {
+  created?: boolean;
+  abfahrt_zentrale?: boolean;
+  vor_ort?: boolean;
+  abfahrt_objekt?: boolean;
+  einsatz_ende?: boolean;
+  abgeschlossen?: boolean;
+};
+
+const DEFAULT_PDF_ZEITEN: Required<PdfZeitenConfig> = {
+  created: true,
+  abfahrt_zentrale: false,
+  vor_ort: true,
+  abfahrt_objekt: true,
+  einsatz_ende: true,
+  abgeschlossen: true,
+};
+
+export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
+  const cfg = { ...DEFAULT_PDF_ZEITEN, ...(zeiten ?? {}) };
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const margin = 48;
@@ -67,13 +86,20 @@ export function buildEinsatzPdf(e: any, fahrerName: string | null) {
   if (e.beschreibung) line(`Beschreibung: ${e.beschreibung}`);
   sep();
 
-  line("Zeiten", { size: 11, bold: true, gap: 16 });
-  line(`Erstellt: ${fmt(e.created_at)}`);
-  line(`Vor Ort: ${fmt(e.vor_ort_am)}`);
-  line(`Abfahrt: ${fmt(e.abfahrt_am)}`);
-  line(`Einsatz-Ende: ${fmt(e.einsatz_ende_am)}`);
-  line(`Abgeschlossen: ${fmt(e.abgeschlossen_am)}`);
-  sep();
+  const zeilen: Array<[boolean, string, any]> = [
+    [!!cfg.created, "Erstellt", e.created_at],
+    [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
+    [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
+    [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
+    [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
+    [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
+  ];
+  const visible = zeilen.filter(([on]) => on);
+  if (visible.length > 0) {
+    line("Zeiten", { size: 11, bold: true, gap: 16 });
+    for (const [, label, v] of visible) line(`${label}: ${fmt(v)}`);
+    sep();
+  }
 
   line("Bericht", { size: 11, bold: true, gap: 16 });
   if (e.bericht_typ === "hausnotruf") {
@@ -109,14 +135,14 @@ export function buildEinsatzPdf(e: any, fahrerName: string | null) {
   return doc;
 }
 
-export function downloadEinsatzPdf(e: any, fahrerName: string | null) {
-  const doc = buildEinsatzPdf(e, fahrerName);
+export function downloadEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
+  const doc = buildEinsatzPdf(e, fahrerName, zeiten);
   const name = `Einsatzbericht_${String(e.id).slice(0, 8)}.pdf`;
   doc.save(name);
 }
 
-export function einsatzPdfBase64(e: any, fahrerName: string | null) {
-  const doc = buildEinsatzPdf(e, fahrerName);
+export function einsatzPdfBase64(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
+  const doc = buildEinsatzPdf(e, fahrerName, zeiten);
   const uri = doc.output("datauristring");
   const base64 = uri.split(",")[1] ?? "";
   return base64;
