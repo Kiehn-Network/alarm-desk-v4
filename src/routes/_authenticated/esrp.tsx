@@ -21,6 +21,8 @@ import {
   listErpOutbox,
   retryErpOutbox,
   processErpOutboxNow,
+  previewErpPayload,
+  listEinsaetzeForPreview,
 } from "@/lib/esrp.functions";
 
 export const Route = createFileRoute("/_authenticated/esrp")({
@@ -135,6 +137,7 @@ function EsrpPage() {
         <h1 className="text-2xl font-bold">ESRP – ERP-Anbindung</h1>
       </div>
       <SettingsCard />
+      <PayloadPreviewCard />
       <OutboxCard />
     </div>
   );
