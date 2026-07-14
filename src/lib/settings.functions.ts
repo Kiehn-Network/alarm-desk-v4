@@ -65,6 +65,32 @@ export const updateFahrerZeitenConfig = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+const pdfZeitenSchema = z.object({
+  created: z.boolean(),
+  abfahrt_zentrale: z.boolean(),
+  vor_ort: z.boolean(),
+  abfahrt_objekt: z.boolean(),
+  einsatz_ende: z.boolean(),
+  abgeschlossen: z.boolean(),
+});
+
+export const updatePdfZeitenConfig = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => pdfZeitenSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        { domain_id: domainId, pdf_zeiten_config: data, updated_by: userId } as any,
+        { onConflict: "domain_id" },
+      );
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const updateAppSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => settingsSchema.parse(d))
