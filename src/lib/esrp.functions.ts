@@ -219,8 +219,9 @@ export const previewErpPayload = createServerFn({ method: "POST" })
     if (einsatz.domain_id !== domainId) {
       throw new Error("Einsatz gehört nicht zur Domäne");
     }
-    const payload = await buildErpPayload(einsatz);
-    const pdf = (payload as any).pdf as
+    const built = await buildErpPayload(einsatz);
+    const payload = JSON.parse(JSON.stringify(built)) as Record<string, any>;
+    const pdf = payload.pdf as
       | { titel: string; dateiname: string; base64: string }
       | undefined;
     const pdfMeta = pdf
