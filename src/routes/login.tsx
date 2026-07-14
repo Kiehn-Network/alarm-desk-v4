@@ -312,7 +312,7 @@ function LoginPage() {
 function VersionBadge({ info }: { info: VersionInfo | null }) {
   const version = info?.current_version ?? "…";
   return (
-    <div className="inline-flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg bg-card/60 border border-border/50 backdrop-blur-sm">
+    <div className="inline-flex flex-col lg:flex-row items-center gap-0.5 lg:gap-2 px-3 py-1.5 rounded-lg bg-card/60 border border-border/50 backdrop-blur-sm">
       <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground tracking-tight">
         <span>© 2026 AlarmDesk</span>
         <span className="text-border">·</span>
@@ -348,7 +348,7 @@ function VersionBadge({ info }: { info: VersionInfo | null }) {
           </DialogContent>
         </Dialog>
       </div>
-      <div className="text-[9px] text-muted-foreground leading-none">
+      <div className="text-[9px] text-muted-foreground leading-none lg:pl-2 lg:border-l lg:border-border/50">
         Ein Produkt vom <span className="font-medium text-foreground/80">Kiehn Network</span>
       </div>
     </div>
