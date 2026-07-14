@@ -312,39 +312,46 @@ function LoginPage() {
 function VersionBadge({ info }: { info: VersionInfo | null }) {
   const version = info?.current_version ?? "…";
   return (
-    <div className="text-xs text-muted-foreground">
-      © 2026 AlarmDesk · Ein Produkt vom Kiehn Network ·{" "}
-      <Dialog>
-        <DialogTrigger asChild>
-          <button className="text-primary hover:underline font-medium">v{version}</button>
-        </DialogTrigger>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Changelog</DialogTitle>
-            <DialogDescription>Aktuelle Version: v{version}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-5 mt-2">
-            {(info?.versions ?? []).length === 0 && (
-              <p className="text-sm text-muted-foreground">Noch keine Einträge.</p>
-            )}
-            {info?.versions.map((v) => (
-              <div key={v.id} className="border-l-2 border-primary/40 pl-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <div className="font-semibold text-sm">v{v.version}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(v.released_at).toLocaleDateString("de-DE")}
+    <div className="flex flex-col items-center gap-3 text-[11px] text-muted-foreground">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/60">
+        <span className="opacity-80">Ein Produkt vom</span>
+        <span className="font-semibold text-foreground">Kiehn Network</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span>© 2026 AlarmDesk</span>
+        <span className="text-border">·</span>
+        <Dialog>
+          <DialogTrigger asChild>
+            <button className="text-primary hover:underline font-medium">v{version}</button>
+          </DialogTrigger>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Changelog</DialogTitle>
+              <DialogDescription>Aktuelle Version: v{version}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-5 mt-2">
+              {(info?.versions ?? []).length === 0 && (
+                <p className="text-sm text-muted-foreground">Noch keine Einträge.</p>
+              )}
+              {info?.versions.map((v) => (
+                <div key={v.id} className="border-l-2 border-primary/40 pl-3">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <div className="font-semibold text-sm">v{v.version}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(v.released_at).toLocaleDateString("de-DE")}
+                    </div>
                   </div>
+                  {v.changelog && (
+                    <pre className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground font-sans">
+                      {v.changelog}
+                    </pre>
+                  )}
                 </div>
-                {v.changelog && (
-                  <pre className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground font-sans">
-                    {v.changelog}
-                  </pre>
-                )}
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
