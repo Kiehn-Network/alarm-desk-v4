@@ -66,6 +66,7 @@ export type Database = {
           budeko_notiz: string | null
           dashboard_hinweis: string | null
           domain_id: string
+          fahrer_zeiten_config: Json
           firmenname: string
           logo_url: string | null
           rohrservice_notiz: string | null
@@ -81,6 +82,7 @@ export type Database = {
           budeko_notiz?: string | null
           dashboard_hinweis?: string | null
           domain_id: string
+          fahrer_zeiten_config?: Json
           firmenname?: string
           logo_url?: string | null
           rohrservice_notiz?: string | null
@@ -96,6 +98,7 @@ export type Database = {
           budeko_notiz?: string | null
           dashboard_hinweis?: string | null
           domain_id?: string
+          fahrer_zeiten_config?: Json
           firmenname?: string
           logo_url?: string | null
           rohrservice_notiz?: string | null
@@ -982,6 +985,7 @@ export type Database = {
       einsaetze: {
         Row: {
           abfahrt_am: string | null
+          abfahrt_zentrale_am: string | null
           abgeschlossen_am: string | null
           ablehnung_grund: string | null
           address: string | null
@@ -1022,6 +1026,7 @@ export type Database = {
         }
         Insert: {
           abfahrt_am?: string | null
+          abfahrt_zentrale_am?: string | null
           abgeschlossen_am?: string | null
           ablehnung_grund?: string | null
           address?: string | null
@@ -1062,6 +1067,7 @@ export type Database = {
         }
         Update: {
           abfahrt_am?: string | null
+          abfahrt_zentrale_am?: string | null
           abgeschlossen_am?: string | null
           ablehnung_grund?: string | null
           address?: string | null

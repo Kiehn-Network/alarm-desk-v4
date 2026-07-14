@@ -24,6 +24,7 @@ import {
   listSchluesselForEinsatz, uebernehmenSchluessel, rueckgabeAnfragen,
 } from "@/lib/schluesselbuch.functions";
 import { useDomainModules } from "@/hooks/use-domain-modules";
+import { useAppSettings } from "@/hooks/use-app-settings";
 import { HoldButton } from "@/components/hold-button";
 import { EinsatzDateienDialog } from "@/components/einsatz-dateien-dialog";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
@@ -58,6 +59,16 @@ function MeineEinsaetzePage() {
   const prefetchDateien = useServerFn(listDateienForEinsatz);
   const { data: modules } = useDomainModules();
   const schluesselbuchOn = modules?.has("schluesselbuch") ?? false;
+  const { data: appSettings } = useAppSettings();
+  const zeitCfg = (((appSettings as any)?.fahrer_zeiten_config) ?? {
+    abfahrt_zentrale: { enabled: false, required: false },
+    vor_ort: { enabled: true, required: true },
+    abfahrt_objekt: { enabled: true, required: false },
+  }) as {
+    abfahrt_zentrale: { enabled: boolean; required: boolean };
+    vor_ort: { enabled: boolean; required: boolean };
+    abfahrt_objekt: { enabled: boolean; required: boolean };
+  };
   const { online } = useOfflineQueue();
 
   const { data, refetch, isLoading } = useQuery({
@@ -159,6 +170,17 @@ function MeineEinsaetzePage() {
   }
 
   async function complete(id: string) {
+    const e = einsaetze.find((x) => x.id === id);
+    if (e) {
+      const missing: string[] = [];
+      if (zeitCfg.abfahrt_zentrale.enabled && zeitCfg.abfahrt_zentrale.required && !e.abfahrt_zentrale_am) missing.push("Abfahrt Zentrale");
+      if (zeitCfg.vor_ort.enabled && zeitCfg.vor_ort.required && !e.vor_ort_am) missing.push("Vor Ort");
+      if (zeitCfg.abfahrt_objekt.enabled && zeitCfg.abfahrt_objekt.required && !e.abfahrt_am) missing.push("Abfahrt Objekt");
+      if (missing.length > 0) {
+        toast.error(`Bitte zuerst erfassen: ${missing.join(", ")}`);
+        return;
+      }
+    }
     setBusy(id);
     try {
       if (!online) {
@@ -181,7 +203,7 @@ function MeineEinsaetzePage() {
     } finally { setBusy(null); }
   }
 
-  async function setTime(id: string, feld: "vor_ort" | "abfahrt" | "ende") {
+  async function setTime(id: string, feld: "abfahrt_zentrale" | "vor_ort" | "abfahrt" | "ende") {
     try {
       if (!online) {
         enqueue({ kind: "setEinsatzZeit", data: { id, feld } });
@@ -281,23 +303,33 @@ function MeineEinsaetzePage() {
                 </div>
 
                 {isAktiv(e) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-border">
-                    <HoldButton label="Vor Ort" value={e.vor_ort_am}
-                      icon={<MapPinned className="size-4" />}
-                      onComplete={() => setTime(e.id, "vor_ort")} />
-                    <HoldButton label="Abfahrt" value={e.abfahrt_am}
-                      icon={<LogOut className="size-4" />}
-                      onComplete={() => setTime(e.id, "abfahrt")} />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-border">
+                    {zeitCfg.abfahrt_zentrale.enabled && (
+                      <HoldButton label={`Abfahrt Zentrale${zeitCfg.abfahrt_zentrale.required ? " *" : ""}`} value={e.abfahrt_zentrale_am}
+                        icon={<LogOut className="size-4" />}
+                        onComplete={() => setTime(e.id, "abfahrt_zentrale")} />
+                    )}
+                    {zeitCfg.vor_ort.enabled && (
+                      <HoldButton label={`Vor Ort${zeitCfg.vor_ort.required ? " *" : ""}`} value={e.vor_ort_am}
+                        icon={<MapPinned className="size-4" />}
+                        onComplete={() => setTime(e.id, "vor_ort")} />
+                    )}
+                    {zeitCfg.abfahrt_objekt.enabled && (
+                      <HoldButton label={`Abfahrt Objekt${zeitCfg.abfahrt_objekt.required ? " *" : ""}`} value={e.abfahrt_am}
+                        icon={<LogOut className="size-4" />}
+                        onComplete={() => setTime(e.id, "abfahrt")} />
+                    )}
                     <HoldButton label="Einsatz Ende" value={e.einsatz_ende_am}
                       icon={<Square className="size-4" />}
                       onComplete={() => setTime(e.id, "ende")} />
                   </div>
                 )}
 
-                {!isAktiv(e) && (e.vor_ort_am || e.abfahrt_am || e.einsatz_ende_am) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-border text-xs">
+                {!isAktiv(e) && (e.abfahrt_zentrale_am || e.vor_ort_am || e.abfahrt_am || e.einsatz_ende_am) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-border text-xs">
+                    {e.abfahrt_zentrale_am && <TimeBadge label="Abfahrt Zentrale" value={e.abfahrt_zentrale_am} />}
                     <TimeBadge label="Vor Ort" value={e.vor_ort_am} />
-                    <TimeBadge label="Abfahrt" value={e.abfahrt_am} />
+                    <TimeBadge label="Abfahrt Objekt" value={e.abfahrt_am} />
                     <TimeBadge label="Ende" value={e.einsatz_ende_am} />
                   </div>
                 )}

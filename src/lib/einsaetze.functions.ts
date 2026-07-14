@@ -333,14 +333,15 @@ export const setEinsatzZeit = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({
       id: z.string().uuid(),
-      feld: z.enum(["vor_ort", "abfahrt", "ende"]),
+      feld: z.enum(["abfahrt_zentrale", "vor_ort", "abfahrt", "ende"]),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const domainId = await requireEffectiveDomainId(supabase, userId);
     const col =
-      data.feld === "vor_ort" ? "vor_ort_am"
+      data.feld === "abfahrt_zentrale" ? "abfahrt_zentrale_am"
+      : data.feld === "vor_ort" ? "vor_ort_am"
       : data.feld === "abfahrt" ? "abfahrt_am"
       : "einsatz_ende_am";
     const { data: before } = await supabase
