@@ -875,6 +875,7 @@ function EditDialog({
         abfahrt_am: toLocalInput(einsatz.abfahrt_am),
         einsatz_ende_am: toLocalInput(einsatz.einsatz_ende_am),
         abgeschlossen_am: toLocalInput(einsatz.abgeschlossen_am),
+        hausnotruf_provider: einsatz.hausnotruf_provider ?? "",
       });
     }
   }, [einsatz?.id]);
@@ -888,6 +889,7 @@ function EditDialog({
       </Dialog>
     );
   }
+  const isHausnotruf = (einsatz.einsatz_typ ?? "av_einsatz") === "hausnotruf";
 
   return (
     <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -920,6 +922,23 @@ function EditDialog({
               <Label>Adresse</Label>
               <Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} />
             </div>
+            {isHausnotruf && (
+              <div className="space-y-1 md:col-span-2">
+                <Label>Subprovider</Label>
+                <Select
+                  value={form.hausnotruf_provider || "none"}
+                  onValueChange={(v) => set("hausnotruf_provider", v === "none" ? "" : v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">— keiner —</SelectItem>
+                    <SelectItem value="malteser">Malteser</SelectItem>
+                    <SelectItem value="johanniter">Johanniter</SelectItem>
+                    <SelectItem value="lgwa">LüWa</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -967,6 +986,9 @@ function EditDialog({
                   abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
                   einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
                   abgeschlossen_am: fromLocalInput(form.abgeschlossen_am ?? ""),
+                  ...(isHausnotruf
+                    ? { hausnotruf_provider: form.hausnotruf_provider || null }
+                    : {}),
                 });
               } catch (err: any) {
                 toast.error(err.message ?? "Fehler");
