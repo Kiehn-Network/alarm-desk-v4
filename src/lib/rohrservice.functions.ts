@@ -17,7 +17,7 @@ export const getRohrserviceConfig = createServerFn({ method: "GET" })
     const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data } = await supabase
       .from("app_settings")
-      .select("rohrservice_variante, rohrservice_notiz")
+      .select("rohrservice_variante, rohrservice_notiz, rohrservice_bericht_email")
       .eq("domain_id", domainId)
       .maybeSingle();
     const { data: files } = await supabase
@@ -28,6 +28,7 @@ export const getRohrserviceConfig = createServerFn({ method: "GET" })
     return {
       variante: (data?.rohrservice_variante ?? "standard") as "standard" | "budeko",
       notiz: (data?.rohrservice_notiz ?? null) as string | null,
+      bericht_email: (data?.rohrservice_bericht_email ?? null) as string | null,
       dateien: (files ?? []) as any[],
     };
   });
@@ -50,6 +51,11 @@ export const updateRohrserviceConfig = createServerFn({ method: "POST" })
     z.object({
       variante: z.enum(["standard", "budeko"]).optional(),
       notiz: z.string().max(20000).nullable().optional(),
+      bericht_email: z.string().trim().max(200).nullable().optional().transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null || v === "") return null;
+        return v;
+      }),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
@@ -60,6 +66,7 @@ export const updateRohrserviceConfig = createServerFn({ method: "POST" })
     const patch: any = { domain_id: domainId, updated_by: userId };
     if (data.variante !== undefined) patch.rohrservice_variante = data.variante;
     if (data.notiz !== undefined) patch.rohrservice_notiz = data.notiz;
+    if (data.bericht_email !== undefined) patch.rohrservice_bericht_email = data.bericht_email;
 
     const { error } = await supabase
       .from("app_settings")
