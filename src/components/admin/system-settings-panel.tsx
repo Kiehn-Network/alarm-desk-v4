@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Building2, Upload, AlertTriangle, Info, Save, Palette, Check } from "lucide-react";
+import { Building2, Upload, AlertTriangle, Info, Save, Palette, Check, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig, updatePdfZeitenConfig } from "@/lib/settings.functions";
+import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig, updatePdfZeitenConfig, updateZentraleAdresse } from "@/lib/settings.functions";
 import { Clock, FileText } from "lucide-react";
 
 export function SystemSettingsPanel() {
@@ -20,6 +20,7 @@ export function SystemSettingsPanel() {
     <div className="space-y-6">
       <GeneralSettings />
       <ThemeSettings />
+      <ZentraleAdresseSettings />
       <FahrerZeitenSettings />
       <PdfZeitenSettings />
       <MaintenanceSettings />
