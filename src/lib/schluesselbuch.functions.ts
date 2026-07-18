@@ -118,6 +118,153 @@ export const rueckgabeBestaetigen = createServerFn({ method: "POST" })
     return row;
   });
 
+// Zwangs-Rücknahme: Zentrale/Disponent kann einen ausgegebenen Schlüssel
+// zurücknehmen, auch wenn der Fahrer keine Rückgabe angefordert hat.
+// Grund wird verpflichtend in der Notiz protokolliert.
+export const rueckgabeErzwingen = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      grund: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", userId);
+    const allowed = (roles ?? []).some((r: any) =>
+      r.role === "dispatcher" || r.role === "admin" || r.role === "superadmin");
+    if (!allowed) throw new Error("Nur Zentrale/Disponent darf Schlüssel zwangs-zurücknehmen");
+
+    const { data: existing, error: exErr } = await supabase
+      .from("schluessel_buch")
+      .select("notiz, status")
+      .eq("id", data.id)
+      .single();
+    if (exErr) throw new Error(exErr.message);
+    if (existing?.status === "zurueck") throw new Error("Schlüssel ist bereits zurück");
+
+    const stamp = new Date().toLocaleString("de-DE");
+    const forced = `[Zwangs-Rücknahme ${stamp}] ${data.grund}`;
+    const newNotiz = existing?.notiz ? `${existing.notiz}\n${forced}` : forced;
+
+    const nowIso = new Date().toISOString();
+    const { data: row, error } = await supabase
+      .from("schluessel_buch")
+      .update({
+        status: "zurueck",
+        zurueck_at: nowIso,
+        zurueck_by: userId,
+        // Falls nie eine Rückgabe angefragt wurde, für die Historie nachtragen
+        rueckgabe_angefragt_at: existing && (existing as any)?.rueckgabe_angefragt_at
+          ? undefined
+          : nowIso,
+        rueckgabe_angefragt_by: existing && (existing as any)?.rueckgabe_angefragt_by
+          ? undefined
+          : userId,
+        notiz: newNotiz,
+      })
+      .eq("id", data.id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+// Manuelle Ausgabe durch die Zentrale — ohne Einsatzbezug.
+// Beispiel: Kunde holt seinen Schlüssel selbst ab. Grund + Empfängername sind Pflicht.
+export const manuellAusbuchen = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      key_number: z.string().trim().min(1).max(100),
+      traeger_name: z.string().trim().min(1).max(200),
+      kunden_name: z.string().trim().max(200).optional().nullable(),
+      address: z.string().trim().max(300).optional().nullable(),
+      grund: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", userId);
+    const allowed = (roles ?? []).some((r: any) =>
+      r.role === "dispatcher" || r.role === "admin" || r.role === "superadmin");
+    if (!allowed) throw new Error("Nur Zentrale/Disponent darf Schlüssel manuell ausbuchen");
+
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const stamp = new Date().toLocaleString("de-DE");
+    const notiz = `[Manuelle Ausgabe ${stamp}] ${data.grund}`;
+
+    const { data: row, error } = await supabase
+      .from("schluessel_buch")
+      .insert({
+        domain_id: domainId,
+        einsatz_id: null,
+        key_number: data.key_number,
+        kunden_name: data.kunden_name?.trim() || null,
+        address: data.address?.trim() || null,
+        traeger_name: data.traeger_name,
+        status: "ausgegeben",
+        ausgegeben_by: userId,
+        ausgegeben_at: new Date().toISOString(),
+        notiz,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+// Manuelle Einbuchung / Rücknahme durch die Zentrale.
+// Beispiel: Kunde bringt seinen Schlüssel zurück. Grund ist Pflicht.
+export const manuellEinbuchen = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      id: z.string().uuid(),
+      grund: z.string().trim().min(3).max(500),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", userId);
+    const allowed = (roles ?? []).some((r: any) =>
+      r.role === "dispatcher" || r.role === "admin" || r.role === "superadmin");
+    if (!allowed) throw new Error("Nur Zentrale/Disponent darf Schlüssel einbuchen");
+
+    const { data: existing, error: exErr } = await supabase
+      .from("schluessel_buch")
+      .select("notiz, status")
+      .eq("id", data.id)
+      .single();
+    if (exErr) throw new Error(exErr.message);
+    if (existing?.status === "zurueck") throw new Error("Schlüssel ist bereits eingebucht");
+
+    const stamp = new Date().toLocaleString("de-DE");
+    const line = `[Manuelle Einbuchung ${stamp}] ${data.grund}`;
+    const newNotiz = existing?.notiz ? `${existing.notiz}\n${line}` : line;
+    const nowIso = new Date().toISOString();
+
+    const { data: row, error } = await supabase
+      .from("schluessel_buch")
+      .update({
+        status: "zurueck",
+        zurueck_at: nowIso,
+        zurueck_by: userId,
+        rueckgabe_angefragt_at: (existing as any)?.rueckgabe_angefragt_at ?? nowIso,
+        rueckgabe_angefragt_by: (existing as any)?.rueckgabe_angefragt_by ?? userId,
+        notiz: newNotiz,
+      })
+      .eq("id", data.id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
 export const listSchluesselbuch = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
