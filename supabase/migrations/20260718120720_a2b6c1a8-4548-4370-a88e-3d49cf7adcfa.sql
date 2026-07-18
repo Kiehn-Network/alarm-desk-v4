@@ -1,0 +1,1 @@
+ALTER TABLE public.schluessel_buch ALTER COLUMN einsatz_id DROP NOT NULL;
