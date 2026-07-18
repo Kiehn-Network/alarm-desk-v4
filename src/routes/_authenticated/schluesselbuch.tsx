@@ -120,6 +120,24 @@ function SchluesselbuchPage() {
     return list;
   }, [entries, tab, q]);
 
+  // Debounced Kundensuche (must run before any early return to keep hook order stable)
+  useEffect(() => {
+    if (!ausgabeOpen) return;
+    const query = kundeQ.trim();
+    if (query.length < 2) { setKundeResults([]); return; }
+    setKundeSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await kundenSearch({ data: { q: query } });
+        setKundeResults(r?.results ?? []);
+        setKundeOpen(true);
+      } catch { /* ignore */ }
+      finally { setKundeSearching(false); }
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kundeQ, ausgabeOpen]);
+
   if (loading) return <div className="p-6 lg:p-8 text-sm text-muted-foreground">Lade…</div>;
   if (isFahrer) return <AccessDenied title="Kein Zugriff" message="Das Schlüsselbuch ist nicht für Fahrer freigegeben." />;
 
@@ -153,24 +171,6 @@ function SchluesselbuchPage() {
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
     finally { setAusgabeBusy(false); }
   }
-
-  // Debounced Kundensuche
-  useEffect(() => {
-    if (!ausgabeOpen) return;
-    const q = kundeQ.trim();
-    if (q.length < 2) { setKundeResults([]); return; }
-    setKundeSearching(true);
-    const t = setTimeout(async () => {
-      try {
-        const r = await kundenSearch({ data: { q } });
-        setKundeResults(r?.results ?? []);
-        setKundeOpen(true);
-      } catch { /* ignore */ }
-      finally { setKundeSearching(false); }
-    }, 250);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kundeQ, ausgabeOpen]);
 
   async function doErzwingen() {
     if (!forceRow || forceGrund.trim().length < 3) {
