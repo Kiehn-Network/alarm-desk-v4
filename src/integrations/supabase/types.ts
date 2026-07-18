@@ -78,6 +78,7 @@ export type Database = {
           wartung_aktiv: boolean
           wartung_farbe: string
           wartung_nachricht: string | null
+          zentrale_adresse: string | null
         }
         Insert: {
           budeko_notiz?: string | null
@@ -95,6 +96,7 @@ export type Database = {
           wartung_aktiv?: boolean
           wartung_farbe?: string
           wartung_nachricht?: string | null
+          zentrale_adresse?: string | null
         }
         Update: {
           budeko_notiz?: string | null
@@ -112,6 +114,7 @@ export type Database = {
           wartung_aktiv?: boolean
           wartung_farbe?: string
           wartung_nachricht?: string | null
+          zentrale_adresse?: string | null
         }
         Relationships: [
           {
