@@ -137,6 +137,7 @@ function Nachbearbeitung() {
       {sendId && (
         <SendDialog
           bericht={berichte.find((b) => b.id === sendId)}
+          defaultEmail={cfg?.bericht_email ?? ""}
           onClose={() => setSendId(null)}
           onSend={handleSend}
         />
@@ -146,9 +147,9 @@ function Nachbearbeitung() {
 }
 
 function SendDialog({
-  bericht, onClose, onSend,
-}: { bericht: any; onClose: () => void; onSend: (b: any, email: string) => Promise<void> }) {
-  const [email, setEmail] = useState(bericht?.versendet_an ?? "");
+  bericht, defaultEmail, onClose, onSend,
+}: { bericht: any; defaultEmail?: string; onClose: () => void; onSend: (b: any, email: string) => Promise<void> }) {
+  const [email, setEmail] = useState(bericht?.versendet_an ?? defaultEmail ?? "");
   const [pending, setPending] = useState(false);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
