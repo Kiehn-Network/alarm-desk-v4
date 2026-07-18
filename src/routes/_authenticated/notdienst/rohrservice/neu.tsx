@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { createBericht, getRohrserviceConfig } from "@/lib/rohrservice.functions";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/notdienst/rohrservice/neu")({
   component: NeuerBericht,
@@ -24,6 +25,22 @@ function NeuerBericht() {
   const [f, setF] = useState<Form>({});
 
   const set = (k: string, v: any) => setF((p) => ({ ...p, [k]: v }));
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth.user?.id;
+      if (!uid) return;
+      const { data: prof } = await supabase
+        .from("profiles").select("display_name").eq("id", uid).maybeSingle();
+      const name = (prof as any)?.display_name?.trim();
+      if (!cancel && name) {
+        setF((p) => (p.diensthabender_alarmzentrale ? p : { ...p, diensthabender_alarmzentrale: name }));
+      }
+    })();
+    return () => { cancel = true; };
+  }, []);
 
   const mut = useMutation({
     mutationFn: (data: Form) => createFn({ data: data as any }),
