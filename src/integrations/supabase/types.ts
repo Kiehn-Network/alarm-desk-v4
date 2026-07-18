@@ -2584,7 +2584,7 @@ export type Database = {
           ausgegeben_by: string
           created_at: string
           domain_id: string
-          einsatz_id: string
+          einsatz_id: string | null
           id: string
           is_demo: boolean
           key_number: string
@@ -2607,7 +2607,7 @@ export type Database = {
           ausgegeben_by: string
           created_at?: string
           domain_id: string
-          einsatz_id: string
+          einsatz_id?: string | null
           id?: string
           is_demo?: boolean
           key_number: string
@@ -2630,7 +2630,7 @@ export type Database = {
           ausgegeben_by?: string
           created_at?: string
           domain_id?: string
-          einsatz_id?: string
+          einsatz_id?: string | null
           id?: string
           is_demo?: boolean
           key_number?: string
