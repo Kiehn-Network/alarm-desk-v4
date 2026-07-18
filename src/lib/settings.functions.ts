@@ -38,6 +38,29 @@ const settingsSchema = z.object({
   theme: z.enum(["midnight", "emerald", "slate", "sunset", "crimson", "violet", "ocean", "mono", "lavender"]).optional(),
 });
 
+export const updateZentraleAdresse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ zentrale_adresse: z.string().trim().max(500).nullable() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        {
+          domain_id: domainId,
+          zentrale_adresse: data.zentrale_adresse || null,
+          updated_by: userId,
+        } as any,
+        { onConflict: "domain_id" },
+      );
+    if (error) throw error;
+    return { ok: true };
+  });
+
 const zeitFeldSchema = z.object({
   enabled: z.boolean(),
   required: z.boolean(),

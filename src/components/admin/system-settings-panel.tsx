@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Building2, Upload, AlertTriangle, Info, Save, Palette, Check } from "lucide-react";
+import { Building2, Upload, AlertTriangle, Info, Save, Palette, Check, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig, updatePdfZeitenConfig } from "@/lib/settings.functions";
+import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig, updatePdfZeitenConfig, updateZentraleAdresse } from "@/lib/settings.functions";
 import { Clock, FileText } from "lucide-react";
 
 export function SystemSettingsPanel() {
@@ -20,6 +20,7 @@ export function SystemSettingsPanel() {
     <div className="space-y-6">
       <GeneralSettings />
       <ThemeSettings />
+      <ZentraleAdresseSettings />
       <FahrerZeitenSettings />
       <PdfZeitenSettings />
       <MaintenanceSettings />
@@ -402,6 +403,57 @@ function FahrerZeitenSettings() {
             </label>
           </div>
         ))}
+      </div>
+      <div className="flex justify-end mt-5">
+        <Button onClick={() => save.mutate()} disabled={save.isPending}>
+          <Save className="size-4 mr-2" />{save.isPending ? "Speichere…" : "Speichern"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+// ============ Zentrale Adresse (per-domain) ============
+
+function ZentraleAdresseSettings() {
+  const qc = useQueryClient();
+  const fetchFn = useServerFn(getAppSettings);
+  const updateFn = useServerFn(updateZentraleAdresse);
+  const { data } = useQuery({ queryKey: ["app-settings"], queryFn: () => fetchFn() });
+
+  const [adresse, setAdresse] = useState("");
+  useEffect(() => {
+    setAdresse(((data as any)?.zentrale_adresse as string | null) ?? "");
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: async () => updateFn({ data: { zentrale_adresse: adresse.trim() || null } }),
+    onSuccess: () => {
+      toast.success("Zentrale-Adresse gespeichert");
+      qc.invalidateQueries({ queryKey: ["app-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <header className="flex items-center gap-2 pb-4 border-b border-border mb-5">
+        <MapPin className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold uppercase tracking-wide">Zentrale-Adresse</h3>
+      </header>
+      <p className="text-sm text-muted-foreground mb-4">
+        Adresse eurer Zentrale. Der Fahrer sieht in seinen Einsätzen einen Button
+        „zur Zentrale", der die Navigation zu dieser Adresse öffnet.
+      </p>
+      <div className="space-y-2">
+        <Label htmlFor="zentrale-adresse">Adresse</Label>
+        <Input
+          id="zentrale-adresse"
+          value={adresse}
+          onChange={(e) => setAdresse(e.target.value)}
+          placeholder="Musterstraße 1, 12345 Musterstadt"
+          maxLength={500}
+        />
       </div>
       <div className="flex justify-end mt-5">
         <Button onClick={() => save.mutate()} disabled={save.isPending}>
