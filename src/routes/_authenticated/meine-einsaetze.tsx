@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
-  History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square, Info,
+  History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square, Info, Building2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +70,10 @@ function MeineEinsaetzePage() {
     abfahrt_objekt: { enabled: boolean; required: boolean };
   };
   const { online } = useOfflineQueue();
+  const zentraleAdresse = ((appSettings as any)?.zentrale_adresse as string | null) ?? null;
+  const zentraleUrl = zentraleAdresse
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(zentraleAdresse)}`
+    : null;
 
   const { data, refetch, isLoading } = useQuery({
     queryKey: ["meine-einsaetze"],
@@ -341,6 +345,13 @@ function MeineEinsaetzePage() {
                     <a href={mapsUrl} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none">
                       <Button variant="outline" size="sm" className="w-full gap-1.5">
                         <Navigation className="size-4" /> Navigation
+                      </Button>
+                    </a>
+                  )}
+                  {zentraleUrl && (
+                    <a href={zentraleUrl} target="_blank" rel="noreferrer" className="flex-1 sm:flex-none">
+                      <Button variant="outline" size="sm" className="w-full gap-1.5">
+                        <Building2 className="size-4" /> zur Zentrale
                       </Button>
                     </a>
                   )}
