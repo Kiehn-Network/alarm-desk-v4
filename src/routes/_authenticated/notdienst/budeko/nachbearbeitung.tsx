@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listBudekoBerichte, deleteBudekoBericht, updateBudekoBericht, sendBudekoBericht, getBudekoBericht,
+  getBudekoConfig,
 } from "@/lib/budeko.functions";
 import { buildBudekoPdf } from "@/lib/budeko-pdf";
 import { Button } from "@/components/ui/button";
@@ -34,9 +35,11 @@ function Nachbearbeitung() {
   const listFn = useServerFn(listBudekoBerichte);
   const delFn = useServerFn(deleteBudekoBericht);
   const sendFn = useServerFn(sendBudekoBericht);
+  const cfgFn = useServerFn(getBudekoConfig);
   const { data: settings } = useAppSettings();
 
   const { data } = useQuery({ queryKey: ["bk-berichte"], queryFn: () => listFn() });
+  const { data: cfg } = useQuery({ queryKey: ["bk-config"], queryFn: () => cfgFn() });
   const berichte = (data?.berichte ?? []) as any[];
 
   const [editId, setEditId] = useState<string | null>(null);
@@ -134,6 +137,7 @@ function Nachbearbeitung() {
       {sendId && (
         <SendDialog
           bericht={berichte.find((b) => b.id === sendId)}
+          defaultEmail={cfg?.bericht_email ?? ""}
           onClose={() => setSendId(null)}
           onSend={handleSend}
         />
@@ -143,9 +147,9 @@ function Nachbearbeitung() {
 }
 
 function SendDialog({
-  bericht, onClose, onSend,
-}: { bericht: any; onClose: () => void; onSend: (b: any, email: string) => Promise<void> }) {
-  const [email, setEmail] = useState(bericht?.versendet_an ?? "");
+  bericht, defaultEmail, onClose, onSend,
+}: { bericht: any; defaultEmail?: string; onClose: () => void; onSend: (b: any, email: string) => Promise<void> }) {
+  const [email, setEmail] = useState(bericht?.versendet_an ?? defaultEmail ?? "");
   const [pending, setPending] = useState(false);
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>

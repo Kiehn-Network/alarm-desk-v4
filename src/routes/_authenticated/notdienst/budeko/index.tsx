@@ -172,18 +172,22 @@ function NotizDialog({ cfg }: { cfg: any }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
+  const [berichtEmail, setBerichtEmail] = useState<string>(cfg?.bericht_email ?? "");
   const updFn = useServerFn(updateBudekoConfig);
   const upFn = useServerFn(uploadBudekoNotizDatei);
   const delFn = useServerFn(deleteBudekoNotizDatei);
 
   useEffect(() => {
-    if (open && editorRef.current) editorRef.current.innerHTML = cfg?.notiz ?? "";
+    if (open) {
+      setBerichtEmail(cfg?.bericht_email ?? "");
+      if (editorRef.current) editorRef.current.innerHTML = cfg?.notiz ?? "";
+    }
   }, [open, cfg]);
 
   const save = useMutation({
     mutationFn: async () => {
       const html = editorRef.current?.innerHTML ?? "";
-      return updFn({ data: { notiz: html } });
+      return updFn({ data: { notiz: html, bericht_email: berichtEmail.trim() || null } });
     },
     onSuccess: () => {
       toast.success("Notiz gespeichert");
@@ -235,6 +239,18 @@ function NotizDialog({ cfg }: { cfg: any }) {
           <DialogTitle className="flex items-center gap-2"><StickyNote className="size-4" /> Notiz & Anhänge</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Standard-Empfänger für Berichte (E-Mail)</Label>
+            <Input
+              type="email"
+              value={berichtEmail}
+              onChange={(e) => setBerichtEmail(e.target.value)}
+              placeholder="berichte@example.com"
+            />
+            <p className="text-xs text-muted-foreground">
+              Diese Adresse wird beim Versand eines Berichts automatisch als Empfänger vorgeschlagen.
+            </p>
+          </div>
           <div className="space-y-1.5">
             <Label>Notiz-Text</Label>
             <div className="rounded-lg border border-border bg-background">

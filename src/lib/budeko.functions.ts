@@ -17,7 +17,7 @@ export const getBudekoConfig = createServerFn({ method: "GET" })
     const domainId = await requireEffectiveDomainId(supabase, userId);
     const { data } = await supabase
       .from("app_settings")
-      .select("budeko_notiz")
+      .select("budeko_notiz, budeko_bericht_email")
       .eq("domain_id", domainId)
       .maybeSingle();
     const { data: files } = await supabase
@@ -27,6 +27,7 @@ export const getBudekoConfig = createServerFn({ method: "GET" })
       .order("created_at");
     return {
       notiz: (data?.budeko_notiz ?? null) as string | null,
+      bericht_email: ((data as any)?.budeko_bericht_email ?? null) as string | null,
       dateien: (files ?? []) as any[],
     };
   });
@@ -48,6 +49,11 @@ export const updateBudekoConfig = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({
       notiz: z.string().max(20000).nullable().optional(),
+      bericht_email: z.string().trim().max(200).nullable().optional().transform((v) => {
+        if (v === undefined) return undefined;
+        if (v === null || v === "") return null;
+        return v;
+      }),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
@@ -57,6 +63,7 @@ export const updateBudekoConfig = createServerFn({ method: "POST" })
 
     const patch: any = { domain_id: domainId, updated_by: userId };
     if (data.notiz !== undefined) patch.budeko_notiz = data.notiz;
+    if (data.bericht_email !== undefined) patch.budeko_bericht_email = data.bericht_email;
 
     const { error } = await supabase
       .from("app_settings")
