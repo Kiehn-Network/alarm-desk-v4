@@ -63,6 +63,7 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          budeko_bericht_email: string | null
           budeko_notiz: string | null
           dashboard_hinweis: string | null
           domain_id: string
@@ -82,6 +83,7 @@ export type Database = {
           zentrale_adresse: string | null
         }
         Insert: {
+          budeko_bericht_email?: string | null
           budeko_notiz?: string | null
           dashboard_hinweis?: string | null
           domain_id: string
@@ -101,6 +103,7 @@ export type Database = {
           zentrale_adresse?: string | null
         }
         Update: {
+          budeko_bericht_email?: string | null
           budeko_notiz?: string | null
           dashboard_hinweis?: string | null
           domain_id?: string
