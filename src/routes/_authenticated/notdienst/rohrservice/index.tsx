@@ -184,6 +184,7 @@ function NotizDialog({ cfg }: { cfg: any }) {
   const [open, setOpen] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
   const [variante, setVariante] = useState<"standard" | "budeko">(cfg?.variante ?? "standard");
+  const [berichtEmail, setBerichtEmail] = useState<string>(cfg?.bericht_email ?? "");
   const updFn = useServerFn(updateRohrserviceConfig);
   const upFn = useServerFn(uploadNotizDatei);
   const delFn = useServerFn(deleteNotizDatei);
@@ -191,6 +192,7 @@ function NotizDialog({ cfg }: { cfg: any }) {
   useEffect(() => {
     if (open) {
       setVariante(cfg?.variante ?? "standard");
+      setBerichtEmail(cfg?.bericht_email ?? "");
       if (editorRef.current) editorRef.current.innerHTML = cfg?.notiz ?? "";
     }
   }, [open, cfg]);
@@ -200,7 +202,7 @@ function NotizDialog({ cfg }: { cfg: any }) {
   const save = useMutation({
     mutationFn: async () => {
       const html = editorRef.current?.innerHTML ?? "";
-      return updFn({ data: { variante, notiz: html } });
+      return updFn({ data: { variante, notiz: html, bericht_email: berichtEmail.trim() || null } });
     },
     onSuccess: () => {
       toast.success("Notiz gespeichert");
