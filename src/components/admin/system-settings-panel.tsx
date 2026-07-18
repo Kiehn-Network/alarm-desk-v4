@@ -413,6 +413,57 @@ function FahrerZeitenSettings() {
   );
 }
 
+// ============ Zentrale Adresse (per-domain) ============
+
+function ZentraleAdresseSettings() {
+  const qc = useQueryClient();
+  const fetchFn = useServerFn(getAppSettings);
+  const updateFn = useServerFn(updateZentraleAdresse);
+  const { data } = useQuery({ queryKey: ["app-settings"], queryFn: () => fetchFn() });
+
+  const [adresse, setAdresse] = useState("");
+  useEffect(() => {
+    setAdresse(((data as any)?.zentrale_adresse as string | null) ?? "");
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: async () => updateFn({ data: { zentrale_adresse: adresse.trim() || null } }),
+    onSuccess: () => {
+      toast.success("Zentrale-Adresse gespeichert");
+      qc.invalidateQueries({ queryKey: ["app-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <header className="flex items-center gap-2 pb-4 border-b border-border mb-5">
+        <MapPin className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold uppercase tracking-wide">Zentrale-Adresse</h3>
+      </header>
+      <p className="text-sm text-muted-foreground mb-4">
+        Adresse eurer Zentrale. Der Fahrer sieht in seinen Einsätzen einen Button
+        „zur Zentrale", der die Navigation zu dieser Adresse öffnet.
+      </p>
+      <div className="space-y-2">
+        <Label htmlFor="zentrale-adresse">Adresse</Label>
+        <Input
+          id="zentrale-adresse"
+          value={adresse}
+          onChange={(e) => setAdresse(e.target.value)}
+          placeholder="Musterstraße 1, 12345 Musterstadt"
+          maxLength={500}
+        />
+      </div>
+      <div className="flex justify-end mt-5">
+        <Button onClick={() => save.mutate()} disabled={save.isPending}>
+          <Save className="size-4 mr-2" />{save.isPending ? "Speichere…" : "Speichern"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 // ============ PDF-Zeiten (per-domain) ============
 
 type PdfZeitKey = "created" | "abfahrt_zentrale" | "vor_ort" | "abfahrt_objekt" | "einsatz_ende" | "abgeschlossen";
