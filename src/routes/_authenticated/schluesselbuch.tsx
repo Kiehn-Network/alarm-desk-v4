@@ -18,6 +18,7 @@ import {
   rueckgabeErzwingen, manuellAusbuchen, manuellEinbuchen,
   seedSchluesselDemo, cleanupSchluesselDemo,
 } from "@/lib/schluesselbuch.functions";
+import { searchKundenDateien } from "@/lib/einsaetze.functions";
 import { startWalkthrough, PENDING_KEY } from "@/lib/walkthroughs";
 
 export const Route = createFileRoute("/_authenticated/schluesselbuch")({
@@ -44,6 +45,7 @@ function SchluesselbuchPage() {
   const erzwingen = useServerFn(rueckgabeErzwingen);
   const ausbuchen = useServerFn(manuellAusbuchen);
   const einbuchen = useServerFn(manuellEinbuchen);
+  const kundenSearch = useServerFn(searchKundenDateien);
   const seedDemo = useServerFn(seedSchluesselDemo);
   const cleanupDemo = useServerFn(cleanupSchluesselDemo);
   const [demoActive, setDemoActive] = useState(false);
@@ -54,6 +56,10 @@ function SchluesselbuchPage() {
   const [ausgabeOpen, setAusgabeOpen] = useState(false);
   const [ausgabeForm, setAusgabeForm] = useState({ key_number: "", traeger_name: "", kunden_name: "", address: "", grund: "" });
   const [ausgabeBusy, setAusgabeBusy] = useState(false);
+  const [kundeQ, setKundeQ] = useState("");
+  const [kundeResults, setKundeResults] = useState<any[]>([]);
+  const [kundeSearching, setKundeSearching] = useState(false);
+  const [kundeOpen, setKundeOpen] = useState(false);
 
   const [forceRow, setForceRow] = useState<any | null>(null);
   const [forceGrund, setForceGrund] = useState("");
@@ -147,6 +153,24 @@ function SchluesselbuchPage() {
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
     finally { setAusgabeBusy(false); }
   }
+
+  // Debounced Kundensuche
+  useEffect(() => {
+    if (!ausgabeOpen) return;
+    const q = kundeQ.trim();
+    if (q.length < 2) { setKundeResults([]); return; }
+    setKundeSearching(true);
+    const t = setTimeout(async () => {
+      try {
+        const r = await kundenSearch({ data: { q } });
+        setKundeResults(r?.results ?? []);
+        setKundeOpen(true);
+      } catch { /* ignore */ }
+      finally { setKundeSearching(false); }
+    }, 250);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kundeQ, ausgabeOpen]);
 
   async function doErzwingen() {
     if (!forceRow || forceGrund.trim().length < 3) {
@@ -379,7 +403,7 @@ function SchluesselbuchPage() {
       )}
 
       {/* Manuelle Ausgabe */}
-      <Dialog open={ausgabeOpen} onOpenChange={setAusgabeOpen}>
+      <Dialog open={ausgabeOpen} onOpenChange={(o) => { setAusgabeOpen(o); if (!o) { setKundeQ(""); setKundeResults([]); setKundeOpen(false); } }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Schlüssel manuell ausbuchen</DialogTitle>
@@ -388,6 +412,55 @@ function SchluesselbuchPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
+            <div className="grid gap-1.5 relative">
+              <Label>Kunde suchen</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  value={kundeQ}
+                  onChange={(e) => { setKundeQ(e.target.value); setKundeOpen(true); }}
+                  onFocus={() => setKundeOpen(true)}
+                  placeholder="Name, Adresse, Anlagen-Nr., Schlüssel-Nr. …"
+                  className="pl-9"
+                />
+              </div>
+              {kundeOpen && kundeQ.trim().length >= 2 && (
+                <div className="absolute z-20 top-full left-0 right-0 mt-1 rounded-md border border-border bg-popover shadow-lg max-h-60 overflow-auto">
+                  {kundeSearching ? (
+                    <div className="p-3 text-xs text-muted-foreground">Suche…</div>
+                  ) : kundeResults.length === 0 ? (
+                    <div className="p-3 text-xs text-muted-foreground">Keine Treffer</div>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {kundeResults.slice(0, 20).map((r) => (
+                        <li key={r.id}>
+                          <button
+                            type="button"
+                            className="w-full text-left px-3 py-2 hover:bg-muted/50 text-xs"
+                            onClick={() => {
+                              setAusgabeForm((p) => ({
+                                ...p,
+                                kunden_name: r.kunden_name ?? p.kunden_name,
+                                address: r.address ?? p.address,
+                                key_number: r.key_number ?? p.key_number,
+                              }));
+                              setKundeOpen(false);
+                              setKundeQ("");
+                            }}
+                          >
+                            <div className="font-medium text-foreground truncate">{r.kunden_name || "(ohne Name)"}</div>
+                            <div className="text-muted-foreground truncate">
+                              {[r.address, r.key_number && `🔑 ${r.key_number}`, r.anlagen_nr && `Anlage ${r.anlagen_nr}`]
+                                .filter(Boolean).join(" · ")}
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
             <div className="grid gap-1.5">
               <Label>Schlüsselnummer *</Label>
               <Input value={ausgabeForm.key_number} onChange={(e) => setAusgabeForm((p) => ({ ...p, key_number: e.target.value }))} placeholder="z.B. K-1234" />
