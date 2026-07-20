@@ -414,6 +414,81 @@ function FahrerZeitenSettings() {
   );
 }
 
+// ============ Bericht-Versand (per-domain) ============
+
+function BerichtVersandSettings() {
+  const qc = useQueryClient();
+  const fetchFn = useServerFn(getAppSettings);
+  const updateFn = useServerFn(updateBerichtVersandMode);
+  const { data } = useQuery({ queryKey: ["app-settings"], queryFn: () => fetchFn() });
+
+  const current = ((data as any)?.bericht_versand_mode as "link" | "inline" | undefined) ?? "link";
+  const [mode, setMode] = useState<"link" | "inline">("link");
+  useEffect(() => { setMode(current); }, [current]);
+
+  const save = useMutation({
+    mutationFn: async () => updateFn({ data: { bericht_versand_mode: mode } }),
+    onSuccess: () => {
+      toast.success("Versandart aktualisiert");
+      qc.invalidateQueries({ queryKey: ["app-settings"] });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Fehler"),
+  });
+
+  const options: Array<{ value: "link" | "inline"; title: string; desc: string }> = [
+    {
+      value: "link",
+      title: "PDF-Bericht als Download-Link",
+      desc: "Empfänger erhalten eine E-Mail mit einem Button/Link zum Herunterladen des PDF-Berichts (30 Tage gültig).",
+    },
+    {
+      value: "inline",
+      title: "Klartext in der E-Mail",
+      desc: "Die Bericht-Inhalte werden direkt als lesbarer Text in die E-Mail eingefügt. Kein PDF-Anhang oder Download-Link.",
+    },
+  ];
+
+  return (
+    <section className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+      <header className="flex items-center gap-2 pb-4 border-b border-border mb-5">
+        <Mail className="size-4 text-primary" />
+        <h3 className="text-sm font-semibold uppercase tracking-wide">Bericht-Versand per E-Mail</h3>
+      </header>
+      <p className="text-sm text-muted-foreground mb-4">
+        Wähle, wie die Berichte (Einsatz, Rohrservice, Budeko) per E-Mail zugestellt werden.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {options.map((o) => {
+          const active = mode === o.value;
+          return (
+            <button
+              key={o.value}
+              type="button"
+              onClick={() => setMode(o.value)}
+              className={`text-left rounded-xl border p-4 transition-all ${
+                active
+                  ? "border-primary ring-2 ring-ring bg-accent/30"
+                  : "border-border hover:border-primary/60 hover:bg-accent/20"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-sm font-medium">{o.title}</div>
+                {active && <Check className="size-4 text-primary" />}
+              </div>
+              <p className="text-xs text-muted-foreground">{o.desc}</p>
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex justify-end mt-5">
+        <Button onClick={() => save.mutate()} disabled={save.isPending || mode === current}>
+          <Save className="size-4 mr-2" />{save.isPending ? "Speichere…" : "Speichern"}
+        </Button>
+      </div>
+    </section>
+  );
+}
+
 // ============ Zentrale Adresse (per-domain) ============
 
 function ZentraleAdresseSettings() {
