@@ -93,6 +93,7 @@ export type RenderBrandedInput = {
   ctaHint?: string;           // small text under CTA
   closingNote?: string;       // paragraph before signature
   previewText?: string;       // inbox preview snippet
+  bodyHtml?: string;          // OPTIONAL: inline HTML block that REPLACES infoPanel+CTA (used for "Klartext"-Bericht in E-Mail)
 };
 
 export function renderBrandedEmail(input: RenderBrandedInput): string {
@@ -142,6 +143,13 @@ export function renderBrandedEmail(input: RenderBrandedInput): string {
     ? `<p style="color:#64748b;font-size:12px;margin:12px 0 0;text-align:center;">${escapeHtml(input.ctaHint)}</p>`
     : "";
 
+  // When bodyHtml is supplied, we drop the CTA + info-panel path entirely
+  // and render the caller-provided HTML block instead.
+  const useInline = !!input.bodyHtml;
+  const inlineBlock = useInline
+    ? `<div style="margin:4px 0 12px;">${input.bodyHtml}</div>`
+    : "";
+
   const closingBlock = input.closingNote
     ? `<p style="color:#64748b;font-size:13px;line-height:1.6;margin:0;">${escapeHtml(input.closingNote)}</p>`
     : "";
@@ -177,9 +185,7 @@ export function renderBrandedEmail(input: RenderBrandedInput): string {
     ${headingH}
     ${greetP}
     ${introP}
-    ${infoPanel}
-    ${ctaBlock}
-    ${ctaHintBlock}
+    ${useInline ? inlineBlock : `${infoPanel}${ctaBlock}${ctaHintBlock}`}
     ${divider}
     ${closingBlock}
     ${signatureP}`;
@@ -205,9 +211,7 @@ export function renderBrandedEmail(input: RenderBrandedInput): string {
   <tr><td style="background:#ffffff;border:1px solid #e2e8f0;border-top:0;border-radius:0 0 16px 16px;padding:28px;">
     ${greetP}
     ${introP}
-    ${infoPanel}
-    ${ctaBlock}
-    ${ctaHintBlock}
+    ${useInline ? inlineBlock : `${infoPanel}${ctaBlock}${ctaHintBlock}`}
     ${divider}
     ${closingBlock}
     ${signatureP}
@@ -223,9 +227,7 @@ export function renderBrandedEmail(input: RenderBrandedInput): string {
     ${headingH}
     ${greetP}
     ${introP}
-    ${infoPanel}
-    ${ctaBlock}
-    ${ctaHintBlock}
+    ${useInline ? inlineBlock : `${infoPanel}${ctaBlock}${ctaHintBlock}`}
     ${divider}
     ${closingBlock}
     ${signatureP}

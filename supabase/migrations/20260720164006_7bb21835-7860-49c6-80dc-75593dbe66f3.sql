@@ -1,0 +1,2 @@
+ALTER TABLE public.app_settings ADD COLUMN IF NOT EXISTS bericht_versand_mode text NOT NULL DEFAULT 'link';
+ALTER TABLE public.app_settings ADD CONSTRAINT app_settings_bericht_versand_mode_chk CHECK (bericht_versand_mode IN ('link','inline'));

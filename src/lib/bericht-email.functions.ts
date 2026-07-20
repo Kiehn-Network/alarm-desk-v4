@@ -7,6 +7,7 @@ import { sendEmailForDomain } from "@/lib/email-send.server";
 import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
 import { renderBrandedEmail } from "@/lib/email-brand";
 import { rewriteStorageUrl } from "@/lib/storage-url.server";
+import { renderEinsatzInlineHtml } from "@/lib/bericht-inline";
 
 const inputSchema = z.object({
   einsatz_id: z.string().uuid(),
@@ -31,24 +32,32 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
     if (!canSend) throw new Error("Nur Admin / Disponent dürfen Berichte versenden");
 
     const { data: einsatz, error: eErr } = await supabase
-      .from("einsaetze").select("id, einsatzgrund, kunden_name").eq("id", data.einsatz_id).single();
+      .from("einsaetze").select("*").eq("id", data.einsatz_id).single();
     if (eErr || !einsatz) throw new Error("Einsatz nicht gefunden");
 
-    // PDF in Storage hochladen → signed URL erzeugen
-    const path = `berichte/${data.einsatz_id}/${Date.now()}_${data.filename}`;
-    const pdfBuf = Buffer.from(data.pdf_base64, "base64");
-    const upload = await supabaseAdmin.storage.from("dateien").upload(path, pdfBuf, {
-      contentType: "application/pdf",
-      upsert: true,
-    });
-    if (upload.error) throw new Error("Upload fehlgeschlagen: " + upload.error.message);
+    // Versandmodus der Domäne bestimmen (link = Download-Link, inline = Klartext in der E-Mail)
+    const { data: settings } = await supabaseAdmin
+      .from("app_settings").select("bericht_versand_mode").eq("domain_id", domainId).maybeSingle();
+    const mode: "link" | "inline" = ((settings as any)?.bericht_versand_mode === "inline") ? "inline" : "link";
 
-    const signed = await supabaseAdmin.storage
-      .from("dateien").createSignedUrl(path, 60 * 60 * 24 * 30); // 30 Tage
-    if (signed.error || !signed.data?.signedUrl) {
-      throw new Error("Signed URL fehlgeschlagen");
+    let downloadUrl: string | null = null;
+    if (mode === "link") {
+      // PDF in Storage hochladen → signed URL erzeugen
+      const path = `berichte/${data.einsatz_id}/${Date.now()}_${data.filename}`;
+      const pdfBuf = Buffer.from(data.pdf_base64, "base64");
+      const upload = await supabaseAdmin.storage.from("dateien").upload(path, pdfBuf, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+      if (upload.error) throw new Error("Upload fehlgeschlagen: " + upload.error.message);
+
+      const signed = await supabaseAdmin.storage
+        .from("dateien").createSignedUrl(path, 60 * 60 * 24 * 30); // 30 Tage
+      if (signed.error || !signed.data?.signedUrl) {
+        throw new Error("Signed URL fehlgeschlagen");
+      }
+      downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
     }
-    const downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
 
     const subject = `Einsatzbericht: ${einsatz.einsatzgrund}`;
     const branding = await loadDomainBranding(domainId);
@@ -58,13 +67,16 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
       statusPill: "Einsatzbericht",
       heading: "Ihr Einsatzbericht",
       greetingName: einsatz.kunden_name ?? null,
-      intro: `anbei erhalten Sie den Bericht zu Ihrem Einsatz "${einsatz.einsatzgrund ?? "Einsatz"}" als PDF-Dokument.`,
-      metaTitle: einsatz.einsatzgrund ?? "Einsatzbericht",
-      metaSubtitle: "PDF · Download 30 Tage gültig",
-      ctaLabel: "Bericht herunterladen",
-      ctaUrl: downloadUrl,
+      intro: mode === "inline"
+        ? `nachfolgend finden Sie die Details zu Ihrem Einsatz "${einsatz.einsatzgrund ?? "Einsatz"}".`
+        : `anbei erhalten Sie den Bericht zu Ihrem Einsatz "${einsatz.einsatzgrund ?? "Einsatz"}" als PDF-Dokument.`,
+      metaTitle: mode === "inline" ? undefined : (einsatz.einsatzgrund ?? "Einsatzbericht"),
+      metaSubtitle: mode === "inline" ? undefined : "PDF · Download 30 Tage gültig",
+      ctaLabel: mode === "inline" ? undefined : "Bericht herunterladen",
+      ctaUrl: mode === "inline" ? undefined : (downloadUrl ?? undefined),
+      bodyHtml: mode === "inline" ? renderEinsatzInlineHtml(einsatz, null) : undefined,
       closingNote: "Bei Rückfragen zum Einsatz wenden Sie sich bitte an die für Sie zuständige Ansprechperson.",
-      previewText: "Ihr Einsatzbericht als PDF",
+      previewText: mode === "inline" ? "Ihr Einsatzbericht" : "Ihr Einsatzbericht als PDF",
     });
 
     let status: "sent" | "failed" = "sent";

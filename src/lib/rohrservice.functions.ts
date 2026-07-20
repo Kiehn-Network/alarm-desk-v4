@@ -7,6 +7,7 @@ import { sendEmailForDomain } from "@/lib/email-send.server";
 import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
 import { renderBrandedEmail } from "@/lib/email-brand";
 import { rewriteStorageUrl } from "@/lib/storage-url.server";
+import { renderRohrserviceInlineHtml } from "@/lib/bericht-inline";
 
 // ---------- Notiz / Variante ----------
 
@@ -430,18 +431,25 @@ export const sendBericht = createServerFn({ method: "POST" })
       .single();
     if (bErr || !bericht) throw new Error("Bericht nicht gefunden");
 
-    const path = `rohrservice/${data.id}/${Date.now()}_${data.filename}`;
-    const pdfBuf = Buffer.from(data.pdf_base64, "base64");
-    const upload = await supabaseAdmin.storage
-      .from("dateien")
-      .upload(path, pdfBuf, { contentType: "application/pdf", upsert: true });
-    if (upload.error) throw new Error("Upload fehlgeschlagen: " + upload.error.message);
+    const { data: settings } = await supabaseAdmin
+      .from("app_settings").select("bericht_versand_mode").eq("domain_id", domainId).maybeSingle();
+    const mode: "link" | "inline" = ((settings as any)?.bericht_versand_mode === "inline") ? "inline" : "link";
 
-    const signed = await supabaseAdmin.storage
-      .from("dateien")
-      .createSignedUrl(path, 60 * 60 * 24 * 30);
-    if (signed.error || !signed.data?.signedUrl) throw new Error("Signed URL fehlgeschlagen");
-    const downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
+    let downloadUrl: string | null = null;
+    if (mode === "link") {
+      const path = `rohrservice/${data.id}/${Date.now()}_${data.filename}`;
+      const pdfBuf = Buffer.from(data.pdf_base64, "base64");
+      const upload = await supabaseAdmin.storage
+        .from("dateien")
+        .upload(path, pdfBuf, { contentType: "application/pdf", upsert: true });
+      if (upload.error) throw new Error("Upload fehlgeschlagen: " + upload.error.message);
+
+      const signed = await supabaseAdmin.storage
+        .from("dateien")
+        .createSignedUrl(path, 60 * 60 * 24 * 30);
+      if (signed.error || !signed.data?.signedUrl) throw new Error("Signed URL fehlgeschlagen");
+      downloadUrl = rewriteStorageUrl(signed.data.signedUrl);
+    }
 
     const titel = `Rohrservice-Bericht #${bericht.bericht_nr}`;
     const subject = titel;
@@ -457,13 +465,16 @@ export const sendBericht = createServerFn({ method: "POST" })
       statusPill: "Rohrservice-Bericht",
       heading: titel,
       greetingName: empfaengerName,
-      intro: "anbei finden Sie den Bericht zum Rohrservice-Einsatz als PDF-Dokument.",
-      metaTitle: titel,
-      metaSubtitle: "PDF · Download 30 Tage gültig",
-      ctaLabel: "Bericht herunterladen",
-      ctaUrl: downloadUrl,
+      intro: mode === "inline"
+        ? "nachfolgend finden Sie die Details zum Rohrservice-Einsatz."
+        : "anbei finden Sie den Bericht zum Rohrservice-Einsatz als PDF-Dokument.",
+      metaTitle: mode === "inline" ? undefined : titel,
+      metaSubtitle: mode === "inline" ? undefined : "PDF · Download 30 Tage gültig",
+      ctaLabel: mode === "inline" ? undefined : "Bericht herunterladen",
+      ctaUrl: mode === "inline" ? undefined : (downloadUrl ?? undefined),
+      bodyHtml: mode === "inline" ? renderRohrserviceInlineHtml(bericht, "standard") : undefined,
       closingNote: "Bei Rückfragen zum Einsatz wenden Sie sich bitte an die für Sie zuständige Ansprechperson.",
-      previewText: "Ihr Rohrservice-Bericht als PDF",
+      previewText: mode === "inline" ? "Ihr Rohrservice-Bericht" : "Ihr Rohrservice-Bericht als PDF",
     });
 
     try {
