@@ -7,6 +7,7 @@ import { sendEmailForDomain } from "@/lib/email-send.server";
 import { loadDomainBranding, brandName } from "@/lib/email-brand.server";
 import { renderBrandedEmail } from "@/lib/email-brand";
 import { rewriteStorageUrl } from "@/lib/storage-url.server";
+import { renderRohrserviceInlineHtml } from "@/lib/bericht-inline";
 
 // ---------- Notiz / Variante ----------
 
