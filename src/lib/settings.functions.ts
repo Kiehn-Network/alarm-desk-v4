@@ -38,6 +38,25 @@ const settingsSchema = z.object({
   theme: z.enum(["midnight", "emerald", "slate", "sunset", "crimson", "violet", "ocean", "mono", "lavender"]).optional(),
 });
 
+export const updateBerichtVersandMode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ bericht_versand_mode: z.enum(["link", "inline"]) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        { domain_id: domainId, bericht_versand_mode: data.bericht_versand_mode, updated_by: userId } as any,
+        { onConflict: "domain_id" },
+      );
+    if (error) throw error;
+    return { ok: true };
+  });
+
 export const updateZentraleAdresse = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
