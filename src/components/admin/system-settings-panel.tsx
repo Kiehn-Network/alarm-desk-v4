@@ -12,8 +12,8 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig, updatePdfZeitenConfig, updateZentraleAdresse } from "@/lib/settings.functions";
-import { Clock, FileText } from "lucide-react";
+import { getAppSettings, updateAppSettings, updateFahrerZeitenConfig, updatePdfZeitenConfig, updateZentraleAdresse, updateBerichtVersandMode } from "@/lib/settings.functions";
+import { Clock, FileText, Mail } from "lucide-react";
 
 export function SystemSettingsPanel() {
   return (
@@ -23,6 +23,7 @@ export function SystemSettingsPanel() {
       <ZentraleAdresseSettings />
       <FahrerZeitenSettings />
       <PdfZeitenSettings />
+      <BerichtVersandSettings />
       <MaintenanceSettings />
     </div>
   );
