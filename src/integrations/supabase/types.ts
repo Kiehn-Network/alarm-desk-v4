@@ -63,6 +63,7 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          bericht_versand_mode: string
           budeko_bericht_email: string | null
           budeko_notiz: string | null
           dashboard_hinweis: string | null
@@ -83,6 +84,7 @@ export type Database = {
           zentrale_adresse: string | null
         }
         Insert: {
+          bericht_versand_mode?: string
           budeko_bericht_email?: string | null
           budeko_notiz?: string | null
           dashboard_hinweis?: string | null
@@ -103,6 +105,7 @@ export type Database = {
           zentrale_adresse?: string | null
         }
         Update: {
+          bericht_versand_mode?: string
           budeko_bericht_email?: string | null
           budeko_notiz?: string | null
           dashboard_hinweis?: string | null
