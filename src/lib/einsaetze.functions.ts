@@ -57,6 +57,7 @@ const editSchema = z.object({
   einsatz_ende_am: isoOrNull,
   abgeschlossen_am: isoOrNull,
   hausnotruf_provider: z.enum(["malteser", "johanniter", "lgwa"]).optional().nullable(),
+  created_at: isoOrNull,
 });
 
 const TRACKABLE = [
