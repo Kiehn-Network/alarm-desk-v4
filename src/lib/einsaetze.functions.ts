@@ -57,6 +57,7 @@ const editSchema = z.object({
   einsatz_ende_am: isoOrNull,
   abgeschlossen_am: isoOrNull,
   hausnotruf_provider: z.enum(["malteser", "johanniter", "lgwa"]).optional().nullable(),
+  created_at: isoOrNull,
 });
 
 const TRACKABLE = [
@@ -64,6 +65,7 @@ const TRACKABLE = [
   "teilnehmer_id","prioritaet","beschreibung","geplant_am","status",
   "assigned_to","sub_unternehmen","ablehnung_grund","approved_by","abgeschlossen_am",
   "vor_ort_am","abfahrt_am","einsatz_ende_am",
+  "created_at",
   "bericht_typ","hausnotruf_problem","hausnotruf_loesung","hausnotruf_provider",
 ] as const;
 

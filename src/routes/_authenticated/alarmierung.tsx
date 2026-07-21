@@ -835,6 +835,7 @@ const FIELD_LABELS: Record<string, string> = {
   teilnehmer_id: "Teilnehmer-ID", beschreibung: "Beschreibung",
   assigned_to: "Fahrer", abgeschlossen_am: "Abgeschlossen am",
   vor_ort_am: "Vor Ort", abfahrt_am: "Abfahrt", einsatz_ende_am: "Einsatz Ende",
+  created_at: "Startzeit",
   bericht: "Bericht", bericht_typ: "Berichtstyp",
   hausnotruf_problem: "Hausnotruf-Problem", hausnotruf_loesung: "Hausnotruf-Lösung",
 };
@@ -875,6 +876,7 @@ function EditDialog({
         abfahrt_am: toLocalInput(einsatz.abfahrt_am),
         einsatz_ende_am: toLocalInput(einsatz.einsatz_ende_am),
         abgeschlossen_am: toLocalInput(einsatz.abgeschlossen_am),
+        created_at: toLocalInput(einsatz.created_at),
         hausnotruf_provider: einsatz.hausnotruf_provider ?? "",
       });
     }
@@ -950,6 +952,10 @@ function EditDialog({
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Zeiten</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
+                <Label>Startzeit (Erstellt am)</Label>
+                <Input type="datetime-local" value={form.created_at ?? ""} onChange={(e) => set("created_at", e.target.value)} />
+              </div>
+              <div className="space-y-1">
                 <Label>Vor Ort</Label>
                 <Input type="datetime-local" value={form.vor_ort_am ?? ""} onChange={(e) => set("vor_ort_am", e.target.value)} />
               </div>
@@ -986,6 +992,7 @@ function EditDialog({
                   abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
                   einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
                   abgeschlossen_am: fromLocalInput(form.abgeschlossen_am ?? ""),
+                  created_at: fromLocalInput(form.created_at ?? ""),
                   ...(isHausnotruf
                     ? { hausnotruf_provider: form.hausnotruf_provider || null }
                     : {}),
