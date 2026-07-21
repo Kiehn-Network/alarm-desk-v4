@@ -835,6 +835,7 @@ const FIELD_LABELS: Record<string, string> = {
   teilnehmer_id: "Teilnehmer-ID", beschreibung: "Beschreibung",
   assigned_to: "Fahrer", abgeschlossen_am: "Abgeschlossen am",
   vor_ort_am: "Vor Ort", abfahrt_am: "Abfahrt", einsatz_ende_am: "Einsatz Ende",
+  created_at: "Startzeit",
   bericht: "Bericht", bericht_typ: "Berichtstyp",
   hausnotruf_problem: "Hausnotruf-Problem", hausnotruf_loesung: "Hausnotruf-Lösung",
 };
