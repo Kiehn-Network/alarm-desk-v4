@@ -64,6 +64,7 @@ const TRACKABLE = [
   "teilnehmer_id","prioritaet","beschreibung","geplant_am","status",
   "assigned_to","sub_unternehmen","ablehnung_grund","approved_by","abgeschlossen_am",
   "vor_ort_am","abfahrt_am","einsatz_ende_am",
+  "created_at",
   "bericht_typ","hausnotruf_problem","hausnotruf_loesung","hausnotruf_provider",
 ] as const;
 
