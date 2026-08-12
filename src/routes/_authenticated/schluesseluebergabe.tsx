@@ -329,6 +329,22 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
             <Label>Notiz (intern)</Label>
             <Textarea rows={2} value={notiz} onChange={(e) => setNotiz(e.target.value)} />
           </div>
+
+          {/* Unterschriften */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <SignatureField
+              label={richtung === "ausgang" ? "Unterschrift ausgehändigt von" : "Unterschrift übergeben von"}
+              value={sigVon}
+              who={vonName}
+              onChange={(v, s) => { setSigVon(v); setSrcVon(s); }}
+            />
+            <SignatureField
+              label="Unterschrift übergeben an"
+              value={sigAn}
+              who={anName}
+              onChange={(v, s) => { setSigAn(v); setSrcAn(s); }}
+            />
+          </div>
         </div>
 
         <DialogFooter>
