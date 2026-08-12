@@ -22,6 +22,7 @@ import {
 } from "@/lib/schluesseluebergabe.functions";
 import { searchKundenDateien } from "@/lib/einsaetze.functions";
 import { downloadSchluesselPdf } from "@/lib/schluesseluebergabe-pdf";
+import { SignatureField } from "@/components/signature-field";
 
 export const Route = createFileRoute("/_authenticated/schluesseluebergabe")({
   component: Page,
@@ -142,6 +143,10 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
   const [anName, setAnName] = useState("");
   const [items, setItems] = useState<Item[]>([{ anzahl: "", art: "", beschreibung: "" }]);
   const [notiz, setNotiz] = useState("");
+  const [sigVon, setSigVon] = useState<string | null>(null);
+  const [sigAn, setSigAn] = useState<string | null>(null);
+  const [srcVon, setSrcVon] = useState<"pad" | "touch" | null>(null);
+  const [srcAn, setSrcAn] = useState<"pad" | "touch" | null>(null);
 
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -162,6 +167,10 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
         uebergeben_an_name: anName || null,
         items: items.filter((i) => i.anzahl || i.art || i.beschreibung),
         notiz: notiz || null,
+        signatur_von: sigVon,
+        signatur_an: sigAn,
+        signatur_quelle:
+          srcVon && srcAn ? (srcVon === srcAn ? srcVon : "gemischt") : (srcVon ?? srcAn ?? null),
       },
     }),
     onSuccess: (row: any) => {
