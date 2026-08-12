@@ -30,7 +30,9 @@ export function useSupportNotifications() {
     if (!user) return;
     if (!isAdmin && !isSuperAdmin) return;
 
-    const target = isSuperAdmin ? "/superadmin?tab=tickets" : "/admin?tab=hilfe";
+    const target = isSuperAdmin
+      ? { to: "/superadmin" as const, search: { tab: "tickets" } as never }
+      : { to: "/admin" as const, search: { tab: "hilfe" } as never };
 
     const channel = supabase
       .channel(`support-notify-${user.id}`)
@@ -45,7 +47,7 @@ export function useSupportNotifications() {
           if (row.ticket_id) qc.invalidateQueries({ queryKey: ["support-ticket", row.ticket_id] });
           toast.message("Neue Antwort auf Support-Ticket", {
             description: row.body ? String(row.body).slice(0, 120) : undefined,
-            action: { label: "Öffnen", onClick: () => navigate({ to: target }) },
+            action: { label: "Öffnen", onClick: () => navigate(target) },
           });
         },
       )
@@ -64,7 +66,7 @@ export function useSupportNotifications() {
           qc.invalidateQueries({ queryKey: ["support-open-count"] });
           toast.message("Ticket-Status geändert", {
             description: `„${newRow.subject ?? "Ticket"}" → ${STATUS_LABEL[newRow.status] ?? newRow.status}`,
-            action: { label: "Öffnen", onClick: () => navigate({ to: target }) },
+            action: { label: "Öffnen", onClick: () => navigate(target) },
           });
         },
       )
