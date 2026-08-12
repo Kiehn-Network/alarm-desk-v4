@@ -2673,6 +2673,9 @@ export type Database = {
           ort: string | null
           protokoll_nr: number
           richtung: string
+          signatur_an: string | null
+          signatur_quelle: string | null
+          signatur_von: string | null
           strasse: string | null
           uebergeben_an_name: string | null
           uebergeben_von_name: string | null
@@ -2688,6 +2691,9 @@ export type Database = {
           ort?: string | null
           protokoll_nr: number
           richtung: string
+          signatur_an?: string | null
+          signatur_quelle?: string | null
+          signatur_von?: string | null
           strasse?: string | null
           uebergeben_an_name?: string | null
           uebergeben_von_name?: string | null
@@ -2703,6 +2709,9 @@ export type Database = {
           ort?: string | null
           protokoll_nr?: number
           richtung?: string
+          signatur_an?: string | null
+          signatur_quelle?: string | null
+          signatur_von?: string | null
           strasse?: string | null
           uebergeben_an_name?: string | null
           uebergeben_von_name?: string | null
