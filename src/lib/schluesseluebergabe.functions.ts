@@ -19,6 +19,9 @@ const createSchema = z.object({
   uebergeben_an_name: z.string().trim().max(200).optional().nullable(),
   items: z.array(itemSchema).max(50).default([]),
   notiz: z.string().max(2000).optional().nullable(),
+  signatur_von: z.string().max(2_000_000).optional().nullable(),
+  signatur_an: z.string().max(2_000_000).optional().nullable(),
+  signatur_quelle: z.enum(["pad", "touch", "gemischt"]).optional().nullable(),
 });
 
 export const createSchluesselProtokoll = createServerFn({ method: "POST" })
@@ -45,6 +48,9 @@ export const createSchluesselProtokoll = createServerFn({ method: "POST" })
         uebergeben_an_name: data.uebergeben_an_name ?? null,
         items: data.items,
         notiz: data.notiz ?? null,
+        signatur_von: data.signatur_von ?? null,
+        signatur_an: data.signatur_an ?? null,
+        signatur_quelle: data.signatur_quelle ?? null,
         created_by: userId,
       })
       .select()
