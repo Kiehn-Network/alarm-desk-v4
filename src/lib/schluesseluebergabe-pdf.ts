@@ -11,6 +11,8 @@ export type SchluesselProtokoll = {
   items: Array<{ anzahl?: string; art?: string; beschreibung?: string }>;
   notiz?: string | null;
   created_at: string;
+  signatur_von?: string | null;
+  signatur_an?: string | null;
 };
 
 export type SchluesselFooter = {
@@ -148,6 +150,21 @@ export function buildSchluesselPdf(p: SchluesselProtokoll, footer: SchluesselFoo
   doc.setFont("helvetica", "bold");
   doc.text("Unterschrift:", leftX, y);
   doc.text("Unterschrift:", rightX, y);
+
+  // Unterschriftsbilder (signotec Pad oder Touch/Maus)
+  const sigW = halfW - 70;
+  const sigH = 44;
+  const drawSig = (data: string | null | undefined, x: number) => {
+    if (!data) return;
+    try {
+      doc.addImage(data, "PNG", x + 70, y - sigH + 2, sigW, sigH, undefined, "FAST");
+    } catch {
+      /* ungültige Bilddaten ignorieren */
+    }
+  };
+  drawSig(p.signatur_von, leftX);
+  drawSig(p.signatur_an, rightX);
+
   doc.line(leftX + 70, y + 4, leftX + halfW, y + 4);
   doc.line(rightX + 70, y + 4, rightX + halfW, y + 4);
   y += 24;
