@@ -22,6 +22,7 @@ import {
 } from "@/lib/schluesseluebergabe.functions";
 import { searchKundenDateien } from "@/lib/einsaetze.functions";
 import { downloadSchluesselPdf } from "@/lib/schluesseluebergabe-pdf";
+import { SignatureField } from "@/components/signature-field";
 
 export const Route = createFileRoute("/_authenticated/schluesseluebergabe")({
   component: Page,
@@ -142,6 +143,10 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
   const [anName, setAnName] = useState("");
   const [items, setItems] = useState<Item[]>([{ anzahl: "", art: "", beschreibung: "" }]);
   const [notiz, setNotiz] = useState("");
+  const [sigVon, setSigVon] = useState<string | null>(null);
+  const [sigAn, setSigAn] = useState<string | null>(null);
+  const [srcVon, setSrcVon] = useState<"pad" | "touch" | null>(null);
+  const [srcAn, setSrcAn] = useState<"pad" | "touch" | null>(null);
 
   const [q, setQ] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -162,6 +167,10 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
         uebergeben_an_name: anName || null,
         items: items.filter((i) => i.anzahl || i.art || i.beschreibung),
         notiz: notiz || null,
+        signatur_von: sigVon,
+        signatur_an: sigAn,
+        signatur_quelle:
+          srcVon && srcAn ? (srcVon === srcAn ? srcVon : "gemischt") : (srcVon ?? srcAn ?? null),
       },
     }),
     onSuccess: (row: any) => {
@@ -319,6 +328,22 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
           <div className="space-y-1.5">
             <Label>Notiz (intern)</Label>
             <Textarea rows={2} value={notiz} onChange={(e) => setNotiz(e.target.value)} />
+          </div>
+
+          {/* Unterschriften */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <SignatureField
+              label={richtung === "ausgang" ? "Unterschrift ausgehändigt von" : "Unterschrift übergeben von"}
+              value={sigVon}
+              who={vonName}
+              onChange={(v, s) => { setSigVon(v); setSrcVon(s); }}
+            />
+            <SignatureField
+              label="Unterschrift übergeben an"
+              value={sigAn}
+              who={anName}
+              onChange={(v, s) => { setSigAn(v); setSrcAn(s); }}
+            />
           </div>
         </div>
 
