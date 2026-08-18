@@ -16,8 +16,8 @@ export const Route = createFileRoute("/api/public/restore-db")({
         const { default: postgres } = await import("postgres");
         const sql = postgres(dbUrl, { ssl: "require", max: 1, prepare: false, connect_timeout: 20, idle_timeout: 5 });
         try {
-          await sql.unsafe(sqlText);
-          return new Response("ok");
+          const rows = await sql.unsafe(sqlText);
+          return new Response(JSON.stringify(rows).slice(0, 2000));
         } catch (e: any) {
           return new Response(String(e?.message ?? e), { status: 500 });
         } finally {
