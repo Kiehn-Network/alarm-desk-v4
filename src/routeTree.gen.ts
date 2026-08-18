@@ -41,6 +41,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
 import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
+import { Route as ApiPublicRestoreDbRouteImport } from './routes/api/public/restore-db'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
 import { Route as AuthenticatedRevierCenterOwksRouteRouteImport } from './routes/_authenticated/revier-center/owks/route'
@@ -240,6 +241,11 @@ const AuthenticatedRevierCenterIndexRoute =
 const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
   id: '/api/public/version',
   path: '/api/public/version',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRestoreDbRoute = ApiPublicRestoreDbRouteImport.update({
+  id: '/api/public/restore-db',
+  path: '/api/public/restore-db',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedNotdienstLutzRoute =
@@ -455,6 +461,7 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/api/public/restore-db': typeof ApiPublicRestoreDbRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
@@ -514,6 +521,7 @@ export interface FileRoutesByTo {
   '/support': typeof AuthenticatedSupportRoute
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/api/public/restore-db': typeof ApiPublicRestoreDbRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
@@ -579,6 +587,7 @@ export interface FileRoutesById {
   '/_authenticated/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
   '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/api/public/restore-db': typeof ApiPublicRestoreDbRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/_authenticated/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/_authenticated/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
@@ -644,6 +653,7 @@ export interface FileRouteTypes {
     | '/revier-center/owks'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
+    | '/api/public/restore-db'
     | '/api/public/version'
     | '/revier-center/'
     | '/abrechnung/$provider/versand'
@@ -703,6 +713,7 @@ export interface FileRouteTypes {
     | '/support'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
+    | '/api/public/restore-db'
     | '/api/public/version'
     | '/revier-center'
     | '/abrechnung/$provider/versand'
@@ -767,6 +778,7 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center/owks'
     | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
+    | '/api/public/restore-db'
     | '/api/public/version'
     | '/_authenticated/revier-center/'
     | '/_authenticated/abrechnung/$provider/versand'
@@ -805,6 +817,7 @@ export interface RootRouteChildren {
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiPublicRestoreDbRoute: typeof ApiPublicRestoreDbRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicFilesGetRoute: typeof ApiPublicFilesGetRoute
   ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
@@ -1039,6 +1052,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/version'
       fullPath: '/api/public/version'
       preLoaderRoute: typeof ApiPublicVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/restore-db': {
+      id: '/api/public/restore-db'
+      path: '/api/public/restore-db'
+      fullPath: '/api/public/restore-db'
+      preLoaderRoute: typeof ApiPublicRestoreDbRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/notdienst/lutz': {
@@ -1447,6 +1467,7 @@ const rootRouteChildren: RootRouteChildren = {
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiPublicRestoreDbRoute: ApiPublicRestoreDbRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicFilesGetRoute: ApiPublicFilesGetRoute,
   ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,
