@@ -42,6 +42,7 @@ import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_au
 import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as ApiPublicRestoreUsersRouteImport } from './routes/api/public/restore-users'
+import { Route as ApiPublicRestoreRowsRouteImport } from './routes/api/public/restore-rows'
 import { Route as ApiPublicRestoreDbRouteImport } from './routes/api/public/restore-db'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
@@ -247,6 +248,11 @@ const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
 const ApiPublicRestoreUsersRoute = ApiPublicRestoreUsersRouteImport.update({
   id: '/api/public/restore-users',
   path: '/api/public/restore-users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicRestoreRowsRoute = ApiPublicRestoreRowsRouteImport.update({
+  id: '/api/public/restore-rows',
+  path: '/api/public/restore-rows',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRestoreDbRoute = ApiPublicRestoreDbRouteImport.update({
@@ -468,6 +474,7 @@ export interface FileRoutesByFullPath {
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/restore-db': typeof ApiPublicRestoreDbRoute
+  '/api/public/restore-rows': typeof ApiPublicRestoreRowsRoute
   '/api/public/restore-users': typeof ApiPublicRestoreUsersRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
@@ -529,6 +536,7 @@ export interface FileRoutesByTo {
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/restore-db': typeof ApiPublicRestoreDbRoute
+  '/api/public/restore-rows': typeof ApiPublicRestoreRowsRoute
   '/api/public/restore-users': typeof ApiPublicRestoreUsersRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/revier-center': typeof AuthenticatedRevierCenterIndexRoute
@@ -596,6 +604,7 @@ export interface FileRoutesById {
   '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/restore-db': typeof ApiPublicRestoreDbRoute
+  '/api/public/restore-rows': typeof ApiPublicRestoreRowsRoute
   '/api/public/restore-users': typeof ApiPublicRestoreUsersRoute
   '/api/public/version': typeof ApiPublicVersionRoute
   '/_authenticated/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
@@ -663,6 +672,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/restore-db'
+    | '/api/public/restore-rows'
     | '/api/public/restore-users'
     | '/api/public/version'
     | '/revier-center/'
@@ -724,6 +734,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/restore-db'
+    | '/api/public/restore-rows'
     | '/api/public/restore-users'
     | '/api/public/version'
     | '/revier-center'
@@ -790,6 +801,7 @@ export interface FileRouteTypes {
     | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/restore-db'
+    | '/api/public/restore-rows'
     | '/api/public/restore-users'
     | '/api/public/version'
     | '/_authenticated/revier-center/'
@@ -830,6 +842,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicRestoreDbRoute: typeof ApiPublicRestoreDbRoute
+  ApiPublicRestoreRowsRoute: typeof ApiPublicRestoreRowsRoute
   ApiPublicRestoreUsersRoute: typeof ApiPublicRestoreUsersRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicFilesGetRoute: typeof ApiPublicFilesGetRoute
@@ -1072,6 +1085,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/restore-users'
       fullPath: '/api/public/restore-users'
       preLoaderRoute: typeof ApiPublicRestoreUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/restore-rows': {
+      id: '/api/public/restore-rows'
+      path: '/api/public/restore-rows'
+      fullPath: '/api/public/restore-rows'
+      preLoaderRoute: typeof ApiPublicRestoreRowsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/restore-db': {
@@ -1488,6 +1508,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicRestoreDbRoute: ApiPublicRestoreDbRoute,
+  ApiPublicRestoreRowsRoute: ApiPublicRestoreRowsRoute,
   ApiPublicRestoreUsersRoute: ApiPublicRestoreUsersRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicFilesGetRoute: ApiPublicFilesGetRoute,
