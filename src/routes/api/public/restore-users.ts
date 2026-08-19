@@ -23,6 +23,23 @@ export const Route = createFileRoute("/api/public/restore-users")({
         }
         return new Response(JSON.stringify(out));
       },
+      DELETE: async ({ request }) => {
+        const host = new URL(request.url).hostname;
+        if (host !== "localhost" && host !== "127.0.0.1") return new Response("Forbidden", { status: 403 });
+        const url = process.env["SUPABASE_URL"];
+        const key = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+        if (!url || !key) return new Response("env missing", { status: 500 });
+        const ids = (await request.json()) as string[];
+        const out: any[] = [];
+        for (const id of ids) {
+          const r = await fetch(`${url}/auth/v1/admin/users/${id}`, {
+            method: "DELETE",
+            headers: { apikey: key, Authorization: `Bearer ${key}` },
+          });
+          out.push({ id, status: r.status });
+        }
+        return new Response(JSON.stringify(out));
+      },
       POST: async ({ request }) => {
         const host = new URL(request.url).hostname;
         if (host !== "localhost" && host !== "127.0.0.1") {
