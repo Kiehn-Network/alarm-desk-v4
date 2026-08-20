@@ -666,7 +666,7 @@ function CreateUserDialog({ open, onOpenChange, onDone }: { open: boolean; onOpe
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" />
           </div>
           <div>
-            <Label>Passwort (min. 8 Zeichen)</Label>
+            <Label>Passwort (min. 4 Zeichen)</Label>
             <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
           </div>
           <div>
@@ -683,7 +683,7 @@ function CreateUserDialog({ open, onOpenChange, onDone }: { open: boolean; onOpe
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Abbrechen</Button>
-          <Button onClick={submit} disabled={busy || !email || password.length < 8 || !displayName}>
+          <Button onClick={submit} disabled={busy || !email || password.length < 4 || !displayName}>
             {busy ? "Lege an…" : "Anlegen"}
           </Button>
         </DialogFooter>
@@ -779,12 +779,12 @@ function PasswordDialog({ user, onOpenChange }: { user: any | null; onOpenChange
           <DialogDescription>Neues Passwort für {user?.email}</DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label>Neues Passwort (min. 8 Zeichen)</Label>
+          <Label>Neues Passwort (min. 4 Zeichen)</Label>
           <Input type="text" value={pw} onChange={(e) => setPw(e.target.value)} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>Abbrechen</Button>
-          <Button onClick={submit} disabled={busy || pw.length < 8}>Setzen</Button>
+          <Button onClick={submit} disabled={busy || pw.length < 4}>Setzen</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

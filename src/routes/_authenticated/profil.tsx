@@ -100,8 +100,8 @@ function ProfilPage() {
   }
 
   async function changePassword() {
-    if (pw1.length < 8) {
-      toast.error("Passwort muss mindestens 8 Zeichen haben.");
+    if (pw1.length < 4) {
+      toast.error("Passwort muss mindestens 4 Zeichen haben.");
       return;
     }
     if (pw1 !== pw2) {
@@ -254,7 +254,7 @@ function ProfilPage() {
             />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">Mindestens 8 Zeichen.</p>
+        <p className="text-xs text-muted-foreground">Mindestens 4 Zeichen.</p>
         <div className="flex justify-end">
           <button
             onClick={changePassword}

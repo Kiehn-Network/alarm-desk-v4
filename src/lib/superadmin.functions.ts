@@ -240,7 +240,7 @@ export const createTenantUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({
     email: z.string().email().max(255),
-    password: z.string().min(8).max(72),
+    password: z.string().min(4).max(72),
     display_name: z.string().min(1).max(120),
     domain_id: z.string().uuid().nullable(),
     role: z.enum(["superadmin", "admin", "user"]),
@@ -394,7 +394,7 @@ export const bulkImportUsers = createServerFn({ method: "POST" })
     users: z.array(z.object({
       email: z.string().email().max(255),
       display_name: z.string().min(1).max(120),
-      password: z.string().min(8).max(72),
+      password: z.string().min(4).max(72),
     })).min(1).max(500),
   }).parse(i))
   .handler(async ({ data, context }) => {
@@ -672,7 +672,7 @@ export const onboardDomain = createServerFn({ method: "POST" })
     name: z.string().min(1).max(200),
     admin: z.object({
       email: z.string().email().max(255),
-      password: z.string().min(8).max(72),
+      password: z.string().min(4).max(72),
       display_name: z.string().min(1).max(120),
     }),
     license: z.object({
