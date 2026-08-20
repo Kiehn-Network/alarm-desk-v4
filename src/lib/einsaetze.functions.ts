@@ -51,7 +51,8 @@ const editSchema = z.object({
   teilnehmer_id: z.string().max(100).optional().nullable(),
   beschreibung: z.string().max(4000).optional().nullable(),
   assigned_to: z.string().uuid().optional().nullable(),
-  status: z.enum(["in_bearbeitung", "abgeschlossen"]).optional(),
+  status: z.enum(["in_bearbeitung", "abgeschlossen", "storniert"]).optional(),
+  storniert_grund: z.string().max(1000).optional().nullable(),
   vor_ort_am: isoOrNull,
   abfahrt_am: isoOrNull,
   einsatz_ende_am: isoOrNull,
@@ -67,6 +68,7 @@ const TRACKABLE = [
   "vor_ort_am","abfahrt_am","einsatz_ende_am",
   "created_at",
   "bericht_typ","hausnotruf_problem","hausnotruf_loesung","hausnotruf_provider",
+  "storniert_grund",
 ] as const;
 
 async function logHistory(
