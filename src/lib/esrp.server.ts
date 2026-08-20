@@ -45,6 +45,45 @@ function ynBool(v: any): boolean | null {
   return null;
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+// Anlagennummern des ERP beginnen bei 500001 – kleinere Werte lehnt die API ab.
+const MIN_ANLAGEN_NR = 500001;
+
+export function isValidEmail(v: any): boolean {
+  return typeof v === "string" && EMAIL_RE.test(v.trim());
+}
+
+async function lookupUserEmail(userId: string): Promise<string | null> {
+  try {
+    const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const mail = data?.user?.email ?? null;
+    return isValidEmail(mail) ? String(mail).trim() : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Prüft den Payload vor dem Versand auf bekannte Datenfehler, die das ERP
+ * mit HTTP 400 ablehnt. Solche Jobs dürfen NICHT endlos wiederholt werden.
+ */
+export function validateErpPayload(payload: any): string[] {
+  const problems: string[] = [];
+  if (!isValidEmail(payload?.personalEmail)) {
+    problems.push("personalEmail fehlt oder ist keine gültige E-Mail-Adresse (Fahrer/Ersteller ohne E-Mail hinterlegt)");
+  }
+  const anr = Number(payload?.anlagenNr);
+  if (!Number.isFinite(anr) || anr < MIN_ANLAGEN_NR) {
+    problems.push(`anlagenNr ungültig (${payload?.anlagenNr ?? "leer"}) – gültige ERP-Anlagennummern beginnen bei ${MIN_ANLAGEN_NR}`);
+  }
+  const apn = Number(payload?.aenderPersonalNr);
+  if (!Number.isFinite(apn) || apn <= 0) {
+    problems.push("aenderPersonalNr muss größer als 0 sein");
+  }
+  if (!payload?.einsatzDatum) problems.push("einsatzDatum fehlt");
+  return problems;
+}
+
 export async function buildErpPayload(einsatz: any) {
   // AnlagenNr ist im ERP Pflicht (> 0). Falls am Einsatz nicht gepflegt, mit 0 senden -
   // dann liefert das ERP einen klaren Validierungsfehler statt 500.
@@ -75,11 +114,13 @@ export async function buildErpPayload(einsatz: any) {
       .eq("id", einsatz.assigned_to)
       .maybeSingle();
     fahrerName = prof?.display_name ?? null;
-    try {
-      const { data: u } = await supabaseAdmin.auth.admin.getUserById(einsatz.assigned_to);
-      personalEmail = u?.user?.email ?? "";
-    } catch { /* ignore */ }
+    personalEmail = (await lookupUserEmail(einsatz.assigned_to)) ?? "";
   }
+  // Fallback-Kette: zugewiesener Fahrer -> Ersteller des Einsatzes.
+  if (!isValidEmail(personalEmail) && einsatz.created_by) {
+    personalEmail = (await lookupUserEmail(einsatz.created_by)) ?? "";
+  }
+  if (!isValidEmail(personalEmail)) personalEmail = "";
 
   // Ersteller-/Änderer-Personalnummer aus ERP-Einstellungen.
   // Das ERP verlangt eine positive Nummer – 0 ist unzulässig.
@@ -246,6 +287,15 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
       : s.endpoint_path.startsWith("/") ? s.endpoint_path : `/${s.endpoint_path}`;
     const url = `${s.api_base.replace(/\/$/, "")}${ep}`;
     const payload = await resolveOutboundPayload(job);
+
+    // Vorab-Validierung: Datenfehler gar nicht erst senden.
+    const problems = validateErpPayload(payload);
+    if (problems.length > 0) {
+      const msg = `Datenfehler: ${problems.join(" | ")}`;
+      await markPermanent(outboxId, attemptTries, msg);
+      return { ok: false, error: msg };
+    }
+
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -266,6 +316,13 @@ export async function processErpOutboxItem(outboxId: string): Promise<{ ok: bool
       return { ok: true };
     }
     const msg = formatErpError(res.status, body, payload);
+    // 4xx = Datenfehler (außer 408/425/429) -> erneutes Senden mit denselben Daten
+    // ist zwecklos. Job dauerhaft stoppen, bis die Daten korrigiert und der Job
+    // manuell erneut gesendet wird.
+    if (res.status >= 400 && res.status < 500 && ![408, 425, 429].includes(res.status)) {
+      await markPermanent(outboxId, attemptTries, msg);
+      return { ok: false, error: msg };
+    }
     await markFailed(outboxId, attemptTries, msg);
     return { ok: false, error: msg };
   } catch (e: any) {
@@ -281,11 +338,10 @@ async function resolveOutboundPayload(job: any) {
     ? (payload.einsatzId ?? payload.EinsatzId)
     : null;
   const hasEinsatzId = typeof currentId === "string" && currentId.trim() !== "";
-  const hasV2Shape =
-    payload && typeof payload === "object" &&
-    "customFields" in payload && "arbeitszeit" in payload && "personalEmail" in payload;
-  if (hasEinsatzId && hasV2Shape) return payload;
+  // Payload IMMER neu bauen, solange der Einsatz existiert – so werden korrigierte
+  // Stammdaten (E-Mail, AnlagenNr, PersonalNr) beim erneuten Senden übernommen.
   if (!job.einsatz_id) return payload;
+  void hasEinsatzId;
 
   const { data: einsatz } = await supabaseAdmin
     .from("einsaetze")
@@ -369,24 +425,57 @@ function extractFieldNames(parsed: any, rawBody: string): string[] {
   return Array.from(set);
 }
 
+export const ERP_PERMANENT_PREFIX = "ENDGÜLTIG (kein Auto-Retry): ";
+const MAX_ERP_TRIES = 10;
+
 async function markFailed(id: string, tries: number, message: string) {
+  if (tries >= MAX_ERP_TRIES) {
+    await markPermanent(id, tries, `Maximale Versuche (${MAX_ERP_TRIES}) erreicht. ${message}`);
+    return;
+  }
+  // Exponentielles Backoff: 1min, 2, 4, 8 ... max 6h
+  const delay = Math.min(60_000 * 2 ** Math.max(0, tries - 1), 6 * 60 * 60_000);
   await supabaseAdmin.from("erp_outbox").update({
     status: "failed",
     tries,
     last_error: message,
-    next_retry_at: new Date(Date.now() + 60_000).toISOString(),
+    next_retry_at: new Date(Date.now() + delay).toISOString(),
+  }).eq("id", id);
+}
+
+/**
+ * Endgültiger Fehler: Job bleibt "failed", wird aber vom Worker nicht mehr
+ * abgeholt (next_retry_at = null). Nur manuelles "Erneut senden" reaktiviert ihn.
+ */
+async function markPermanent(id: string, tries: number, message: string) {
+  await supabaseAdmin.from("erp_outbox").update({
+    status: "failed",
+    tries,
+    last_error: ERP_PERMANENT_PREFIX + message,
+    next_retry_at: null,
   }).eq("id", id);
 }
 
 export async function processDueErpJobs(limit = 20) {
   const nowIso = new Date().toISOString();
-  const { data: jobs } = await supabaseAdmin
+  const { data: pendingJobs } = await supabaseAdmin
     .from("erp_outbox")
     .select("id")
-    .in("status", ["pending", "failed"])
+    .eq("status", "pending")
     .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
     .order("created_at", { ascending: true })
     .limit(limit);
+  // Fehlgeschlagene Jobs nur, wenn ein Retry-Zeitpunkt gesetzt und fällig ist.
+  // next_retry_at = null bedeutet "endgültiger Datenfehler" – kein Auto-Retry.
+  const { data: failedJobs } = await supabaseAdmin
+    .from("erp_outbox")
+    .select("id")
+    .eq("status", "failed")
+    .not("next_retry_at", "is", null)
+    .lte("next_retry_at", nowIso)
+    .order("created_at", { ascending: true })
+    .limit(limit);
+  const jobs = [...(pendingJobs ?? []), ...(failedJobs ?? [])].slice(0, limit);
   const results: { id: string; ok: boolean; error?: string }[] = [];
   for (const j of jobs ?? []) {
     const r = await processErpOutboxItem(j.id);
