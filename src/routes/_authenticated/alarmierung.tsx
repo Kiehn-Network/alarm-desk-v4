@@ -871,7 +871,11 @@ function EditDialog({
         kunden_name: einsatz.kunden_name ?? "",
         address: einsatz.address ?? "",
         beschreibung: einsatz.beschreibung ?? "",
-        status: einsatz.status === "abgeschlossen" ? "abgeschlossen" : "in_bearbeitung",
+        status:
+          einsatz.status === "abgeschlossen" ? "abgeschlossen"
+          : einsatz.status === "storniert" ? "storniert"
+          : "in_bearbeitung",
+        storniert_grund: einsatz.storniert_grund ?? "",
         vor_ort_am: toLocalInput(einsatz.vor_ort_am),
         abfahrt_am: toLocalInput(einsatz.abfahrt_am),
         einsatz_ende_am: toLocalInput(einsatz.einsatz_ende_am),
@@ -913,9 +917,21 @@ function EditDialog({
                 <SelectContent>
                   <SelectItem value="in_bearbeitung">Aktiv (Läuft)</SelectItem>
                   <SelectItem value="abgeschlossen">Abgeschlossen</SelectItem>
+                  <SelectItem value="storniert">Storniert</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {form.status === "storniert" && (
+              <div className="space-y-1 md:col-span-2">
+                <Label>Storno-Grund</Label>
+                <Textarea
+                  rows={2}
+                  placeholder="Warum wurde der Einsatz storniert?"
+                  value={form.storniert_grund ?? ""}
+                  onChange={(e) => set("storniert_grund", e.target.value)}
+                />
+              </div>
+            )}
             <div className="space-y-1">
               <Label>Kunde</Label>
               <Input value={form.kunden_name ?? ""} onChange={(e) => set("kunden_name", e.target.value)} />
@@ -988,6 +1004,9 @@ function EditDialog({
                   address: form.address ?? null,
                   beschreibung: form.beschreibung ?? null,
                   status: form.status,
+                  ...(form.status === "storniert"
+                    ? { storniert_grund: form.storniert_grund?.trim() || null }
+                    : {}),
                   vor_ort_am: fromLocalInput(form.vor_ort_am ?? ""),
                   abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
                   einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
