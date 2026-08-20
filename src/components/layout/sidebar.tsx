@@ -41,7 +41,7 @@ const sections: Section[] = [
     { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice", roles: ["admin", "dispatcher"] },
     { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko", roles: ["admin", "dispatcher"] },
     { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz", roles: ["admin", "dispatcher"] },
-    { to: "/notdienst/lutz/pisaweb", label: "Lutz · PisaWeb", icon: ExternalLink, module: "notdienst_lutz", roles: ["admin", "dispatcher"], external: "https://pisaweb.lutz-aufzuege.de/pisasales/pisasales" },
+    { to: "/notdienst/lutz/pisaweb", label: "Lutz · PisaWeb", icon: ExternalLink, module: "notdienst_lutz", roles: ["admin", "dispatcher"], external: "https://desktop.pisa.lutz-aufzuege.de/pisaexternal/pisasales" },
   ]},
   { label: "Abrechnung Hausnotruf", items: [
     { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser", roles: ["admin", "dispatcher"] },
