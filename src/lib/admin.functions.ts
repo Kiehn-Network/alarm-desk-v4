@@ -120,7 +120,7 @@ export const createUser = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({
       email: z.string().email().max(255),
-      password: z.string().min(8).max(72),
+      password: z.string().min(4).max(72),
       display_name: z.string().trim().min(1).max(120),
       role: roleEnum,
     }).parse(i),
@@ -199,7 +199,7 @@ export const setUserEinsatzSelectable = createServerFn({ method: "POST" })
 export const resetUserPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) =>
-    z.object({ user_id: z.string().uuid(), password: z.string().min(8).max(72) }).parse(i),
+    z.object({ user_id: z.string().uuid(), password: z.string().min(4).max(72) }).parse(i),
   )
   .handler(async ({ data, context }) => {
     const domainId = await requireDomainAdmin(context.userId);

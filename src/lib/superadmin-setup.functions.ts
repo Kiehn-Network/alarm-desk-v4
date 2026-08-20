@@ -6,7 +6,7 @@ export const createSuperadmin = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({
       email: z.string().email().max(255),
-      password: z.string().min(8).max(72),
+      password: z.string().min(4).max(72),
       display_name: z.string().trim().min(1).max(120),
       setup_token: z.string().min(8).max(256).optional(),
     }).parse(i),

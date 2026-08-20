@@ -35,8 +35,8 @@ function ResetPasswordPage() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("Passwort muss mindestens 8 Zeichen lang sein");
+    if (password.length < 4) {
+      toast.error("Passwort muss mindestens 4 Zeichen lang sein");
       return;
     }
     if (password !== confirm) {
@@ -110,10 +110,10 @@ function ResetPasswordPage() {
                   <input
                     type="password"
                     required
-                    minLength={8}
+                    minLength={4}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mindestens 8 Zeichen"
+                    placeholder="Mindestens 4 Zeichen"
                     className="w-full bg-input border border-border rounded-xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
                   />
                 </div>
@@ -126,7 +126,7 @@ function ResetPasswordPage() {
                   <input
                     type="password"
                     required
-                    minLength={8}
+                    minLength={4}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     placeholder="Passwort wiederholen"

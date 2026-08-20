@@ -60,9 +60,9 @@ function KiehnSystemeLogin() {
                 onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pw">Passwort (min. 8 Zeichen)</Label>
+              <Label htmlFor="pw">Passwort (min. 4 Zeichen)</Label>
               <Input id="pw" type="password" autoComplete="new-password" value={password}
-                onChange={(e) => setPassword(e.target.value)} minLength={8} required />
+                onChange={(e) => setPassword(e.target.value)} minLength={4} required />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Wird angelegt…" : "SuperAdmin anlegen"}

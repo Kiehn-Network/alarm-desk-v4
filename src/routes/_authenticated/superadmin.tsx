@@ -1590,7 +1590,7 @@ function SuperAdminPage() {
                   <Input type="email" value={nuEmail} onChange={(e) => setNuEmail(e.target.value)} placeholder="max@firma.de" />
                 </div>
                 <div>
-                  <Label>Passwort (min. 8 Zeichen)</Label>
+                  <Label>Passwort (min. 4 Zeichen)</Label>
                   <Input type="text" value={nuPassword} onChange={(e) => setNuPassword(e.target.value)} placeholder="Passwort vergeben" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -1620,7 +1620,7 @@ function SuperAdminPage() {
               <Button
                 disabled={
                   nuPending ||
-                  !nuEmail || !nuName || nuPassword.length < 8 ||
+                  !nuEmail || !nuName || nuPassword.length < 4 ||
                   (nuRole !== "superadmin" && nuDomain === "none")
                 }
                 onClick={async () => {
@@ -1653,7 +1653,7 @@ function SuperAdminPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="text-xs text-muted-foreground">
-                Eine Zeile pro Nutzer: <code>email,name,passwort</code> (Komma, Semikolon oder Tab als Trenner). Passwort min. 8 Zeichen.
+                Eine Zeile pro Nutzer: <code>email,name,passwort</code> (Komma, Semikolon oder Tab als Trenner). Passwort min. 4 Zeichen.
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
