@@ -250,6 +250,18 @@ export const editEinsatzFull = createServerFn({ method: "POST" })
       // Reaktivieren: Abschluss-Zeitstempel entfernen, wenn nicht explizit gesetzt
       if (patch.abgeschlossen_am === undefined) patch.abgeschlossen_am = null;
     }
+    // Nachträgliche Stornierung
+    if (patch.status === "storniert") {
+      if (before?.status !== "storniert") {
+        patch.storniert_at = new Date().toISOString();
+        patch.storniert_by = userId;
+      }
+    } else if (patch.status && before?.status === "storniert") {
+      // Storno zurücknehmen
+      patch.storniert_at = null;
+      patch.storniert_by = null;
+      patch.storniert_grund = null;
+    }
 
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", id).select().single();
