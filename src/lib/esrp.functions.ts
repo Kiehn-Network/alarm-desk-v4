@@ -153,14 +153,25 @@ export const processErpOutboxNow = createServerFn({ method: "POST" })
     }
     // Nur eigene Domain: IDs vorab filtern, dann pro Job verarbeiten
     const nowIso = new Date().toISOString();
-    const { data: jobs } = await supabaseAdmin
+    const { data: pendingJobs } = await supabaseAdmin
       .from("erp_outbox")
       .select("id")
       .eq("domain_id", domainId)
-      .in("status", ["pending", "failed"])
+      .eq("status", "pending")
       .or(`next_retry_at.is.null,next_retry_at.lte.${nowIso}`)
       .order("created_at", { ascending: true })
       .limit(50);
+    // Endgültige Datenfehler (next_retry_at = null) werden nicht automatisch erneut gesendet.
+    const { data: failedJobs } = await supabaseAdmin
+      .from("erp_outbox")
+      .select("id")
+      .eq("domain_id", domainId)
+      .eq("status", "failed")
+      .not("next_retry_at", "is", null)
+      .lte("next_retry_at", nowIso)
+      .order("created_at", { ascending: true })
+      .limit(50);
+    const jobs = [...(pendingJobs ?? []), ...(failedJobs ?? [])].slice(0, 50);
     const results: { id: string; ok: boolean; error?: string }[] = [];
     for (const j of jobs ?? []) {
       const r = await processErpOutboxItem(j.id);
