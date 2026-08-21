@@ -16,8 +16,11 @@ export function SignatureField({ label, value, onChange, who }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
   const dirty = useRef(false);
+  const sized = useRef(false);
   const [padAvailable, setPadAvailable] = useState(false);
   const [padBusy, setPadBusy] = useState(false);
+  // "draw" = Leinwand aktiv (weiterzeichnen möglich), "image" = fertiges Bild anzeigen
+  const [mode, setMode] = useState<"draw" | "image">(value ? "image" : "draw");
 
   useEffect(() => {
     let alive = true;
@@ -25,11 +28,19 @@ export function SignatureField({ label, value, onChange, who }: Props) {
     return () => { alive = false; };
   }, []);
 
+  // Externes Bild (z. B. Pad oder geladener Datensatz) anzeigen,
+  // aber niemals während/nach eigenem Zeichnen die Leinwand ersetzen.
   useEffect(() => {
+    if (!value) { setMode("draw"); return; }
+    if (!dirty.current) setMode("image");
+  }, [value]);
+
+  function setupCanvas() {
     const c = canvasRef.current;
-    if (!c) return;
+    if (!c || sized.current) return;
     const ratio = window.devicePixelRatio || 1;
     const rect = c.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
     c.width = rect.width * ratio;
     c.height = rect.height * ratio;
     const ctx = c.getContext("2d");
@@ -39,7 +50,13 @@ export function SignatureField({ label, value, onChange, who }: Props) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#111111";
-  }, [value]);
+    sized.current = true;
+  }
+
+  useEffect(() => {
+    if (mode === "draw") setupCanvas();
+    else sized.current = false;
+  }, [mode]);
 
   function pos(e: React.PointerEvent<HTMLCanvasElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -47,6 +64,7 @@ export function SignatureField({ label, value, onChange, who }: Props) {
   }
 
   function start(e: React.PointerEvent<HTMLCanvasElement>) {
+    setupCanvas();
     e.currentTarget.setPointerCapture(e.pointerId);
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
@@ -71,6 +89,7 @@ export function SignatureField({ label, value, onChange, who }: Props) {
     drawing.current = false;
     const c = canvasRef.current;
     if (!c || !dirty.current) return;
+    // Zwischenstand speichern, Leinwand bleibt aktiv → weiterzeichnen möglich
     onChange(c.toDataURL("image/png"), "touch");
   }
 
@@ -79,6 +98,7 @@ export function SignatureField({ label, value, onChange, who }: Props) {
     const ctx = c?.getContext("2d");
     if (c && ctx) ctx.clearRect(0, 0, c.width, c.height);
     dirty.current = false;
+    setMode("draw");
     onChange(null, null);
   }
 
@@ -86,6 +106,8 @@ export function SignatureField({ label, value, onChange, who }: Props) {
     setPadBusy(true);
     try {
       const img = await captureSignotecSignature({ who, reason: "Schlüsselübergabe" });
+      dirty.current = false;
+      setMode("image");
       onChange(img, "pad");
       toast.success("Unterschrift vom Pad übernommen");
     } catch (e: any) {
@@ -111,7 +133,7 @@ export function SignatureField({ label, value, onChange, who }: Props) {
         </div>
       </div>
 
-      {value ? (
+      {mode === "image" && value ? (
         <div className="rounded-lg border border-border bg-white h-28 flex items-center justify-center overflow-hidden">
           <img src={value} alt={label} className="max-h-full max-w-full object-contain" />
         </div>
@@ -122,14 +144,15 @@ export function SignatureField({ label, value, onChange, who }: Props) {
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={end}
-          onPointerLeave={end}
+          onPointerCancel={end}
         />
       )}
       <p className="text-[11px] text-muted-foreground">
         {padAvailable
           ? "signotec Sigma LITE erkannt – oder direkt hier mit Finger/Maus unterschreiben."
-          : "Kein signotec-Dienst erkannt – bitte mit Finger/Maus unterschreiben."}
+          : "Mit Finger/Maus unterschreiben – Sie können nach dem Absetzen beliebig weiterschreiben."}
       </p>
     </div>
   );
 }
+
