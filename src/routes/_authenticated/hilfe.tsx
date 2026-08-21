@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Sparkles, Play, CheckCircle2, BookOpen } from "lucide-react";
+import { Sparkles, BookOpen, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TOUR_STEPS, stepsForRole } from "@/lib/tour-steps";
 import { useRole } from "@/hooks/use-role";
-import { resetMyTour } from "@/lib/tour.functions";
 
 export const Route = createFileRoute("/_authenticated/hilfe")({
   component: HilfePage,
@@ -18,17 +14,6 @@ function HilfePage() {
   const { role } = useRole();
   const steps = stepsForRole(role, null);
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const reset = useServerFn(resetMyTour);
-
-  const restart = useMutation({
-    mutationFn: () => reset(),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["my-tour"] });
-      window.dispatchEvent(new Event("open-tour"));
-      toast.success("Einführung gestartet");
-    },
-  });
 
   return (
     <div className="p-6 lg:p-8 space-y-6 max-w-5xl">
@@ -37,14 +22,11 @@ function HilfePage() {
           <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
             <BookOpen className="size-3.5" /> Anleitung
           </div>
-          <h1 className="text-3xl font-bold mt-1">Hilfe & Einführung</h1>
+          <h1 className="text-3xl font-bold mt-1">Hilfe & Anleitung</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Hier findest du Erklärungen zu allen Bereichen. Du kannst die geführte Tour jederzeit neu starten.
+            Hier findest du Erklärungen zu allen Bereichen.
           </p>
         </div>
-        <Button onClick={() => restart.mutate()} disabled={restart.isPending}>
-          <Play className="size-4 mr-2" /> Tour erneut starten
-        </Button>
       </header>
 
       <div className="grid sm:grid-cols-2 gap-4">
@@ -89,7 +71,7 @@ function HilfePage() {
       <div className="rounded-xl border border-dashed border-border bg-muted/30 p-5 text-sm text-muted-foreground flex items-center gap-3">
         <Sparkles className="size-4 text-primary" />
         <span>
-          Tipp: Dein Admin kann steuern, ob die Tour automatisch erscheint und welche Schritte gezeigt werden.
+          Tipp: Nutze die Seitenleiste, um schnell zwischen den Bereichen zu wechseln.
         </span>
       </div>
     </div>

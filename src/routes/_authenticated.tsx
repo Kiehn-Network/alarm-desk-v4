@@ -6,15 +6,11 @@ import { MaintenanceBanner } from "@/components/layout/maintenance-banner";
 import { ImpersonationBanner } from "@/components/layout/impersonation-banner";
 import { ThemeApplier } from "@/components/theme-applier";
 import { ChatWidget } from "@/components/chat/chat-widget";
-import { TourLauncher } from "@/components/tour/tour-launcher";
-import { DemoModeBanner } from "@/components/onboarding/demo-mode-banner";
-import { LoginSplash } from "@/components/onboarding/login-splash";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocationTracker } from "@/hooks/use-location-tracker";
 import { useSupportNotifications } from "@/hooks/use-support-notifications";
 import { usePresenceBroadcast } from "@/hooks/use-presence";
 import { useRole } from "@/hooks/use-role";
-import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -36,16 +32,6 @@ function AuthLayout() {
     role,
     displayName: (user?.user_metadata?.display_name as string) ?? user?.email ?? null,
   });
-  // Kurzer Login-Splash: einmal pro Session/Login sichtbar.
-  const [loginSplash, setLoginSplash] = useState(false);
-  useEffect(() => {
-    if (!user) return;
-    if (typeof window === "undefined") return;
-    const key = `login-splash-shown:${user.id}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
-    setLoginSplash(true);
-  }, [user?.id]);
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
@@ -62,14 +48,11 @@ function AuthLayout() {
         <Topbar displayName={name} />
         <ImpersonationBanner />
         <MaintenanceBanner />
-        <DemoModeBanner />
         <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>
       <ChatWidget />
-      <TourLauncher />
-      {loginSplash && <LoginSplash onDone={() => setLoginSplash(false)} />}
     </div>
   );
 }

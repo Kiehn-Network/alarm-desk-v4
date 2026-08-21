@@ -3,6 +3,7 @@ import {
   Outlet, Link, createRootRouteWithContext, useRouter,
   HeadContent, Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
