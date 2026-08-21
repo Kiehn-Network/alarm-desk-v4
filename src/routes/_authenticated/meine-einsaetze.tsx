@@ -314,23 +314,24 @@ function MeineEinsaetzePage() {
                     {zeitCfg.abfahrt_zentrale.enabled && (
                       <HoldButton label={`Abfahrt Zentrale${zeitCfg.abfahrt_zentrale.required ? " *" : ""}`} value={e.abfahrt_zentrale_am}
                         icon={<LogOut className="size-4" />}
-                        onComplete={() => setTime(e.id, "abfahrt_zentrale")} />
+                        onComplete={(at) => setTime(e.id, "abfahrt_zentrale", at)} />
                     )}
                     {zeitCfg.vor_ort.enabled && (
                       <HoldButton label={`Vor Ort${zeitCfg.vor_ort.required ? " *" : ""}`} value={e.vor_ort_am}
                         icon={<MapPinned className="size-4" />}
-                        onComplete={() => setTime(e.id, "vor_ort")} />
+                        onComplete={(at) => setTime(e.id, "vor_ort", at)} />
                     )}
                     {zeitCfg.abfahrt_objekt.enabled && (
                       <HoldButton label={`Abfahrt Objekt${zeitCfg.abfahrt_objekt.required ? " *" : ""}`} value={e.abfahrt_am}
                         icon={<LogOut className="size-4" />}
-                        onComplete={() => setTime(e.id, "abfahrt")} />
+                        onComplete={(at) => setTime(e.id, "abfahrt", at)} />
                     )}
                     <HoldButton label="Einsatz Ende" value={e.einsatz_ende_am}
                       icon={<Square className="size-4" />}
-                      onComplete={() => setTime(e.id, "ende")} />
+                      onComplete={(at) => setTime(e.id, "ende", at)} />
                   </div>
                 )}
+
 
                 {!isAktiv(e) && (e.abfahrt_zentrale_am || e.vor_ort_am || e.abfahrt_am || e.einsatz_ende_am) && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-border text-xs">
