@@ -6,8 +6,7 @@ import { toast } from "sonner";
 import {
   Users, ShieldCheck, FileText, Siren, Tag, Plus, Pencil, Trash2,
   KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
-  Boxes, CheckCircle2, GraduationCap,
-  LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert, Download,
+  Boxes, CheckCircle2, LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert, Download,
 } from "lucide-react";
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,6 @@ import {
 import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
 import { SystemSettingsPanel } from "@/components/admin/system-settings-panel";
-import { TourAdminPanel } from "@/components/admin/tour-admin-panel";
 import { EmailSettingsPanel } from "@/components/admin/email-settings-panel";
 import { EmailBrandingPanel } from "@/components/admin/email-branding-panel";
 import { SchluesselFooterPanel } from "@/components/admin/schluessel-footer-panel";
@@ -108,7 +106,6 @@ function AdminPage() {
           <TabsTrigger value="users"><Users className="size-4 mr-2" />Benutzer</TabsTrigger>
           <TabsTrigger value="gruende"><Tag className="size-4 mr-2" />Einsatzgründe</TabsTrigger>
           <TabsTrigger value="modules"><Boxes className="size-4 mr-2" />Module</TabsTrigger>
-          <TabsTrigger value="tour"><GraduationCap className="size-4 mr-2" />Einführung</TabsTrigger>
           <TabsTrigger value="system"><SettingsIcon className="size-4 mr-2" />System</TabsTrigger>
           <TabsTrigger value="email"><Mail className="size-4 mr-2" />E-Mail</TabsTrigger>
           <TabsTrigger value="schluessel"><KeyRound className="size-4 mr-2" />Schlüsselübergabe</TabsTrigger>
@@ -119,7 +116,6 @@ function AdminPage() {
         <TabsContent value="users"><UsersPanel /></TabsContent>
         <TabsContent value="gruende"><GruendePanel /></TabsContent>
         <TabsContent value="modules"><ModulesPanel /></TabsContent>
-        <TabsContent value="tour"><TourAdminPanel /></TabsContent>
         <TabsContent value="system"><SystemSettingsPanel /></TabsContent>
           <TabsContent value="email">
             <div className="space-y-6">
