@@ -26,12 +26,12 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 - **Startzeit bearbeitbar**: Beim Bearbeiten eines Einsatzes kann der Erstellzeitpunkt (Startzeit) angepasst werden, inklusive Eintrag in der Historie.
 - **Homepage im Light-Mode**: Die Startseite wurde auf ein helles Design umgestellt.
-- **Lutz PisaWeb-Link**: Zeigt jetzt auf `https://desktop.pisa.lutz-aufzuege.de/pisaexternal/pisasales`.
 - **Passwort-Mindestlänge**: Auf 4 Zeichen gesenkt (Profil, Passwort-Reset, Admin- und Superadmin-Nutzerverwaltung).
 
 ### Removed
 
 - **Einführung/Tour**: Die geführte Einführung inkl. Demo-Modus und Login-Splash ist ausgeblendet.
+
 
 ## [4.0.20] - 2026-07-14
 
