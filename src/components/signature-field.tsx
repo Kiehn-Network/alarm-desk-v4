@@ -134,13 +134,13 @@ export function SignatureField({ label, value, onChange, who }: Props) {
       </div>
 
       {mode === "image" && value ? (
-        <div className="rounded-lg border border-border bg-white h-28 flex items-center justify-center overflow-hidden">
+        <div className="rounded-lg border border-border bg-white h-56 flex items-center justify-center overflow-hidden">
           <img src={value} alt={label} className="max-h-full max-w-full object-contain" />
         </div>
       ) : (
         <canvas
           ref={canvasRef}
-          className="w-full h-28 rounded-lg border border-dashed border-border bg-white touch-none cursor-crosshair"
+          className="w-full h-56 rounded-lg border border-dashed border-border bg-white touch-none cursor-crosshair"
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={end}
