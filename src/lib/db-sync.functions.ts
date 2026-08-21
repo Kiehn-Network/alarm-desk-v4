@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { toAuthPassword } from "@/lib/password-compat";
 
 const SYNC_TABLES: string[] = [
   "domains",
@@ -1097,7 +1098,7 @@ export const exportFullBootstrapSql = createServerFn({ method: "POST" })
     z
       .object({
         email: z.string().email().max(255),
-        password: z.string().min(6).max(128),
+        password: z.string().min(4).max(128),
         displayName: z.string().min(1).max(120).optional(),
       })
       .parse(d),
@@ -1153,7 +1154,7 @@ export const exportFullBootstrapSql = createServerFn({ method: "POST" })
     }
 
     const emailLit = pgQuote(data.email);
-    const pwLit = pgQuote(data.password);
+    const pwLit = pgQuote(toAuthPassword(data.password));
     const nameLit = pgQuote(data.displayName ?? "SuperAdmin");
 
     parts.push(

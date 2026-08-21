@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { toAuthPassword } from "@/lib/password-compat";
 
 export const createSuperadmin = createServerFn({ method: "POST" })
   .inputValidator((i) =>
@@ -28,7 +29,7 @@ export const createSuperadmin = createServerFn({ method: "POST" })
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: data.password,
+      password: toAuthPassword(data.password),
       email_confirm: true,
       user_metadata: { display_name: data.display_name },
     });

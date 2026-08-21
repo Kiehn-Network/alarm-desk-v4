@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Lock, ArrowRight, CheckCircle2, AlertTriangle } from "lucide-react";
 import logo from "@/assets/alarmdesk-logo.png";
+import { toAuthPassword } from "@/lib/password-compat";
 
 export const Route = createFileRoute("/reset-password")({
   component: ResetPasswordPage,
@@ -45,7 +46,7 @@ function ResetPasswordPage() {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({ password: toAuthPassword(password) });
       if (error) throw error;
       setDone(true);
       toast.success("Passwort aktualisiert");

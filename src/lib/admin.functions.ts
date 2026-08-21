@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId, getEffectiveDomainId } from "@/lib/tenant.server";
+import { toAuthPassword } from "@/lib/password-compat";
 
 const ROLES = ["admin", "dispatcher", "fahrer", "user"] as const;
 const roleEnum = z.enum(ROLES);
@@ -129,7 +130,7 @@ export const createUser = createServerFn({ method: "POST" })
     const domainId = await requireDomainAdmin(context.userId);
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: data.password,
+      password: toAuthPassword(data.password),
       email_confirm: true,
       user_metadata: { display_name: data.display_name },
     });
@@ -204,7 +205,9 @@ export const resetUserPassword = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const domainId = await requireDomainAdmin(context.userId);
     await assertUserInDomain(data.user_id, domainId);
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, { password: data.password });
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
+      password: toAuthPassword(data.password),
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });

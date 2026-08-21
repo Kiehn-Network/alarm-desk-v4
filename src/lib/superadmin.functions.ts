@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { toAuthPassword } from "@/lib/password-compat";
 
 async function assertSuper(userId: string) {
   const { data } = await supabaseAdmin.from("user_roles").select("role")
@@ -252,7 +253,7 @@ export const createTenantUser = createServerFn({ method: "POST" })
     }
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
-      password: data.password,
+      password: toAuthPassword(data.password),
       email_confirm: true,
       user_metadata: { display_name: data.display_name },
     });
@@ -404,7 +405,7 @@ export const bulkImportUsers = createServerFn({ method: "POST" })
       try {
         const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
           email: u.email,
-          password: u.password,
+          password: toAuthPassword(u.password),
           email_confirm: true,
           user_metadata: { display_name: u.display_name },
         });
@@ -703,7 +704,7 @@ export const onboardDomain = createServerFn({ method: "POST" })
     if (lerr) throw new Error(lerr.message);
     const { data: created, error: uerr } = await supabaseAdmin.auth.admin.createUser({
       email: data.admin.email,
-      password: data.admin.password,
+      password: toAuthPassword(data.admin.password),
       email_confirm: true,
       user_metadata: { display_name: data.admin.display_name },
     });
