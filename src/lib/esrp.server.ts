@@ -95,14 +95,10 @@ export async function buildErpPayload(einsatz: any) {
         ? Number(anlagenNrRaw)
         : 0;
 
-  // EinsatzDatum ist Pflicht. Bevorzugt: tatsächliche Einsatzzeit, sonst Plan/Anlage/Erstellung.
-  const einsatzDatum =
-    toIsoOrNull(einsatz.vor_ort_am) ||
-    toIsoOrNull(einsatz.assigned_at) ||
-    toIsoOrNull(einsatz.geplant_am) ||
-    toIsoOrNull(einsatz.abgeschlossen_am) ||
-    toIsoOrNull(einsatz.created_at) ||
-    new Date().toISOString();
+  // Arbeitszeit-Zeitpunkte werden weiter unten aus den ERFASSTEN Zeiten gebaut.
+  // WICHTIG: niemals "jetzt" verwenden – sonst bekommt ein zeitversetzt
+  // gesendeter Einsatz den Sendezeitpunkt statt der echten Einsatzzeiten.
+
 
   // Fahrername + personalEmail aus Profil/Auth auflösen
   let fahrerName: string | null = null;
