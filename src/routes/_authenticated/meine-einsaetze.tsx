@@ -207,25 +207,28 @@ function MeineEinsaetzePage() {
     } finally { setBusy(null); }
   }
 
-  async function setTime(id: string, feld: "abfahrt_zentrale" | "vor_ort" | "abfahrt" | "ende") {
+  async function setTime(id: string, feld: "abfahrt_zentrale" | "vor_ort" | "abfahrt" | "ende", at?: string) {
+    const payload = { id, feld, ...(at ? { at, overwrite: true } : {}) };
     try {
       if (!online) {
-        enqueue({ kind: "setEinsatzZeit", data: { id, feld } });
+        enqueue({ kind: "setEinsatzZeit", data: payload });
         toast.success("Offline – Zeit wird gesendet, sobald wieder online");
         return;
       }
-      await setEinsatzZeit({ data: { id, feld } });
+      await setEinsatzZeit({ data: payload });
       qc.invalidateQueries({ queryKey: ["meine-einsaetze"] });
+      if (at) toast.success("Zeit korrigiert");
     } catch (e: any) {
       const msg = e?.message ?? "";
       if (/network|fetch|failed to fetch|load failed/i.test(msg)) {
-        enqueue({ kind: "setEinsatzZeit", data: { id, feld } });
+        enqueue({ kind: "setEinsatzZeit", data: payload });
         toast.success("Verbindung weg – Zeit wird automatisch nachgesendet");
       } else {
         toast.error(msg || "Fehler");
       }
     }
   }
+
 
   return (
     <div className="p-4 md:p-8 space-y-5 max-w-3xl">
@@ -311,23 +314,24 @@ function MeineEinsaetzePage() {
                     {zeitCfg.abfahrt_zentrale.enabled && (
                       <HoldButton label={`Abfahrt Zentrale${zeitCfg.abfahrt_zentrale.required ? " *" : ""}`} value={e.abfahrt_zentrale_am}
                         icon={<LogOut className="size-4" />}
-                        onComplete={() => setTime(e.id, "abfahrt_zentrale")} />
+                        onComplete={(at) => setTime(e.id, "abfahrt_zentrale", at)} />
                     )}
                     {zeitCfg.vor_ort.enabled && (
                       <HoldButton label={`Vor Ort${zeitCfg.vor_ort.required ? " *" : ""}`} value={e.vor_ort_am}
                         icon={<MapPinned className="size-4" />}
-                        onComplete={() => setTime(e.id, "vor_ort")} />
+                        onComplete={(at) => setTime(e.id, "vor_ort", at)} />
                     )}
                     {zeitCfg.abfahrt_objekt.enabled && (
                       <HoldButton label={`Abfahrt Objekt${zeitCfg.abfahrt_objekt.required ? " *" : ""}`} value={e.abfahrt_am}
                         icon={<LogOut className="size-4" />}
-                        onComplete={() => setTime(e.id, "abfahrt")} />
+                        onComplete={(at) => setTime(e.id, "abfahrt", at)} />
                     )}
                     <HoldButton label="Einsatz Ende" value={e.einsatz_ende_am}
                       icon={<Square className="size-4" />}
-                      onComplete={() => setTime(e.id, "ende")} />
+                      onComplete={(at) => setTime(e.id, "ende", at)} />
                   </div>
                 )}
+
 
                 {!isAktiv(e) && (e.abfahrt_zentrale_am || e.vor_ort_am || e.abfahrt_am || e.einsatz_ende_am) && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-border text-xs">

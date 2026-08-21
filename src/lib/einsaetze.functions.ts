@@ -351,6 +351,8 @@ export const setEinsatzZeit = createServerFn({ method: "POST" })
     z.object({
       id: z.string().uuid(),
       feld: z.enum(["abfahrt_zentrale", "vor_ort", "abfahrt", "ende"]),
+      at: z.string().datetime({ offset: true }).optional(),
+      overwrite: z.boolean().optional(),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
@@ -363,14 +365,15 @@ export const setEinsatzZeit = createServerFn({ method: "POST" })
       : "einsatz_ende_am";
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
-    if (before?.[col]) return before;
-    const patch: any = { [col]: new Date().toISOString() };
+    if (before?.[col] && !data.overwrite) return before;
+    const patch: any = { [col]: data.at ?? new Date().toISOString() };
     const { data: row, error } = await supabase
       .from("einsaetze").update(patch).eq("id", data.id).select().single();
     if (error) throw new Error(error.message);
     await logHistory(supabase, userId, data.id, before ?? {}, patch, domainId);
     return row;
   });
+
 
 export const updateEinsatzBericht = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
