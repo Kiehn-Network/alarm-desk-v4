@@ -742,7 +742,7 @@ function DbSyncPanel() {
                 type="text"
                 value={bsPassword}
                 onChange={(e) => setBsPassword(e.target.value)}
-                placeholder="mind. 6 Zeichen"
+                placeholder="mind. 4 Zeichen"
               />
             </div>
             <div className="space-y-1">
@@ -763,7 +763,7 @@ function DbSyncPanel() {
               disabled={
                 m_bootstrap.isPending ||
                 !bsEmail.includes("@") ||
-                bsPassword.length < 6
+                bsPassword.length < 4
               }
               onClick={() => m_bootstrap.mutate()}
             >

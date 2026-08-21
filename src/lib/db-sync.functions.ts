@@ -1097,7 +1097,7 @@ export const exportFullBootstrapSql = createServerFn({ method: "POST" })
     z
       .object({
         email: z.string().email().max(255),
-        password: z.string().min(6).max(128),
+        password: z.string().min(4).max(128),
         displayName: z.string().min(1).max(120).optional(),
       })
       .parse(d),
