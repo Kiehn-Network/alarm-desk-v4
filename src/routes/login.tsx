@@ -9,6 +9,7 @@ import hero1 from "@/assets/login-hero-1.jpg";
 import hero2 from "@/assets/login-hero-2.jpg";
 import hero3 from "@/assets/login-hero-3.jpg";
 import hero4 from "@/assets/login-hero-4.jpg";
+import { toAuthPassword } from "@/lib/password-compat";
 
 const HERO_IMAGES = [hero1, hero2, hero3, hero4];
 
@@ -78,7 +79,10 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: toAuthPassword(password),
+      });
       if (error) throw error;
       toast.success("Willkommen!");
       navigate({ to: "/dashboard" });

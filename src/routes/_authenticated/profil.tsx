@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useThemeMode } from "@/hooks/use-theme-mode";
 import { useAppSettings } from "@/hooks/use-app-settings";
+import { toAuthPassword } from "@/lib/password-compat";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   component: ProfilPage,
@@ -109,7 +110,7 @@ function ProfilPage() {
       return;
     }
     setSavingPw(true);
-    const { error } = await supabase.auth.updateUser({ password: pw1 });
+    const { error } = await supabase.auth.updateUser({ password: toAuthPassword(pw1) });
     if (error) {
       toast.error(error.message);
     } else {
