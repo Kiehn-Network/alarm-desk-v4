@@ -95,14 +95,10 @@ export async function buildErpPayload(einsatz: any) {
         ? Number(anlagenNrRaw)
         : 0;
 
-  // EinsatzDatum ist Pflicht. Bevorzugt: tatsächliche Einsatzzeit, sonst Plan/Anlage/Erstellung.
-  const einsatzDatum =
-    toIsoOrNull(einsatz.vor_ort_am) ||
-    toIsoOrNull(einsatz.assigned_at) ||
-    toIsoOrNull(einsatz.geplant_am) ||
-    toIsoOrNull(einsatz.abgeschlossen_am) ||
-    toIsoOrNull(einsatz.created_at) ||
-    new Date().toISOString();
+  // Arbeitszeit-Zeitpunkte werden weiter unten aus den ERFASSTEN Zeiten gebaut.
+  // WICHTIG: niemals "jetzt" verwenden – sonst bekommt ein zeitversetzt
+  // gesendeter Einsatz den Sendezeitpunkt statt der echten Einsatzzeiten.
+
 
   // Fahrername + personalEmail aus Profil/Auth auflösen
   let fahrerName: string | null = null;
@@ -137,14 +133,44 @@ export async function buildErpPayload(einsatz: any) {
     if (Number.isFinite(num) && num > 0) aenderPersonalNr = num;
   }
 
-  // Arbeitszeit — vier verpflichtende Zeitpunkte mit monoton wachsender Reihenfolge.
-  const rawBB = toIsoOrNull(einsatz.assigned_at) || toIsoOrNull(einsatz.vor_ort_am) || toIsoOrNull(einsatz.created_at) || einsatzDatum;
-  const rawBN = toIsoOrNull(einsatz.vor_ort_am) || rawBB;
-  const rawEN = toIsoOrNull(einsatz.abfahrt_am) || toIsoOrNull(einsatz.einsatz_ende_am) || rawBN;
-  const rawEB = toIsoOrNull(einsatz.einsatz_ende_am) || toIsoOrNull(einsatz.abgeschlossen_am) || rawEN;
-  const ts = [rawBB, rawBN, rawEN, rawEB].map((v) => new Date(v).getTime());
-  for (let i = 1; i < ts.length; i++) if (ts[i] < ts[i - 1]) ts[i] = ts[i - 1];
-  const [bB, bN, eN, eB] = ts.map((t) => toBerlinIso(new Date(t)));
+  // Arbeitszeit — vier Zeitpunkte, ausschliesslich aus ERFASSTEN Zeiten.
+  // Kein Fallback auf "jetzt": ein zeitversetzt gesendeter Einsatz darf niemals
+  // den Sendezeitpunkt als Arbeitszeit bekommen.
+  const tMs = (v: any): number | null => {
+    const iso = toIsoOrNull(v);
+    if (!iso) return null;
+    const t = new Date(iso).getTime();
+    return Number.isFinite(t) ? t : null;
+  };
+  const tCreated = tMs(einsatz.created_at);
+  const tAssigned = tMs(einsatz.assigned_at);
+  const tAbfahrtZ = tMs(einsatz.abfahrt_zentrale_am);
+  const tVorOrt = tMs(einsatz.vor_ort_am);
+  const tAbfahrt = tMs(einsatz.abfahrt_am);
+  const tEnde = tMs(einsatz.einsatz_ende_am);
+  const tAbgeschlossen = tMs(einsatz.abgeschlossen_am);
+  const tGeplant = tMs(einsatz.geplant_am);
+
+  // Ankunft vor Ort ist der stabilste Anker.
+  let beginnNettoMs = tVorOrt ?? tAbfahrtZ ?? tAssigned ?? tCreated ?? tGeplant ?? tEnde ?? Date.now();
+
+  // Beginn (Abfahrt Zentrale). assigned_at kann deutlich NACH dem Einsatz liegen
+  // (nachträgliche Zuweisung) – dann ist es als Beginn unbrauchbar.
+  const beginnKandidaten = [tAbfahrtZ, tAssigned, tCreated, tGeplant].filter(
+    (t): t is number => t !== null && t <= beginnNettoMs,
+  );
+  const beginnBruttoMs = beginnKandidaten.length > 0 ? Math.min(...beginnKandidaten) : beginnNettoMs;
+  if (beginnNettoMs < beginnBruttoMs) beginnNettoMs = beginnBruttoMs;
+
+  // Ende vor Ort / Ende gesamt.
+  let endeNettoMs = tAbfahrt ?? tEnde ?? tAbgeschlossen ?? beginnNettoMs;
+  if (endeNettoMs < beginnNettoMs) endeNettoMs = beginnNettoMs;
+  let endeBruttoMs = tEnde ?? tAbgeschlossen ?? endeNettoMs;
+  if (endeBruttoMs < endeNettoMs) endeBruttoMs = endeNettoMs;
+
+  const [bB, bN, eN, eB] = [beginnBruttoMs, beginnNettoMs, endeNettoMs, endeBruttoMs].map((t) =>
+    toBerlinIso(new Date(t)),
+  );
   const arbeitszeit = {
     beginnBrutto: bB,
     beginnNetto: bN,
@@ -152,6 +178,10 @@ export async function buildErpPayload(einsatz: any) {
     endeBrutto: eB,
     pauseMinuten: 0,
   };
+
+  // EinsatzDatum = Beginn des Einsatzes (konsistent zu beginnBrutto, gleiche Zeitzone).
+  const einsatzDatum = bB;
+
 
   // Scharfmeldung — nur wenn Scharfschaltung durchgeführt UND Errichter + Zeit vorhanden.
   const bd: any = einsatz.bericht_data && typeof einsatz.bericht_data === "object" ? einsatz.bericht_data : {};
