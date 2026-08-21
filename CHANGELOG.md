@@ -4,6 +4,35 @@ Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokument
 
 Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [4.0.22] - 2026-08-21
+
+### Changed
+
+- **Stempelzeiten für Fahrer**: Das 2-Sekunden-Festhalten entfällt – Zeiten werden jetzt per einfachem Klick gesetzt. Eine bereits gesetzte Zeit kann über das Stift-Symbol nachträglich korrigiert werden.
+
+### Fixed
+
+- **ERP-Zeitstempel**: Zeitpunkte werden nicht mehr fälschlich auf den Zeitpunkt der Fahrerzuweisung hochgeklemmt – dadurch entstehen keine Einsätze mit 0 Minuten Dauer mehr.
+- **ERP `einsatzDatum`**: Entspricht jetzt exakt `beginnBrutto` (gleiche Quelle, Europa/Berlin-Ortszeit mit korrektem Offset).
+
+## [4.0.21] - 2026-08-20
+
+### Added
+
+- **Stornierung im Nachgang**: Einsätze lassen sich nachträglich als storniert markieren – inklusive Grund, Zeitpunkt und ausführendem Benutzer.
+- **Schlüsselbuch – Zwangsrücknahme**: Schlüssel können zwangsweise zurückgenommen werden; zusätzlich kann die Zentrale Schlüssel manuell aus- und einbuchen (Name und Begründung sind Pflicht).
+
+### Changed
+
+- **Startzeit bearbeitbar**: Beim Bearbeiten eines Einsatzes kann der Erstellzeitpunkt (Startzeit) angepasst werden, inklusive Eintrag in der Historie.
+- **Homepage im Light-Mode**: Die Startseite wurde auf ein helles Design umgestellt.
+- **Lutz PisaWeb-Link**: Zeigt jetzt auf `https://desktop.pisa.lutz-aufzuege.de/pisaexternal/pisasales`.
+- **Passwort-Mindestlänge**: Auf 4 Zeichen gesenkt (Profil, Passwort-Reset, Admin- und Superadmin-Nutzerverwaltung).
+
+### Removed
+
+- **Einführung/Tour**: Die geführte Einführung inkl. Demo-Modus und Login-Splash ist ausgeblendet.
+
 ## [4.0.20] - 2026-07-14
 
 ### Added
