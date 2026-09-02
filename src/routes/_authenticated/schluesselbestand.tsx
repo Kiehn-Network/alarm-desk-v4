@@ -382,8 +382,16 @@ function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
 
   return (
     <Dialog open={!!row} onOpenChange={(o) => { if (!o) { setKey(null); onClose(); } }}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{row?.id ? "Schlüssel bearbeiten" : "Schlüssel anlegen"}</DialogTitle></DialogHeader>
+        <KundenSuche
+          onPick={(hit) => setForm((f: any) => ({
+            ...f,
+            key_number: hit.key_number || f.key_number,
+            kunden_name: hit.kunden_name ?? f.kunden_name,
+            address: hit.address ?? f.address,
+          }))}
+        />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Schlüsselnummer *">
             <Input list="datei-schluessel-nummern" value={form.key_number} onChange={(e) => selectDateiKey(e.target.value)} />
@@ -394,6 +402,7 @@ function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
               <Link2 className="size-3" /> Nummern aus der Dateiverwaltung werden vorgeschlagen.
             </div>
           </Field>
+
           <Field label="Bezeichnung"><Input value={form.bezeichnung ?? ""} onChange={(e) => set("bezeichnung", e.target.value)} /></Field>
           <Field label="Kunde"><Input value={form.kunden_name ?? ""} onChange={(e) => set("kunden_name", e.target.value)} /></Field>
           <Field label="Adresse"><Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} /></Field>
