@@ -392,16 +392,25 @@ function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
     <Dialog open={!!row} onOpenChange={(o) => { if (!o) { setKey(null); onClose(); } }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{row?.id ? "Schlüssel bearbeiten" : "Schlüssel anlegen"}</DialogTitle></DialogHeader>
-        <KundenSuche
-          onPick={(hit) => setForm((f: any) => ({
-            ...f,
-            key_number: hit.key_number || f.key_number,
-            kunden_name: hit.kunden_name ?? f.kunden_name,
-            address: hit.address ?? f.address,
-          }))}
-        />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Schlüsselnummer *">
+         <KundenSuche
+           onPick={(hit) => setForm((f: any) => ({
+             ...f,
+             key_number: hit.key_number || f.key_number,
+             kategorie: hit.folder ? kategorieAusOrdner(hit.folder) : f.kategorie,
+             kunden_name: hit.kunden_name ?? f.kunden_name,
+             address: hit.address ?? f.address,
+           }))}
+         />
+         <div className="grid gap-3 sm:grid-cols-2">
+           <Field label="Schlüsselbereich *">
+             <select value={form.kategorie ?? "AZ"} onChange={(e) => set("kategorie", e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+               <option value="AZ">AZ</option>
+               <option value="Malteser">Malteser</option>
+               <option value="LüWa">LüWa</option>
+               <option value="Sonstige">Sonstige</option>
+             </select>
+           </Field>
+           <Field label="Schlüsselnummer *">
             <Input list="datei-schluessel-nummern" value={form.key_number} onChange={(e) => selectDateiKey(e.target.value)} />
             <datalist id="datei-schluessel-nummern">
               {dateiSchluessel.map((d) => <option key={`${d.key_number}-${d.kategorie}`} value={d.key_number}>{d.kategorie} · {d.kunden_name ?? ""}</option>)}
