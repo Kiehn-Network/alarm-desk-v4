@@ -194,6 +194,7 @@ function KundenPage() {
 function KundeDateienDialog({
   einsatz, onClose, onPick,
 }: { einsatz: any | null; onClose: () => void; onPick: (d: DateiLike) => void }) {
+  const loadBestand = useServerFn(listBestandForKunde);
   const { data, isLoading } = useQuery({
     queryKey: ["kunde-dateien", einsatz?.id],
     enabled: !!einsatz,
@@ -212,8 +213,20 @@ function KundeDateienDialog({
     },
   });
 
+  const { data: bestandData, isLoading: bestandLoading } = useQuery({
+    queryKey: ["kunde-bestand", einsatz?.id],
+    enabled: !!einsatz,
+    queryFn: () => loadBestand({ data: {
+      kunden_name: einsatz!.kunden_name ?? null,
+      key_number: einsatz!.key_number ?? null,
+      address: einsatz!.address ?? null,
+    }}),
+  });
+
   if (!einsatz) return null;
   const dateien = data ?? [];
+  const bestand: any[] = bestandData?.rows ?? [];
+
 
   return (
     <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
