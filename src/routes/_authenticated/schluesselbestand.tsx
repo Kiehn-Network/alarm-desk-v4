@@ -577,13 +577,27 @@ function InventurTab() {
 
   return (
     <div className="grid gap-4 md:grid-cols-[260px_1fr]">
+      <Dialog open={startOpen} onOpenChange={setStartOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Neue Inventur starten</DialogTitle></DialogHeader>
+          <Input value={titel} onChange={(e) => setTitel(e.target.value)} placeholder="Titel der Inventur" autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter") handleStart(); }} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStartOpen(false)}>Abbrechen</Button>
+            <Button onClick={handleStart} disabled={busy}>{busy ? "Starte …" : "Starten"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader className="pb-2 flex-row items-center justify-between">
           <CardTitle className="text-sm">Inventuren</CardTitle>
-          <Button size="sm" variant="outline" onClick={handleStart}><Plus className="size-4" /></Button>
+          <Button size="sm" variant="outline" onClick={openStart}><Plus className="size-4" /></Button>
         </CardHeader>
         <CardContent className="space-y-1">
+          {invError && <div className="text-sm text-destructive">{(invError as any)?.message ?? "Fehler beim Laden"}</div>}
           {(inventuren ?? []).length === 0 && <div className="text-sm text-muted-foreground">Noch keine Inventur.</div>}
+
           {(inventuren ?? []).map((i: any) => (
             <button key={i.id} onClick={() => setActive(i.id)}
               className={"w-full text-left rounded px-2 py-1.5 text-sm hover:bg-muted " + (active === i.id ? "bg-muted" : "")}>
