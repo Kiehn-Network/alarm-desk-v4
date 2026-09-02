@@ -240,6 +240,44 @@ function KundeDateienDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="rounded-md border border-border">
+          <div className="px-3 py-2 border-b border-border flex items-center gap-2 text-sm font-medium">
+            <Boxes className="size-4 text-primary" /> Schlüsselbestand
+            {bestandLoading && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
+          </div>
+          {!bestandLoading && bestand.length === 0 ? (
+            <div className="px-3 py-3 text-xs text-muted-foreground">
+              Kein Bestandseintrag zu diesem Kunden hinterlegt.
+            </div>
+          ) : (
+            <ul className="divide-y divide-border max-h-48 overflow-y-auto">
+              {bestand.map((b) => (
+                <li key={b.id} className="px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">🔑 {b.key_number}</span>
+                    {b.bezeichnung && <span className="text-muted-foreground">{b.bezeichnung}</span>}
+                    <Badge variant="outline" className="text-[11px]">Depot {b.im_depot}/{b.anzahl_soll}</Badge>
+                    {b.draussen > 0 && (
+                      <Badge className="text-[11px] bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                        {b.draussen} unterwegs
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {[b.objekt, b.address, b.schrank && `Schrank ${b.schrank}`, b.fach && `Fach ${b.fach}`]
+                      .filter(Boolean).join(" · ") || "—"}
+                    {b.traeger?.length ? ` · bei: ${b.traeger.join(", ")}` : ""}
+                  </div>
+                  {b.warnungen?.length > 0 && (
+                    <div className="text-xs text-red-500 mt-0.5">⚠ {b.warnungen.join(" · ")}</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+
         {isLoading ? (
           <div className="p-6 text-center"><Loader2 className="size-5 animate-spin mx-auto text-muted-foreground" /></div>
         ) : dateien.length === 0 ? (
