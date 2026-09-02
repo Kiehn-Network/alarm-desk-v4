@@ -328,7 +328,12 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function EditDialog({ row, onClose, onSave }: { row: any | null; onClose: () => void; onSave: (f: any) => Promise<void> }) {
+function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
+  row: any | null;
+  dateiSchluessel: Array<{ key_number: string; kunden_name: string | null; address: string | null; count: number }>;
+  onClose: () => void;
+  onSave: (f: any) => Promise<void>;
+}) {
   const [form, setForm] = useState<any>(EMPTY);
   const [key, setKey] = useState<string | null>(null);
   if (row && key !== (row.id ?? "new") + (row.key_number ?? "")) {
@@ -336,13 +341,30 @@ function EditDialog({ row, onClose, onSave }: { row: any | null; onClose: () => 
     setForm({ ...EMPTY, ...row });
   }
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const selectDateiKey = (value: string) => {
+    const match = dateiSchluessel.find((d) => d.key_number === value);
+    setForm((f: any) => ({
+      ...f,
+      key_number: value,
+      kunden_name: match?.kunden_name ?? f.kunden_name,
+      address: match?.address ?? f.address,
+    }));
+  };
 
   return (
     <Dialog open={!!row} onOpenChange={(o) => { if (!o) { setKey(null); onClose(); } }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>{row?.id ? "Schlüssel bearbeiten" : "Schlüssel anlegen"}</DialogTitle></DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Schlüsselnummer *"><Input value={form.key_number} onChange={(e) => set("key_number", e.target.value)} /></Field>
+          <Field label="Schlüsselnummer *">
+            <Input list="datei-schluessel-nummern" value={form.key_number} onChange={(e) => selectDateiKey(e.target.value)} />
+            <datalist id="datei-schluessel-nummern">
+              {dateiSchluessel.map((d) => <option key={d.key_number} value={d.key_number}>{d.kunden_name ?? ""}</option>)}
+            </datalist>
+            <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
+              <Link2 className="size-3" /> Nummern aus der Dateiverwaltung werden vorgeschlagen.
+            </div>
+          </Field>
           <Field label="Bezeichnung"><Input value={form.bezeichnung ?? ""} onChange={(e) => set("bezeichnung", e.target.value)} /></Field>
           <Field label="Kunde"><Input value={form.kunden_name ?? ""} onChange={(e) => set("kunden_name", e.target.value)} /></Field>
           <Field label="Adresse"><Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} /></Field>
