@@ -301,12 +301,33 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
     const addr = (data.address ?? "").trim();
     if (!name && !key && !addr) return { rows: [] as BestandRow[] };
 
+    // Die Schlüssel-Nr. in der Dateiverwaltung ist die führende Verknüpfung.
+    // Dadurch werden auch Bestandszeilen ohne separat gepflegten Kundennamen gefunden.
+    const dateiOrs: string[] = [];
+    if (name) dateiOrs.push(`kunden_name.ilike.%${name}%`);
+    if (key) dateiOrs.push(`key_number.eq.${key}`);
+    if (addr) dateiOrs.push(`address.ilike.%${addr}%`);
+    const { data: dateien, error: dateiError } = await supabase
+      .from("dateien")
+      .select("key_number")
+      .eq("domain_id", domainId)
+      .is("deleted_at", null)
+      .or(dateiOrs.join(","))
+      .limit(5000);
+    if (dateiError) throw new Error(dateiError.message);
+
+    const dateiKeys = (dateien ?? [])
+      .map((d: any) => (d.key_number ?? "").trim())
+      .filter(Boolean);
+    const allKeys = [...new Set([key, ...dateiKeys].filter(Boolean))];
+
     let q = supabase.from("schluessel_bestand").select("*").eq("domain_id", domainId);
-    const ors: string[] = [];
-    if (name) ors.push(`kunden_name.ilike.%${name}%`);
-    if (key) ors.push(`key_number.eq.${key}`);
-    if (addr) ors.push(`address.ilike.%${addr}%`);
-    q = q.or(ors.join(","));
+    const bestandOrs: string[] = [];
+    if (name) bestandOrs.push(`kunden_name.ilike.%${name}%`);
+    if (addr) bestandOrs.push(`address.ilike.%${addr}%`);
+    if (allKeys.length) bestandOrs.push(`key_number.in.(${allKeys.join(",")})`);
+    if (!bestandOrs.length) return { rows: [] as BestandRow[] };
+    q = q.or(bestandOrs.join(","));
     const { data: bestand, error } = await q.order("key_number", { ascending: true }).limit(200);
     if (error) throw new Error(error.message);
     if (!bestand?.length) return { rows: [] as BestandRow[] };
@@ -349,5 +370,56 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
       };
     });
 
+    return { rows };
+  });
+
+// =================================================================
+// Verknüpfung mit der Dateiverwaltung (Schlüssel-Nr. beim Kunden)
+// =================================================================
+
+export type DateiSchluessel = {
+  key_number: string;
+  kunden_name: string | null;
+  address: string | null;
+  count: number;
+};
+
+/** Alle in der Dateiverwaltung hinterlegten Schlüssel-Nummern der Domäne. */
+export const listDateiSchluessel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+
+    const { data, error } = await supabase
+      .from("dateien")
+      .select("key_number, kunden_name, address")
+      .eq("domain_id", domainId)
+      .is("deleted_at", null)
+      .not("key_number", "is", null)
+      .limit(5000);
+    if (error) throw new Error(error.message);
+
+    const map = new Map<string, DateiSchluessel>();
+    for (const d of data ?? []) {
+      const k = (d.key_number ?? "").trim();
+      if (!k) continue;
+      const cur = map.get(k.toLowerCase());
+      if (cur) {
+        cur.count += 1;
+        if (!cur.kunden_name && d.kunden_name) cur.kunden_name = d.kunden_name;
+        if (!cur.address && d.address) cur.address = d.address;
+      } else {
+        map.set(k.toLowerCase(), {
+          key_number: k,
+          kunden_name: d.kunden_name ?? null,
+          address: d.address ?? null,
+          count: 1,
+        });
+      }
+    }
+    const rows = Array.from(map.values()).sort((a, b) =>
+      a.key_number.localeCompare(b.key_number, "de", { numeric: true }),
+    );
     return { rows };
   });

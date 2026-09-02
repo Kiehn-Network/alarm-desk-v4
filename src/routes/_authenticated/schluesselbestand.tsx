@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import {
   Boxes, Plus, Search, Upload, Download, QrCode, AlertTriangle, ClipboardCheck,
-  Pencil, Trash2, RefreshCw, CheckCircle2,
+  Pencil, Trash2, RefreshCw, CheckCircle2, Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,9 +18,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  listSchluesselBestand, upsertSchluesselBestand, deleteSchluesselBestand,
-  importSchluesselBestand, listInventuren, startInventur, listInventurPositionen,
-  setInventurPosition, abschliessenInventur,
+  listSchluesselBestand, listDateiSchluessel, upsertSchluesselBestand,
+  deleteSchluesselBestand, importSchluesselBestand, listInventuren, startInventur,
+  listInventurPositionen, setInventurPosition, abschliessenInventur,
 } from "@/lib/schluesselbestand.functions";
 
 export const Route = createFileRoute("/_authenticated/schluesselbestand")({
@@ -45,6 +45,7 @@ const EMPTY = {
 function SchluesselbestandPage() {
   const qc = useQueryClient();
   const load = useServerFn(listSchluesselBestand);
+  const loadDateiSchluessel = useServerFn(listDateiSchluessel);
   const save = useServerFn(upsertSchluesselBestand);
   const del = useServerFn(deleteSchluesselBestand);
   const doImport = useServerFn(importSchluesselBestand);
@@ -58,9 +59,22 @@ function SchluesselbestandPage() {
     queryKey: ["schluessel-bestand"],
     queryFn: () => load({ data: {} } as any),
   });
+  const { data: dateiKeysData, isLoading: dateiKeysLoading } = useQuery({
+    queryKey: ["datei-schluessel"],
+    queryFn: () => loadDateiSchluessel({ data: {} } as any),
+  });
 
   const rows = data?.rows ?? [];
   const unbekannt = data?.unbekannt ?? [];
+  const dateiSchluessel = dateiKeysData?.rows ?? [];
+  const bestandKeys = useMemo(
+    () => new Set(rows.map((r: any) => r.key_number.trim().toLowerCase())),
+    [rows],
+  );
+  const dateiOhneBestand = useMemo(
+    () => dateiSchluessel.filter((d: any) => !bestandKeys.has(d.key_number.trim().toLowerCase())),
+    [dateiSchluessel, bestandKeys],
+  );
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -212,6 +226,35 @@ function SchluesselbestandPage() {
         </Card>
       )}
 
+      <Card className="border-primary/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Link2 className="size-4 text-primary" /> Schlüssel-Nr. aus der Dateiverwaltung
+            {dateiKeysLoading && <RefreshCw className="size-3.5 animate-spin text-muted-foreground" />}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Diese Nummer ist die Schlüssel-Nr. des Kunden in der Dateiverwaltung und wird für die Zuordnung verwendet.
+          </p>
+          {!dateiKeysLoading && dateiSchluessel.length === 0 ? (
+            <p className="text-xs text-muted-foreground">In der Dateiverwaltung sind noch keine Schlüssel-Nr. eingetragen.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {dateiOhneBestand.slice(0, 30).map((d: any) => (
+                <Button key={d.key_number} variant="outline" size="sm" className="gap-1.5"
+                  onClick={() => setEditRow({ ...EMPTY, key_number: d.key_number, kunden_name: d.kunden_name ?? "", address: d.address ?? "" })}>
+                  <Plus className="size-3.5" /> {d.key_number}
+                  {d.kunden_name && <span className="text-muted-foreground">· {d.kunden_name}</span>}
+                </Button>
+              ))}
+              {dateiOhneBestand.length === 0 && <Badge variant="secondary"><CheckCircle2 className="size-3 mr-1" />Alle Nummern im Bestand verknüpft</Badge>}
+              {dateiOhneBestand.length > 30 && <span className="text-xs text-muted-foreground self-center">+ {dateiOhneBestand.length - 30} weitere</span>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="bestand">
         <TabsList>
           <TabsTrigger value="bestand">Bestand</TabsTrigger>
@@ -289,7 +332,12 @@ function SchluesselbestandPage() {
         </TabsContent>
       </Tabs>
 
-      <EditDialog row={editRow} onClose={() => setEditRow(null)} onSave={handleSave} />
+      <EditDialog
+        row={editRow}
+        dateiSchluessel={dateiSchluessel}
+        onClose={() => setEditRow(null)}
+        onSave={handleSave}
+      />
     </div>
   );
 }
@@ -309,7 +357,12 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function EditDialog({ row, onClose, onSave }: { row: any | null; onClose: () => void; onSave: (f: any) => Promise<void> }) {
+function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
+  row: any | null;
+  dateiSchluessel: Array<{ key_number: string; kunden_name: string | null; address: string | null; count: number }>;
+  onClose: () => void;
+  onSave: (f: any) => Promise<void>;
+}) {
   const [form, setForm] = useState<any>(EMPTY);
   const [key, setKey] = useState<string | null>(null);
   if (row && key !== (row.id ?? "new") + (row.key_number ?? "")) {
@@ -317,13 +370,30 @@ function EditDialog({ row, onClose, onSave }: { row: any | null; onClose: () => 
     setForm({ ...EMPTY, ...row });
   }
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const selectDateiKey = (value: string) => {
+    const match = dateiSchluessel.find((d) => d.key_number === value);
+    setForm((f: any) => ({
+      ...f,
+      key_number: value,
+      kunden_name: match?.kunden_name ?? f.kunden_name,
+      address: match?.address ?? f.address,
+    }));
+  };
 
   return (
     <Dialog open={!!row} onOpenChange={(o) => { if (!o) { setKey(null); onClose(); } }}>
       <DialogContent className="max-w-2xl">
         <DialogHeader><DialogTitle>{row?.id ? "Schlüssel bearbeiten" : "Schlüssel anlegen"}</DialogTitle></DialogHeader>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Schlüsselnummer *"><Input value={form.key_number} onChange={(e) => set("key_number", e.target.value)} /></Field>
+          <Field label="Schlüsselnummer *">
+            <Input list="datei-schluessel-nummern" value={form.key_number} onChange={(e) => selectDateiKey(e.target.value)} />
+            <datalist id="datei-schluessel-nummern">
+              {dateiSchluessel.map((d) => <option key={d.key_number} value={d.key_number}>{d.kunden_name ?? ""}</option>)}
+            </datalist>
+            <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
+              <Link2 className="size-3" /> Nummern aus der Dateiverwaltung werden vorgeschlagen.
+            </div>
+          </Field>
           <Field label="Bezeichnung"><Input value={form.bezeichnung ?? ""} onChange={(e) => set("bezeichnung", e.target.value)} /></Field>
           <Field label="Kunde"><Input value={form.kunden_name ?? ""} onChange={(e) => set("kunden_name", e.target.value)} /></Field>
           <Field label="Adresse"><Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} /></Field>
