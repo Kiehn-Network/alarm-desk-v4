@@ -78,6 +78,16 @@ function SchluesselbestandPage() {
     warn: rows.filter((r: any) => r.warnungen.length > 0).length,
   }), [rows]);
 
+  const kunden = useMemo(() => {
+    const map = new Map<string, { name: string; address: string | null; objekt: string | null }>();
+    for (const r of rows as any[]) {
+      const name = (r.kunden_name ?? "").trim();
+      if (!name || map.has(name.toLowerCase())) continue;
+      map.set(name.toLowerCase(), { name, address: r.address ?? null, objekt: r.objekt ?? null });
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }, [rows]);
+
   const refresh = () => qc.invalidateQueries({ queryKey: ["schluessel-bestand"] });
 
   async function handleSave(form: any) {
@@ -294,7 +304,7 @@ function SchluesselbestandPage() {
         </TabsContent>
       </Tabs>
 
-      <EditDialog row={editRow} onClose={() => setEditRow(null)} onSave={handleSave} />
+      <EditDialog row={editRow} onClose={() => setEditRow(null)} onSave={handleSave} kunden={kunden} />
     </div>
   );
 }
@@ -314,7 +324,7 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function EditDialog({ row, onClose, onSave }: { row: any | null; onClose: () => void; onSave: (f: any) => Promise<void> }) {
+function EditDialog({ row, onClose, onSave, kunden = [] }: { row: any | null; onClose: () => void; onSave: (f: any) => Promise<void>; kunden?: { name: string; address: string | null; objekt: string | null }[] }) {
   const [form, setForm] = useState<any>(EMPTY);
   const [key, setKey] = useState<string | null>(null);
   if (row && key !== (row.id ?? "new") + (row.key_number ?? "")) {
@@ -330,7 +340,26 @@ function EditDialog({ row, onClose, onSave }: { row: any | null; onClose: () => 
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Schlüsselnummer *"><Input value={form.key_number} onChange={(e) => set("key_number", e.target.value)} /></Field>
           <Field label="Bezeichnung"><Input value={form.bezeichnung ?? ""} onChange={(e) => set("bezeichnung", e.target.value)} /></Field>
-          <Field label="Kunde"><Input value={form.kunden_name ?? ""} onChange={(e) => set("kunden_name", e.target.value)} /></Field>
+          <Field label="Kunde">
+            <Input
+              list="kunden-vorschlaege"
+              placeholder="Kunde wählen oder neu eingeben"
+              value={form.kunden_name ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                const hit = kunden.find((k) => k.name.toLowerCase() === v.trim().toLowerCase());
+                setForm((f: any) => ({
+                  ...f,
+                  kunden_name: v,
+                  address: hit && !f.address ? hit.address ?? "" : f.address,
+                  objekt: hit && !f.objekt ? hit.objekt ?? "" : f.objekt,
+                }));
+              }}
+            />
+            <datalist id="kunden-vorschlaege">
+              {kunden.map((k) => <option key={k.name} value={k.name} />)}
+            </datalist>
+          </Field>
           <Field label="Adresse"><Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} /></Field>
           <Field label="Objekt"><Input value={form.objekt ?? ""} onChange={(e) => set("objekt", e.target.value)} /></Field>
           <Field label="Zustand"><Input value={form.zustand ?? "ok"} onChange={(e) => set("zustand", e.target.value)} placeholder="ok / defekt / verloren" /></Field>
