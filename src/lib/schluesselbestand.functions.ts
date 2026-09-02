@@ -7,9 +7,12 @@ import { requireEffectiveDomainId } from "@/lib/tenant.server";
 // SCHLÜSSELBESTAND — Stammdaten, Soll/Ist-Abgleich, Inventur
 // =================================================================
 
+export type SchluesselKategorie = "AZ" | "Malteser" | "LüWa" | "Sonstige";
+
 export type BestandRow = {
   id: string;
   key_number: string;
+  kategorie: SchluesselKategorie;
   bezeichnung: string | null;
   kunden_name: string | null;
   address: string | null;
@@ -31,7 +34,39 @@ export type BestandRow = {
   warnungen: string[];
 };
 
+const KATEGORIEN: SchluesselKategorie[] = ["AZ", "Malteser", "LüWa", "Sonstige"];
 const OPEN_STATUS: Array<"ausgegeben" | "uebernommen" | "rueckgabe_offen"> = ["ausgegeben", "uebernommen", "rueckgabe_offen"];
+
+export function kategorieAusOrdner(folder: string | null | undefined): SchluesselKategorie {
+  const value = (folder ?? "").trim().toLocaleLowerCase("de-DE");
+  if (value.includes("malteser")) return "Malteser";
+  if (value.includes("lüwa") || value.includes("luewa") || value.includes("asb")) return "LüWa";
+  if (value.includes("az")) return "AZ";
+  return "Sonstige";
+}
+
+function normalizeKategorie(value: unknown): SchluesselKategorie {
+  return KATEGORIEN.includes(value as SchluesselKategorie) ? value as SchluesselKategorie : "AZ";
+}
+
+function compositeKey(key: unknown, kategorie: unknown) {
+  return `${String(key ?? "").trim().toLowerCase()}::${normalizeKategorie(kategorie)}`;
+}
+
+type DateiQuelle = { key_number: string | null; kunden_name: string | null; address: string | null; folder: string | null };
+
+function kategorieFuerBuch(buch: any, quellen: DateiQuelle[]): SchluesselKategorie {
+  const key = (buch.key_number ?? "").trim().toLowerCase();
+  const matches = quellen.filter((q) => (q.key_number ?? "").trim().toLowerCase() === key);
+  if (!matches.length) return "AZ";
+  const exact = matches.filter((q) =>
+    (buch.kunden_name && q.kunden_name && buch.kunden_name.trim().toLowerCase() === q.kunden_name.trim().toLowerCase())
+    || (buch.address && q.address && buch.address.trim().toLowerCase() === q.address.trim().toLowerCase()),
+  );
+  const candidates = exact.length ? exact : matches;
+  const categories = [...new Set(candidates.map((q) => kategorieAusOrdner(q.folder)))];
+  return categories.length === 1 ? categories[0] : kategorieAusOrdner(candidates[0]?.folder);
+}
 
 export const listSchluesselBestand = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -39,7 +74,7 @@ export const listSchluesselBestand = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const domainId = await requireEffectiveDomainId(supabase, userId);
 
-    const [{ data: bestand, error }, { data: buch }] = await Promise.all([
+    const [{ data: bestand, error }, { data: buch }, { data: dateien, error: dateiError }] = await Promise.all([
       supabase
         .from("schluessel_bestand")
         .select("*")
@@ -47,16 +82,24 @@ export const listSchluesselBestand = createServerFn({ method: "POST" })
         .order("key_number", { ascending: true }),
       supabase
         .from("schluessel_buch")
-        .select("key_number, status, traeger_name, ausgegeben_at")
+        .select("key_number, kunden_name, address, status, traeger_name, ausgegeben_at")
         .eq("domain_id", domainId)
         .in("status", OPEN_STATUS),
+      supabase
+        .from("dateien")
+        .select("key_number, kunden_name, address, folder")
+        .eq("domain_id", domainId)
+        .is("deleted_at", null)
+        .limit(5000),
     ]);
     if (error) throw new Error(error.message);
+    if (dateiError) throw new Error(dateiError.message);
 
+    const quellen = (dateien ?? []) as DateiQuelle[];
     const now = Date.now();
     const byKey = new Map<string, { count: number; traeger: string[]; ueberfaellig: boolean }>();
     for (const b of buch ?? []) {
-      const k = (b.key_number ?? "").trim().toLowerCase();
+      const k = compositeKey(b.key_number, kategorieFuerBuch(b, quellen));
       const cur = byKey.get(k) ?? { count: 0, traeger: [], ueberfaellig: false };
       cur.count += 1;
       if (b.traeger_name && !cur.traeger.includes(b.traeger_name)) cur.traeger.push(b.traeger_name);
@@ -65,7 +108,7 @@ export const listSchluesselBestand = createServerFn({ method: "POST" })
     }
 
     const rows: BestandRow[] = (bestand ?? []).map((b: any) => {
-      const live = byKey.get((b.key_number ?? "").trim().toLowerCase());
+      const live = byKey.get(compositeKey(b.key_number, b.kategorie));
       const draussen = live?.count ?? 0;
       const im_depot = b.anzahl_soll - draussen;
       const warnungen: string[] = [];
@@ -75,6 +118,7 @@ export const listSchluesselBestand = createServerFn({ method: "POST" })
       if (!b.aktiv) warnungen.push("Inaktiv / ausgemustert");
       return {
         ...b,
+        kategorie: normalizeKategorie(b.kategorie),
         draussen,
         im_depot,
         traeger: live?.traeger ?? [],
@@ -83,9 +127,11 @@ export const listSchluesselBestand = createServerFn({ method: "POST" })
       };
     });
 
-    // Schlüssel, die im Buch bewegt werden, aber keinen Bestands-Eintrag haben
-    const known = new Set(rows.map((r) => r.key_number.trim().toLowerCase()));
-    const unbekannt = [...byKey.keys()].filter((k) => k && !known.has(k));
+    // Schlüssel, die im Buch bewegt werden, aber keinen passenden Bestands-Eintrag haben.
+    const known = new Set(rows.map((r) => compositeKey(r.key_number, r.kategorie)));
+    const unbekannt = [...byKey.keys()]
+      .filter((k) => k && !known.has(k))
+      .map((k) => { const [key_number, kategorie] = k.split("::"); return { key_number, kategorie: normalizeKategorie(kategorie) }; });
 
     return { rows, unbekannt };
   });
