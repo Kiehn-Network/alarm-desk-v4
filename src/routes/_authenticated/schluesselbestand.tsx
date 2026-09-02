@@ -523,23 +523,37 @@ function InventurTab() {
   const finish = useServerFn(abschliessenInventur);
 
   const [active, setActive] = useState<string | null>(null);
+  const [startOpen, setStartOpen] = useState(false);
+  const [titel, setTitel] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const { data: inventuren } = useQuery({ queryKey: ["schluessel-inventuren"], queryFn: () => listInv({ data: {} } as any) });
-  const { data: positionen } = useQuery({
+  const { data: inventuren, error: invError } = useQuery({
+    queryKey: ["schluessel-inventuren"],
+    queryFn: () => listInv({ data: {} } as any),
+  });
+  const { data: positionen, error: posError } = useQuery({
     queryKey: ["schluessel-inventur-pos", active],
     queryFn: () => listPos({ data: { inventur_id: active! } } as any),
     enabled: !!active,
   });
 
+  function openStart() {
+    setTitel(`Inventur ${new Date().toLocaleDateString("de-DE")}`);
+    setStartOpen(true);
+  }
+
   async function handleStart() {
-    const titel = prompt("Titel der Inventur", `Inventur ${new Date().toLocaleDateString("de-DE")}`);
-    if (!titel) return;
+    const t = titel.trim();
+    if (!t) { toast.error("Bitte einen Titel eingeben."); return; }
+    setBusy(true);
     try {
-      const inv: any = await start({ data: { titel } } as any);
+      const inv: any = await start({ data: { titel: t } } as any);
       toast.success("Inventur gestartet");
-      qc.invalidateQueries({ queryKey: ["schluessel-inventuren"] });
-      setActive(inv.id);
-    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+      await qc.invalidateQueries({ queryKey: ["schluessel-inventuren"] });
+      setActive(inv?.id ?? null);
+      setStartOpen(false);
+    } catch (e: any) { toast.error(e?.message ?? "Fehler beim Starten der Inventur"); }
+    finally { setBusy(false); }
   }
 
   async function count(id: string, value: string) {
@@ -559,6 +573,7 @@ function InventurTab() {
       qc.invalidateQueries({ queryKey: ["schluessel-inventuren"] });
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
   }
+
 
   return (
     <div className="grid gap-4 md:grid-cols-[260px_1fr]">
