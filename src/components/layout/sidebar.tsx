@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
-  Network, Wrench, Home, Building2, KeyRound, KeySquare, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
+  Network, Wrench, Home, Building2, KeyRound, KeySquare, Boxes, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
   Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon, ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -48,9 +48,12 @@ const sections: Section[] = [
     { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter", roles: ["admin", "dispatcher"] },
     { to: "/abrechnung/lgwa",       label: "LüWa",        icon: Receipt, module: "lgwa", roles: ["admin", "dispatcher"] },
   ]},
-  { label: "Tools", items: [
+  { label: "Schlüsselverwaltung", items: [
     { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"], module: "schluesselbuch" },
     { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher"] },
+    { to: "/schluesselbestand", label: "Schlüsselbestand", icon: Boxes, roles: ["admin", "dispatcher"] },
+  ]},
+  { label: "Tools", items: [
     { to: "/daten-import", label: "Daten-Import", icon: Upload, roles: ["admin"] },
   ]},
   { label: "Center", items: [
