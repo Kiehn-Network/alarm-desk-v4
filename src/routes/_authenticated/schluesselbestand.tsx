@@ -621,12 +621,21 @@ function InventurTab() {
           {active && (
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left">
-                <tr><th className="p-2">Nummer</th><th className="p-2 text-right">Soll</th><th className="p-2 w-32">Gezählt</th><th className="p-2">Ergebnis</th></tr>
+                <tr>
+                  <th className="p-2">Nummer</th>
+                  <th className="p-2">Kategorie</th>
+                  <th className="p-2">Kunde</th>
+                  <th className="p-2 text-right">Soll</th>
+                  <th className="p-2 w-32">Gezählt</th>
+                  <th className="p-2">Ergebnis</th>
+                </tr>
               </thead>
               <tbody>
                 {(positionen ?? []).map((p: any) => (
                   <tr key={p.id} className="border-t">
                     <td className="p-2 font-medium">{p.key_number}</td>
+                    <td className="p-2"><Badge variant="outline">{p.kategorie ?? "—"}</Badge></td>
+                    <td className="p-2 text-muted-foreground">{p.kunden_name ?? "—"}</td>
                     <td className="p-2 text-right">{p.anzahl_soll}</td>
                     <td className="p-2">
                       <Input type="number" min={0} defaultValue={p.anzahl_ist ?? ""} className="h-8"
@@ -640,7 +649,7 @@ function InventurTab() {
                   </tr>
                 ))}
                 {(positionen ?? []).length === 0 && (
-                  <tr><td colSpan={4} className="p-4 text-muted-foreground">Keine Positionen (Bestand ist leer).</td></tr>
+                  <tr><td colSpan={6} className="p-4 text-muted-foreground">Keine Positionen (Bestand ist leer).</td></tr>
                 )}
               </tbody>
             </table>

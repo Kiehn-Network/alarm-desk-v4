@@ -262,14 +262,15 @@ export const startInventur = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const { data: bestand } = await supabase
-      .from("schluessel_bestand").select("id, key_number, anzahl_soll")
+      .from("schluessel_bestand").select("id, key_number, kategorie, kunden_name, anzahl_soll")
       .eq("domain_id", domainId).eq("aktiv", true);
 
     if (bestand?.length) {
       const { error: pErr } = await supabase.from("schluessel_inventur_positionen").insert(
         bestand.map((b: any) => ({
           domain_id: domainId, inventur_id: inv.id, bestand_id: b.id,
-          key_number: b.key_number, anzahl_soll: b.anzahl_soll,
+          key_number: b.key_number, kategorie: normalizeKategorie(b.kategorie), kunden_name: b.kunden_name ?? null,
+          anzahl_soll: b.anzahl_soll,
         })),
       );
       if (pErr) throw new Error(pErr.message);
