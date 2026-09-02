@@ -151,7 +151,7 @@ function SchluesselbestandPage() {
         kunden_name: get(cols.kunde) || null,
         address: get(cols.adr) || null,
         objekt: get(cols.obj) || null,
-        schrank: get(cols.schrank) || null,
+        schrank: get(cols.schrank) || "Tresor",
         fach: get(cols.fach) || null,
         anzahl_soll: Number(get(cols.soll)) || 1,
         notiz: get(cols.notiz) || null,
