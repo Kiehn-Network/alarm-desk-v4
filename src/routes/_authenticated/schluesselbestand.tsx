@@ -226,6 +226,35 @@ function SchluesselbestandPage() {
         </Card>
       )}
 
+      <Card className="border-primary/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Link2 className="size-4 text-primary" /> Schlüssel-Nr. aus der Dateiverwaltung
+            {dateiKeysLoading && <RefreshCw className="size-3.5 animate-spin text-muted-foreground" />}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Diese Nummer ist die Schlüssel-Nr. des Kunden in der Dateiverwaltung und wird für die Zuordnung verwendet.
+          </p>
+          {!dateiKeysLoading && dateiSchluessel.length === 0 ? (
+            <p className="text-xs text-muted-foreground">In der Dateiverwaltung sind noch keine Schlüssel-Nr. eingetragen.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {dateiOhneBestand.slice(0, 30).map((d: any) => (
+                <Button key={d.key_number} variant="outline" size="sm" className="gap-1.5"
+                  onClick={() => setEditRow({ ...EMPTY, key_number: d.key_number, kunden_name: d.kunden_name ?? "", address: d.address ?? "" })}>
+                  <Plus className="size-3.5" /> {d.key_number}
+                  {d.kunden_name && <span className="text-muted-foreground">· {d.kunden_name}</span>}
+                </Button>
+              ))}
+              {dateiOhneBestand.length === 0 && <Badge variant="secondary"><CheckCircle2 className="size-3 mr-1" />Alle Nummern im Bestand verknüpft</Badge>}
+              {dateiOhneBestand.length > 30 && <span className="text-xs text-muted-foreground self-center">+ {dateiOhneBestand.length - 30} weitere</span>}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <Tabs defaultValue="bestand">
         <TabsList>
           <TabsTrigger value="bestand">Bestand</TabsTrigger>
