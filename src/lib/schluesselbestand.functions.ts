@@ -190,6 +190,7 @@ export const deleteSchluesselBestand = createServerFn({ method: "POST" })
 const importSchema = z.object({
   rows: z.array(z.object({
     key_number: z.string().trim().min(1).max(100),
+    kategorie: z.enum(["AZ", "Malteser", "LüWa", "Sonstige"]).default("AZ"),
     bezeichnung: z.string().max(200).optional().nullable(),
     kunden_name: z.string().max(200).optional().nullable(),
     address: z.string().max(300).optional().nullable(),
@@ -210,12 +211,12 @@ export const importSchluesselBestand = createServerFn({ method: "POST" })
     const domainId = await requireEffectiveDomainId(supabase, userId);
 
     const { data: existing } = await supabase
-      .from("schluessel_bestand").select("id, key_number").eq("domain_id", domainId);
-    const map = new Map((existing ?? []).map((e: any) => [e.key_number.trim().toLowerCase(), e.id]));
+      .from("schluessel_bestand").select("id, key_number, kategorie").eq("domain_id", domainId);
+    const map = new Map((existing ?? []).map((e: any) => [compositeKey(e.key_number, e.kategorie), e.id]));
 
     let created = 0, updated = 0, skipped = 0;
     for (const r of data.rows) {
-      const existingId = map.get(r.key_number.trim().toLowerCase());
+      const existingId = map.get(compositeKey(r.key_number, r.kategorie));
       if (existingId) {
         if (!data.updateExisting) { skipped++; continue; }
         const { error } = await supabase.from("schluessel_bestand").update({ ...r }).eq("id", existingId);
@@ -225,6 +226,7 @@ export const importSchluesselBestand = createServerFn({ method: "POST" })
         const { error } = await supabase.from("schluessel_bestand")
           .insert({ ...r, domain_id: domainId, created_by: userId });
         if (error) throw new Error(error.message);
+        map.set(compositeKey(r.key_number, r.kategorie), "imported");
         created++;
       }
     }
