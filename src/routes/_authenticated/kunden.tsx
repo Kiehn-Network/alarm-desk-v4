@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Clock, Users, History as HistoryIcon, Info, Pencil, FileText, Loader2 } from "lucide-react";
+import { Search, Clock, Users, History as HistoryIcon, Info, Pencil, FileText, Loader2, Boxes } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { searchKundenEinsaetze, listEinsatzHistorie } from "@/lib/einsaetze.func
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { DateiEditDialog, type DateiLike } from "@/components/datei-edit-dialog";
+import { listBestandForKunde } from "@/lib/schluesselbestand.functions";
 
 export const Route = createFileRoute("/_authenticated/kunden")({
   component: KundenPage,
