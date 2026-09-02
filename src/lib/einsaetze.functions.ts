@@ -599,7 +599,7 @@ export const searchKundenDateien = createServerFn({ method: "POST" })
     const pattern = `%${q}%`;
     const { data: rows, error } = await supabase
       .from("dateien")
-      .select("id, kunden_name, address, key_number, anlagen_nr, teilnehmer_id, notiz, filename")
+      .select("id, kunden_name, address, key_number, anlagen_nr, teilnehmer_id, notiz, filename, folder")
       .is("deleted_at", null)
       .or(
         [
