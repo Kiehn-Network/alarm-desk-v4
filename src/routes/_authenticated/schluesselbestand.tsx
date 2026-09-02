@@ -566,6 +566,18 @@ function InventurTab() {
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
   }
 
+  function handlePrint() {
+    const inv: any = (inventuren ?? []).find((i: any) => i.id === active);
+    if (!inv) { toast.error("Keine Inventur ausgewählt."); return; }
+    downloadInventurPdf({
+      titel: inv.titel,
+      gestartet_at: inv.gestartet_at,
+      abgeschlossen_at: inv.abgeschlossen_at ?? null,
+      status: inv.status,
+      positionen: (positionen ?? []) as any,
+    });
+  }
+
   async function handleFinish() {
     if (!active) return;
     try {
