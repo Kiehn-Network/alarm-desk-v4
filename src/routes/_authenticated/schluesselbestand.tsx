@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import {
   Boxes, Plus, Search, Upload, Download, QrCode, AlertTriangle, ClipboardCheck,
-  Pencil, Trash2, RefreshCw, CheckCircle2,
+  Pencil, Trash2, RefreshCw, CheckCircle2, Building2, ChevronDown, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -461,6 +461,112 @@ function InventurTab() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function KundenTab({ rows, isLoading, onEdit }: { rows: any[]; isLoading: boolean; onEdit: (r: any) => void }) {
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+
+  const gruppen = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const r of rows) {
+      const k = (r.kunden_name ?? "").trim() || "Ohne Kunde";
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(r);
+    }
+    return Array.from(map.entries())
+      .map(([kunde, items]) => ({
+        kunde,
+        items,
+        soll: items.reduce((a, r) => a + (r.anzahl_soll ?? 0), 0),
+        draussen: items.reduce((a, r) => a + (r.draussen ?? 0), 0),
+        depot: items.reduce((a, r) => a + (r.im_depot ?? 0), 0),
+        warn: items.filter((r) => (r.warnungen?.length ?? 0) > 0).length,
+      }))
+      .sort((a, b) => a.kunde.localeCompare(b.kunde, "de"));
+  }, [rows]);
+
+  if (isLoading) return <Card><CardContent className="p-4 text-sm text-muted-foreground">Lade …</CardContent></Card>;
+  if (!gruppen.length) return <Card><CardContent className="p-4 text-sm text-muted-foreground">Keine Einträge.</CardContent></Card>;
+
+  return (
+    <div className="space-y-3">
+      {gruppen.map((g) => {
+        const isOpen = open[g.kunde] ?? false;
+        return (
+          <Card key={g.kunde}>
+            <CardHeader className="pb-2">
+              <button
+                type="button"
+                className="flex w-full flex-wrap items-center justify-between gap-3 text-left"
+                onClick={() => setOpen((o) => ({ ...o, [g.kunde]: !isOpen }))}
+              >
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Building2 className="size-4 text-primary" />
+                  {g.kunde}
+                  <span className="text-xs font-normal text-muted-foreground">({g.items.length} Positionen)</span>
+                </CardTitle>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  <Badge variant="secondary">Soll {g.soll}</Badge>
+                  <Badge variant="outline">Unterwegs {g.draussen}</Badge>
+                  <Badge variant={g.depot < 0 ? "destructive" : "outline"}>Depot {g.depot}</Badge>
+                  {g.warn > 0 && <Badge variant="destructive" className="gap-1"><AlertTriangle className="size-3" />{g.warn}</Badge>}
+                  {isOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                </div>
+              </button>
+            </CardHeader>
+            {isOpen && (
+              <CardContent className="p-0 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50 text-left">
+                    <tr>
+                      <th className="p-2">Nummer</th>
+                      <th className="p-2">Bezeichnung / Objekt</th>
+                      <th className="p-2">Lagerort</th>
+                      <th className="p-2 text-right">Soll</th>
+                      <th className="p-2 text-right">Unterwegs</th>
+                      <th className="p-2 text-right">Depot</th>
+                      <th className="p-2">Status</th>
+                      <th className="p-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.items.map((r: any) => (
+                      <tr key={r.id} className="border-t">
+                        <td className="p-2 font-medium">{r.key_number}</td>
+                        <td className="p-2">
+                          <div>{r.bezeichnung ?? "—"}</div>
+                          <div className="text-xs text-muted-foreground">{r.objekt ?? r.address ?? ""}</div>
+                        </td>
+                        <td className="p-2 text-xs">{[r.schrank, r.fach].filter(Boolean).join(" · ") || "—"}</td>
+                        <td className="p-2 text-right">{r.anzahl_soll}</td>
+                        <td className="p-2 text-right">{r.draussen}</td>
+                        <td className={"p-2 text-right " + (r.im_depot < 0 ? "text-destructive font-semibold" : "")}>{r.im_depot}</td>
+                        <td className="p-2">
+                          {(r.warnungen?.length ?? 0) === 0
+                            ? <Badge variant="secondary" className="gap-1"><CheckCircle2 className="size-3" />ok</Badge>
+                            : <div className="flex flex-wrap gap-1">
+                                {r.warnungen.map((w: string) => (
+                                  <Badge key={w} variant="destructive" className="text-[10px]">{w}</Badge>
+                                ))}
+                              </div>}
+                          {(r.traeger?.length ?? 0) > 0 && (
+                            <div className="text-[11px] text-muted-foreground mt-1">bei: {r.traeger.join(", ")}</div>
+                          )}
+                        </td>
+                        <td className="p-2 text-right">
+                          <Button variant="ghost" size="icon" onClick={() => onEdit(r)}><Pencil className="size-4" /></Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </CardContent>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }
