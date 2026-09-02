@@ -272,10 +272,14 @@ function SchluesselbestandPage() {
               <Search className="size-4 absolute left-2 top-2.5 text-muted-foreground" />
               <Input className="pl-8" placeholder="Suchen (Nummer, Kunde, Schrank …)" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={onlyWarn} onCheckedChange={(v) => setOnlyWarn(!!v)} /> nur Warnungen
-            </label>
-          </div>
+             <label className="flex items-center gap-2 text-sm">
+               <Checkbox checked={onlyWarn} onCheckedChange={(v) => setOnlyWarn(!!v)} /> nur Warnungen
+             </label>
+             <select aria-label="Kategorie filtern" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as SchluesselKategorie | "Alle")} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+               <option value="Alle">Alle Kategorien</option>
+               <option value="AZ">AZ</option><option value="Malteser">Malteser</option><option value="LüWa">LüWa</option><option value="Sonstige">Sonstige</option>
+             </select>
+           </div>
 
           <Card>
             <CardContent className="p-0 overflow-x-auto">
