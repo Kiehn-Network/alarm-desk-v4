@@ -48,9 +48,12 @@ const sections: Section[] = [
     { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter", roles: ["admin", "dispatcher"] },
     { to: "/abrechnung/lgwa",       label: "LüWa",        icon: Receipt, module: "lgwa", roles: ["admin", "dispatcher"] },
   ]},
-  { label: "Tools", items: [
+  { label: "Schlüsselverwaltung", items: [
     { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"], module: "schluesselbuch" },
     { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher"] },
+    { to: "/schluesselbestand", label: "Schlüsselbestand", icon: Boxes, roles: ["admin", "dispatcher"] },
+  ]},
+  { label: "Tools", items: [
     { to: "/daten-import", label: "Daten-Import", icon: Upload, roles: ["admin"] },
   ]},
   { label: "Center", items: [
