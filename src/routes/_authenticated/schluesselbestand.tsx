@@ -285,6 +285,10 @@ function SchluesselbestandPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="kunden">
+          <KundenTab rows={filtered} isLoading={isLoading} onEdit={setEditRow} />
+        </TabsContent>
+
         <TabsContent value="inventur">
           <InventurTab />
         </TabsContent>
