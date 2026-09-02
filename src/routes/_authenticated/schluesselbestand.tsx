@@ -41,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/schluesselbestand")({
 
 const EMPTY = {
   key_number: "", kategorie: "AZ" as SchluesselKategorie, bezeichnung: "", kunden_name: "", address: "", objekt: "",
-  schrank: "", fach: "", anzahl_soll: 1, zustand: "ok", label_code: "", notiz: "", aktiv: true,
+  schrank: "Tresor", fach: "", anzahl_soll: 1, zustand: "ok", label_code: "", notiz: "", aktiv: true,
 };
 
 function SchluesselbestandPage() {
@@ -151,7 +151,7 @@ function SchluesselbestandPage() {
         kunden_name: get(cols.kunde) || null,
         address: get(cols.adr) || null,
         objekt: get(cols.obj) || null,
-        schrank: get(cols.schrank) || null,
+        schrank: get(cols.schrank) || "Tresor",
         fach: get(cols.fach) || null,
         anzahl_soll: Number(get(cols.soll)) || 1,
         notiz: get(cols.notiz) || null,
