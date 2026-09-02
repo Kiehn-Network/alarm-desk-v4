@@ -616,6 +616,7 @@ function InventurTab() {
           {active && <Button size="sm" variant="outline" onClick={handleFinish}>Abschließen</Button>}
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
+          {posError && <div className="p-4 text-sm text-destructive">{(posError as any)?.message ?? "Fehler beim Laden"}</div>}
           {!active && <div className="p-4 text-sm text-muted-foreground">Inventur auswählen oder neu starten.</div>}
           {active && (
             <table className="w-full text-sm">
