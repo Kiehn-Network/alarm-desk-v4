@@ -395,7 +395,9 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
     const now = Date.now();
     const byKey = new Map<string, { count: number; traeger: string[]; ueberfaellig: boolean }>();
     for (const b of buch ?? []) {
-      const k = compositeKey(b.key_number, kategorieFuerBuch(b, dateiRows));
+      const kategorie = kategorieFuerBuch(b, dateiRows);
+      if (!kategorie) continue;
+      const k = compositeKey(b.key_number, kategorie);
       const cur = byKey.get(k) ?? { count: 0, traeger: [], ueberfaellig: false };
       cur.count += 1;
       if (b.traeger_name && !cur.traeger.includes(b.traeger_name)) cur.traeger.push(b.traeger_name);
