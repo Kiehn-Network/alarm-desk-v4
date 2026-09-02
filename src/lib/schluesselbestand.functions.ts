@@ -31,7 +31,7 @@ export type BestandRow = {
   warnungen: string[];
 };
 
-const OPEN_STATUS = ["ausgegeben", "uebernommen", "rueckgabe_offen"];
+const OPEN_STATUS: Array<"ausgegeben" | "uebernommen" | "rueckgabe_offen"> = ["ausgegeben", "uebernommen", "rueckgabe_offen"];
 
 export const listSchluesselBestand = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
