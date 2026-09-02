@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   Upload, Search, Link2, Trash2, Download, FileText, Loader2,
   X, Eye, Link as LinkIcon, Pencil, History, ArrowRight, Paperclip,
-  Users, ChevronLeft, ChevronRight,
+  Users, ChevronLeft, ChevronRight, Boxes, AlertTriangle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import { AccessDenied } from "@/components/layout/access-denied";
 import { DateiEditDialog } from "@/components/datei-edit-dialog";
 import { safeUUID } from "@/lib/utils";
 import { FilePreviewDialog } from "@/components/file-preview-dialog";
+import { listBestandForKunde } from "@/lib/schluesselbestand.functions";
 
 type Datei = Awaited<ReturnType<typeof listDateien>>["dateien"][number];
 type Link = Awaited<ReturnType<typeof listDateien>>["links"][number];
@@ -953,6 +954,50 @@ function Info({ label, value }: { label: string; value: string | null }) {
   );
 }
 
+function KundenSchluesselbestand({ kundenName }: { kundenName: string }) {
+  const loadBestand = useServerFn(listBestandForKunde);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["dateien-kunde-bestand", kundenName],
+    queryFn: () => loadBestand({ data: { kunden_name: kundenName, key_number: null, address: null } }),
+  });
+  const bestand = data?.rows ?? [];
+
+  return (
+    <div className="mt-3 rounded-md border border-border bg-background/60">
+      <div className="px-3 py-2 flex items-center gap-2 border-b border-border">
+        <Boxes className="size-4 text-primary" />
+        <span className="text-sm font-medium">Schlüsselbestand</span>
+        {isLoading && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
+      </div>
+      {isError ? (
+        <p className="px-3 py-2 text-xs text-destructive">Schlüsselbestand konnte nicht geladen werden.</p>
+      ) : bestand.length === 0 && !isLoading ? (
+        <p className="px-3 py-2 text-xs text-muted-foreground">Für diesen Kunden ist kein Schlüsselbestand hinterlegt.</p>
+      ) : (
+        <ul className="divide-y divide-border">
+          {bestand.map((b) => (
+            <li key={b.id} className="px-3 py-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium">🔑 {b.key_number}</span>
+                {b.bezeichnung && <span className="text-muted-foreground">{b.bezeichnung}</span>}
+                <Badge variant="outline" className="text-[11px]">Depot {b.im_depot}/{b.anzahl_soll}</Badge>
+                {b.draussen > 0 && <Badge variant="secondary" className="text-[11px]">{b.draussen} unterwegs</Badge>}
+                {b.warnungen?.length > 0 && <AlertTriangle className="size-3.5 text-destructive" aria-label="Warnung" />}
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                {[b.address, b.objekt, b.schrank && `Schrank ${b.schrank}`, b.fach && `Fach ${b.fach}`]
+                  .filter(Boolean).join(" · ") || "Kein Lagerort hinterlegt"}
+                {b.traeger?.length ? ` · bei: ${b.traeger.join(", ")}` : ""}
+              </div>
+              {b.warnungen?.length > 0 && <div className="text-xs text-destructive mt-0.5">{b.warnungen.join(" · ")}</div>}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function KundenListe({
   dateien, search, onEdit, isAdmin, onDone,
 }: { dateien: Datei[]; search: string; onEdit: (d: Datei) => void; isAdmin: boolean; onDone: () => void }) {
@@ -1038,6 +1083,7 @@ function KundenListe({
                   </li>
                 ))}
               </ul>
+              {g.name !== "(ohne Kunde)" && <KundenSchluesselbestand kundenName={g.name} />}
             </li>
           ))}
         </ul>

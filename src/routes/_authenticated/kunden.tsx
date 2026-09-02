@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Clock, Users, History as HistoryIcon, Info, Pencil, FileText, Loader2 } from "lucide-react";
+import { Search, Clock, Users, History as HistoryIcon, Info, Pencil, FileText, Loader2, Boxes } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { searchKundenEinsaetze, listEinsatzHistorie } from "@/lib/einsaetze.func
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { DateiEditDialog, type DateiLike } from "@/components/datei-edit-dialog";
+import { listBestandForKunde } from "@/lib/schluesselbestand.functions";
 
 export const Route = createFileRoute("/_authenticated/kunden")({
   component: KundenPage,
@@ -194,6 +195,7 @@ function KundenPage() {
 function KundeDateienDialog({
   einsatz, onClose, onPick,
 }: { einsatz: any | null; onClose: () => void; onPick: (d: DateiLike) => void }) {
+  const loadBestand = useServerFn(listBestandForKunde);
   const { data, isLoading } = useQuery({
     queryKey: ["kunde-dateien", einsatz?.id],
     enabled: !!einsatz,
@@ -212,8 +214,20 @@ function KundeDateienDialog({
     },
   });
 
+  const { data: bestandData, isLoading: bestandLoading } = useQuery({
+    queryKey: ["kunde-bestand", einsatz?.id],
+    enabled: !!einsatz,
+    queryFn: () => loadBestand({ data: {
+      kunden_name: einsatz!.kunden_name ?? null,
+      key_number: einsatz!.key_number ?? null,
+      address: einsatz!.address ?? null,
+    }}),
+  });
+
   if (!einsatz) return null;
   const dateien = data ?? [];
+  const bestand: any[] = bestandData?.rows ?? [];
+
 
   return (
     <Dialog open={!!einsatz} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -226,6 +240,44 @@ function KundeDateienDialog({
             {einsatz.kunden_name || "(ohne Kunde)"} · Datei wählen, um zu bearbeiten
           </DialogDescription>
         </DialogHeader>
+
+        <div className="rounded-md border border-border">
+          <div className="px-3 py-2 border-b border-border flex items-center gap-2 text-sm font-medium">
+            <Boxes className="size-4 text-primary" /> Schlüsselbestand
+            {bestandLoading && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
+          </div>
+          {!bestandLoading && bestand.length === 0 ? (
+            <div className="px-3 py-3 text-xs text-muted-foreground">
+              Kein Bestandseintrag zu diesem Kunden hinterlegt.
+            </div>
+          ) : (
+            <ul className="divide-y divide-border max-h-48 overflow-y-auto">
+              {bestand.map((b) => (
+                <li key={b.id} className="px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium">🔑 {b.key_number}</span>
+                    {b.bezeichnung && <span className="text-muted-foreground">{b.bezeichnung}</span>}
+                    <Badge variant="outline" className="text-[11px]">Depot {b.im_depot}/{b.anzahl_soll}</Badge>
+                    {b.draussen > 0 && (
+                      <Badge className="text-[11px] bg-amber-500/15 text-amber-500 border border-amber-500/30">
+                        {b.draussen} unterwegs
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {[b.objekt, b.address, b.schrank && `Schrank ${b.schrank}`, b.fach && `Fach ${b.fach}`]
+                      .filter(Boolean).join(" · ") || "—"}
+                    {b.traeger?.length ? ` · bei: ${b.traeger.join(", ")}` : ""}
+                  </div>
+                  {b.warnungen?.length > 0 && (
+                    <div className="text-xs text-red-500 mt-0.5">⚠ {b.warnungen.join(" · ")}</div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
 
         {isLoading ? (
           <div className="p-6 text-center"><Loader2 className="size-5 animate-spin mx-auto text-muted-foreground" /></div>
