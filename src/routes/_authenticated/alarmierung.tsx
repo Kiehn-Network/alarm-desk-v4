@@ -1027,22 +1027,25 @@ function EditDialog({
               try {
                 await onSave({
                   id: einsatz.id,
-                  einsatzgrund: form.einsatzgrund?.trim() || undefined,
-                  kunden_name: form.kunden_name ?? null,
-                  address: form.address ?? null,
-                  beschreibung: form.beschreibung ?? null,
-                  status: form.status,
-                  ...(form.status === "storniert"
-                    ? { storniert_grund: form.storniert_grund?.trim() || null }
-                    : {}),
-                  vor_ort_am: fromLocalInput(form.vor_ort_am ?? ""),
-                  abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
-                  einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
-                  abgeschlossen_am: fromLocalInput(form.abgeschlossen_am ?? ""),
-                  created_at: fromLocalInput(form.created_at ?? ""),
-                  ...(isHausnotruf
-                    ? { hausnotruf_provider: form.hausnotruf_provider || null }
-                    : {}),
+                   einsatzgrund: form.einsatzgrund?.trim() || undefined,
+                   kunden_name: form.kunden_name ?? null,
+                   address: form.address ?? null,
+                   beschreibung: form.beschreibung ?? null,
+                   status: form.status,
+                   ...(einsatz.status === "in_bearbeitung" && form.assigned_to
+                     ? { assigned_to: form.assigned_to }
+                     : {}),
+                   ...(form.status === "storniert"
+                     ? { storniert_grund: form.storniert_grund?.trim() || null }
+                     : {}),
+                   vor_ort_am: fromLocalInput(form.vor_ort_am ?? ""),
+                   abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
+                   einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
+                   abgeschlossen_am: fromLocalInput(form.abgeschlossen_am ?? ""),
+                   created_at: fromLocalInput(form.created_at ?? ""),
+                   ...(isHausnotruf
+                     ? { hausnotruf_provider: form.hausnotruf_provider || null }
+                     : {}),
                 });
               } catch (err: any) {
                 toast.error(err.message ?? "Fehler");
