@@ -2589,6 +2589,66 @@ export type Database = {
         }
         Relationships: []
       }
+      schluessel_bestand: {
+        Row: {
+          address: string | null
+          aktiv: boolean
+          anzahl_soll: number
+          bezeichnung: string | null
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          fach: string | null
+          id: string
+          key_number: string
+          kunden_name: string | null
+          label_code: string | null
+          notiz: string | null
+          objekt: string | null
+          schrank: string | null
+          updated_at: string
+          zustand: string
+        }
+        Insert: {
+          address?: string | null
+          aktiv?: boolean
+          anzahl_soll?: number
+          bezeichnung?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          fach?: string | null
+          id?: string
+          key_number: string
+          kunden_name?: string | null
+          label_code?: string | null
+          notiz?: string | null
+          objekt?: string | null
+          schrank?: string | null
+          updated_at?: string
+          zustand?: string
+        }
+        Update: {
+          address?: string | null
+          aktiv?: boolean
+          anzahl_soll?: number
+          bezeichnung?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          fach?: string | null
+          id?: string
+          key_number?: string
+          kunden_name?: string | null
+          label_code?: string | null
+          notiz?: string | null
+          objekt?: string | null
+          schrank?: string | null
+          updated_at?: string
+          zustand?: string
+        }
+        Relationships: []
+      }
       schluessel_buch: {
         Row: {
           address: string | null
@@ -2658,6 +2718,108 @@ export type Database = {
           updated_at?: string
           zurueck_at?: string | null
           zurueck_by?: string | null
+        }
+        Relationships: []
+      }
+      schluessel_inventur_positionen: {
+        Row: {
+          anzahl_ist: number | null
+          anzahl_soll: number
+          bestand_id: string | null
+          created_at: string
+          domain_id: string
+          ergebnis: string
+          geprueft_at: string | null
+          geprueft_von: string | null
+          id: string
+          inventur_id: string
+          key_number: string
+          notiz: string | null
+          updated_at: string
+        }
+        Insert: {
+          anzahl_ist?: number | null
+          anzahl_soll?: number
+          bestand_id?: string | null
+          created_at?: string
+          domain_id: string
+          ergebnis?: string
+          geprueft_at?: string | null
+          geprueft_von?: string | null
+          id?: string
+          inventur_id: string
+          key_number: string
+          notiz?: string | null
+          updated_at?: string
+        }
+        Update: {
+          anzahl_ist?: number | null
+          anzahl_soll?: number
+          bestand_id?: string | null
+          created_at?: string
+          domain_id?: string
+          ergebnis?: string
+          geprueft_at?: string | null
+          geprueft_von?: string | null
+          id?: string
+          inventur_id?: string
+          key_number?: string
+          notiz?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schluessel_inventur_positionen_bestand_id_fkey"
+            columns: ["bestand_id"]
+            isOneToOne: false
+            referencedRelation: "schluessel_bestand"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schluessel_inventur_positionen_inventur_id_fkey"
+            columns: ["inventur_id"]
+            isOneToOne: false
+            referencedRelation: "schluessel_inventuren"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schluessel_inventuren: {
+        Row: {
+          abgeschlossen_at: string | null
+          created_at: string
+          domain_id: string
+          gestartet_at: string
+          gestartet_von: string | null
+          id: string
+          notiz: string | null
+          status: string
+          titel: string
+          updated_at: string
+        }
+        Insert: {
+          abgeschlossen_at?: string | null
+          created_at?: string
+          domain_id: string
+          gestartet_at?: string
+          gestartet_von?: string | null
+          id?: string
+          notiz?: string | null
+          status?: string
+          titel: string
+          updated_at?: string
+        }
+        Update: {
+          abgeschlossen_at?: string | null
+          created_at?: string
+          domain_id?: string
+          gestartet_at?: string
+          gestartet_von?: string | null
+          id?: string
+          notiz?: string | null
+          status?: string
+          titel?: string
+          updated_at?: string
         }
         Relationships: []
       }
