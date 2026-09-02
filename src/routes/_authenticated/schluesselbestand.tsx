@@ -22,6 +22,7 @@ import {
   deleteSchluesselBestand, importSchluesselBestand, listInventuren, startInventur,
   listInventurPositionen, setInventurPosition, abschliessenInventur,
 } from "@/lib/schluesselbestand.functions";
+import { searchKundenDateien } from "@/lib/einsaetze.functions";
 
 export const Route = createFileRoute("/_authenticated/schluesselbestand")({
   component: SchluesselbestandPage,
