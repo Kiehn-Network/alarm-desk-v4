@@ -314,7 +314,7 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
   );
 }
 
-function EditDialog({ row, onClose, onSave }: { row: any | null; onClose: () => void; onSave: (f: any) => Promise<void> }) {
+function EditDialog({ row, onClose, onSave, kunden = [] }: { row: any | null; onClose: () => void; onSave: (f: any) => Promise<void>; kunden?: { name: string; address: string | null; objekt: string | null }[] }) {
   const [form, setForm] = useState<any>(EMPTY);
   const [key, setKey] = useState<string | null>(null);
   if (row && key !== (row.id ?? "new") + (row.key_number ?? "")) {
