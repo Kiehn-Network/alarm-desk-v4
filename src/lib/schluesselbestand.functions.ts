@@ -276,3 +276,78 @@ export const abschliessenInventur = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return row;
   });
+
+// ---------------- Kundenansicht (Dateiverwaltung) ----------------
+
+/**
+ * Schlüsselbestand zu einem Kunden / einer Schlüssel-Nr. inkl. Live-Status
+ * aus dem Schlüsselbuch (für die Kunden-/Dateiverwaltung).
+ */
+export const listBestandForKunde = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      kunden_name: z.string().trim().max(200).optional().nullable(),
+      key_number: z.string().trim().max(100).optional().nullable(),
+      address: z.string().trim().max(300).optional().nullable(),
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+
+    const name = (data.kunden_name ?? "").trim();
+    const key = (data.key_number ?? "").trim();
+    const addr = (data.address ?? "").trim();
+    if (!name && !key && !addr) return { rows: [] as BestandRow[] };
+
+    let q = supabase.from("schluessel_bestand").select("*").eq("domain_id", domainId);
+    const ors: string[] = [];
+    if (name) ors.push(`kunden_name.ilike.%${name}%`);
+    if (key) ors.push(`key_number.eq.${key}`);
+    if (addr) ors.push(`address.ilike.%${addr}%`);
+    q = q.or(ors.join(","));
+    const { data: bestand, error } = await q.order("key_number", { ascending: true }).limit(200);
+    if (error) throw new Error(error.message);
+    if (!bestand?.length) return { rows: [] as BestandRow[] };
+
+    const keys = bestand.map((b: any) => b.key_number);
+    const { data: buch } = await supabase
+      .from("schluessel_buch")
+      .select("key_number, status, traeger_name, ausgegeben_at")
+      .eq("domain_id", domainId)
+      .in("status", OPEN_STATUS)
+      .in("key_number", keys);
+
+    const now = Date.now();
+    const byKey = new Map<string, { count: number; traeger: string[]; ueberfaellig: boolean }>();
+    for (const b of buch ?? []) {
+      const k = (b.key_number ?? "").trim().toLowerCase();
+      const cur = byKey.get(k) ?? { count: 0, traeger: [], ueberfaellig: false };
+      cur.count += 1;
+      if (b.traeger_name && !cur.traeger.includes(b.traeger_name)) cur.traeger.push(b.traeger_name);
+      if (b.ausgegeben_at && now - new Date(b.ausgegeben_at).getTime() > 24 * 3600 * 1000) cur.ueberfaellig = true;
+      byKey.set(k, cur);
+    }
+
+    const rows: BestandRow[] = bestand.map((b: any) => {
+      const live = byKey.get((b.key_number ?? "").trim().toLowerCase());
+      const draussen = live?.count ?? 0;
+      const im_depot = b.anzahl_soll - draussen;
+      const warnungen: string[] = [];
+      if (im_depot < 0) warnungen.push("Mehr Schlüssel unterwegs als im Bestand hinterlegt");
+      if (live?.ueberfaellig) warnungen.push("Rückgabe überfällig (> 24 h)");
+      if (b.zustand && b.zustand !== "ok") warnungen.push(`Zustand: ${b.zustand}`);
+      if (!b.aktiv) warnungen.push("Inaktiv / ausgemustert");
+      return {
+        ...b,
+        draussen,
+        im_depot,
+        traeger: live?.traeger ?? [],
+        ueberfaellig: live?.ueberfaellig ?? false,
+        warnungen,
+      };
+    });
+
+    return { rows };
+  });
