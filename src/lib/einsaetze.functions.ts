@@ -242,6 +242,25 @@ export const editEinsatzFull = createServerFn({ method: "POST" })
       if (v === undefined) continue;
       patch[k] = v === "" ? null : v;
     }
+
+    // Eine Fahrer-Übergabe ist nur bei laufenden Einsätzen erlaubt.
+    if (patch.assigned_to !== undefined && patch.assigned_to !== before?.assigned_to) {
+      if (before?.status !== "in_bearbeitung") {
+        throw new Error("Fahrer können nur bei aktiven Einsätzen geändert werden");
+      }
+      if (!patch.assigned_to) throw new Error("Bitte einen Fahrer auswählen");
+      const { data: targetRole } = await supabaseAdmin
+        .from("user_roles").select("user_id")
+        .eq("user_id", patch.assigned_to).eq("role", "fahrer").eq("domain_id", domainId)
+        .maybeSingle();
+      if (!targetRole) throw new Error("Der ausgewählte Fahrer gehört nicht zu dieser Domäne");
+      const { data: targetProfile } = await supabaseAdmin
+        .from("profiles").select("id").eq("id", patch.assigned_to).eq("domain_id", domainId)
+        .neq("einsatz_selectable", false).maybeSingle();
+      if (!targetProfile) throw new Error("Der ausgewählte Fahrer ist nicht für Einsätze freigeschaltet");
+      patch.assigned_at = new Date().toISOString();
+    }
+
     // Status-bezogene Zeitfelder automatisch pflegen
     if (patch.status === "abgeschlossen" && !patch.abgeschlossen_am && !before?.abgeschlossen_am) {
       patch.abgeschlossen_am = new Date().toISOString();

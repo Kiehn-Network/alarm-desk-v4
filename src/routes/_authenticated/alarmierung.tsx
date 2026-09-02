@@ -23,7 +23,7 @@ import {
 import { useRole } from "@/hooks/use-role";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import {
-  listEinsaetze, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
+  listEinsaetze, listFahrer, abschliessenEinsatz, listEinsatzHistorie, stornierenEinsatz,
   editEinsatzFull, deleteEinsatz, deleteEinsaetzeBulk,
 } from "@/lib/einsaetze.functions";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -271,12 +271,15 @@ function AlarmierungPage() {
   const { data: modules } = useDomainModules();
   const hausnotrufEnabled = modules?.has("hausnotruf") ?? false;
   const list = useServerFn(listEinsaetze);
+  const listF = useServerFn(listFahrer);
   const abschliessen = useServerFn(abschliessenEinsatz);
   const stornieren = useServerFn(stornierenEinsatz);
   const editFull = useServerFn(editEinsatzFull);
   const loeschen = useServerFn(deleteEinsatz);
   const loeschenBulk = useServerFn(deleteEinsaetzeBulk);
   const { data, refetch, isLoading } = useQuery({ queryKey: ["einsaetze"], queryFn: () => list() });
+  const { data: fahrerData } = useQuery({ queryKey: ["fahrer"], queryFn: () => listF(), enabled: canManage });
+  const fahrer = (fahrerData?.fahrer ?? []) as Array<{ id: string; display_name: string | null }>;
 
   // Live-Updates: Fahrer-Änderungen (Zeiten, Bericht, Status) sofort in der Zentrale.
   useEffect(() => {
@@ -620,11 +623,12 @@ function AlarmierungPage() {
                               <DropdownMenuItem onClick={() => setHistory(e)}>
                                 <HistoryIcon className="size-4 mr-2" /> Verlauf
                               </DropdownMenuItem>
-                              {canManage && (
-                                <DropdownMenuItem onClick={() => setEditFor(e)}>
-                                  <Pencil className="size-4 mr-2" /> Bearbeiten
-                                </DropdownMenuItem>
-                              )}
+                               {canManage && (
+                                 <DropdownMenuItem onClick={() => setEditFor(e)}>
+                                   <Pencil className="size-4 mr-2" />
+                                   {e.status === "in_bearbeitung" ? "Bearbeiten / Fahrer übergeben" : "Bearbeiten"}
+                                 </DropdownMenuItem>
+                               )}
                               {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
                                 <>
                                   <DropdownMenuSeparator />
@@ -664,6 +668,7 @@ function AlarmierungPage() {
       <InfoDialog einsatz={infoFor} profiles={profiles} hausnotrufEnabled={hausnotrufEnabled} onClose={() => setInfoFor(null)} />
       <EditDialog
         einsatz={editFor}
+        fahrer={fahrer}
         onClose={() => setEditFor(null)}
         onSave={async (patch) => {
           await editFull({ data: patch });
@@ -855,9 +860,10 @@ function fromLocalInput(v: string): string | null {
 }
 
 function EditDialog({
-  einsatz, onClose, onSave,
+  einsatz, fahrer, onClose, onSave,
 }: {
   einsatz: Einsatz | null;
+  fahrer: Array<{ id: string; display_name: string | null }>;
   onClose: () => void;
   onSave: (patch: any) => Promise<void>;
 }) {
@@ -882,6 +888,7 @@ function EditDialog({
         abgeschlossen_am: toLocalInput(einsatz.abgeschlossen_am),
         created_at: toLocalInput(einsatz.created_at),
         hausnotruf_provider: einsatz.hausnotruf_provider ?? "",
+        assigned_to: einsatz.assigned_to ?? "",
       });
     }
   }, [einsatz?.id]);
@@ -940,6 +947,28 @@ function EditDialog({
               <Label>Adresse</Label>
               <Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} />
             </div>
+            {einsatz.status === "in_bearbeitung" && (
+              <div className="space-y-1 md:col-span-2">
+                <Label>Fahrer</Label>
+                <Select
+                  value={form.assigned_to || "none"}
+                  onValueChange={(v) => set("assigned_to", v === "none" ? "" : v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Fahrer auswählen" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" disabled>Fahrer auswählen</SelectItem>
+                    {fahrer.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.display_name ?? f.id.slice(0, 8)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Der neue Fahrer übernimmt den aktiven Einsatz sofort.
+                </p>
+              </div>
+            )}
             {isHausnotruf && (
               <div className="space-y-1 md:col-span-2">
                 <Label>Subprovider</Label>
@@ -999,22 +1028,25 @@ function EditDialog({
               try {
                 await onSave({
                   id: einsatz.id,
-                  einsatzgrund: form.einsatzgrund?.trim() || undefined,
-                  kunden_name: form.kunden_name ?? null,
-                  address: form.address ?? null,
-                  beschreibung: form.beschreibung ?? null,
-                  status: form.status,
-                  ...(form.status === "storniert"
-                    ? { storniert_grund: form.storniert_grund?.trim() || null }
-                    : {}),
-                  vor_ort_am: fromLocalInput(form.vor_ort_am ?? ""),
-                  abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
-                  einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
-                  abgeschlossen_am: fromLocalInput(form.abgeschlossen_am ?? ""),
-                  created_at: fromLocalInput(form.created_at ?? ""),
-                  ...(isHausnotruf
-                    ? { hausnotruf_provider: form.hausnotruf_provider || null }
-                    : {}),
+                   einsatzgrund: form.einsatzgrund?.trim() || undefined,
+                   kunden_name: form.kunden_name ?? null,
+                   address: form.address ?? null,
+                   beschreibung: form.beschreibung ?? null,
+                   status: form.status,
+                   ...(einsatz.status === "in_bearbeitung" && form.assigned_to
+                     ? { assigned_to: form.assigned_to }
+                     : {}),
+                   ...(form.status === "storniert"
+                     ? { storniert_grund: form.storniert_grund?.trim() || null }
+                     : {}),
+                   vor_ort_am: fromLocalInput(form.vor_ort_am ?? ""),
+                   abfahrt_am: fromLocalInput(form.abfahrt_am ?? ""),
+                   einsatz_ende_am: fromLocalInput(form.einsatz_ende_am ?? ""),
+                   abgeschlossen_am: fromLocalInput(form.abgeschlossen_am ?? ""),
+                   created_at: fromLocalInput(form.created_at ?? ""),
+                   ...(isHausnotruf
+                     ? { hausnotruf_provider: form.hausnotruf_provider || null }
+                     : {}),
                 });
               } catch (err: any) {
                 toast.error(err.message ?? "Fehler");
