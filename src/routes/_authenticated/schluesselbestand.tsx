@@ -215,6 +215,7 @@ function SchluesselbestandPage() {
       <Tabs defaultValue="bestand">
         <TabsList>
           <TabsTrigger value="bestand">Bestand</TabsTrigger>
+          <TabsTrigger value="kunden">Kunden</TabsTrigger>
           <TabsTrigger value="inventur">Inventur</TabsTrigger>
         </TabsList>
 
