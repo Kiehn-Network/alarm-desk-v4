@@ -2600,6 +2600,7 @@ export type Database = {
           domain_id: string
           fach: string | null
           id: string
+          kategorie: string
           key_number: string
           kunden_name: string | null
           label_code: string | null
@@ -2619,6 +2620,7 @@ export type Database = {
           domain_id: string
           fach?: string | null
           id?: string
+          kategorie?: string
           key_number: string
           kunden_name?: string | null
           label_code?: string | null
@@ -2638,6 +2640,7 @@ export type Database = {
           domain_id?: string
           fach?: string | null
           id?: string
+          kategorie?: string
           key_number?: string
           kunden_name?: string | null
           label_code?: string | null

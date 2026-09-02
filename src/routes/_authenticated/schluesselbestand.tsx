@@ -21,6 +21,7 @@ import {
   listSchluesselBestand, listDateiSchluessel, upsertSchluesselBestand,
   deleteSchluesselBestand, importSchluesselBestand, listInventuren, startInventur,
   listInventurPositionen, setInventurPosition, abschliessenInventur,
+  kategorieAusOrdner, type SchluesselKategorie,
 } from "@/lib/schluesselbestand.functions";
 import { searchKundenDateien } from "@/lib/einsaetze.functions";
 
@@ -39,7 +40,7 @@ export const Route = createFileRoute("/_authenticated/schluesselbestand")({
 });
 
 const EMPTY = {
-  key_number: "", bezeichnung: "", kunden_name: "", address: "", objekt: "",
+  key_number: "", kategorie: "AZ" as SchluesselKategorie, bezeichnung: "", kunden_name: "", address: "", objekt: "",
   schrank: "", fach: "", anzahl_soll: 1, zustand: "ok", label_code: "", notiz: "", aktiv: true,
 };
 
@@ -53,6 +54,7 @@ function SchluesselbestandPage() {
 
   const [q, setQ] = useState("");
   const [onlyWarn, setOnlyWarn] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<SchluesselKategorie | "Alle">("Alle");
   const [editRow, setEditRow] = useState<any | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -69,11 +71,11 @@ function SchluesselbestandPage() {
   const unbekannt = data?.unbekannt ?? [];
   const dateiSchluessel = dateiKeysData?.rows ?? [];
   const bestandKeys = useMemo(
-    () => new Set(rows.map((r: any) => r.key_number.trim().toLowerCase())),
+    () => new Set(rows.map((r: any) => `${r.key_number.trim().toLowerCase()}::${r.kategorie}`)),
     [rows],
   );
   const dateiOhneBestand = useMemo(
-    () => dateiSchluessel.filter((d: any) => !bestandKeys.has(d.key_number.trim().toLowerCase())),
+    () => dateiSchluessel.filter((d: any) => !bestandKeys.has(`${d.key_number.trim().toLowerCase()}::${d.kategorie}`)),
     [dateiSchluessel, bestandKeys],
   );
 
@@ -81,11 +83,12 @@ function SchluesselbestandPage() {
     const s = q.trim().toLowerCase();
     return rows.filter((r: any) => {
       if (onlyWarn && r.warnungen.length === 0) return false;
+      if (categoryFilter !== "Alle" && r.kategorie !== categoryFilter) return false;
       if (!s) return true;
-      return [r.key_number, r.bezeichnung, r.kunden_name, r.address, r.objekt, r.schrank, r.fach]
+      return [r.key_number, r.kategorie, r.bezeichnung, r.kunden_name, r.address, r.objekt, r.schrank, r.fach]
         .some((v) => (v ?? "").toString().toLowerCase().includes(s));
     });
-  }, [rows, q, onlyWarn]);
+  }, [rows, q, onlyWarn, categoryFilter]);
 
   const totals = useMemo(() => ({
     soll: rows.reduce((a: number, r: any) => a + r.anzahl_soll, 0),
@@ -111,9 +114,9 @@ function SchluesselbestandPage() {
   }
 
   function exportCsv() {
-    const head = ["Schluesselnummer", "Bezeichnung", "Kunde", "Adresse", "Objekt", "Schrank", "Fach", "Soll", "Draussen", "Im Depot", "Zustand", "Aktiv", "Notiz"];
+    const head = ["Schluesselnummer", "Kategorie", "Bezeichnung", "Kunde", "Adresse", "Objekt", "Schrank", "Fach", "Soll", "Draussen", "Im Depot", "Zustand", "Aktiv", "Notiz"];
     const lines = [head.join(";")].concat(filtered.map((r: any) => [
-      r.key_number, r.bezeichnung ?? "", r.kunden_name ?? "", r.address ?? "", r.objekt ?? "",
+      r.key_number, r.kategorie, r.bezeichnung ?? "", r.kunden_name ?? "", r.address ?? "", r.objekt ?? "",
       r.schrank ?? "", r.fach ?? "", r.anzahl_soll, r.draussen, r.im_depot, r.zustand,
       r.aktiv ? "ja" : "nein", (r.notiz ?? "").replace(/[\r\n;]+/g, " "),
     ].join(";")));
@@ -135,7 +138,7 @@ function SchluesselbestandPage() {
     const iKey = idx("schluesselnummer", "schlüsselnummer", "key_number", "nummer");
     if (iKey < 0) { toast.error("Spalte mit der Schlüsselnummer nicht gefunden"); return; }
     const cols = {
-      bez: idx("bezeichnung"), kunde: idx("kunde"), adr: idx("adresse"), obj: idx("objekt"),
+      kat: idx("kategorie", "bereich", "anbieter"), bez: idx("bezeichnung"), kunde: idx("kunde"), adr: idx("adresse"), obj: idx("objekt"),
       schrank: idx("schrank"), fach: idx("fach"), soll: idx("soll", "anzahl"), notiz: idx("notiz"),
     };
     const parsed = lines.slice(1).map((l) => {
@@ -143,6 +146,7 @@ function SchluesselbestandPage() {
       const get = (i: number) => (i >= 0 ? c[i] ?? "" : "");
       return {
         key_number: get(iKey),
+        kategorie: (["AZ", "Malteser", "LüWa", "Sonstige"].includes(get(cols.kat)) ? get(cols.kat) : "AZ"),
         bezeichnung: get(cols.bez) || null,
         kunden_name: get(cols.kunde) || null,
         address: get(cols.adr) || null,
@@ -217,10 +221,10 @@ function SchluesselbestandPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {unbekannt.map((k: string) => (
-              <Button key={k} variant="outline" size="sm"
-                onClick={() => setEditRow({ ...EMPTY, key_number: k })}>
-                {k} <Plus className="size-3 ml-1" />
+            {unbekannt.map((k: { key_number: string; kategorie: SchluesselKategorie }) => (
+              <Button key={`${k.key_number}-${k.kategorie}`} variant="outline" size="sm"
+                onClick={() => setEditRow({ ...EMPTY, key_number: k.key_number, kategorie: k.kategorie })}>
+                {k.key_number} · {k.kategorie} <Plus className="size-3 ml-1" />
               </Button>
             ))}
           </CardContent>
@@ -244,7 +248,7 @@ function SchluesselbestandPage() {
             <div className="flex flex-wrap gap-2">
               {dateiOhneBestand.slice(0, 30).map((d: any) => (
                 <Button key={d.key_number} variant="outline" size="sm" className="gap-1.5"
-                  onClick={() => setEditRow({ ...EMPTY, key_number: d.key_number, kunden_name: d.kunden_name ?? "", address: d.address ?? "" })}>
+                  onClick={() => setEditRow({ ...EMPTY, key_number: d.key_number, kategorie: d.kategorie, kunden_name: d.kunden_name ?? "", address: d.address ?? "" })}>
                   <Plus className="size-3.5" /> {d.key_number}
                   {d.kunden_name && <span className="text-muted-foreground">· {d.kunden_name}</span>}
                 </Button>
@@ -268,35 +272,41 @@ function SchluesselbestandPage() {
               <Search className="size-4 absolute left-2 top-2.5 text-muted-foreground" />
               <Input className="pl-8" placeholder="Suchen (Nummer, Kunde, Schrank …)" value={q} onChange={(e) => setQ(e.target.value)} />
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox checked={onlyWarn} onCheckedChange={(v) => setOnlyWarn(!!v)} /> nur Warnungen
-            </label>
-          </div>
+             <label className="flex items-center gap-2 text-sm">
+               <Checkbox checked={onlyWarn} onCheckedChange={(v) => setOnlyWarn(!!v)} /> nur Warnungen
+             </label>
+             <select aria-label="Kategorie filtern" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as SchluesselKategorie | "Alle")} className="h-9 rounded-md border border-input bg-background px-3 text-sm">
+               <option value="Alle">Alle Kategorien</option>
+               <option value="AZ">AZ</option><option value="Malteser">Malteser</option><option value="LüWa">LüWa</option><option value="Sonstige">Sonstige</option>
+             </select>
+           </div>
 
           <Card>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left">
-                  <tr>
-                    <th className="p-2">Nummer</th>
-                    <th className="p-2">Bezeichnung / Kunde</th>
-                    <th className="p-2">Lagerort</th>
-                    <th className="p-2 text-right">Soll</th>
-                    <th className="p-2 text-right">Unterwegs</th>
-                    <th className="p-2 text-right">Depot</th>
-                    <th className="p-2">Status</th>
-                    <th className="p-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading && <tr><td colSpan={8} className="p-4 text-muted-foreground">Lade …</td></tr>}
-                  {!isLoading && filtered.length === 0 && (
-                    <tr><td colSpan={8} className="p-4 text-muted-foreground">Keine Einträge.</td></tr>
-                  )}
-                  {filtered.map((r: any) => (
-                    <tr key={r.id} className="border-t">
-                      <td className="p-2 font-medium">{r.key_number}</td>
-                      <td className="p-2">
+                 <thead className="bg-muted/50 text-left">
+                   <tr>
+                     <th className="p-2">Nummer</th>
+                     <th className="p-2">Kategorie</th>
+                     <th className="p-2">Bezeichnung / Kunde</th>
+                     <th className="p-2">Lagerort</th>
+                     <th className="p-2 text-right">Soll</th>
+                     <th className="p-2 text-right">Unterwegs</th>
+                     <th className="p-2 text-right">Depot</th>
+                     <th className="p-2">Status</th>
+                     <th className="p-2"></th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {isLoading && <tr><td colSpan={9} className="p-4 text-muted-foreground">Lade …</td></tr>}
+                   {!isLoading && filtered.length === 0 && (
+                     <tr><td colSpan={9} className="p-4 text-muted-foreground">Keine Einträge.</td></tr>
+                   )}
+                   {filtered.map((r: any) => (
+                     <tr key={r.id} className="border-t">
+                       <td className="p-2 font-medium">{r.key_number}</td>
+                       <td className="p-2"><Badge variant="outline">{r.kategorie}</Badge></td>
+                       <td className="p-2">
                         <div>{r.bezeichnung ?? "—"}</div>
                         <div className="text-xs text-muted-foreground">{r.kunden_name ?? r.address ?? ""}</div>
                       </td>
@@ -360,7 +370,7 @@ function StatCard({ label, value, tone }: { label: string; value: number; tone?:
 
 function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
   row: any | null;
-  dateiSchluessel: Array<{ key_number: string; kunden_name: string | null; address: string | null; count: number }>;
+  dateiSchluessel: Array<{ key_number: string; kategorie: SchluesselKategorie; kunden_name: string | null; address: string | null; count: number }>;
   onClose: () => void;
   onSave: (f: any) => Promise<void>;
 }) {
@@ -372,10 +382,12 @@ function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
   }
   const set = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
   const selectDateiKey = (value: string) => {
-    const match = dateiSchluessel.find((d) => d.key_number === value);
+    const matches = dateiSchluessel.filter((d) => d.key_number === value);
+    const match = matches.find((d) => d.kategorie === form.kategorie) ?? matches[0];
     setForm((f: any) => ({
       ...f,
       key_number: value,
+      kategorie: match?.kategorie ?? f.kategorie,
       kunden_name: match?.kunden_name ?? f.kunden_name,
       address: match?.address ?? f.address,
     }));
@@ -385,19 +397,28 @@ function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
     <Dialog open={!!row} onOpenChange={(o) => { if (!o) { setKey(null); onClose(); } }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{row?.id ? "Schlüssel bearbeiten" : "Schlüssel anlegen"}</DialogTitle></DialogHeader>
-        <KundenSuche
-          onPick={(hit) => setForm((f: any) => ({
-            ...f,
-            key_number: hit.key_number || f.key_number,
-            kunden_name: hit.kunden_name ?? f.kunden_name,
-            address: hit.address ?? f.address,
-          }))}
-        />
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Field label="Schlüsselnummer *">
+         <KundenSuche
+           onPick={(hit) => setForm((f: any) => ({
+             ...f,
+             key_number: hit.key_number || f.key_number,
+             kategorie: hit.folder ? kategorieAusOrdner(hit.folder) : f.kategorie,
+             kunden_name: hit.kunden_name ?? f.kunden_name,
+             address: hit.address ?? f.address,
+           }))}
+         />
+         <div className="grid gap-3 sm:grid-cols-2">
+           <Field label="Schlüsselbereich *">
+             <select value={form.kategorie ?? "AZ"} onChange={(e) => set("kategorie", e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+               <option value="AZ">AZ</option>
+               <option value="Malteser">Malteser</option>
+               <option value="LüWa">LüWa</option>
+               <option value="Sonstige">Sonstige</option>
+             </select>
+           </Field>
+           <Field label="Schlüsselnummer *">
             <Input list="datei-schluessel-nummern" value={form.key_number} onChange={(e) => selectDateiKey(e.target.value)} />
             <datalist id="datei-schluessel-nummern">
-              {dateiSchluessel.map((d) => <option key={d.key_number} value={d.key_number}>{d.kunden_name ?? ""}</option>)}
+              {dateiSchluessel.map((d) => <option key={`${d.key_number}-${d.kategorie}`} value={d.key_number}>{d.kategorie} · {d.kunden_name ?? ""}</option>)}
             </datalist>
             <div className="mt-1 text-[11px] text-muted-foreground flex items-center gap-1">
               <Link2 className="size-3" /> Nummern aus der Dateiverwaltung werden vorgeschlagen.
@@ -456,7 +477,7 @@ function KundenSuche({ onPick }: { onPick: (hit: any) => void }) {
       {picked ? (
         <div className="text-xs text-muted-foreground">
           Übernommen: <b className="text-foreground">{picked.kunden_name || "Ohne Kundennamen"}</b>
-          {picked.key_number ? ` · 🔑 ${picked.key_number}` : ""}
+          {picked.key_number ? ` · 🔑 ${picked.key_number}` : ""}{picked.folder ? ` · ${kategorieAusOrdner(picked.folder)}` : ""}
         </div>
       ) : term.length < 2 ? (
         <p className="text-[11px] text-muted-foreground">Mindestens 2 Zeichen eingeben.</p>
