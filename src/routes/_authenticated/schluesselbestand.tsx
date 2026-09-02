@@ -220,8 +220,8 @@ function SchluesselbestandPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            {unbekannt.map((k: string) => (
-              <Button key={k} variant="outline" size="sm"
+            {unbekannt.map((k: { key_number: string; kategorie: SchluesselKategorie }) => (
+              <Button key={`${k.key_number}-${k.kategorie}`} variant="outline" size="sm"
                 onClick={() => setEditRow({ ...EMPTY, key_number: k.key_number, kategorie: k.kategorie })}>
                 {k.key_number} · {k.kategorie} <Plus className="size-3 ml-1" />
               </Button>
