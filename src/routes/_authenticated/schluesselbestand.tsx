@@ -5,8 +5,9 @@ import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import {
   Boxes, Plus, Search, Upload, Download, QrCode, AlertTriangle, ClipboardCheck,
-  Pencil, Trash2, RefreshCw, CheckCircle2, Link2,
+  Pencil, Trash2, RefreshCw, CheckCircle2, Link2, Printer,
 } from "lucide-react";
+import { downloadInventurPdf } from "@/lib/inventur-pdf";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -565,6 +566,18 @@ function InventurTab() {
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
   }
 
+  function handlePrint() {
+    const inv: any = (inventuren ?? []).find((i: any) => i.id === active);
+    if (!inv) { toast.error("Keine Inventur ausgewählt."); return; }
+    downloadInventurPdf({
+      titel: inv.titel,
+      gestartet_at: inv.gestartet_at,
+      abgeschlossen_at: inv.abgeschlossen_at ?? null,
+      status: inv.status,
+      positionen: (positionen ?? []) as any,
+    });
+  }
+
   async function handleFinish() {
     if (!active) return;
     try {
@@ -613,7 +626,14 @@ function InventurTab() {
       <Card>
         <CardHeader className="pb-2 flex-row items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2"><ClipboardCheck className="size-4" />Zählliste</CardTitle>
-          {active && <Button size="sm" variant="outline" onClick={handleFinish}>Abschließen</Button>}
+          {active && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handlePrint}>
+                <Printer className="size-4 mr-1" />PDF drucken
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleFinish}>Abschließen</Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {posError && <div className="p-4 text-sm text-destructive">{(posError as any)?.message ?? "Fehler beim Laden"}</div>}
