@@ -55,17 +55,17 @@ function compositeKey(key: unknown, kategorie: unknown) {
 
 type DateiQuelle = { key_number: string | null; kunden_name: string | null; address: string | null; folder: string | null };
 
-function kategorieFuerBuch(buch: any, quellen: DateiQuelle[]): SchluesselKategorie {
+function kategorieFuerBuch(buch: any, quellen: DateiQuelle[]): SchluesselKategorie | null {
   const key = (buch.key_number ?? "").trim().toLowerCase();
   const matches = quellen.filter((q) => (q.key_number ?? "").trim().toLowerCase() === key);
-  if (!matches.length) return "AZ";
+  if (!matches.length) return null;
   const exact = matches.filter((q) =>
     (buch.kunden_name && q.kunden_name && buch.kunden_name.trim().toLowerCase() === q.kunden_name.trim().toLowerCase())
     || (buch.address && q.address && buch.address.trim().toLowerCase() === q.address.trim().toLowerCase()),
   );
   const candidates = exact.length ? exact : matches;
   const categories = [...new Set(candidates.map((q) => kategorieAusOrdner(q.folder)))];
-  return categories.length === 1 ? categories[0] : kategorieAusOrdner(candidates[0]?.folder);
+  return categories.length === 1 ? categories[0] : null;
 }
 
 export const listSchluesselBestand = createServerFn({ method: "POST" })
