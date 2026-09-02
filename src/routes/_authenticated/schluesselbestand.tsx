@@ -280,27 +280,29 @@ function SchluesselbestandPage() {
           <Card>
             <CardContent className="p-0 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left">
-                  <tr>
-                    <th className="p-2">Nummer</th>
-                    <th className="p-2">Bezeichnung / Kunde</th>
-                    <th className="p-2">Lagerort</th>
-                    <th className="p-2 text-right">Soll</th>
-                    <th className="p-2 text-right">Unterwegs</th>
-                    <th className="p-2 text-right">Depot</th>
-                    <th className="p-2">Status</th>
-                    <th className="p-2"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading && <tr><td colSpan={9} className="p-4 text-muted-foreground">Lade …</td></tr>}
-                  {!isLoading && filtered.length === 0 && (
-                    <tr><td colSpan={9} className="p-4 text-muted-foreground">Keine Einträge.</td></tr>
-                  )}
-                  {filtered.map((r: any) => (
-                    <tr key={r.id} className="border-t">
-                      <td className="p-2 font-medium">{r.key_number}</td>
-                      <td className="p-2">
+                 <thead className="bg-muted/50 text-left">
+                   <tr>
+                     <th className="p-2">Nummer</th>
+                     <th className="p-2">Kategorie</th>
+                     <th className="p-2">Bezeichnung / Kunde</th>
+                     <th className="p-2">Lagerort</th>
+                     <th className="p-2 text-right">Soll</th>
+                     <th className="p-2 text-right">Unterwegs</th>
+                     <th className="p-2 text-right">Depot</th>
+                     <th className="p-2">Status</th>
+                     <th className="p-2"></th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {isLoading && <tr><td colSpan={9} className="p-4 text-muted-foreground">Lade …</td></tr>}
+                   {!isLoading && filtered.length === 0 && (
+                     <tr><td colSpan={9} className="p-4 text-muted-foreground">Keine Einträge.</td></tr>
+                   )}
+                   {filtered.map((r: any) => (
+                     <tr key={r.id} className="border-t">
+                       <td className="p-2 font-medium">{r.key_number}</td>
+                       <td className="p-2"><Badge variant="outline">{r.kategorie}</Badge></td>
+                       <td className="p-2">
                         <div>{r.bezeichnung ?? "—"}</div>
                         <div className="text-xs text-muted-foreground">{r.kunden_name ?? r.address ?? ""}</div>
                       </td>
