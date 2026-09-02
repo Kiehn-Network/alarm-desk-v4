@@ -78,6 +78,16 @@ function SchluesselbestandPage() {
     warn: rows.filter((r: any) => r.warnungen.length > 0).length,
   }), [rows]);
 
+  const kunden = useMemo(() => {
+    const map = new Map<string, { name: string; address: string | null; objekt: string | null }>();
+    for (const r of rows as any[]) {
+      const name = (r.kunden_name ?? "").trim();
+      if (!name || map.has(name.toLowerCase())) continue;
+      map.set(name.toLowerCase(), { name, address: r.address ?? null, objekt: r.objekt ?? null });
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }, [rows]);
+
   const refresh = () => qc.invalidateQueries({ queryKey: ["schluessel-bestand"] });
 
   async function handleSave(form: any) {
