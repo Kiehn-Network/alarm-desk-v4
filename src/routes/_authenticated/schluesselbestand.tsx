@@ -330,7 +330,26 @@ function EditDialog({ row, onClose, onSave, kunden = [] }: { row: any | null; on
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Schlüsselnummer *"><Input value={form.key_number} onChange={(e) => set("key_number", e.target.value)} /></Field>
           <Field label="Bezeichnung"><Input value={form.bezeichnung ?? ""} onChange={(e) => set("bezeichnung", e.target.value)} /></Field>
-          <Field label="Kunde"><Input value={form.kunden_name ?? ""} onChange={(e) => set("kunden_name", e.target.value)} /></Field>
+          <Field label="Kunde">
+            <Input
+              list="kunden-vorschlaege"
+              placeholder="Kunde wählen oder neu eingeben"
+              value={form.kunden_name ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                const hit = kunden.find((k) => k.name.toLowerCase() === v.trim().toLowerCase());
+                setForm((f: any) => ({
+                  ...f,
+                  kunden_name: v,
+                  address: hit && !f.address ? hit.address ?? "" : f.address,
+                  objekt: hit && !f.objekt ? hit.objekt ?? "" : f.objekt,
+                }));
+              }}
+            />
+            <datalist id="kunden-vorschlaege">
+              {kunden.map((k) => <option key={k.name} value={k.name} />)}
+            </datalist>
+          </Field>
           <Field label="Adresse"><Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} /></Field>
           <Field label="Objekt"><Input value={form.objekt ?? ""} onChange={(e) => set("objekt", e.target.value)} /></Field>
           <Field label="Zustand"><Input value={form.zustand ?? "ok"} onChange={(e) => set("zustand", e.target.value)} placeholder="ok / defekt / verloren" /></Field>
