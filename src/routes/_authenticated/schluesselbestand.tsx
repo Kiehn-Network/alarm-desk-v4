@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import QRCode from "qrcode";
 import {
   Boxes, Plus, Search, Upload, Download, QrCode, AlertTriangle, ClipboardCheck,
-  Pencil, Trash2, RefreshCw, CheckCircle2,
+  Pencil, Trash2, RefreshCw, CheckCircle2, Link2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
