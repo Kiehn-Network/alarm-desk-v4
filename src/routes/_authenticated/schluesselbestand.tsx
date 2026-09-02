@@ -294,7 +294,7 @@ function SchluesselbestandPage() {
         </TabsContent>
       </Tabs>
 
-      <EditDialog row={editRow} onClose={() => setEditRow(null)} onSave={handleSave} />
+      <EditDialog row={editRow} onClose={() => setEditRow(null)} onSave={handleSave} kunden={kunden} />
     </div>
   );
 }
