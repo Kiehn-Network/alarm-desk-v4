@@ -859,9 +859,10 @@ function fromLocalInput(v: string): string | null {
 }
 
 function EditDialog({
-  einsatz, onClose, onSave,
+  einsatz, fahrer, onClose, onSave,
 }: {
   einsatz: Einsatz | null;
+  fahrer: Array<{ id: string; display_name: string | null }>;
   onClose: () => void;
   onSave: (patch: any) => Promise<void>;
 }) {
@@ -886,6 +887,7 @@ function EditDialog({
         abgeschlossen_am: toLocalInput(einsatz.abgeschlossen_am),
         created_at: toLocalInput(einsatz.created_at),
         hausnotruf_provider: einsatz.hausnotruf_provider ?? "",
+        assigned_to: einsatz.assigned_to ?? "",
       });
     }
   }, [einsatz?.id]);
@@ -944,6 +946,28 @@ function EditDialog({
               <Label>Adresse</Label>
               <Input value={form.address ?? ""} onChange={(e) => set("address", e.target.value)} />
             </div>
+            {einsatz.status === "in_bearbeitung" && (
+              <div className="space-y-1 md:col-span-2">
+                <Label>Fahrer</Label>
+                <Select
+                  value={form.assigned_to || "none"}
+                  onValueChange={(v) => set("assigned_to", v === "none" ? "" : v)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Fahrer auswählen" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" disabled>Fahrer auswählen</SelectItem>
+                    {fahrer.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.display_name ?? f.id.slice(0, 8)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Der neue Fahrer übernimmt den aktiven Einsatz sofort.
+                </p>
+              </div>
+            )}
             {isHausnotruf && (
               <div className="space-y-1 md:col-span-2">
                 <Label>Subprovider</Label>
