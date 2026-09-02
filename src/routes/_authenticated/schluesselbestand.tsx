@@ -18,9 +18,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  listSchluesselBestand, upsertSchluesselBestand, deleteSchluesselBestand,
-  importSchluesselBestand, listInventuren, startInventur, listInventurPositionen,
-  setInventurPosition, abschliessenInventur,
+  listSchluesselBestand, listDateiSchluessel, upsertSchluesselBestand,
+  deleteSchluesselBestand, importSchluesselBestand, listInventuren, startInventur,
+  listInventurPositionen, setInventurPosition, abschliessenInventur,
 } from "@/lib/schluesselbestand.functions";
 
 export const Route = createFileRoute("/_authenticated/schluesselbestand")({
