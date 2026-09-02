@@ -45,6 +45,7 @@ const EMPTY = {
 function SchluesselbestandPage() {
   const qc = useQueryClient();
   const load = useServerFn(listSchluesselBestand);
+  const loadDateiSchluessel = useServerFn(listDateiSchluessel);
   const save = useServerFn(upsertSchluesselBestand);
   const del = useServerFn(deleteSchluesselBestand);
   const doImport = useServerFn(importSchluesselBestand);
@@ -57,6 +58,10 @@ function SchluesselbestandPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["schluessel-bestand"],
     queryFn: () => load({ data: {} } as any),
+  });
+  const { data: dateiKeysData, isLoading: dateiKeysLoading } = useQuery({
+    queryKey: ["datei-schluessel"],
+    queryFn: () => loadDateiSchluessel({ data: {} } as any),
   });
 
   const rows = data?.rows ?? [];
