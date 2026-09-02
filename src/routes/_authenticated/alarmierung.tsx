@@ -623,11 +623,12 @@ function AlarmierungPage() {
                               <DropdownMenuItem onClick={() => setHistory(e)}>
                                 <HistoryIcon className="size-4 mr-2" /> Verlauf
                               </DropdownMenuItem>
-                              {canManage && (
-                                <DropdownMenuItem onClick={() => setEditFor(e)}>
-                                  <Pencil className="size-4 mr-2" /> Bearbeiten
-                                </DropdownMenuItem>
-                              )}
+                               {canManage && (
+                                 <DropdownMenuItem onClick={() => setEditFor(e)}>
+                                   <Pencil className="size-4 mr-2" />
+                                   {e.status === "in_bearbeitung" ? "Bearbeiten / Fahrer übergeben" : "Bearbeiten"}
+                                 </DropdownMenuItem>
+                               )}
                               {canManage && e.status !== "storniert" && e.status !== "abgeschlossen" && (
                                 <>
                                   <DropdownMenuSeparator />
