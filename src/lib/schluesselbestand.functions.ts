@@ -139,6 +139,7 @@ export const listSchluesselBestand = createServerFn({ method: "POST" })
 const upsertSchema = z.object({
   id: z.string().uuid().optional(),
   key_number: z.string().trim().min(1).max(100),
+  kategorie: z.enum(["AZ", "Malteser", "LüWa", "Sonstige"]).default("AZ"),
   bezeichnung: z.string().max(200).optional().nullable(),
   kunden_name: z.string().max(200).optional().nullable(),
   address: z.string().max(300).optional().nullable(),
@@ -171,7 +172,7 @@ export const upsertSchluesselBestand = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("schluessel_bestand").insert({ ...payload, created_by: userId }).select().single();
     if (error) {
-      if (error.code === "23505") throw new Error("Diese Schlüsselnummer existiert bereits im Bestand.");
+      if (error.code === "23505") throw new Error(`Die Kombination aus ${data.kategorie} und Schlüsselnummer existiert bereits im Bestand.`);
       throw new Error(error.message);
     }
     return row;
