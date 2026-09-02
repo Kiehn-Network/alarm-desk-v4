@@ -2736,7 +2736,9 @@ export type Database = {
           geprueft_von: string | null
           id: string
           inventur_id: string
+          kategorie: string
           key_number: string
+          kunden_name: string | null
           notiz: string | null
           updated_at: string
         }
@@ -2751,7 +2753,9 @@ export type Database = {
           geprueft_von?: string | null
           id?: string
           inventur_id: string
+          kategorie: string
           key_number: string
+          kunden_name?: string | null
           notiz?: string | null
           updated_at?: string
         }
@@ -2766,7 +2770,9 @@ export type Database = {
           geprueft_von?: string | null
           id?: string
           inventur_id?: string
+          kategorie?: string
           key_number?: string
+          kunden_name?: string | null
           notiz?: string | null
           updated_at?: string
         }
