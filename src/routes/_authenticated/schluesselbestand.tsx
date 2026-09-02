@@ -523,23 +523,37 @@ function InventurTab() {
   const finish = useServerFn(abschliessenInventur);
 
   const [active, setActive] = useState<string | null>(null);
+  const [startOpen, setStartOpen] = useState(false);
+  const [titel, setTitel] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  const { data: inventuren } = useQuery({ queryKey: ["schluessel-inventuren"], queryFn: () => listInv({ data: {} } as any) });
-  const { data: positionen } = useQuery({
+  const { data: inventuren, error: invError } = useQuery({
+    queryKey: ["schluessel-inventuren"],
+    queryFn: () => listInv({ data: {} } as any),
+  });
+  const { data: positionen, error: posError } = useQuery({
     queryKey: ["schluessel-inventur-pos", active],
     queryFn: () => listPos({ data: { inventur_id: active! } } as any),
     enabled: !!active,
   });
 
+  function openStart() {
+    setTitel(`Inventur ${new Date().toLocaleDateString("de-DE")}`);
+    setStartOpen(true);
+  }
+
   async function handleStart() {
-    const titel = prompt("Titel der Inventur", `Inventur ${new Date().toLocaleDateString("de-DE")}`);
-    if (!titel) return;
+    const t = titel.trim();
+    if (!t) { toast.error("Bitte einen Titel eingeben."); return; }
+    setBusy(true);
     try {
-      const inv: any = await start({ data: { titel } } as any);
+      const inv: any = await start({ data: { titel: t } } as any);
       toast.success("Inventur gestartet");
-      qc.invalidateQueries({ queryKey: ["schluessel-inventuren"] });
-      setActive(inv.id);
-    } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
+      await qc.invalidateQueries({ queryKey: ["schluessel-inventuren"] });
+      setActive(inv?.id ?? null);
+      setStartOpen(false);
+    } catch (e: any) { toast.error(e?.message ?? "Fehler beim Starten der Inventur"); }
+    finally { setBusy(false); }
   }
 
   async function count(id: string, value: string) {
@@ -560,15 +574,30 @@ function InventurTab() {
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
   }
 
+
   return (
     <div className="grid gap-4 md:grid-cols-[260px_1fr]">
+      <Dialog open={startOpen} onOpenChange={setStartOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Neue Inventur starten</DialogTitle></DialogHeader>
+          <Input value={titel} onChange={(e) => setTitel(e.target.value)} placeholder="Titel der Inventur" autoFocus
+            onKeyDown={(e) => { if (e.key === "Enter") handleStart(); }} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStartOpen(false)}>Abbrechen</Button>
+            <Button onClick={handleStart} disabled={busy}>{busy ? "Starte …" : "Starten"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader className="pb-2 flex-row items-center justify-between">
           <CardTitle className="text-sm">Inventuren</CardTitle>
-          <Button size="sm" variant="outline" onClick={handleStart}><Plus className="size-4" /></Button>
+          <Button size="sm" variant="outline" onClick={openStart}><Plus className="size-4" /></Button>
         </CardHeader>
         <CardContent className="space-y-1">
+          {invError && <div className="text-sm text-destructive">{(invError as any)?.message ?? "Fehler beim Laden"}</div>}
           {(inventuren ?? []).length === 0 && <div className="text-sm text-muted-foreground">Noch keine Inventur.</div>}
+
           {(inventuren ?? []).map((i: any) => (
             <button key={i.id} onClick={() => setActive(i.id)}
               className={"w-full text-left rounded px-2 py-1.5 text-sm hover:bg-muted " + (active === i.id ? "bg-muted" : "")}>
@@ -587,6 +616,7 @@ function InventurTab() {
           {active && <Button size="sm" variant="outline" onClick={handleFinish}>Abschließen</Button>}
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
+          {posError && <div className="p-4 text-sm text-destructive">{(posError as any)?.message ?? "Fehler beim Laden"}</div>}
           {!active && <div className="p-4 text-sm text-muted-foreground">Inventur auswählen oder neu starten.</div>}
           {active && (
             <table className="w-full text-sm">
