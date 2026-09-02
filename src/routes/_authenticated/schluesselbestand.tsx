@@ -383,6 +383,7 @@ function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
     setForm((f: any) => ({
       ...f,
       key_number: value,
+      kategorie: match?.kategorie ?? f.kategorie,
       kunden_name: match?.kunden_name ?? f.kunden_name,
       address: match?.address ?? f.address,
     }));
