@@ -428,9 +428,69 @@ function EditDialog({ row, dateiSchluessel, onClose, onSave }: {
   );
 }
 
+function KundenSuche({ onPick }: { onPick: (hit: any) => void }) {
+  const searchFn = useServerFn(searchKundenDateien);
+  const [q, setQ] = useState("");
+  const [picked, setPicked] = useState<any | null>(null);
+  const term = q.trim();
+  const { data, isFetching } = useQuery({
+    queryKey: ["bestand-kunden-search", term],
+    queryFn: () => searchFn({ data: { q: term } }),
+    enabled: term.length >= 2 && !picked,
+  });
+  const results: any[] = (data as any)?.results ?? [];
+
+  return (
+    <div className="rounded-lg border border-border p-3 space-y-2">
+      <Label className="text-xs">Kunde / Objekt suchen (Dateiverwaltung)</Label>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+          className="pl-9"
+          value={q}
+          onChange={(e) => { setQ(e.target.value); setPicked(null); }}
+          placeholder="Kunde, Straße, Schlüssel-Nr., Anlagen-Nr. ..."
+        />
+      </div>
+      {picked ? (
+        <div className="text-xs text-muted-foreground">
+          Übernommen: <b className="text-foreground">{picked.kunden_name || "Ohne Kundennamen"}</b>
+          {picked.key_number ? ` · 🔑 ${picked.key_number}` : ""}
+        </div>
+      ) : term.length < 2 ? (
+        <p className="text-[11px] text-muted-foreground">Mindestens 2 Zeichen eingeben.</p>
+      ) : isFetching ? (
+        <p className="text-[11px] text-muted-foreground">Suche läuft...</p>
+      ) : results.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">Keine Treffer.</p>
+      ) : (
+        <ul className="rounded-md border border-border divide-y divide-border max-h-52 overflow-y-auto">
+          {results.map((r) => (
+            <li key={r.id}>
+              <button
+                type="button"
+                className="w-full text-left p-2 hover:bg-muted/40 transition-colors"
+                onClick={() => { setPicked(r); onPick(r); }}
+              >
+                <div className="text-sm font-medium">{r.kunden_name || "Ohne Kundennamen"}</div>
+                <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-3">
+                  {r.address && <span>📍 {r.address}</span>}
+                  {r.key_number && <span>🔑 {r.key_number}</span>}
+                  {r.anlagen_nr && <span>🏷️ {r.anlagen_nr}</span>}
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div className="space-y-1"><Label className="text-xs">{label}</Label>{children}</div>;
 }
+
 
 function InventurTab() {
   const qc = useQueryClient();
