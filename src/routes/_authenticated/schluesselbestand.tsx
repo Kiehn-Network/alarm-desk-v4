@@ -614,7 +614,14 @@ function InventurTab() {
       <Card>
         <CardHeader className="pb-2 flex-row items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2"><ClipboardCheck className="size-4" />Zählliste</CardTitle>
-          {active && <Button size="sm" variant="outline" onClick={handleFinish}>Abschließen</Button>}
+          {active && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" onClick={handlePrint}>
+                <Printer className="size-4 mr-1" />PDF drucken
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleFinish}>Abschließen</Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
           {posError && <div className="p-4 text-sm text-destructive">{(posError as any)?.message ?? "Fehler beim Laden"}</div>}
