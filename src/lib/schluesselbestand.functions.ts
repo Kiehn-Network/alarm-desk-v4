@@ -350,25 +350,23 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
     const addr = (data.address ?? "").trim();
     if (!name && !key && !addr) return { rows: [] as BestandRow[] };
 
-    // Die Schlüssel-Nr. in der Dateiverwaltung ist die führende Verknüpfung.
-    // Dadurch werden auch Bestandszeilen ohne separat gepflegten Kundennamen gefunden.
     const dateiOrs: string[] = [];
     if (name) dateiOrs.push(`kunden_name.ilike.%${name}%`);
     if (key) dateiOrs.push(`key_number.eq.${key}`);
     if (addr) dateiOrs.push(`address.ilike.%${addr}%`);
     const { data: dateien, error: dateiError } = await supabase
       .from("dateien")
-      .select("key_number")
+      .select("key_number, kunden_name, address, folder")
       .eq("domain_id", domainId)
       .is("deleted_at", null)
       .or(dateiOrs.join(","))
       .limit(5000);
     if (dateiError) throw new Error(dateiError.message);
 
-    const dateiKeys = (dateien ?? [])
-      .map((d: any) => (d.key_number ?? "").trim())
-      .filter(Boolean);
+    const dateiRows = (dateien ?? []).filter((d: any) => d.key_number?.trim());
+    const dateiKeys = dateiRows.map((d: any) => d.key_number.trim());
     const allKeys = [...new Set([key, ...dateiKeys].filter(Boolean))];
+    const dateiPairs = new Set(dateiRows.map((d: any) => compositeKey(d.key_number, kategorieAusOrdner(d.folder))));
 
     let q = supabase.from("schluessel_bestand").select("*").eq("domain_id", domainId);
     const bestandOrs: string[] = [];
@@ -377,14 +375,17 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
     if (allKeys.length) bestandOrs.push(`key_number.in.(${allKeys.join(",")})`);
     if (!bestandOrs.length) return { rows: [] as BestandRow[] };
     q = q.or(bestandOrs.join(","));
-    const { data: bestand, error } = await q.order("key_number", { ascending: true }).limit(200);
+    const { data: bestandRows, error } = await q.order("key_number", { ascending: true }).limit(500);
     if (error) throw new Error(error.message);
-    if (!bestand?.length) return { rows: [] as BestandRow[] };
+    const bestand = (bestandRows ?? []).filter((b: any) =>
+      !dateiPairs.size || dateiPairs.has(compositeKey(b.key_number, b.kategorie)),
+    );
+    if (!bestand.length) return { rows: [] as BestandRow[] };
 
-    const keys = bestand.map((b: any) => b.key_number);
+    const keys = [...new Set(bestand.map((b: any) => b.key_number))];
     const { data: buch } = await supabase
       .from("schluessel_buch")
-      .select("key_number, status, traeger_name, ausgegeben_at")
+      .select("key_number, kunden_name, address, status, traeger_name, ausgegeben_at")
       .eq("domain_id", domainId)
       .in("status", OPEN_STATUS)
       .in("key_number", keys);
@@ -392,7 +393,7 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
     const now = Date.now();
     const byKey = new Map<string, { count: number; traeger: string[]; ueberfaellig: boolean }>();
     for (const b of buch ?? []) {
-      const k = (b.key_number ?? "").trim().toLowerCase();
+      const k = compositeKey(b.key_number, kategorieFuerBuch(b, dateiRows));
       const cur = byKey.get(k) ?? { count: 0, traeger: [], ueberfaellig: false };
       cur.count += 1;
       if (b.traeger_name && !cur.traeger.includes(b.traeger_name)) cur.traeger.push(b.traeger_name);
@@ -401,7 +402,7 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
     }
 
     const rows: BestandRow[] = bestand.map((b: any) => {
-      const live = byKey.get((b.key_number ?? "").trim().toLowerCase());
+      const live = byKey.get(compositeKey(b.key_number, b.kategorie));
       const draussen = live?.count ?? 0;
       const im_depot = b.anzahl_soll - draussen;
       const warnungen: string[] = [];
@@ -409,14 +410,7 @@ export const listBestandForKunde = createServerFn({ method: "POST" })
       if (live?.ueberfaellig) warnungen.push("Rückgabe überfällig (> 24 h)");
       if (b.zustand && b.zustand !== "ok") warnungen.push(`Zustand: ${b.zustand}`);
       if (!b.aktiv) warnungen.push("Inaktiv / ausgemustert");
-      return {
-        ...b,
-        draussen,
-        im_depot,
-        traeger: live?.traeger ?? [],
-        ueberfaellig: live?.ueberfaellig ?? false,
-        warnungen,
-      };
+      return { ...b, kategorie: normalizeKategorie(b.kategorie), draussen, im_depot, traeger: live?.traeger ?? [], ueberfaellig: live?.ueberfaellig ?? false, warnungen };
     });
 
     return { rows };
