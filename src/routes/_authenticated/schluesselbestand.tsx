@@ -66,6 +66,15 @@ function SchluesselbestandPage() {
 
   const rows = data?.rows ?? [];
   const unbekannt = data?.unbekannt ?? [];
+  const dateiSchluessel = dateiKeysData?.rows ?? [];
+  const bestandKeys = useMemo(
+    () => new Set(rows.map((r: any) => r.key_number.trim().toLowerCase())),
+    [rows],
+  );
+  const dateiOhneBestand = useMemo(
+    () => dateiSchluessel.filter((d: any) => !bestandKeys.has(d.key_number.trim().toLowerCase())),
+    [dateiSchluessel, bestandKeys],
+  );
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
