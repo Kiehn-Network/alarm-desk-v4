@@ -146,6 +146,7 @@ function SchluesselbestandPage() {
       const get = (i: number) => (i >= 0 ? c[i] ?? "" : "");
       return {
         key_number: get(iKey),
+        kategorie: (["AZ", "Malteser", "LüWa", "Sonstige"].includes(get(cols.kat)) ? get(cols.kat) : "AZ"),
         bezeichnung: get(cols.bez) || null,
         kunden_name: get(cols.kunde) || null,
         address: get(cols.adr) || null,
