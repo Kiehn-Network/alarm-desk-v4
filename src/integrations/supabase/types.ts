@@ -1705,6 +1705,7 @@ export type Database = {
           name: string
           notiz: string | null
           personalnummer: string | null
+          rolle: string
           transponder_id: string
           updated_at: string
         }
@@ -1717,6 +1718,7 @@ export type Database = {
           name: string
           notiz?: string | null
           personalnummer?: string | null
+          rolle?: string
           transponder_id: string
           updated_at?: string
         }
@@ -1729,6 +1731,7 @@ export type Database = {
           name?: string
           notiz?: string | null
           personalnummer?: string | null
+          rolle?: string
           transponder_id?: string
           updated_at?: string
         }
