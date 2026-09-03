@@ -310,7 +310,7 @@ function RecentEinsaetzeCard({
               <thead className="text-xs uppercase tracking-wider text-muted-foreground">
                 <tr className="border-b border-border">
                   <th className="text-left font-medium py-2">Einsatz</th>
-                  <th className="text-left font-medium py-2">ID / Teilnehmer</th>
+                  <th className="text-left font-medium py-2">ID / Teilnehmer-Nr.</th>
                   <th className="text-left font-medium py-2">Fahrer</th>
                   <th className="text-left font-medium py-2">Start</th>
                   <th className="text-left font-medium py-2">Dauer</th>
@@ -323,9 +323,9 @@ function RecentEinsaetzeCard({
                   const statusMeta = getStatusMeta(r.status);
                   return (
                     <tr key={r.id} className="border-b border-border/50 last:border-0">
-                      <td className="py-3 pr-3 min-w-44">{r.dateiname}</td>
                       <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">
-                        {r.teilnehmerId || r.anlagenNr || "–"}
+                        <div className="font-mono text-xs" title={r.id}>#{r.id.slice(0, 8)}</div>
+                        <div className="text-xs mt-0.5">TN: {r.teilnehmerId || "–"}</div>
                       </td>
                       <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.fahrer}</td>
                       <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.start}</td>
