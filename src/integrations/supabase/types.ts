@@ -1729,6 +1729,7 @@ export type Database = {
           domain_id: string
           einheit: string
           id: string
+          kategorie: string
           lagerort: string | null
           last_alert_at: string | null
           mindestbestand: number
@@ -1746,6 +1747,7 @@ export type Database = {
           domain_id: string
           einheit?: string
           id?: string
+          kategorie?: string
           lagerort?: string | null
           last_alert_at?: string | null
           mindestbestand?: number
@@ -1763,6 +1765,7 @@ export type Database = {
           domain_id?: string
           einheit?: string
           id?: string
+          kategorie?: string
           lagerort?: string | null
           last_alert_at?: string | null
           mindestbestand?: number

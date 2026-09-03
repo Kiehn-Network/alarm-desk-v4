@@ -1,0 +1,2 @@
+ALTER TABLE public.lager_artikel ADD COLUMN IF NOT EXISTS kategorie text NOT NULL DEFAULT 'Sonstiges';
+CREATE INDEX IF NOT EXISTS lager_artikel_kategorie_idx ON public.lager_artikel (domain_id, kategorie);

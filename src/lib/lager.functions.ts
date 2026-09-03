@@ -19,9 +19,13 @@ export type LagerPerson = {
   updated_at: string;
 };
 
+export const LAGER_KATEGORIEN = ["EMA", "BMA", "GMA", "Kleinmaterial", "Sonstiges"] as const;
+export type LagerKategorie = (typeof LAGER_KATEGORIEN)[number];
+
 export type LagerArtikel = {
   id: string;
   domain_id: string;
+  kategorie: string;
   bezeichnung: string;
   beschreibung: string | null;
   barcode: string;
@@ -144,14 +148,15 @@ export const listLagerArtikel = createServerFn({ method: "POST" })
 
 export const upsertLagerArtikel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id?: string; bezeichnung: string; beschreibung?: string | null; barcode: string; barcode_generiert?: boolean; einheit?: string; lagerort?: string | null; bestand?: number; mindestbestand?: number; alarm_email?: string | null; aktiv?: boolean }) => input)
+  .inputValidator((input: { id?: string; kategorie?: string; bezeichnung: string; beschreibung?: string | null; barcode: string; barcode_generiert?: boolean; einheit?: string; lagerort?: string | null; bestand?: number; mindestbestand?: number; alarm_email?: string | null; aktiv?: boolean }) => input)
   .handler(async ({ data, context }) => {
     const { domainId, supabaseAdmin } = await lagerAdminContext(context);
     const bezeichnung = data.bezeichnung.trim();
     const barcode = data.barcode.trim().toUpperCase();
     if (!bezeichnung) throw new Error("Bitte eine Artikelbezeichnung angeben.");
     if (!barcode) throw new Error("Bitte einen Barcode angeben oder generieren.");
-    const payload = { domain_id: domainId, bezeichnung, beschreibung: data.beschreibung?.trim() || null, barcode, barcode_generiert: data.barcode_generiert ?? false, einheit: data.einheit?.trim() || "Stk", lagerort: data.lagerort?.trim() || null, bestand: Math.max(0, Math.trunc(Number(data.bestand ?? 0))), mindestbestand: Math.max(0, Math.trunc(Number(data.mindestbestand ?? 0))), alarm_email: data.alarm_email?.trim() || null, aktiv: data.aktiv ?? true };
+    const kategorie = (LAGER_KATEGORIEN as readonly string[]).includes(String(data.kategorie ?? "")) ? String(data.kategorie) : "Sonstiges";
+    const payload = { domain_id: domainId, kategorie, bezeichnung, beschreibung: data.beschreibung?.trim() || null, barcode, barcode_generiert: data.barcode_generiert ?? false, einheit: data.einheit?.trim() || "Stk", lagerort: data.lagerort?.trim() || null, bestand: Math.max(0, Math.trunc(Number(data.bestand ?? 0))), mindestbestand: Math.max(0, Math.trunc(Number(data.mindestbestand ?? 0))), alarm_email: data.alarm_email?.trim() || null, aktiv: data.aktiv ?? true };
     const query = data.id
       ? supabaseAdmin.from("lager_artikel").update(payload).eq("id", data.id).eq("domain_id", domainId)
       : supabaseAdmin.from("lager_artikel").insert(payload);
