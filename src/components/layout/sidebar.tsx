@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useRole, type AppRole } from "@/hooks/use-role";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useDomainModules } from "@/hooks/use-domain-modules";
+import { useLagerAccess } from "@/hooks/use-lager-access";
 import logo from "@/assets/alarmdesk-logo.png";
 
 type Item = {
@@ -20,6 +21,7 @@ type Item = {
   module?: string;
   tab?: string;
   external?: string;
+  lagerOnly?: boolean;
 };
 type Section = { label: string; items: Item[] };
 
@@ -54,7 +56,7 @@ const sections: Section[] = [
     { to: "/schluesselbestand", label: "Schlüsselbestand", icon: Boxes, roles: ["admin", "dispatcher"] },
   ]},
   { label: "Lager", items: [
-    { to: "/lager", label: "Lager", icon: Boxes, module: "lager" },
+    { to: "/lager", label: "Lager", icon: Boxes, module: "lager", lagerOnly: true },
   ]},
   { label: "Tools", items: [
     { to: "/daten-import", label: "Daten-Import", icon: Upload, roles: ["admin"] },
@@ -107,6 +109,7 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
   const { role, actualRole, isImpersonating } = useRole();
   const { data: settings } = useAppSettings();
   const { data: enabledModules } = useDomainModules();
+  const { data: lagerAccess } = useLagerAccess();
   const isSuperAdminMode = actualRole === "superadmin" && !isImpersonating;
   const sourceSections = isSuperAdminMode ? superAdminSections : sections;
   const visibleSections = sourceSections
@@ -117,6 +120,7 @@ export function SidebarContent({ displayName, onNavigate }: { displayName: strin
         // effective domain. Only a SuperAdmin who is NOT currently
         // impersonating a domain sees everything; during impersonation we
         // mirror the domain's actual module configuration.
+        if (i.lagerOnly && !lagerAccess?.allowed) return false;
         if (i.module && !(actualRole === "superadmin" && !isImpersonating)) {
           if (!enabledModules || !enabledModules.has(i.module)) return false;
         }
