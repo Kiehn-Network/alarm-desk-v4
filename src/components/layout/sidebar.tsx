@@ -53,9 +53,13 @@ const sections: Section[] = [
     { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher"] },
     { to: "/schluesselbestand", label: "Schlüsselbestand", icon: Boxes, roles: ["admin", "dispatcher"] },
   ]},
+  { label: "Lager", items: [
+    { to: "/lager", label: "Lager", icon: Boxes, module: "lager" },
+  ]},
   { label: "Tools", items: [
     { to: "/daten-import", label: "Daten-Import", icon: Upload, roles: ["admin"] },
   ]},
+
   { label: "Center", items: [
     { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher"] },
     { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher"] },
