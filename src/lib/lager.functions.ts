@@ -93,7 +93,19 @@ export const listLagerPersonen = createServerFn({ method: "POST" })
     return { rows: (data ?? []) as LagerPerson[] };
   });
 
+export const getLagerZugriff = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    try {
+      const { isDomainAdmin } = await lagerAdminContext(context);
+      return { allowed: true, isDomainAdmin };
+    } catch {
+      return { allowed: false, isDomainAdmin: false };
+    }
+  });
+
 export const upsertLagerPerson = createServerFn({ method: "POST" })
+
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { id?: string; name: string; personalnummer?: string | null; transponder_id: string; aktiv?: boolean; notiz?: string | null }) => input)
   .handler(async ({ data, context }) => {
