@@ -6,6 +6,7 @@ import QRCode from "qrcode";
 import {
   Plus, Pencil, Trash2, QrCode, AlertTriangle, History, Printer, Wand2,
   Search, Package, PackageCheck, PackageX, Boxes, ArrowDownToLine, ArrowUpFromLine,
+  Activity, TrendingDown, TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +54,7 @@ function CategoryBadge({ value }: { value?: string | null }) {
 export function LagerArtikelPanel() {
   const qc = useQueryClient();
   const load = useServerFn(listLagerArtikel);
+  const loadBookings = useServerFn(listLagerBuchungen);
   const save = useServerFn(upsertLagerArtikel);
   const del = useServerFn(deleteLagerArtikel);
   const [edit, setEdit] = useState<any | null>(null);
@@ -63,8 +65,15 @@ export function LagerArtikelPanel() {
   const [stockFilter, setStockFilter] = useState("alle");
 
   const { data, isLoading } = useQuery({ queryKey: ["lager-artikel"], queryFn: () => load({ data: {} } as any) });
+  const { data: bookingData } = useQuery({ queryKey: ["lager-buchungen", "overview"], queryFn: () => loadBookings({ data: {} } as any) });
   const rows = (data?.rows ?? []) as LagerArtikel[];
+  const bookings = (bookingData?.rows ?? []) as LagerBuchung[];
   const unterMelde = useMemo(() => rows.filter((r) => r.mindestbestand > 0 && r.bestand <= r.mindestbestand), [rows]);
+  const movementStats = useMemo(() => ({
+    incoming: bookings.filter((b) => b.richtung === "eingang").reduce((sum, b) => sum + b.menge, 0),
+    outgoing: bookings.filter((b) => b.richtung === "ausgang").reduce((sum, b) => sum + b.menge, 0),
+    count: bookings.length,
+  }), [bookings]);
   const stats = useMemo(() => ({
     total: rows.length,
     active: rows.filter((r) => r.aktiv).length,
@@ -151,6 +160,22 @@ export function LagerArtikelPanel() {
           <div className="rounded-lg border border-border bg-card p-4"><div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Kategorien</span><PackageCheck className="size-4 text-primary" /></div><p className="mt-2 text-2xl font-semibold">{categoryStats.length}</p><p className="text-xs text-muted-foreground">mit angelegten Artikeln</p></div>
         </div>
       </section>
+
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="flex items-center gap-2 text-base"><Activity className="size-4 text-primary" />Lageraktivität</CardTitle></CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3">
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-3"><div className="grid size-9 place-items-center rounded-md bg-success/10 text-success"><TrendingUp className="size-4" /></div><div><p className="text-xs text-muted-foreground">Eingebuchte Einheiten</p><p className="text-lg font-semibold">{movementStats.incoming}</p></div></div>
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-3"><div className="grid size-9 place-items-center rounded-md bg-warning/10 text-warning"><TrendingDown className="size-4" /></div><div><p className="text-xs text-muted-foreground">Ausgebuchte Einheiten</p><p className="text-lg font-semibold">{movementStats.outgoing}</p></div></div>
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/20 p-3"><div className="grid size-9 place-items-center rounded-md bg-info/10 text-info"><History className="size-4" /></div><div><p className="text-xs text-muted-foreground">Buchungen insgesamt</p><p className="text-lg font-semibold">{movementStats.count}</p></div></div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3"><CardTitle className="text-base">Verteilung nach Kategorie</CardTitle></CardHeader>
+        <CardContent className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {LAGER_KATEGORIEN.map((name) => { const count = categoryStats.find((item) => item.name === name)?.count ?? 0; return <button key={name} type="button" onClick={() => setCategory(name)} className="flex cursor-pointer items-center justify-between rounded-lg border border-border p-3 text-left transition-colors hover:bg-muted/50"><CategoryBadge value={name} /><span className="font-semibold">{count}</span></button>; })}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="gap-4 pb-4 lg:flex-row lg:items-center lg:justify-between">
