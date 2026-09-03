@@ -6,6 +6,8 @@ import { LagerArtikelPanel } from "@/components/admin/lager-artikel-panel";
 import { LagerBenutzerPanel } from "@/components/admin/lager-benutzer-panel";
 import { LagerAdminsPanel } from "@/components/admin/lager-admins-panel";
 import { useRole } from "@/hooks/use-role";
+import { useLagerAccess } from "@/hooks/use-lager-access";
+
 
 export const Route = createFileRoute("/_authenticated/lager")({
   component: LagerAdminPage,
@@ -23,6 +25,25 @@ export const Route = createFileRoute("/_authenticated/lager")({
 
 function LagerAdminPage() {
   const { isAdmin } = useRole();
+  const { data: lagerAccess, isPending } = useLagerAccess();
+
+  if (isPending) {
+    return <div className="p-6 lg:p-8 text-sm text-muted-foreground">Lagerberechtigung wird geprüft…</div>;
+  }
+
+  if (!lagerAccess?.allowed) {
+    return (
+      <div className="p-6 lg:p-8">
+        <div className="rounded-xl border border-border bg-card p-12 text-center">
+          <Boxes className="mx-auto mb-4 size-10 text-muted-foreground" />
+          <h1 className="text-xl font-semibold">Kein Zugriff</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Dieser Bereich ist ausschließlich für Lager-Admins freigeschaltet.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 lg:p-8 space-y-6">
