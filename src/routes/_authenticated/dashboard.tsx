@@ -1,21 +1,24 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Suspense, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
-  Activity, Timer, Building2, Wallet, CheckSquare, ArrowRight,
+  Activity, Timer, Building2, Wallet, CheckSquare, ArrowRight, Info, Car, Mail, MapPin, Hash, Tag,
 } from "lucide-react";
 import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
+import { editEinsatzFull, listFahrer } from "@/lib/einsaetze.functions";
 import { rueckgabeBestaetigen } from "@/lib/schluesselbuch.functions";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppSettings } from "@/hooks/use-app-settings";
-import { Info } from "lucide-react";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePresenceList } from "@/hooks/use-presence";
 import { PartnerInbox } from "@/components/intervention/partner-inbox";
 
@@ -69,10 +72,11 @@ function DashboardContent() {
   const { user } = useAuth();
   const fetch = useServerFn(getDashboardStats);
   const fetchExtras = useServerFn(getDashboardExtras);
+  const listF = useServerFn(listFahrer);
   const qc = useQueryClient();
   const { data: settings } = useAppSettings();
   const { data: modules } = useDomainModules();
-  const { domainId } = useRole();
+  const { domainId, canManage } = useRole();
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
   const hausnotrufAktiv = modules?.has("hausnotruf") ?? false;
   const aktiveProvider = (["malteser", "johanniter", "lgwa"] as const).filter((k) => modules?.has(k));
@@ -121,6 +125,13 @@ function DashboardContent() {
     queryFn: () => fetch(),
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: fahrerData } = useQuery({
+    queryKey: ["dashboard-fahrer"],
+    queryFn: () => listF(),
+    enabled: canManage,
+    staleTime: 60_000,
   });
 
   const { data: extras } = useQuery({
@@ -212,6 +223,13 @@ function DashboardContent() {
         <StundenCard stunden={extras?.stunden} />
       </div>
 
+      <RecentEinsaetzeCard
+        recent={data.recent}
+        fahrer={(fahrerData?.fahrer ?? []) as Array<{ id: string; display_name: string | null }>}
+        canManage={canManage}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["dashboard-stats"] })}
+      />
+
       {/* Provider + Top Kunden */}
       <div className="grid lg:grid-cols-3 gap-6">
         {hausnotrufAktiv && aktiveProvider.length > 0 && (
@@ -219,77 +237,158 @@ function DashboardContent() {
         )}
         <TopKundenCard kunden={extras?.topKunden ?? []} />
       </div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-lg font-semibold">Letzte Einsätze</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Übersicht der jüngsten Aktivitäten</p>
-            </div>
-            <TrendingUp className="size-5 text-muted-foreground" />
-          </div>
-          {data.recent.length === 0 ? (
-            <EmptyState
-              icon={ListChecks}
-              title="Noch keine Einsätze"
-              hint="Sobald Einsätze erstellt werden, erscheinen sie hier."
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr className="border-b border-border">
-                    <th className="text-left font-medium py-2">Datei</th>
-                    <th className="text-left font-medium py-2">Fahrer</th>
-                    <th className="text-left font-medium py-2">Start</th>
-                    <th className="text-left font-medium py-2">Dauer</th>
-                    <th className="text-left font-medium py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.recent.map((r) => {
-                    const statusMeta = getStatusMeta(r.status);
-                    return (
-                      <tr key={r.id} className="border-b border-border/50 last:border-0">
-                        <td className="py-3">{r.dateiname}</td>
-                        <td className="py-3 text-muted-foreground">{r.fahrer}</td>
-                        <td className="py-3 text-muted-foreground">{r.start}</td>
-                        <td className="py-3 text-muted-foreground">{r.dauer}</td>
-                        <td className="py-3">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${statusMeta.classes}`}>
-                            {statusMeta.label}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-              <Clock className="size-3.5" /> Durchschnittswerte (Monat)
-            </div>
-            <div className="mt-4 space-y-3">
-              <KV label="Einsatzdauer" value="—" />
-              <KV label="Anfahrtszeit" value="—" />
-            </div>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-              <Users className="size-3.5" /> Top Teilnehmer
-            </div>
-            <div className="mt-4 text-sm text-muted-foreground">Noch keine Daten verfügbar.</div>
-          </div>
-        </div>
-      </div>
     </div>
   );
+}
+
+type RecentEinsatz = {
+  id: string;
+  dateiname: string;
+  fahrer: string;
+  assignedTo?: string | null;
+  teilnehmerId?: string | null;
+  anlagenNr?: string | null;
+  kundenName?: string | null;
+  kundenEmail?: string | null;
+  address?: string | null;
+  keyNumber?: string | null;
+  provider?: string | null;
+  beschreibung?: string | null;
+  prioritaet?: string | null;
+  start: string;
+  dauer: string;
+  status: string;
+};
+
+function RecentEinsaetzeCard({
+  recent, fahrer, canManage, onSaved,
+}: {
+  recent: RecentEinsatz[];
+  fahrer: Array<{ id: string; display_name: string | null }>;
+  canManage: boolean;
+  onSaved: () => void;
+}) {
+  const edit = useServerFn(editEinsatzFull);
+  const [infoFor, setInfoFor] = useState<RecentEinsatz | null>(null);
+  const [fahrerValue, setFahrerValue] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setFahrerValue(infoFor?.assignedTo ?? "");
+  }, [infoFor?.id, infoFor?.assignedTo]);
+
+  async function saveFahrer() {
+    if (!infoFor || !fahrerValue || fahrerValue === infoFor.assignedTo) return;
+    setBusy(true);
+    try {
+      await edit({ data: { id: infoFor.id, assigned_to: fahrerValue } });
+      toast.success("Fahrer wurde geändert");
+      onSaved();
+      setInfoFor(null);
+    } catch (error: any) {
+      toast.error(error?.message ?? "Fahrer konnte nicht geändert werden");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h2 className="text-lg font-semibold">Letzte Einsätze</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Übersicht der jüngsten Aktivitäten</p>
+          </div>
+          <TrendingUp className="size-5 text-muted-foreground" />
+        </div>
+        {recent.length === 0 ? (
+          <EmptyState icon={ListChecks} title="Noch keine Einsätze" hint="Sobald Einsätze erstellt werden, erscheinen sie hier." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-xs uppercase tracking-wider text-muted-foreground">
+                <tr className="border-b border-border">
+                  <th className="text-left font-medium py-2">Einsatz</th>
+                  <th className="text-left font-medium py-2">ID / Teilnehmer-Nr.</th>
+                  <th className="text-left font-medium py-2">Fahrer</th>
+                  <th className="text-left font-medium py-2">Start</th>
+                  <th className="text-left font-medium py-2">Dauer</th>
+                  <th className="text-left font-medium py-2">Status</th>
+                  <th className="text-right font-medium py-2">Info</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recent.map((r) => {
+                  const statusMeta = getStatusMeta(r.status);
+                  return (
+                    <tr key={r.id} className="border-b border-border/50 last:border-0">
+                      <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">
+                        <div className="font-mono text-xs" title={r.id}>#{r.id.slice(0, 8)}</div>
+                        <div className="text-xs mt-0.5">TN: {r.teilnehmerId || "–"}</div>
+                      </td>
+                      <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.fahrer}</td>
+                      <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.start}</td>
+                      <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.dauer}</td>
+                      <td className="py-3 pr-3">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${statusMeta.classes}`}>{statusMeta.label}</span>
+                      </td>
+                      <td className="py-3 text-right">
+                        <Button variant="ghost" size="icon" aria-label={`Kundendaten für ${r.dateiname} anzeigen`} onClick={() => setInfoFor(r)}>
+                          <Info />
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <Dialog open={!!infoFor} onOpenChange={(open) => { if (!open) setInfoFor(null); }}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Info className="size-4 text-primary" /> Kundendaten</DialogTitle>
+            <DialogDescription>Details zum ausgewählten Einsatz.</DialogDescription>
+          </DialogHeader>
+          {infoFor && (
+            <div className="space-y-4">
+              <div className="grid gap-2 rounded-lg border border-border p-4 sm:grid-cols-2">
+                <DashboardDetail icon={<Hash className="size-4" />} label="Einsatz-ID" value={infoFor.id} mono />
+                <DashboardDetail icon={<Hash className="size-4" />} label="Teilnehmer-Nr." value={infoFor.teilnehmerId ?? "–"} />
+                <DashboardDetail icon={<Tag className="size-4" />} label="Anlagen-Nr." value={infoFor.anlagenNr ?? "–"} />
+                <DashboardDetail icon={<Users className="size-4" />} label="Kunde" value={infoFor.kundenName ?? "–"} />
+                <DashboardDetail icon={<MapPin className="size-4" />} label="Adresse" value={infoFor.address ?? "–"} />
+                <DashboardDetail icon={<KeyRound className="size-4" />} label="Schlüssel-Nr." value={infoFor.keyNumber ?? "–"} />
+                {infoFor.kundenEmail && <DashboardDetail icon={<Mail className="size-4" />} label="E-Mail" value={infoFor.kundenEmail} />}
+              </div>
+              {infoFor.beschreibung && <div className="rounded-lg bg-muted/50 p-3 text-sm whitespace-pre-wrap">{infoFor.beschreibung}</div>}
+              {canManage && infoFor.status === "in_bearbeitung" && (
+                <div className="space-y-2 border-t border-border pt-4">
+                  <div className="flex items-center gap-2 text-sm font-medium"><Car className="size-4" /> Fahrer ändern</div>
+                  <div className="flex gap-2">
+                    <Select value={fahrerValue} onValueChange={setFahrerValue}>
+                      <SelectTrigger className="flex-1"><SelectValue placeholder="Fahrer auswählen" /></SelectTrigger>
+                      <SelectContent>{fahrer.map((f) => <SelectItem key={f.id} value={f.id}>{f.display_name || f.id}</SelectItem>)}</SelectContent>
+                    </Select>
+                    <Button onClick={saveFahrer} disabled={busy || !fahrerValue || fahrerValue === infoFor.assignedTo}>
+                      {busy ? "Speichern…" : "Speichern"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function DashboardDetail({ icon, label, value, mono = false }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) {
+  return <div className="min-w-0"><div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">{icon}{label}</div><div className={`mt-1 truncate text-sm ${mono ? "font-mono text-xs" : ""}`} title={value}>{value}</div></div>;
 }
 
 function StatCard({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: string }) {

@@ -25,7 +25,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       supabase.from("einsaetze").select("id", { count: "exact", head: true }).eq("status", "abgelehnt"),
       supabase.from("dateien").select("id", { count: "exact", head: true }).is("deleted_at", null),
       supabase.from("einsaetze")
-        .select("id, einsatzgrund, kunden_name, status, created_at, abgeschlossen_am, assigned_to, vor_ort_am, einsatz_ende_am")
+        .select("id, einsatzgrund, kunden_name, kunden_email, address, teilnehmer_id, anlagen_nr, key_number, hausnotruf_provider, beschreibung, prioritaet, status, created_at, abgeschlossen_am, assigned_to, vor_ort_am, einsatz_ende_am")
         .order("created_at", { ascending: false }).limit(8),
     ]);
 
@@ -55,15 +55,25 @@ export const getDashboardStats = createServerFn({ method: "GET" })
         storniert: stornoRes.count ?? 0,
         datensaetze: dateienRes.count ?? 0,
       },
-      recent: recents.map((r: any) => ({
-        id: r.id,
-        dateiname: r.einsatzgrund + (r.kunden_name ? ` · ${r.kunden_name}` : ""),
-        fahrer: r.assigned_to ? (names[r.assigned_to] ?? "–") : "–",
-        start: r.created_at ? new Date(r.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "–",
-        ende: r.abgeschlossen_am ? new Date(r.abgeschlossen_am).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "–",
-        dauer: fmtDur(r.vor_ort_am, r.einsatz_ende_am),
-        status: r.status,
-      })),
+       recent: recents.map((r: any) => ({
+         id: r.id,
+         dateiname: r.einsatzgrund + (r.kunden_name ? ` · ${r.kunden_name}` : ""),
+         fahrer: r.assigned_to ? (names[r.assigned_to] ?? "–") : "–",
+         assignedTo: r.assigned_to,
+         teilnehmerId: r.teilnehmer_id,
+         anlagenNr: r.anlagen_nr,
+         kundenName: r.kunden_name,
+         kundenEmail: r.kunden_email,
+         address: r.address,
+         keyNumber: r.key_number,
+         provider: r.hausnotruf_provider,
+         beschreibung: r.beschreibung,
+         prioritaet: r.prioritaet,
+         start: r.created_at ? new Date(r.created_at).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "–",
+         ende: r.abgeschlossen_am ? new Date(r.abgeschlossen_am).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "–",
+         dauer: fmtDur(r.vor_ort_am, r.einsatz_ende_am),
+         status: r.status,
+       })),
     };
   });
 
