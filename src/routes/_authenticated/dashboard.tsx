@@ -1,21 +1,24 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Suspense, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
-  Activity, Timer, Building2, Wallet, CheckSquare, ArrowRight,
+  Activity, Timer, Building2, Wallet, CheckSquare, ArrowRight, Info, Car, Mail, MapPin, Hash, Tag,
 } from "lucide-react";
 import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
+import { editEinsatzFull, listFahrer } from "@/lib/einsaetze.functions";
 import { rueckgabeBestaetigen } from "@/lib/schluesselbuch.functions";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useRole } from "@/hooks/use-role";
 import { supabase } from "@/integrations/supabase/client";
 import { useAppSettings } from "@/hooks/use-app-settings";
-import { Info } from "lucide-react";
 import { useDomainModules } from "@/hooks/use-domain-modules";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePresenceList } from "@/hooks/use-presence";
 import { PartnerInbox } from "@/components/intervention/partner-inbox";
 
@@ -69,10 +72,11 @@ function DashboardContent() {
   const { user } = useAuth();
   const fetch = useServerFn(getDashboardStats);
   const fetchExtras = useServerFn(getDashboardExtras);
+  const listF = useServerFn(listFahrer);
   const qc = useQueryClient();
   const { data: settings } = useAppSettings();
   const { data: modules } = useDomainModules();
-  const { domainId } = useRole();
+  const { domainId, canManage } = useRole();
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
   const hausnotrufAktiv = modules?.has("hausnotruf") ?? false;
   const aktiveProvider = (["malteser", "johanniter", "lgwa"] as const).filter((k) => modules?.has(k));
@@ -121,6 +125,13 @@ function DashboardContent() {
     queryFn: () => fetch(),
     refetchInterval: 30000,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: fahrerData } = useQuery({
+    queryKey: ["dashboard-fahrer"],
+    queryFn: () => listF(),
+    enabled: canManage,
+    staleTime: 60_000,
   });
 
   const { data: extras } = useQuery({
@@ -212,81 +223,19 @@ function DashboardContent() {
         <StundenCard stunden={extras?.stunden} />
       </div>
 
+      <RecentEinsaetzeCard
+        recent={data.recent}
+        fahrer={(fahrerData?.fahrer ?? []) as Array<{ id: string; display_name: string | null }>}
+        canManage={canManage}
+        onSaved={() => qc.invalidateQueries({ queryKey: ["dashboard-stats"] })}
+      />
+
       {/* Provider + Top Kunden */}
       <div className="grid lg:grid-cols-3 gap-6">
         {hausnotrufAktiv && aktiveProvider.length > 0 && (
           <ProviderCard provider={extras?.provider} aktiveProvider={aktiveProvider} />
         )}
         <TopKundenCard kunden={extras?.topKunden ?? []} />
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className="text-lg font-semibold">Letzte Einsätze</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Übersicht der jüngsten Aktivitäten</p>
-            </div>
-            <TrendingUp className="size-5 text-muted-foreground" />
-          </div>
-          {data.recent.length === 0 ? (
-            <EmptyState
-              icon={ListChecks}
-              title="Noch keine Einsätze"
-              hint="Sobald Einsätze erstellt werden, erscheinen sie hier."
-            />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="text-xs uppercase tracking-wider text-muted-foreground">
-                  <tr className="border-b border-border">
-                    <th className="text-left font-medium py-2">Datei</th>
-                    <th className="text-left font-medium py-2">Fahrer</th>
-                    <th className="text-left font-medium py-2">Start</th>
-                    <th className="text-left font-medium py-2">Dauer</th>
-                    <th className="text-left font-medium py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.recent.map((r) => {
-                    const statusMeta = getStatusMeta(r.status);
-                    return (
-                      <tr key={r.id} className="border-b border-border/50 last:border-0">
-                        <td className="py-3">{r.dateiname}</td>
-                        <td className="py-3 text-muted-foreground">{r.fahrer}</td>
-                        <td className="py-3 text-muted-foreground">{r.start}</td>
-                        <td className="py-3 text-muted-foreground">{r.dauer}</td>
-                        <td className="py-3">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs ${statusMeta.classes}`}>
-                            {statusMeta.label}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-6">
-          <div className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-              <Clock className="size-3.5" /> Durchschnittswerte (Monat)
-            </div>
-            <div className="mt-4 space-y-3">
-              <KV label="Einsatzdauer" value="—" />
-              <KV label="Anfahrtszeit" value="—" />
-            </div>
-          </div>
-          <div className="rounded-xl border border-border bg-card p-6" style={{ boxShadow: "var(--shadow-card)" }}>
-            <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground">
-              <Users className="size-3.5" /> Top Teilnehmer
-            </div>
-            <div className="mt-4 text-sm text-muted-foreground">Noch keine Daten verfügbar.</div>
-          </div>
-        </div>
       </div>
     </div>
   );
