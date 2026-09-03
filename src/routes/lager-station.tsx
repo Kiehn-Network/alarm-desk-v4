@@ -172,6 +172,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   const [error, setError] = useState<string | null>(null);
   const scanRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
+  const [camOpen, setCamOpen] = useState(false);
 
   useEffect(() => { if (step === "scan") setTimeout(() => scanRef.current?.focus(), 80); }, [step]);
 
