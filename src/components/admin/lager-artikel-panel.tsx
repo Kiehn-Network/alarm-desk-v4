@@ -233,7 +233,7 @@ export function LagerArtikelPanel() {
   );
 }
 
-function LagerAlarmSettings() {
+export function LagerAlarmSettings() {
   const qc = useQueryClient();
   const load = useServerFn(getLagerSettings);
   const save = useServerFn(saveLagerSettings);
