@@ -39,11 +39,11 @@ function generateBarcode() {
 }
 
 const categoryTone: Record<string, string> = {
-  EMA: "border-info/40 bg-info/10 text-info-foreground",
-  BMA: "border-destructive/40 bg-destructive/10 text-destructive",
-  GMA: "border-primary/40 bg-primary/10 text-primary",
-  Kleinmaterial: "border-success/40 bg-success/10 text-success-foreground",
-  Sonstiges: "border-border bg-muted text-muted-foreground",
+  EMA: "border-info/60 bg-info/40 text-info-foreground",
+  BMA: "border-destructive/60 bg-destructive/40 text-destructive-foreground",
+  GMA: "border-primary/60 bg-primary/40 text-primary-foreground",
+  Kleinmaterial: "border-success/60 bg-success/40 text-success-foreground",
+  Sonstiges: "border-border bg-muted/80 text-muted-foreground",
 };
 
 function CategoryBadge({ value }: { value?: string | null }) {
