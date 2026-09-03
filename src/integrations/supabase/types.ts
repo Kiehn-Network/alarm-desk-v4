@@ -1695,6 +1695,138 @@ export type Database = {
         }
         Relationships: []
       }
+      lager_admins: {
+        Row: {
+          created_at: string
+          domain_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      lager_artikel: {
+        Row: {
+          aktiv: boolean
+          alarm_email: string | null
+          barcode: string
+          barcode_generiert: boolean
+          beschreibung: string | null
+          bestand: number
+          bezeichnung: string
+          created_at: string
+          domain_id: string
+          einheit: string
+          id: string
+          lagerort: string | null
+          last_alert_at: string | null
+          mindestbestand: number
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          alarm_email?: string | null
+          barcode: string
+          barcode_generiert?: boolean
+          beschreibung?: string | null
+          bestand?: number
+          bezeichnung: string
+          created_at?: string
+          domain_id: string
+          einheit?: string
+          id?: string
+          lagerort?: string | null
+          last_alert_at?: string | null
+          mindestbestand?: number
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          alarm_email?: string | null
+          barcode?: string
+          barcode_generiert?: boolean
+          beschreibung?: string | null
+          bestand?: number
+          bezeichnung?: string
+          created_at?: string
+          domain_id?: string
+          einheit?: string
+          id?: string
+          lagerort?: string | null
+          last_alert_at?: string | null
+          mindestbestand?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lager_buchungen: {
+        Row: {
+          artikel_id: string
+          bestand_nachher: number
+          created_at: string
+          domain_id: string
+          id: string
+          menge: number
+          notiz: string | null
+          person_id: string | null
+          person_name: string | null
+          richtung: string
+          signatur: string | null
+        }
+        Insert: {
+          artikel_id: string
+          bestand_nachher?: number
+          created_at?: string
+          domain_id: string
+          id?: string
+          menge: number
+          notiz?: string | null
+          person_id?: string | null
+          person_name?: string | null
+          richtung: string
+          signatur?: string | null
+        }
+        Update: {
+          artikel_id?: string
+          bestand_nachher?: number
+          created_at?: string
+          domain_id?: string
+          id?: string
+          menge?: number
+          notiz?: string | null
+          person_id?: string | null
+          person_name?: string | null
+          richtung?: string
+          signatur?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lager_buchungen_artikel_id_fkey"
+            columns: ["artikel_id"]
+            isOneToOne: false
+            referencedRelation: "lager_artikel"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lager_buchungen_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "lager_personen"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lager_personen: {
         Row: {
           aktiv: boolean
@@ -1733,6 +1865,30 @@ export type Database = {
           personalnummer?: string | null
           rolle?: string
           transponder_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      lager_settings: {
+        Row: {
+          alarm_aktiv: boolean
+          alarm_email: string | null
+          created_at: string
+          domain_id: string
+          updated_at: string
+        }
+        Insert: {
+          alarm_aktiv?: boolean
+          alarm_email?: string | null
+          created_at?: string
+          domain_id: string
+          updated_at?: string
+        }
+        Update: {
+          alarm_aktiv?: boolean
+          alarm_email?: string | null
+          created_at?: string
+          domain_id?: string
           updated_at?: string
         }
         Relationships: []
@@ -3305,6 +3461,7 @@ export type Database = {
         Returns: boolean
       }
       is_domain_admin: { Args: { _domain_id: string }; Returns: boolean }
+      is_lager_admin: { Args: { _domain_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
