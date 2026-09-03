@@ -13,6 +13,7 @@ export type LagerPerson = {
   transponder_id: string;
   aktiv: boolean;
   notiz: string | null;
+  rolle?: string | null;
   last_login_at: string | null;
   created_at: string;
   updated_at: string;
@@ -64,6 +65,7 @@ export const upsertLagerPerson = createServerFn({ method: "POST" })
       transponder_id: transponder,
       aktiv: data.aktiv ?? true,
       notiz: data.notiz?.toString().trim() || null,
+      rolle: "technik",
     };
 
     if (data.id) {

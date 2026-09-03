@@ -31,6 +31,7 @@ import { SystemSettingsPanel } from "@/components/admin/system-settings-panel";
 import { EmailSettingsPanel } from "@/components/admin/email-settings-panel";
 import { EmailBrandingPanel } from "@/components/admin/email-branding-panel";
 import { SchluesselFooterPanel } from "@/components/admin/schluessel-footer-panel";
+import { LagerBenutzerPanel } from "@/components/admin/lager-benutzer-panel";
 import { SupportPanel } from "@/routes/_authenticated/support";
 import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
@@ -110,6 +111,7 @@ function AdminPage() {
           <TabsTrigger value="email"><Mail className="size-4 mr-2" />E-Mail</TabsTrigger>
           <TabsTrigger value="schluessel"><KeyRound className="size-4 mr-2" />Schlüsselübergabe</TabsTrigger>
           <TabsTrigger value="datenloeschung"><Trash2 className="size-4 mr-2" />Datenlöschung</TabsTrigger>
+          <TabsTrigger value="lager"><Boxes className="size-4 mr-2" />Lager-Benutzer</TabsTrigger>
           <TabsTrigger value="hilfe"><LifeBuoy className="size-4 mr-2" />Hilfe</TabsTrigger>
         </TabsList>
 
@@ -125,6 +127,7 @@ function AdminPage() {
           </TabsContent>
         <TabsContent value="schluessel"><SchluesselFooterPanel /></TabsContent>
         <TabsContent value="datenloeschung"><DatenLoeschungPanel /></TabsContent>
+        <TabsContent value="lager"><LagerBenutzerPanel /></TabsContent>
         <TabsContent value="hilfe"><SupportPanel /></TabsContent>
       </Tabs>
     </div>
