@@ -25,7 +25,7 @@ export const getDashboardStats = createServerFn({ method: "GET" })
       supabase.from("einsaetze").select("id", { count: "exact", head: true }).eq("status", "abgelehnt"),
       supabase.from("dateien").select("id", { count: "exact", head: true }).is("deleted_at", null),
       supabase.from("einsaetze")
-        .select("id, einsatzgrund, kunden_name, status, created_at, abgeschlossen_am, assigned_to, vor_ort_am, einsatz_ende_am")
+        .select("id, einsatzgrund, kunden_name, kunden_email, address, teilnehmer_id, anlagen_nr, key_number, hausnotruf_provider, beschreibung, prioritaet, status, created_at, abgeschlossen_am, assigned_to, vor_ort_am, einsatz_ende_am")
         .order("created_at", { ascending: false }).limit(8),
     ]);
 
