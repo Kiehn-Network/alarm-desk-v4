@@ -233,7 +233,7 @@ export function LagerArtikelPanel() {
   );
 }
 
-function LagerAlarmSettings() {
+export function LagerAlarmSettings() {
   const qc = useQueryClient();
   const load = useServerFn(getLagerSettings);
   const save = useServerFn(saveLagerSettings);
@@ -253,14 +253,22 @@ function LagerAlarmSettings() {
 
   return (
     <Card>
-      <CardHeader><CardTitle className="text-base">Meldebestand-Benachrichtigung</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle className="text-base">Lager-E-Mail & Meldebestand</CardTitle>
+      </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Sobald ein Artikel seinen Meldebestand erreicht oder unterschreitet, geht automatisch eine E-Mail raus.
+          Diese Domänen-Adresse erhält automatisch eine E-Mail, sobald ein Artikel seinen Meldebestand erreicht oder unterschreitet.
         </p>
-        <div>
-          <Label>E-Mail-Adresse</Label>
-          <Input type="email" value={value} onChange={(e) => setEmail(e.target.value)} placeholder="lager@beispiel.de" />
+        <div className="space-y-2">
+          <Label htmlFor="lager-alarm-email">Empfängeradresse für Lager-Warnungen</Label>
+          <Input
+            id="lager-alarm-email"
+            type="email"
+            value={value}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="lager@beispiel.de"
+          />
         </div>
         <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
           <span className="text-sm">Benachrichtigung aktiv</span>
