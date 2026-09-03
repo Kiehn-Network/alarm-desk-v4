@@ -1,0 +1,1 @@
+ALTER TABLE public.lager_personen ADD COLUMN IF NOT EXISTS rolle text NOT NULL DEFAULT 'technik';
