@@ -1695,6 +1695,45 @@ export type Database = {
         }
         Relationships: []
       }
+      lager_personen: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          domain_id: string
+          id: string
+          last_login_at: string | null
+          name: string
+          notiz: string | null
+          personalnummer: string | null
+          transponder_id: string
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          domain_id: string
+          id?: string
+          last_login_at?: string | null
+          name: string
+          notiz?: string | null
+          personalnummer?: string | null
+          transponder_id: string
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          domain_id?: string
+          id?: string
+          last_login_at?: string | null
+          name?: string
+          notiz?: string | null
+          personalnummer?: string | null
+          transponder_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       licenses: {
         Row: {
           created_at: string
