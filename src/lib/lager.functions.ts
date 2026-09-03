@@ -148,7 +148,7 @@ export const listLagerArtikel = createServerFn({ method: "POST" })
 
 export const upsertLagerArtikel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { id?: string; bezeichnung: string; beschreibung?: string | null; barcode: string; barcode_generiert?: boolean; einheit?: string; lagerort?: string | null; bestand?: number; mindestbestand?: number; alarm_email?: string | null; aktiv?: boolean }) => input)
+  .inputValidator((input: { id?: string; kategorie?: string; bezeichnung: string; beschreibung?: string | null; barcode: string; barcode_generiert?: boolean; einheit?: string; lagerort?: string | null; bestand?: number; mindestbestand?: number; alarm_email?: string | null; aktiv?: boolean }) => input)
   .handler(async ({ data, context }) => {
     const { domainId, supabaseAdmin } = await lagerAdminContext(context);
     const bezeichnung = data.bezeichnung.trim();
