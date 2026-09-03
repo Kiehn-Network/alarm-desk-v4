@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LagerStationRouteImport } from './routes/lager-station'
 import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
 import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as HomepageRouteImport } from './routes/homepage'
@@ -82,6 +83,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LagerStationRoute = LagerStationRouteImport.update({
+  id: '/lager-station',
+  path: '/lager-station',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
@@ -439,6 +445,7 @@ export interface FileRoutesByFullPath {
   '/homepage': typeof HomepageRoute
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
+  '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -504,6 +511,7 @@ export interface FileRoutesByTo {
   '/homepage': typeof HomepageRoute
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
+  '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -567,6 +575,7 @@ export interface FileRoutesById {
   '/homepage': typeof HomepageRoute
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
+  '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
@@ -634,6 +643,7 @@ export interface FileRouteTypes {
     | '/homepage'
     | '/impressum'
     | '/kiehn-systeme-login'
+    | '/lager-station'
     | '/login'
     | '/reset-password'
     | '/revier-center'
@@ -699,6 +709,7 @@ export interface FileRouteTypes {
     | '/homepage'
     | '/impressum'
     | '/kiehn-systeme-login'
+    | '/lager-station'
     | '/login'
     | '/reset-password'
     | '/admin'
@@ -761,6 +772,7 @@ export interface FileRouteTypes {
     | '/homepage'
     | '/impressum'
     | '/kiehn-systeme-login'
+    | '/lager-station'
     | '/login'
     | '/reset-password'
     | '/_authenticated/revier-center'
@@ -828,6 +840,7 @@ export interface RootRouteChildren {
   HomepageRoute: typeof HomepageRoute
   ImpressumRoute: typeof ImpressumRoute
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
+  LagerStationRoute: typeof LagerStationRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
@@ -854,6 +867,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lager-station': {
+      id: '/lager-station'
+      path: '/lager-station'
+      fullPath: '/lager-station'
+      preLoaderRoute: typeof LagerStationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kiehn-systeme-login': {
@@ -1488,6 +1508,7 @@ const rootRouteChildren: RootRouteChildren = {
   HomepageRoute: HomepageRoute,
   ImpressumRoute: ImpressumRoute,
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,
+  LagerStationRoute: LagerStationRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
