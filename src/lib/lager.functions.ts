@@ -19,9 +19,13 @@ export type LagerPerson = {
   updated_at: string;
 };
 
+export const LAGER_KATEGORIEN = ["EMA", "BMA", "GMA", "Kleinmaterial", "Sonstiges"] as const;
+export type LagerKategorie = (typeof LAGER_KATEGORIEN)[number];
+
 export type LagerArtikel = {
   id: string;
   domain_id: string;
+  kategorie: string;
   bezeichnung: string;
   beschreibung: string | null;
   barcode: string;
