@@ -11,6 +11,14 @@ import { useLagerAccess } from "@/hooks/use-lager-access";
 
 
 export const Route = createFileRoute("/_authenticated/lager")({
+  beforeLoad: async ({ context }) => {
+    const access = await context.queryClient.ensureQueryData({
+      queryKey: ["lager-zugriff"],
+      queryFn: () => getLagerZugriff(),
+      staleTime: 60_000,
+    });
+    if (!access.allowed) throw redirect({ to: "/dashboard" });
+  },
   component: LagerAdminPage,
   head: () => ({
     meta: [
