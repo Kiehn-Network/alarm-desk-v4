@@ -155,7 +155,8 @@ export const upsertLagerArtikel = createServerFn({ method: "POST" })
     const barcode = data.barcode.trim().toUpperCase();
     if (!bezeichnung) throw new Error("Bitte eine Artikelbezeichnung angeben.");
     if (!barcode) throw new Error("Bitte einen Barcode angeben oder generieren.");
-    const payload = { domain_id: domainId, bezeichnung, beschreibung: data.beschreibung?.trim() || null, barcode, barcode_generiert: data.barcode_generiert ?? false, einheit: data.einheit?.trim() || "Stk", lagerort: data.lagerort?.trim() || null, bestand: Math.max(0, Math.trunc(Number(data.bestand ?? 0))), mindestbestand: Math.max(0, Math.trunc(Number(data.mindestbestand ?? 0))), alarm_email: data.alarm_email?.trim() || null, aktiv: data.aktiv ?? true };
+    const kategorie = (LAGER_KATEGORIEN as readonly string[]).includes(String(data.kategorie ?? "")) ? String(data.kategorie) : "Sonstiges";
+    const payload = { domain_id: domainId, kategorie, bezeichnung, beschreibung: data.beschreibung?.trim() || null, barcode, barcode_generiert: data.barcode_generiert ?? false, einheit: data.einheit?.trim() || "Stk", lagerort: data.lagerort?.trim() || null, bestand: Math.max(0, Math.trunc(Number(data.bestand ?? 0))), mindestbestand: Math.max(0, Math.trunc(Number(data.mindestbestand ?? 0))), alarm_email: data.alarm_email?.trim() || null, aktiv: data.aktiv ?? true };
     const query = data.id
       ? supabaseAdmin.from("lager_artikel").update(payload).eq("id", data.id).eq("domain_id", domainId)
       : supabaseAdmin.from("lager_artikel").insert(payload);
