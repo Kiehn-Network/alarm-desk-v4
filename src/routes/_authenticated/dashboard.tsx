@@ -323,10 +323,12 @@ function RecentEinsaetzeCard({
                   const statusMeta = getStatusMeta(r.status);
                   return (
                     <tr key={r.id} className="border-b border-border/50 last:border-0">
+                      <td className="py-3 pr-3 font-medium">{r.dateiname}</td>
                       <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">
                         <div className="font-mono text-xs" title={r.id}>#{r.id.slice(0, 8)}</div>
                         <div className="text-xs mt-0.5">TN: {r.teilnehmerId || "–"}</div>
                       </td>
+
                       <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.fahrer}</td>
                       <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.start}</td>
                       <td className="py-3 pr-3 text-muted-foreground whitespace-nowrap">{r.dauer}</td>
