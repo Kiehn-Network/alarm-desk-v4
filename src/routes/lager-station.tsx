@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Boxes, Nfc, LogOut, ShieldCheck, Loader2, ScanLine, ArrowLeft,
-  ArrowDownToLine, ArrowUpFromLine, CheckCircle2, PenLine, AlertTriangle,
+  ArrowDownToLine, ArrowUpFromLine, CheckCircle2, PenLine, AlertTriangle, Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { SignatureField } from "@/components/signature-field";
+import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
 import {
   kioskTransponderLogin, kioskFindArtikel, kioskBuchen,
   type LagerKioskPerson, type LagerKioskArtikel,
@@ -171,6 +172,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   const [error, setError] = useState<string | null>(null);
   const scanRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
+  const [camOpen, setCamOpen] = useState(false);
 
   useEffect(() => { if (step === "scan") setTimeout(() => scanRef.current?.focus(), 80); }, [step]);
 
@@ -248,20 +250,38 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
               <div className="mx-auto size-14 rounded-2xl bg-primary/10 grid place-items-center">
                 <ScanLine className="size-7 text-primary" />
               </div>
-              <p className="text-sm text-muted-foreground">Artikel-Barcode oder QR-Code scannen.</p>
-              <Input
-                ref={scanRef}
-                value={code}
-                autoComplete="off"
-                placeholder="Barcode scannen …"
-                className="h-14 text-center font-mono text-lg tracking-widest"
-                onChange={(e) => { setCode(e.target.value); setError(null); }}
-                onBlur={() => setTimeout(() => scanRef.current?.focus(), 50)}
-                disabled={busy}
-              />
+              <p className="text-sm text-muted-foreground">Artikel-Barcode oder QR-Code scannen – mit Handscanner oder Kamera.</p>
+              <div className="flex items-center gap-2">
+                <Input
+                  ref={scanRef}
+                  value={code}
+                  autoComplete="off"
+                  placeholder="Barcode scannen …"
+                  className="h-14 flex-1 text-center font-mono text-lg tracking-widest"
+                  onChange={(e) => { setCode(e.target.value); setError(null); }}
+                  onBlur={() => { if (!camOpen) setTimeout(() => { if (!camOpen) scanRef.current?.focus(); }, 50); }}
+                  disabled={busy}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="size-14 shrink-0"
+                  aria-label="Mit Kamera scannen"
+                  title="Mit Kamera scannen"
+                  onClick={() => setCamOpen(true)}
+                  disabled={busy}
+                >
+                  <Camera className="size-6" />
+                </Button>
+              </div>
               <Button type="submit" className="w-full h-12" disabled={busy || !code.trim()}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <ScanLine className="size-4" />} Artikel suchen
               </Button>
+              <BarcodeScannerDialog
+                open={camOpen}
+                onOpenChange={setCamOpen}
+                onDetected={(value) => { setCode(value); handleScan(value); }}
+              />
             </form>
           )}
 
