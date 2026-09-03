@@ -142,7 +142,7 @@ export function LagerArtikelPanel() {
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Bestandsübersicht</p>
             <h2 id="lager-overview-heading" className="text-xl font-semibold tracking-tight">Alles im Blick</h2>
           </div>
-          {unterMelde.length > 0 && <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"><AlertTriangle className="mr-1 size-3.5" />{unterMelde.length} unter Meldebestand</Badge>}
+          {unterMelde.length > 0 && <Badge variant="outline" className="border-warning/40 bg-warning/10 text-warning-foreground"><AlertTriangle className="mr-1 size-3.5" />{unterMelde.length} unter Meldebestand</Badge>}
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-lg border border-border bg-card p-4"><div className="flex items-center justify-between"><span className="text-sm text-muted-foreground">Artikel gesamt</span><Package className="size-4 text-primary" /></div><p className="mt-2 text-2xl font-semibold">{stats.total}</p><p className="text-xs text-muted-foreground">{stats.active} aktiv an der Station</p></div>
