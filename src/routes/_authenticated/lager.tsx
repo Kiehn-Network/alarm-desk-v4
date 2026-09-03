@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Boxes, ExternalLink } from "lucide-react";
+import { getLagerZugriff } from "@/lib/lager.functions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LagerArtikelPanel } from "@/components/admin/lager-artikel-panel";
