@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   Boxes, Nfc, LogOut, ShieldCheck, Loader2, ScanLine, ArrowLeft,
-  ArrowDownToLine, ArrowUpFromLine, CheckCircle2, PenLine, AlertTriangle,
+  ArrowDownToLine, ArrowUpFromLine, CheckCircle2, PenLine, AlertTriangle, Camera,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { SignatureField } from "@/components/signature-field";
+import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
 import {
   kioskTransponderLogin, kioskFindArtikel, kioskBuchen,
   type LagerKioskPerson, type LagerKioskArtikel,
