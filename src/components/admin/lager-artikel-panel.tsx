@@ -71,19 +71,41 @@ export function LagerArtikelPanel() {
 
   async function printLabel(a: LagerArtikel) {
     try {
-      const png = await QRCode.toDataURL(a.barcode, { width: 320, margin: 1 });
-      const w = window.open("", "_blank", "width=420,height=520");
+      const png = await QRCode.toDataURL(a.barcode, { width: 400, margin: 0 });
+      const w = window.open("", "_blank", "width=460,height=420");
       if (!w) { toast.error("Popup wurde blockiert."); return; }
-      w.document.write(`<html><head><title>Etikett ${a.barcode}</title></head>
-        <body style="font-family:Arial,sans-serif;text-align:center;padding:24px">
-          <img src="${png}" style="width:260px;height:260px" />
-          <div style="font-size:18px;font-weight:700;margin-top:12px">${a.bezeichnung}</div>
-          <div style="font-family:monospace;font-size:16px;margin-top:4px">${a.barcode}</div>
+      const esc = (s: string) => s.replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c] as string));
+      w.document.write(`<html><head><title>Etikett ${esc(a.barcode)}</title>
+        <style>
+          @page { size: 57mm 32mm; margin: 0; }
+          html,body { margin:0; padding:0; }
+          .label {
+            width: 57mm; height: 32mm; box-sizing: border-box;
+            display: flex; align-items: center; gap: 2mm; padding: 2mm 2.5mm;
+            font-family: Arial, Helvetica, sans-serif; overflow: hidden;
+          }
+          .qr { width: 26mm; height: 26mm; flex: 0 0 auto; }
+          .txt { min-width: 0; }
+          .name { font-size: 9pt; font-weight: 700; line-height: 1.15; max-height: 11mm; overflow: hidden; }
+          .ort { font-size: 7pt; color: #444; margin-top: 0.6mm; }
+          .code { font-family: "Courier New", monospace; font-size: 8pt; margin-top: 1.2mm; word-break: break-all; }
+          @media screen { body { background:#f4f4f5; padding:12px; } .label { background:#fff; border:1px solid #ddd; } }
+        </style></head>
+        <body>
+          <div class="label">
+            <img class="qr" src="${png}" />
+            <div class="txt">
+              <div class="name">${esc(a.bezeichnung)}</div>
+              ${a.lagerort ? `<div class="ort">${esc(a.lagerort)}</div>` : ""}
+              <div class="code">${esc(a.barcode)}</div>
+            </div>
+          </div>
           <script>window.onload = () => window.print();<\/script>
         </body></html>`);
       w.document.close();
     } catch { toast.error("Etikett konnte nicht erzeugt werden."); }
   }
+
 
   return (
     <div className="space-y-6">
