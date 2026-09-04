@@ -492,6 +492,74 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   );
 }
 
+function VirtualKeyboard({
+  value, onChange, onSubmit, onClear,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+  onClear: () => void;
+}) {
+  const rows = [
+    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+    ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L", "-"],
+    ["Y", "X", "C", "V", "B", "N", "M", ".", "_", " "],
+  ];
+
+  function append(ch: string) {
+    onChange((value + ch).slice(0, 64));
+  }
+
+  function backspace() {
+    onChange(value.slice(0, -1));
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="space-y-1.5">
+        {rows.map((row, ri) => (
+          <div key={ri} className="flex gap-1.5 justify-center">
+            {row.map((ch) => (
+              <button
+                key={ch}
+                type="button"
+                onClick={() => append(ch)}
+                className="h-11 min-w-[2.1rem] flex-1 max-w-[3.2rem] rounded-lg bg-card border border-border text-sm font-semibold shadow-sm active:scale-95 active:bg-primary/10 transition"
+              >
+                {ch === " " ? "␣" : ch}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={backspace}
+          className="h-12 flex-1 rounded-lg bg-muted border border-border text-sm font-semibold active:scale-95 transition"
+        >
+          ⌫ Löschen
+        </button>
+        <button
+          type="button"
+          onClick={onClear}
+          className="h-12 flex-1 rounded-lg bg-muted border border-border text-sm font-semibold active:scale-95 transition"
+        >
+          Leeren
+        </button>
+        <button
+          type="button"
+          onClick={onSubmit}
+          className="h-12 flex-[1.5] rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow active:scale-95 transition"
+        >
+          OK / Scan
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function CartList({
   cart, onMenge, onRemove, readOnly = false,
 }: {
