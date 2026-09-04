@@ -512,8 +512,8 @@ function VirtualKeyboard({
   onSubmit: () => void;
   onClear: () => void;
 }) {
-  const rows = [
-    ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"],
+  const numberRow = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+  const letterRows = [
     ["Q", "W", "E", "R", "T", "Z", "U", "I", "O", "P"],
     ["A", "S", "D", "F", "G", "H", "J", "K", "L", "-"],
     ["Y", "X", "C", "V", "B", "N", "M", ".", "_", " "],
@@ -530,7 +530,19 @@ function VirtualKeyboard({
   return (
     <div className="space-y-2">
       <div className="space-y-1.5">
-        {rows.map((row, ri) => (
+        <div className="flex gap-1.5 justify-center">
+          {numberRow.map((ch) => (
+            <button
+              key={ch}
+              type="button"
+              onClick={() => append(ch)}
+              className="h-14 min-w-[2.4rem] flex-1 max-w-[3.6rem] rounded-lg bg-card border border-border text-lg font-bold shadow-sm active:scale-95 active:bg-primary/10 transition"
+            >
+              {ch}
+            </button>
+          ))}
+        </div>
+        {letterRows.map((row, ri) => (
           <div key={ri} className="flex gap-1.5 justify-center">
             {row.map((ch) => (
               <button
