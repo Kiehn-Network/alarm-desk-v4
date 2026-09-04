@@ -177,12 +177,34 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   const scanRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
   const [camOpen, setCamOpen] = useState(false);
+  const fzRef = useRef<HTMLInputElement>(null);
+  const [fzCode, setFzCode] = useState("");
+  const [fzCamOpen, setFzCamOpen] = useState(false);
+  const [fzBusy, setFzBusy] = useState(false);
 
   useEffect(() => { if (step === "scan") setTimeout(() => scanRef.current?.focus(), 80); }, [step]);
+  useEffect(() => { if (step === "ziel" && ziel === "auto") setTimeout(() => fzRef.current?.focus(), 80); }, [step, ziel]);
+
+  async function handleFahrzeugScan(value: string) {
+    const v = value.trim();
+    if (!v || fzBusy) return;
+    setFzBusy(true); setError(null);
+    try {
+      const res = await findFahrzeug({ data: { person_id: person.id, code: v } } as any);
+      const fz = res.fahrzeug;
+      const label = [fz.kennzeichen, fz.bezeichnung].filter(Boolean).join(" · ");
+      setZielBezeichnung(label);
+      setFzCode(fz.code);
+      toast.success(`Fahrzeug ${fz.kennzeichen} übernommen`);
+    } catch (e: any) {
+      setError(e?.message ?? "Fahrzeug nicht gefunden");
+    } finally { setFzBusy(false); }
+  }
 
   function resetFlow() {
     setCart([]); setZiel(null); setZielBezeichnung(""); setRichtung("ausgang");
-    setNotiz(""); setSignatur(null); setResult(null); setError(null); setCode(""); setStep("scan");
+    setNotiz(""); setSignatur(null); setResult(null); setError(null); setCode("");
+    setFzCode(""); setStep("scan");
   }
 
   function setMenge(artikelId: string, menge: number) {
