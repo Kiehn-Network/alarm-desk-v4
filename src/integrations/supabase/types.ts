@@ -1830,6 +1830,45 @@ export type Database = {
           },
         ]
       }
+      lager_fahrzeuge: {
+        Row: {
+          aktiv: boolean
+          bezeichnung: string | null
+          code: string
+          created_at: string
+          domain_id: string
+          fahrer: string | null
+          id: string
+          kennzeichen: string
+          notiz: string | null
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          bezeichnung?: string | null
+          code: string
+          created_at?: string
+          domain_id: string
+          fahrer?: string | null
+          id?: string
+          kennzeichen: string
+          notiz?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          bezeichnung?: string | null
+          code?: string
+          created_at?: string
+          domain_id?: string
+          fahrer?: string | null
+          id?: string
+          kennzeichen?: string
+          notiz?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lager_personen: {
         Row: {
           aktiv: boolean
