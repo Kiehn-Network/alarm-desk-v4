@@ -171,13 +171,13 @@ export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZ
   return doc;
 }
 
-export function downloadEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
+export function downloadEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenSettings | null) {
   const doc = buildEinsatzPdf(e, fahrerName, zeiten);
   const name = `Einsatzbericht_${String(e.id).slice(0, 8)}.pdf`;
   doc.save(name);
 }
 
-export function einsatzPdfBase64(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
+export function einsatzPdfBase64(e: any, fahrerName: string | null, zeiten?: PdfZeitenSettings | null) {
   const doc = buildEinsatzPdf(e, fahrerName, zeiten);
   const uri = doc.output("datauristring");
   const base64 = uri.split(",")[1] ?? "";
