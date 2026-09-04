@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LagerArtikelPanel } from "@/components/admin/lager-artikel-panel";
 import { LagerBenutzerPanel } from "@/components/admin/lager-benutzer-panel";
 import { LagerAdminsPanel } from "@/components/admin/lager-admins-panel";
+import { LagerFahrzeugePanel } from "@/components/admin/lager-fahrzeuge-panel";
 import { useRole } from "@/hooks/use-role";
 import { useLagerAccess } from "@/hooks/use-lager-access";
 
@@ -76,12 +77,16 @@ function LagerAdminPage() {
       <Tabs defaultValue="artikel">
         <TabsList>
           <TabsTrigger value="artikel">Artikel &amp; Bestände</TabsTrigger>
+          <TabsTrigger value="fahrzeuge">Fahrzeuge</TabsTrigger>
           <TabsTrigger value="benutzer">Lager-Benutzer</TabsTrigger>
           {isAdmin && <TabsTrigger value="admins">Lager-Admins</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="artikel" className="mt-4">
           <LagerArtikelPanel />
+        </TabsContent>
+        <TabsContent value="fahrzeuge" className="mt-4">
+          <LagerFahrzeugePanel />
         </TabsContent>
         <TabsContent value="benutzer" className="mt-4">
           <LagerBenutzerPanel />
