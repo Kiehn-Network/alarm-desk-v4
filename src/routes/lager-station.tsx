@@ -166,7 +166,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
 
   const [step, setStep] = useState<Step>("scan");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [ziel, setZiel] = useState<"auto" | "projekt" | null>(null);
+  const [ziel, setZiel] = useState<"auto" | "projekt" | "lager" | null>(null);
   const [zielBezeichnung, setZielBezeichnung] = useState("");
   const [richtung, setRichtung] = useState<"eingang" | "ausgang">("ausgang");
   const [notiz, setNotiz] = useState("");
@@ -185,6 +185,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
 
   useEffect(() => { if (step === "scan") setTimeout(() => scanRef.current?.focus(), 80); }, [step]);
   useEffect(() => { if (step === "ziel" && ziel === "auto") setTimeout(() => fzRef.current?.focus(), 80); }, [step, ziel]);
+  useEffect(() => { if (ziel === "lager") setRichtung("eingang"); }, [ziel]);
 
   async function handleFahrzeugScan(value: string) {
     const v = value.trim();
@@ -364,7 +365,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           {step === "ziel" && (
             <div className="space-y-5">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Button
                   variant={ziel === "auto" ? "default" : "outline"}
                   className="h-24 text-base flex-col gap-1"
@@ -378,6 +379,13 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                   onClick={() => setZiel("projekt")}
                 >
                   <Building2 className="size-6" /> Projekt
+                </Button>
+                <Button
+                  variant={ziel === "lager" ? "default" : "outline"}
+                  className="h-24 text-base flex-col gap-1"
+                  onClick={() => setZiel("lager")}
+                >
+                  <Boxes className="size-6" /> Lagerbefüllung
                 </Button>
               </div>
               {ziel === "auto" && (
@@ -412,7 +420,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                   />
                 </div>
               )}
-              {ziel && (
+              {ziel && ziel !== "lager" && (
                 <div>
                   <Label>{ziel === "auto" ? "Fahrzeug" : "Projekt (optional)"}</Label>
                   <Input
@@ -436,25 +444,32 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
             <div className="space-y-5">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} readOnly />
               <Badge variant="secondary" className="text-sm">
-                {ziel === "auto" ? "Auto" : "Projekt"}{zielBezeichnung.trim() ? ` · ${zielBezeichnung.trim()}` : ""}
+                {ziel === "lager" ? "Lagerbefüllung" : ziel === "auto" ? "Auto" : "Projekt"}
+                {ziel !== "lager" && zielBezeichnung.trim() ? ` · ${zielBezeichnung.trim()}` : ""}
               </Badge>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button
-                  variant={richtung === "eingang" ? "default" : "outline"}
-                  className="h-20 text-base"
-                  onClick={() => setRichtung("eingang")}
-                >
-                  <ArrowDownToLine className="size-5" /> Eingang
-                </Button>
-                <Button
-                  variant={richtung === "ausgang" ? "default" : "outline"}
-                  className="h-20 text-base"
-                  onClick={() => setRichtung("ausgang")}
-                >
-                  <ArrowUpFromLine className="size-5" /> Ausgang
-                </Button>
-              </div>
+              {ziel === "lager" ? (
+                <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                  Bei Lagerbefüllung wird automatisch ein <strong className="text-foreground">Wareneingang</strong> gebucht.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    variant={richtung === "eingang" ? "default" : "outline"}
+                    className="h-20 text-base"
+                    onClick={() => setRichtung("eingang")}
+                  >
+                    <ArrowDownToLine className="size-5" /> Eingang
+                  </Button>
+                  <Button
+                    variant={richtung === "ausgang" ? "default" : "outline"}
+                    className="h-20 text-base"
+                    onClick={() => setRichtung("ausgang")}
+                  >
+                    <ArrowUpFromLine className="size-5" /> Ausgang
+                  </Button>
+                </div>
+              )}
 
               <div>
                 <Label>Notiz (optional)</Label>

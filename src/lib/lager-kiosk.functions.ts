@@ -73,7 +73,7 @@ export const kioskBuchenBatch = createServerFn({ method: "POST" })
   .inputValidator((input: {
     person_id: string;
     richtung: "eingang" | "ausgang";
-    ziel: "auto" | "projekt";
+    ziel: "auto" | "projekt" | "lager";
     ziel_bezeichnung?: string | null;
     signatur?: string | null;
     notiz?: string | null;
@@ -87,9 +87,15 @@ export const kioskBuchenBatch = createServerFn({ method: "POST" })
     const person = await getActivePerson(supabaseAdmin, data.person_id);
     const { performBuchung } = await import("@/lib/lager-buchung.server");
 
-    const zielText = data.ziel === "auto" ? "Auto" : "Projekt";
+    const richtung = data.ziel === "lager" ? "eingang" : data.richtung;
+    const zielText = data.ziel === "auto" ? "Auto" : data.ziel === "projekt" ? "Projekt" : "Lagerbefüllung";
     const bezeichnung = String(data.ziel_bezeichnung ?? "").trim();
-    const notizParts = [`${zielText}${bezeichnung ? `: ${bezeichnung}` : ""}`];
+    const notizParts: string[] = [];
+    if (data.ziel === "lager") {
+      notizParts.push("Lagerbefüllung");
+    } else {
+      notizParts.push(`${zielText}${bezeichnung ? `: ${bezeichnung}` : ""}`);
+    }
     if (data.notiz?.trim()) notizParts.push(data.notiz.trim());
     const notiz = notizParts.join(" · ");
 
@@ -101,7 +107,7 @@ export const kioskBuchenBatch = createServerFn({ method: "POST" })
       const res = await performBuchung({
         domain_id: person.domain_id,
         artikel_id: artikel.id,
-        richtung: data.richtung,
+        richtung,
         menge: pos.menge,
         person_id: person.id,
         person_name: person.name,
