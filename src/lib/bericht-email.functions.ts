@@ -37,7 +37,7 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
 
     // Versandmodus der Domäne bestimmen (link = Download-Link, inline = Klartext in der E-Mail)
     const { data: settings } = await supabaseAdmin
-      .from("app_settings").select("bericht_versand_mode").eq("domain_id", domainId).maybeSingle();
+      .from("app_settings").select("bericht_versand_mode, pdf_zeiten_config").eq("domain_id", domainId).maybeSingle();
     const mode: "link" | "inline" = ((settings as any)?.bericht_versand_mode === "inline") ? "inline" : "link";
 
     let downloadUrl: string | null = null;
@@ -74,7 +74,7 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
       metaSubtitle: mode === "inline" ? undefined : "PDF · Download 30 Tage gültig",
       ctaLabel: mode === "inline" ? undefined : "Bericht herunterladen",
       ctaUrl: mode === "inline" ? undefined : (downloadUrl ?? undefined),
-      bodyHtml: mode === "inline" ? renderEinsatzInlineHtml(einsatz, null) : undefined,
+      bodyHtml: mode === "inline" ? renderEinsatzInlineHtml(einsatz, null, ((settings as any)?.pdf_zeiten_config ?? null)) : undefined,
       closingNote: "Bei Rückfragen zum Einsatz wenden Sie sich bitte an die für Sie zuständige Ansprechperson.",
       previewText: mode === "inline" ? "Ihr Einsatzbericht" : "Ihr Einsatzbericht als PDF",
     });
