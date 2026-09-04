@@ -148,16 +148,22 @@ Die App ist unter `http://<SERVER-IP>:8080` erreichbar.
 ### Variante C: Als Dienst mit PM2
 
 ```bash
-sudo npm install -g pm2
+sudo npm install -g pm2 wrangler
 
-# Dev-Modus dauerhaft laufen lassen
+# Produktions-Bundle dauerhaft laufen lassen (empfohlen)
+NODE_OPTIONS="--max-old-space-size=2048" bun run build
+
 pm2 start --name alarmdesk \
   --interpreter none \
-  "$(which bun)" -- run dev -- --host 0.0.0.0 --port 8080
+  "$(which wrangler)" -- dev dist/_worker.js/index.js \
+  --ip 0.0.0.0 --port 8080 \
+  --compatibility-date 2025-09-24 \
+  --compatibility-flags nodejs_compat
 
 pm2 save
 pm2 startup
 ```
+
 
 ### Hinweise zu `.env`
 
