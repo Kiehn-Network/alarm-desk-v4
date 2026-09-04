@@ -120,38 +120,6 @@ Die App ist unter `http://<SERVER-IP>:8080` erreichbar.
 > Für den echten Betrieb deshalb immer **Variante B** (Produktions-Bundle)
 > verwenden. Als Sofort-Hilfe hilft ein Hard-Reload (Strg+Shift+R).
 
-#### Dev-Modus stabil hinter Reverse Proxy betreiben
-
-Wenn du den Dev-Modus dauerhaft nutzen willst, muss der Live-Reload-Kanal
-(WebSocket) über deine Domain funktionieren — sonst merkt der Browser einen
-Neustart nicht und meldet
-`Failed to fetch dynamically imported module: ...?tsr-split=component`.
-
-1. In der `.env` die öffentliche Adresse eintragen:
-
-   ```
-   PUBLIC_DEV_HOST=alarmdesk4.alarmzentrale-steinberg.de
-   PUBLIC_DEV_PROTOCOL=ws     # bei HTTPS: wss
-   PUBLIC_DEV_PORT=80         # bei HTTPS: 443
-   ```
-
-   Damit erlaubt Vite den Host und schickt den Live-Reload an die richtige
-   Adresse.
-
-2. Caddy leitet WebSockets automatisch weiter — wichtig ist nur, dass kein
-   Caching/Buffering dazwischen liegt:
-
-   ```
-   alarmdesk4.alarmzentrale-steinberg.de {
-       reverse_proxy localhost:8080 {
-           flush_interval -1
-       }
-   }
-   ```
-
-3. Nach jedem Neustart des Dev-Servers im Browser einmal hart neu laden
-   (Strg+Shift+R). Danach hält die Verbindung.
-
 ### Variante B: Produktions-Bundle (empfohlen für den Server)
 
 

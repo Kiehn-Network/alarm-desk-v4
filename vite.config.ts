@@ -18,29 +18,11 @@ const cloudflareSocketsExternalPlugin = {
 
 // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
 // @cloudflare/vite-plugin builds from this — wrangler.jsonc main alone is insufficient.
-// Eigener Server im Dev-Modus hinter Reverse Proxy:
-// PUBLIC_DEV_HOST=alarmdesk4.alarmzentrale-steinberg.de (optional PUBLIC_DEV_PORT/PUBLIC_DEV_PROTOCOL)
-const publicDevHost = process.env["PUBLIC_DEV_HOST"];
-const publicDevProtocol = process.env["PUBLIC_DEV_PROTOCOL"] ?? "ws";
-const publicDevPort = Number(process.env["PUBLIC_DEV_PORT"] ?? (publicDevProtocol === "wss" ? 443 : 80));
-
 export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
   vite: {
-    ...(publicDevHost
-      ? {
-          server: {
-            allowedHosts: [publicDevHost],
-            hmr: {
-              host: publicDevHost,
-              protocol: publicDevProtocol,
-              clientPort: publicDevPort,
-            },
-          },
-        }
-      : {}),
     optimizeDeps: {
       exclude: ["worker-mailer"],
       esbuildOptions: {
@@ -54,4 +36,3 @@ export default defineConfig({
     },
   },
 });
-
