@@ -328,6 +328,19 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                 />
               </form>
 
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
+                <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
+                  <span className="flex items-center gap-1"><ScanLine className="size-3" /> Virtuelle Tastatur</span>
+                  <span className="text-[10px] uppercase tracking-wide">Touch</span>
+                </div>
+                <VirtualKeyboard
+                  value={code}
+                  onChange={setCode}
+                  onSubmit={() => handleScan(code)}
+                  onClear={() => { setCode(""); scanRef.current?.focus(); }}
+                />
+              </div>
+
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
 
               <Button className="w-full h-12" disabled={cart.length === 0} onClick={() => setStep("ziel")}>
