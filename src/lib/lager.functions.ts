@@ -244,3 +244,74 @@ export const setLagerAdmin = createServerFn({ method: "POST" })
     if (result.error) throw new Error(result.error.message);
     return { ok: true };
   });
+
+// =================================================================
+// LAGER — Fahrzeuge (mit QR-Code)
+// =================================================================
+
+export type LagerFahrzeug = {
+  id: string;
+  domain_id: string;
+  kennzeichen: string;
+  bezeichnung: string | null;
+  fahrer: string | null;
+  code: string;
+  notiz: string | null;
+  aktiv: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+function fahrzeugCode(kennzeichen: string) {
+  const base = kennzeichen.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  return `KFZ-${base || "FAHRZEUG"}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+}
+
+export const listLagerFahrzeuge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { domainId, supabaseAdmin } = await lagerAdminContext(context);
+    const { data, error } = await (supabaseAdmin as any)
+      .from("lager_fahrzeuge").select("*").eq("domain_id", domainId).order("kennzeichen");
+    if (error) throw new Error(error.message);
+    return { rows: (data ?? []) as LagerFahrzeug[] };
+  });
+
+export const upsertLagerFahrzeug = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id?: string; kennzeichen: string; bezeichnung?: string | null; fahrer?: string | null; code?: string | null; notiz?: string | null; aktiv?: boolean }) => input)
+  .handler(async ({ data, context }) => {
+    const { domainId, supabaseAdmin } = await lagerAdminContext(context);
+    const kennzeichen = String(data.kennzeichen ?? "").trim().toUpperCase();
+    if (!kennzeichen) throw new Error("Bitte ein Kennzeichen angeben.");
+    const payload: Record<string, unknown> = {
+      domain_id: domainId,
+      kennzeichen,
+      bezeichnung: data.bezeichnung?.toString().trim() || null,
+      fahrer: data.fahrer?.toString().trim() || null,
+      notiz: data.notiz?.toString().trim() || null,
+      aktiv: data.aktiv ?? true,
+    };
+    const table = (supabaseAdmin as any).from("lager_fahrzeuge");
+    if (data.id) {
+      const code = data.code?.toString().trim();
+      if (code) payload["code"] = code;
+      const { error } = await table.update(payload).eq("id", data.id).eq("domain_id", domainId);
+      if (error) throw new Error(error.code === "23505" ? "Dieser QR-Code ist bereits vergeben." : error.message);
+      return { id: data.id };
+    }
+    payload["code"] = data.code?.toString().trim() || fahrzeugCode(kennzeichen);
+    const { data: inserted, error } = await table.insert(payload).select("id").single();
+    if (error) throw new Error(error.code === "23505" ? "Dieser QR-Code ist bereits vergeben." : error.message);
+    return { id: inserted.id as string };
+  });
+
+export const deleteLagerFahrzeug = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { id: string }) => input)
+  .handler(async ({ data, context }) => {
+    const { domainId, supabaseAdmin } = await lagerAdminContext(context);
+    const { error } = await (supabaseAdmin as any).from("lager_fahrzeuge").delete().eq("id", data.id).eq("domain_id", domainId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
