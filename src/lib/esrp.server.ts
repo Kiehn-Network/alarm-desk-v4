@@ -202,10 +202,11 @@ export async function buildErpPayload(einsatz: any) {
     legacyId != null && String(legacyId).trim() !== "" ? String(legacyId) : String(einsatz.id);
 
   // customFields — nur bekannte Ziel-Felder aus CUST_ArbBeri befüllen.
+  // Boolesche Werte werden als deutsche Texte "Ja"/"Nein" übertragen.
   const customFields: Record<string, unknown> = {};
   const setBool = (k: string, v: any) => {
     const b = ynBool(v);
-    if (b !== null) customFields[k] = b;
+    if (b !== null) customFields[k] = b ? "Ja" : "Nein";
   };
   if (fahrerName) customFields.Fahrer = fahrerName;
   if (bd.linie_nr) customFields.LinieNr = String(bd.linie_nr).slice(0, 255);
@@ -216,9 +217,9 @@ export async function buildErpPayload(einsatz: any) {
   setBool("Rueckstellung", bd.rueckstellung);
   setBool("Innenkontrolle", bd.innenkontrolle);
   const fremd = bd.fremdeinwirkung;
-  if (fremd === true || fremd === "ja") customFields.Fremdeinwirkung = true;
-  else if (fremd === false || fremd === "nein") customFields.Fremdeinwirkung = false;
-  else if (typeof fremd === "string" && fremd) customFields.Fremdeinwirkung = true;
+  if (fremd === true || fremd === "ja") customFields.Fremdeinwirkung = "Ja";
+  else if (fremd === false || fremd === "nein") customFields.Fremdeinwirkung = "Nein";
+  else if (typeof fremd === "string" && fremd) customFields.Fremdeinwirkung = "Ja";
   setBool("Scharfschaltung", bd.scharfschaltung);
   setBool("MeldungZentrale", bd.meldung_zentrale);
   if (bd.weitere_massnahmen) customFields.WeitereMassnahmen = String(bd.weitere_massnahmen).slice(0, 2000);
