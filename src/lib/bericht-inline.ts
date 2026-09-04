@@ -62,13 +62,19 @@ export function renderEinsatzInlineHtml(e: any, fahrerName: string | null): stri
   ];
 
   const zeiten: Row[] = [
-    ["Erstellt", fmt(e.created_at)],
+    ...(e.bericht_typ === "av_einsatz"
+      ? ([
+          ["Alarmierung", fmt(e.assigned_at ?? e.created_at)],
+          ["Startzeit (Erstellung)", fmt(e.created_at)],
+        ] as Row[])
+      : ([["Erstellt", fmt(e.created_at)]] as Row[])),
     ["Abfahrt Zentrale", e.abfahrt_zentrale_am ? fmt(e.abfahrt_zentrale_am) : null],
     ["Vor Ort", e.vor_ort_am ? fmt(e.vor_ort_am) : null],
     ["Abfahrt Objekt", e.abfahrt_am ? fmt(e.abfahrt_am) : null],
     ["Einsatz-Ende", e.einsatz_ende_am ? fmt(e.einsatz_ende_am) : null],
     ["Abgeschlossen", e.abgeschlossen_am ? fmt(e.abgeschlossen_am) : null],
   ];
+
 
   let bericht: Row[] = [];
   if (e.bericht_typ === "hausnotruf") {
