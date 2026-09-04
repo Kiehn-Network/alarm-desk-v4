@@ -80,6 +80,7 @@ function LagerAdminPage() {
           <TabsTrigger value="artikel">Artikel &amp; Bestände</TabsTrigger>
           <TabsTrigger value="fahrzeuge">Fahrzeuge</TabsTrigger>
           <TabsTrigger value="benutzer">Lager-Benutzer</TabsTrigger>
+          <TabsTrigger value="statistik">Statistik</TabsTrigger>
           {isAdmin && <TabsTrigger value="admins">Lager-Admins</TabsTrigger>}
         </TabsList>
 
@@ -88,6 +89,9 @@ function LagerAdminPage() {
         </TabsContent>
         <TabsContent value="fahrzeuge" className="mt-4">
           <LagerFahrzeugePanel />
+        </TabsContent>
+        <TabsContent value="statistik" className="mt-4">
+          <LagerStatistikPanel />
         </TabsContent>
         <TabsContent value="benutzer" className="mt-4">
           <LagerBenutzerPanel />
