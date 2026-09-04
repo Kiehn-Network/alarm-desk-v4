@@ -609,42 +609,42 @@ function CartList({
 }) {
   if (cart.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-base text-muted-foreground">
         Noch keine Artikel gescannt.
       </div>
     );
   }
   return (
-    <div className="space-y-2">
-      <div className="text-sm font-medium flex items-center gap-2">
-        <ListChecks className="size-4" /> Gescannte Artikel ({cart.length})
+    <div className="space-y-3">
+      <div className="text-base font-medium flex items-center gap-2">
+        <ListChecks className="size-5" /> Gescannte Artikel ({cart.length})
       </div>
       {cart.map((it) => (
-        <div key={it.artikel.id} className="rounded-xl border border-border bg-muted/40 px-4 py-3 flex flex-wrap items-center gap-3">
+        <div key={it.artikel.id} className="rounded-xl border border-border bg-muted/40 px-5 py-4 flex flex-wrap items-center gap-4">
           <div className="min-w-0 flex-1">
-            <div className="font-semibold truncate">{it.artikel.bezeichnung}</div>
-            <div className="text-xs text-muted-foreground font-mono">{it.artikel.barcode}</div>
-            <div className="text-xs text-muted-foreground">Bestand: {it.artikel.bestand} {it.artikel.einheit}</div>
+            <div className="text-base font-semibold truncate">{it.artikel.bezeichnung}</div>
+            <div className="text-sm text-muted-foreground font-mono">{it.artikel.barcode}</div>
+            <div className="text-sm text-muted-foreground">Bestand: {it.artikel.bestand} {it.artikel.einheit}</div>
           </div>
           {readOnly ? (
-            <Badge variant="secondary">{it.menge} {it.artikel.einheit}</Badge>
+            <Badge variant="secondary" className="text-base px-3 py-1">{it.menge} {it.artikel.einheit}</Badge>
           ) : (
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon" className="size-9" aria-label="Menge verringern" onClick={() => onMenge(it.artikel.id, it.menge - 1)}>
-                <Minus className="size-4" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="size-11" aria-label="Menge verringern" onClick={() => onMenge(it.artikel.id, it.menge - 1)}>
+                <Minus className="size-5" />
               </Button>
               <Input
                 type="number"
                 min={1}
-                className="h-9 w-16 text-center"
+                className="h-11 w-20 text-center text-base"
                 value={it.menge}
                 onChange={(e) => onMenge(it.artikel.id, Number(e.target.value) || 1)}
               />
-              <Button variant="outline" size="icon" className="size-9" aria-label="Menge erhöhen" onClick={() => onMenge(it.artikel.id, it.menge + 1)}>
-                <Plus className="size-4" />
+              <Button variant="outline" size="icon" className="size-11" aria-label="Menge erhöhen" onClick={() => onMenge(it.artikel.id, it.menge + 1)}>
+                <Plus className="size-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="size-9 text-destructive" aria-label="Artikel entfernen" onClick={() => onRemove(it.artikel.id)}>
-                <Trash2 className="size-4" />
+              <Button variant="ghost" size="icon" className="size-11 text-destructive" aria-label="Artikel entfernen" onClick={() => onRemove(it.artikel.id)}>
+                <Trash2 className="size-5" />
               </Button>
             </div>
           )}
