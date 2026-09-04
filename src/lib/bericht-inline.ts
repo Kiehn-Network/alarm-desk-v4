@@ -3,6 +3,8 @@
 // (Klartext direkt in der E-Mail) gewählt hat. Der Inhalt ersetzt den
 // PDF-Download-Button im gebrandeten Layout.
 
+import { resolvePdfZeiten, type PdfZeitenSettings } from "@/lib/pdf-zeiten";
+
 function esc(s: any): string {
   if (s === null || s === undefined) return "";
   return String(s)
@@ -49,7 +51,12 @@ function section(title: string, rows: Row[]): string {
   </div>`;
 }
 
-export function renderEinsatzInlineHtml(e: any, fahrerName: string | null): string {
+export function renderEinsatzInlineHtml(
+  e: any,
+  fahrerName: string | null,
+  zeitenConfig?: PdfZeitenSettings | null,
+): string {
+  const cfg = resolvePdfZeiten(zeitenConfig, e?.bericht_typ);
   const stamm: Row[] = [
     ["Einsatzgrund", e.einsatzgrund],
     ["Kunde", e.kunden_name],
@@ -61,20 +68,19 @@ export function renderEinsatzInlineHtml(e: any, fahrerName: string | null): stri
     ["Beschreibung", e.beschreibung],
   ];
 
-  const zeiten: Row[] = [
-    ...(e.bericht_typ === "av_einsatz"
-      ? ([
-          ["Alarmierung", fmt(e.assigned_at ?? e.created_at)],
-          ["Startzeit (Erstellung)", fmt(e.created_at)],
-        ] as Row[])
-      : ([["Erstellt", fmt(e.created_at)]] as Row[])),
-    ["Abfahrt Zentrale", e.abfahrt_zentrale_am ? fmt(e.abfahrt_zentrale_am) : null],
-    ["Vor Ort", e.vor_ort_am ? fmt(e.vor_ort_am) : null],
-    ["Abfahrt Objekt", e.abfahrt_am ? fmt(e.abfahrt_am) : null],
-    ["Einsatz-Ende", e.einsatz_ende_am ? fmt(e.einsatz_ende_am) : null],
-    ["Abgeschlossen", e.abgeschlossen_am ? fmt(e.abgeschlossen_am) : null],
+  const istAv = e.bericht_typ === "av_einsatz";
+  const zeitenAlle: Array<[boolean, string, any]> = [
+    [!!cfg.alarmierung, "Alarmierung", e.assigned_at ?? e.created_at],
+    [!!cfg.created, istAv ? "Startzeit (Erstellung)" : "Erstellt", e.created_at],
+    [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
+    [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
+    [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
+    [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
+    [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
   ];
-
+  const zeiten: Row[] = zeitenAlle
+    .filter(([on]) => on)
+    .map(([, label, v]) => [label, v ? fmt(v) : null] as Row);
 
   let bericht: Row[] = [];
   if (e.bericht_typ === "hausnotruf") {
