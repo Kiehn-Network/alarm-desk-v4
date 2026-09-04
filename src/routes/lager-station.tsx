@@ -289,21 +289,21 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           )}
 
           {step === "scan" && (
-            <div className="space-y-5">
-              <form onSubmit={(e) => { e.preventDefault(); handleScan(code); }} className="space-y-4 text-center">
-                <div className="mx-auto size-14 rounded-2xl bg-primary/10 grid place-items-center">
-                  <ScanLine className="size-7 text-primary" />
+            <div className="space-y-6">
+              <form onSubmit={(e) => { e.preventDefault(); handleScan(code); }} className="space-y-5 text-center">
+                <div className="mx-auto size-16 rounded-2xl bg-primary/10 grid place-items-center">
+                  <ScanLine className="size-8 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Mehrere Artikel nacheinander scannen – mit Handscanner oder Kamera.
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Input
                     ref={scanRef}
                     value={code}
                     autoComplete="off"
                     placeholder="Barcode scannen …"
-                    className="h-14 flex-1 text-center font-mono text-lg tracking-widest"
+                    className="h-16 flex-1 text-center font-mono text-xl tracking-widest"
                     onChange={(e) => { setCode(e.target.value); setError(null); }}
                     onBlur={() => { if (!camOpen) setTimeout(() => { if (!camOpen) scanRef.current?.focus(); }, 50); }}
                     disabled={busy}
@@ -311,17 +311,17 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                   <Button
                     type="button"
                     variant="outline"
-                    className="size-14 shrink-0"
+                    className="size-16 shrink-0"
                     aria-label="Mit Kamera scannen"
                     title="Mit Kamera scannen"
                     onClick={() => setCamOpen(true)}
                     disabled={busy}
                   >
-                    <Camera className="size-6" />
+                    <Camera className="size-7" />
                   </Button>
                 </div>
-                <Button type="submit" className="w-full h-12" disabled={busy || !code.trim()}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Zur Liste hinzufügen
+                <Button type="submit" className="w-full h-14 text-base" disabled={busy || !code.trim()}>
+                  {busy ? <Loader2 className="size-5 animate-spin" /> : <Plus className="size-5" />} Zur Liste hinzufügen
                 </Button>
                 <BarcodeScannerDialog
                   open={camOpen}
@@ -333,17 +333,17 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
               <Button
                 type="button"
                 variant={keyboardOpen ? "default" : "outline"}
-                className="w-full h-12"
+                className="w-full h-14 text-base"
                 onClick={() => setKeyboardOpen((v) => !v)}
               >
                 {keyboardOpen ? "Tastatur ausblenden" : "Tastatur einblenden"}
               </Button>
 
               {keyboardOpen && (
-                <div className="rounded-xl border border-border bg-muted/30 p-3">
-                  <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
-                    <span className="flex items-center gap-1"><ScanLine className="size-3" /> Virtuelle Tastatur</span>
-                    <span className="text-[10px] uppercase tracking-wide">Touch</span>
+                <div className="rounded-xl border border-border bg-muted/30 p-4">
+                  <div className="mb-3 flex items-center justify-between text-sm font-medium text-muted-foreground">
+                    <span className="flex items-center gap-1"><ScanLine className="size-4" /> Virtuelle Tastatur</span>
+                    <span className="text-xs uppercase tracking-wide">Touch</span>
                   </div>
                   <VirtualKeyboard
                     value={code}
@@ -356,7 +356,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
 
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
 
-              <Button className="w-full h-12" disabled={cart.length === 0} onClick={() => setStep("ziel")}>
+              <Button className="w-full h-14 text-base" disabled={cart.length === 0} onClick={() => setStep("ziel")}>
                 Weiter ({cart.length} {cart.length === 1 ? "Artikel" : "Artikel"})
               </Button>
             </div>
