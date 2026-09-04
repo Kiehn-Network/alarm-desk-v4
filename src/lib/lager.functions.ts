@@ -315,3 +315,44 @@ export const deleteLagerFahrzeug = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export type LagerPersonStat = {
+  person_id: string | null;
+  person_name: string;
+  eingang: number;
+  ausgang: number;
+  buchungen: number;
+  letzte_buchung: string | null;
+};
+
+export const getLagerStatistik = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { person_name?: string | null; von?: string | null; bis?: string | null }) => input)
+  .handler(async ({ data, context }) => {
+    const { domainId, supabaseAdmin } = await lagerAdminContext(context);
+    let query = supabaseAdmin
+      .from("lager_buchungen")
+      .select("*, lager_artikel(bezeichnung)")
+      .eq("domain_id", domainId)
+      .order("created_at", { ascending: false })
+      .limit(2000);
+    if (data.von) query = query.gte("created_at", data.von);
+    if (data.bis) query = query.lte("created_at", data.bis);
+    if (data.person_name) query = query.ilike("person_name", `%${data.person_name}%`);
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const list = (rows ?? []).map((r: any) => ({ ...r, artikel_bezeichnung: r.lager_artikel?.bezeichnung ?? null })) as LagerBuchung[];
+    const map = new Map<string, LagerPersonStat>();
+    for (const b of list) {
+      const key = b.person_id ?? b.person_name ?? "unbekannt";
+      const entry = map.get(key) ?? { person_id: b.person_id, person_name: b.person_name ?? "Unbekannt", eingang: 0, ausgang: 0, buchungen: 0, letzte_buchung: null };
+      if (b.richtung === "eingang") entry.eingang += Number(b.menge ?? 0);
+      else entry.ausgang += Number(b.menge ?? 0);
+      entry.buchungen += 1;
+      if (!entry.letzte_buchung || b.created_at > entry.letzte_buchung) entry.letzte_buchung = b.created_at;
+      map.set(key, entry);
+    }
+    const personen = [...map.values()].sort((a, b) => b.buchungen - a.buchungen);
+    return { personen, buchungen: list };
+  });
