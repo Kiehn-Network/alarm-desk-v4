@@ -169,6 +169,8 @@ function SchluesselbestandPage() {
   async function printLabels() {
     const items = filtered.slice(0, 200);
     if (!items.length) { toast.error("Keine Einträge zum Drucken"); return; }
+    const mod = await import("qrcode");
+    const qr = ((mod as any).default ?? mod) as typeof QRCodeType;
     const cards = await Promise.all(items.map(async (r: any) => {
       const code = r.label_code || r.key_number;
       const png = await qr.toDataURL(code, { width: 220, margin: 1 });
