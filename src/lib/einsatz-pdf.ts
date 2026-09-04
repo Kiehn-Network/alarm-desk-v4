@@ -16,6 +16,7 @@ function yn(v?: string | boolean | null) {
 }
 
 export type PdfZeitenConfig = {
+  alarmierung?: boolean;
   created?: boolean;
   abfahrt_zentrale?: boolean;
   vor_ort?: boolean;
@@ -24,7 +25,13 @@ export type PdfZeitenConfig = {
   abgeschlossen?: boolean;
 };
 
-const DEFAULT_PDF_ZEITEN: Required<PdfZeitenConfig> = {
+export type PdfZeitenSettings = PdfZeitenConfig & {
+  hausnotruf?: PdfZeitenConfig;
+  av?: PdfZeitenConfig;
+};
+
+export const DEFAULT_PDF_ZEITEN_HAUSNOTRUF: Required<PdfZeitenConfig> = {
+  alarmierung: false,
   created: true,
   abfahrt_zentrale: false,
   vor_ort: true,
@@ -33,8 +40,33 @@ const DEFAULT_PDF_ZEITEN: Required<PdfZeitenConfig> = {
   abgeschlossen: true,
 };
 
-export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
-  const cfg = { ...DEFAULT_PDF_ZEITEN, ...(zeiten ?? {}) };
+export const DEFAULT_PDF_ZEITEN_AV: Required<PdfZeitenConfig> = {
+  alarmierung: true,
+  created: true,
+  abfahrt_zentrale: false,
+  vor_ort: true,
+  abfahrt_objekt: true,
+  einsatz_ende: true,
+  abgeschlossen: true,
+};
+
+/** Ermittelt die Zeit-Konfiguration passend zum Berichtstyp (mit Legacy-Fallback auf die flache Struktur). */
+export function resolvePdfZeiten(
+  settings: PdfZeitenSettings | null | undefined,
+  berichtTyp?: string | null,
+): Required<PdfZeitenConfig> {
+  const isAv = berichtTyp === "av_einsatz";
+  const base = isAv ? DEFAULT_PDF_ZEITEN_AV : DEFAULT_PDF_ZEITEN_HAUSNOTRUF;
+  const s = settings ?? {};
+  const { hausnotruf, av, ...legacy } = s as any;
+  const specific = isAv ? av : hausnotruf;
+  if (specific) return { ...base, ...legacy, ...specific };
+  return { ...base, ...legacy };
+}
+
+export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenSettings | null) {
+  const cfg = resolvePdfZeiten(zeiten, e?.bericht_typ);
+
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const margin = 48;
@@ -87,24 +119,16 @@ export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZ
   sep();
 
   const istAv = e.bericht_typ === "av_einsatz";
-  const zeilen: Array<[boolean, string, any]> = istAv
-    ? [
-        [true, "Alarmierung", e.assigned_at ?? e.created_at],
-        [true, "Startzeit (Erstellung)", e.created_at],
-        [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
-        [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
-        [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
-        [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
-        [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
-      ]
-    : [
-        [!!cfg.created, "Erstellt", e.created_at],
-        [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
-        [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
-        [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
-        [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
-        [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
-      ];
+  const zeilen: Array<[boolean, string, any]> = [
+    [!!cfg.alarmierung, "Alarmierung", e.assigned_at ?? e.created_at],
+    [!!cfg.created, istAv ? "Startzeit (Erstellung)" : "Erstellt", e.created_at],
+    [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
+    [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
+    [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
+    [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
+    [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
+  ];
+
   const visible = zeilen.filter(([on]) => on);
   if (visible.length > 0) {
     line("Zeiten", { size: 11, bold: true, gap: 16 });
@@ -147,13 +171,13 @@ export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZ
   return doc;
 }
 
-export function downloadEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
+export function downloadEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenSettings | null) {
   const doc = buildEinsatzPdf(e, fahrerName, zeiten);
   const name = `Einsatzbericht_${String(e.id).slice(0, 8)}.pdf`;
   doc.save(name);
 }
 
-export function einsatzPdfBase64(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
+export function einsatzPdfBase64(e: any, fahrerName: string | null, zeiten?: PdfZeitenSettings | null) {
   const doc = buildEinsatzPdf(e, fahrerName, zeiten);
   const uri = doc.output("datauristring");
   const base64 = uri.split(",")[1] ?? "";

@@ -107,7 +107,8 @@ export const updateFahrerZeitenConfig = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const pdfZeitenSchema = z.object({
+const pdfZeitenGruppe = z.object({
+  alarmierung: z.boolean(),
   created: z.boolean(),
   abfahrt_zentrale: z.boolean(),
   vor_ort: z.boolean(),
@@ -115,6 +116,12 @@ const pdfZeitenSchema = z.object({
   einsatz_ende: z.boolean(),
   abgeschlossen: z.boolean(),
 });
+
+const pdfZeitenSchema = z.object({
+  hausnotruf: pdfZeitenGruppe,
+  av: pdfZeitenGruppe,
+});
+
 
 export const updatePdfZeitenConfig = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
