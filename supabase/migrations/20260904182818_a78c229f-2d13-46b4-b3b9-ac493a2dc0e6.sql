@@ -1,0 +1,1 @@
+ALTER TABLE public.einsaetze ADD COLUMN IF NOT EXISTS alarm_am timestamptz;

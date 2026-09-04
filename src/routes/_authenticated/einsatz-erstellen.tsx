@@ -66,6 +66,11 @@ function EinsatzErstellenPage() {
   const [grundId, setGrundId] = useState<string | null>(null);
   const [fahrerId, setFahrerId] = useState("");
   const [einsatzTyp, setEinsatzTyp] = useState<"av_einsatz" | "hausnotruf">("av_einsatz");
+  const [alarmAm, setAlarmAm] = useState<string>(() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+  });
   const [hausnotrufProvider, setHausnotrufProvider] = useState<"malteser" | "johanniter" | "lgwa" | "">("");
   const [saving, setSaving] = useState(false);
 
@@ -143,6 +148,9 @@ function EinsatzErstellenPage() {
     if (zielMode === "fahrer" && !fahrerId) { toast.error("Bitte einen Fahrer wählen"); return; }
     if (zielMode === "partner" && !partnerId) { toast.error("Bitte einen Partner wählen"); return; }
     if (zielMode === "sub" && !subName.trim()) { toast.error("Bitte Sub-Unternehmen angeben"); return; }
+    if (activeTyp === "av_einsatz" && !alarmAm) {
+      toast.error("Bitte die Alarmzeit eintragen"); return;
+    }
     if (hausnotrufEnabled && einsatzTyp === "hausnotruf" && providerOptions.length > 0 && !hausnotrufProvider) {
       toast.error("Bitte einen Hausnotruf-Anbieter wählen"); return;
     }
@@ -179,6 +187,7 @@ function EinsatzErstellenPage() {
         assigned_to: zielMode === "sub" ? null : fahrerId,
         sub_unternehmen: zielMode === "sub" ? subName.trim() : null,
         datei_id: picked.id,
+        alarm_am: activeTyp === "av_einsatz" && alarmAm ? new Date(alarmAm).toISOString() : null,
       }});
       const f = fahrer.find((x) => x.id === fahrerId);
       if (zielMode === "sub") {
@@ -365,6 +374,21 @@ function EinsatzErstellenPage() {
             )}
           </section>
         )
+      )}
+
+      {picked && activeTyp === "av_einsatz" && (
+        <section className="rounded-xl border border-border bg-card p-6 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
+          <h2 className="font-semibold">Alarmzeit</h2>
+          <p className="text-xs text-muted-foreground">
+            Zeitpunkt, zu dem der Alarm eingegangen ist. Erscheint im Einsatzbericht.
+          </p>
+          <Input
+            type="datetime-local"
+            value={alarmAm}
+            onChange={(e) => setAlarmAm(e.target.value)}
+            className="max-w-xs"
+          />
+        </section>
       )}
 
       {picked && (

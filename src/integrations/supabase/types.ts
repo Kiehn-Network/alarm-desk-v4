@@ -1004,6 +1004,7 @@ export type Database = {
           abgeschlossen_am: string | null
           ablehnung_grund: string | null
           address: string | null
+          alarm_am: string | null
           anlagen_nr: string | null
           approved_at: string | null
           approved_by: string | null
@@ -1045,6 +1046,7 @@ export type Database = {
           abgeschlossen_am?: string | null
           ablehnung_grund?: string | null
           address?: string | null
+          alarm_am?: string | null
           anlagen_nr?: string | null
           approved_at?: string | null
           approved_by?: string | null
@@ -1086,6 +1088,7 @@ export type Database = {
           abgeschlossen_am?: string | null
           ablehnung_grund?: string | null
           address?: string | null
+          alarm_am?: string | null
           anlagen_nr?: string | null
           approved_at?: string | null
           approved_by?: string | null

@@ -31,6 +31,7 @@ const createBase = z.object({
   assigned_to: z.string().uuid().nullable().optional(),
   sub_unternehmen: z.string().trim().max(200).nullable().optional(),
   datei_id: z.string().uuid().optional().nullable(),
+  alarm_am: z.union([z.string().datetime({ offset: true }), z.literal("")]).optional().nullable(),
 });
 const createSchema = createBase.refine((d) => !!d.assigned_to || !!(d.sub_unternehmen && d.sub_unternehmen.length > 0), {
   message: "Fahrer oder Sub-Unternehmen erforderlich",
@@ -59,6 +60,7 @@ const editSchema = z.object({
   abgeschlossen_am: isoOrNull,
   hausnotruf_provider: z.enum(["malteser", "johanniter", "lgwa"]).optional().nullable(),
   created_at: isoOrNull,
+  alarm_am: isoOrNull,
 });
 
 const TRACKABLE = [
@@ -68,7 +70,7 @@ const TRACKABLE = [
   "vor_ort_am","abfahrt_am","einsatz_ende_am",
   "created_at",
   "bericht_typ","hausnotruf_problem","hausnotruf_loesung","hausnotruf_provider",
-  "storniert_grund",
+  "storniert_grund","alarm_am",
 ] as const;
 
 async function logHistory(
@@ -185,6 +187,7 @@ export const createEinsatz = createServerFn({ method: "POST" })
       domain_id: domainId,
       assigned_to: data.assigned_to ?? null,
       sub_unternehmen: data.sub_unternehmen ? data.sub_unternehmen.trim() : null,
+      alarm_am: data.alarm_am ? data.alarm_am : null,
       assigned_at: new Date().toISOString(),
       approved_by: userId,
       approved_at: new Date().toISOString(),
