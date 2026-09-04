@@ -204,7 +204,6 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
         if (exists) return prev.map((it) => (it.artikel.id === found.id ? { ...it, menge: it.menge + 1 } : it));
         return [...prev, { artikel: found, menge: 1 }];
       });
-      setCode("");
       toast.success(`${found.bezeichnung} hinzugefügt`);
       scanRef.current?.focus();
     } catch (e: any) {
