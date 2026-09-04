@@ -495,21 +495,21 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           )}
 
           {step === "fertig" && result && (
-            <div className="space-y-4 text-center">
-              <div className="mx-auto size-14 rounded-full bg-emerald-500/10 grid place-items-center">
-                <CheckCircle2 className="size-7 text-emerald-500" />
+            <div className="space-y-5 text-center">
+              <div className="mx-auto size-16 rounded-full bg-emerald-500/10 grid place-items-center">
+                <CheckCircle2 className="size-8 text-emerald-500" />
               </div>
               <div>
-                <div className="text-lg font-semibold">Buchung gespeichert</div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <div className="text-xl font-semibold">Buchung gespeichert</div>
+                <p className="text-base text-muted-foreground mt-1">
                   {result.anzahl} {result.anzahl === 1 ? "Artikel" : "Artikel"} gebucht.
                 </p>
               </div>
-              <Button className="w-full h-12" onClick={resetFlow}>
-                <ScanLine className="size-4" /> Neue Buchung starten
+              <Button className="w-full h-14 text-base" onClick={resetFlow}>
+                <ScanLine className="size-5" /> Neue Buchung starten
               </Button>
-              <Button variant="outline" className="w-full h-12" onClick={onLogout}>
-                <LogOut className="size-4" /> Abmelden
+              <Button variant="outline" className="w-full h-14 text-base" onClick={onLogout}>
+                <LogOut className="size-5" /> Abmelden
               </Button>
             </div>
           )}
