@@ -104,43 +104,43 @@ function StationLogin({ onLogin }: { onLogin: (p: LagerKioskPerson) => void }) {
   }
 
   return (
-    <main className="min-h-screen grid place-items-center bg-background p-6">
-      <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-          <div className="mx-auto size-16 rounded-2xl bg-primary/10 grid place-items-center">
-            <Nfc className="size-8 text-primary" />
+    <main className="min-h-screen grid place-items-center bg-background p-6 md:p-8">
+      <div className="w-full max-w-lg">
+        <div className="rounded-2xl border border-border bg-card p-8 md:p-10 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="mx-auto size-20 rounded-2xl bg-primary/10 grid place-items-center">
+            <Nfc className="size-10 text-primary" />
           </div>
-          <h1 className="mt-5 text-2xl font-bold">Lager-Station</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="mt-6 text-3xl font-bold">Lager-Station</h1>
+          <p className="mt-2 text-base text-muted-foreground">
             Transponder an den Leser halten. Die Anmeldung erfolgt automatisch.
           </p>
 
-          <form className="mt-6 space-y-3 text-left" onSubmit={(e) => { e.preventDefault(); submit(code); }}>
-            <Label htmlFor="transponder">Transponder-Nummer</Label>
+          <form className="mt-8 space-y-4 text-left" onSubmit={(e) => { e.preventDefault(); submit(code); }}>
+            <Label htmlFor="transponder" className="text-base">Transponder-Nummer</Label>
             <Input
               id="transponder"
               ref={inputRef}
               value={code}
               autoComplete="off"
               placeholder="Transponder scannen …"
-              className="h-12 text-center font-mono text-lg tracking-widest"
+              className="h-16 text-center font-mono text-xl tracking-widest"
               onChange={(e) => { setCode(e.target.value); setError(null); }}
               onBlur={() => setTimeout(() => inputRef.current?.focus(), 50)}
               disabled={busy}
             />
-            <Button type="submit" className="w-full h-11" disabled={busy || !code.trim()}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
+            <Button type="submit" className="w-full h-14 text-base" disabled={busy || !code.trim()}>
+              {busy ? <Loader2 className="size-5 animate-spin" /> : <ShieldCheck className="size-5" />}
               Anmelden
             </Button>
           </form>
 
           {error && (
-            <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="mt-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-base text-destructive">
               {error}
             </div>
           )}
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="mt-5 text-center text-sm text-muted-foreground">
           Eigenständige Lager-Anmeldung – unabhängig vom AlarmDesk-Login.
         </p>
       </div>
