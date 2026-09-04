@@ -185,6 +185,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
 
   useEffect(() => { if (step === "scan") setTimeout(() => scanRef.current?.focus(), 80); }, [step]);
   useEffect(() => { if (step === "ziel" && ziel === "auto") setTimeout(() => fzRef.current?.focus(), 80); }, [step, ziel]);
+  useEffect(() => { if (ziel === "lager") setRichtung("eingang"); }, [ziel]);
 
   async function handleFahrzeugScan(value: string) {
     const v = value.trim();
