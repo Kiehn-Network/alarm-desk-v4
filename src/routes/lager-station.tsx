@@ -152,7 +152,7 @@ type Step = "scan" | "ziel" | "checkout" | "fertig";
 
 const STEP_LABEL: Record<Step, string> = {
   scan: "1. Artikel scannen",
-  ziel: "2. Auto oder Projekt",
+  ziel: "2. Ziel wählen",
   checkout: "3. Checkout",
   fertig: "Fertig",
 };
