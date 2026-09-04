@@ -171,7 +171,7 @@ function SchluesselbestandPage() {
     if (!items.length) { toast.error("Keine Einträge zum Drucken"); return; }
     const cards = await Promise.all(items.map(async (r: any) => {
       const code = r.label_code || r.key_number;
-      const png = await QRCode.toDataURL(code, { width: 220, margin: 1 });
+      const png = await qr.toDataURL(code, { width: 220, margin: 1 });
       return `<div class="l"><img src="${png}"/><div><b>${escapeHtml(r.key_number)}</b>
         <div>${escapeHtml(r.bezeichnung ?? r.kunden_name ?? "")}</div>
         <div class="s">${escapeHtml([r.schrank, r.fach].filter(Boolean).join(" · "))}</div></div></div>`;
