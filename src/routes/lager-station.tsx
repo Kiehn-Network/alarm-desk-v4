@@ -166,7 +166,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
 
   const [step, setStep] = useState<Step>("scan");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [ziel, setZiel] = useState<"auto" | "projekt" | null>(null);
+  const [ziel, setZiel] = useState<"auto" | "projekt" | "lager" | null>(null);
   const [zielBezeichnung, setZielBezeichnung] = useState("");
   const [richtung, setRichtung] = useState<"eingang" | "ausgang">("ausgang");
   const [notiz, setNotiz] = useState("");
