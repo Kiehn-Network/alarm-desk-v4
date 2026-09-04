@@ -68,3 +68,47 @@ export const kioskBuchen = createServerFn({ method: "POST" })
     const { performBuchung } = await import("@/lib/lager-buchung.server");
     return performBuchung({ domain_id: person.domain_id, artikel_id: artikel.id, richtung: data.richtung, menge: data.menge, person_id: person.id, person_name: person.name, signatur: data.signatur ?? null, notiz: data.notiz ?? null });
   });
+
+export const kioskBuchenBatch = createServerFn({ method: "POST" })
+  .inputValidator((input: {
+    person_id: string;
+    richtung: "eingang" | "ausgang";
+    ziel: "auto" | "projekt";
+    ziel_bezeichnung?: string | null;
+    signatur?: string | null;
+    notiz?: string | null;
+    positionen: { artikel_id: string; menge: number }[];
+  }) => input)
+  .handler(async ({ data }) => {
+    if (!Array.isArray(data.positionen) || data.positionen.length === 0) {
+      throw new Error("Bitte mindestens einen Artikel scannen.");
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const person = await getActivePerson(supabaseAdmin, data.person_id);
+    const { performBuchung } = await import("@/lib/lager-buchung.server");
+
+    const zielText = data.ziel === "auto" ? "Auto" : "Projekt";
+    const bezeichnung = String(data.ziel_bezeichnung ?? "").trim();
+    const notizParts = [`${zielText}${bezeichnung ? `: ${bezeichnung}` : ""}`];
+    if (data.notiz?.trim()) notizParts.push(data.notiz.trim());
+    const notiz = notizParts.join(" · ");
+
+    const results: { bestand: number; bezeichnung: string; einheit: string }[] = [];
+    for (const pos of data.positionen) {
+      const { data: artikel } = await supabaseAdmin
+        .from("lager_artikel").select("id").eq("id", pos.artikel_id).eq("domain_id", person.domain_id).maybeSingle();
+      if (!artikel) throw new Error("Artikel gehört nicht zur aktiven Domäne.");
+      const res = await performBuchung({
+        domain_id: person.domain_id,
+        artikel_id: artikel.id,
+        richtung: data.richtung,
+        menge: pos.menge,
+        person_id: person.id,
+        person_name: person.name,
+        signatur: data.signatur ?? null,
+        notiz,
+      });
+      results.push(res);
+    }
+    return { positionen: results, anzahl: results.length };
+  });
