@@ -16,6 +16,7 @@ function yn(v?: string | boolean | null) {
 }
 
 export type PdfZeitenConfig = {
+  alarmierung?: boolean;
   created?: boolean;
   abfahrt_zentrale?: boolean;
   vor_ort?: boolean;
@@ -24,7 +25,13 @@ export type PdfZeitenConfig = {
   abgeschlossen?: boolean;
 };
 
-const DEFAULT_PDF_ZEITEN: Required<PdfZeitenConfig> = {
+export type PdfZeitenSettings = PdfZeitenConfig & {
+  hausnotruf?: PdfZeitenConfig;
+  av?: PdfZeitenConfig;
+};
+
+export const DEFAULT_PDF_ZEITEN_HAUSNOTRUF: Required<PdfZeitenConfig> = {
+  alarmierung: false,
   created: true,
   abfahrt_zentrale: false,
   vor_ort: true,
@@ -33,8 +40,33 @@ const DEFAULT_PDF_ZEITEN: Required<PdfZeitenConfig> = {
   abgeschlossen: true,
 };
 
-export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenConfig | null) {
-  const cfg = { ...DEFAULT_PDF_ZEITEN, ...(zeiten ?? {}) };
+export const DEFAULT_PDF_ZEITEN_AV: Required<PdfZeitenConfig> = {
+  alarmierung: true,
+  created: true,
+  abfahrt_zentrale: false,
+  vor_ort: true,
+  abfahrt_objekt: true,
+  einsatz_ende: true,
+  abgeschlossen: true,
+};
+
+/** Ermittelt die Zeit-Konfiguration passend zum Berichtstyp (mit Legacy-Fallback auf die flache Struktur). */
+export function resolvePdfZeiten(
+  settings: PdfZeitenSettings | null | undefined,
+  berichtTyp?: string | null,
+): Required<PdfZeitenConfig> {
+  const isAv = berichtTyp === "av_einsatz";
+  const base = isAv ? DEFAULT_PDF_ZEITEN_AV : DEFAULT_PDF_ZEITEN_HAUSNOTRUF;
+  const s = settings ?? {};
+  const { hausnotruf, av, ...legacy } = s as any;
+  const specific = isAv ? av : hausnotruf;
+  if (specific) return { ...base, ...legacy, ...specific };
+  return { ...base, ...legacy };
+}
+
+export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZeitenSettings | null) {
+  const cfg = resolvePdfZeiten(zeiten, e?.bericht_typ);
+
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const margin = 48;
