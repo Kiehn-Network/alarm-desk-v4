@@ -363,54 +363,54 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           )}
 
           {step === "ziel" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button
                   variant={ziel === "auto" ? "default" : "outline"}
-                  className="h-24 text-base flex-col gap-1"
+                  className="h-28 text-lg flex-col gap-2"
                   onClick={() => setZiel("auto")}
                 >
-                  <Car className="size-6" /> Auto
+                  <Car className="size-8" /> Auto
                 </Button>
                 <Button
                   variant={ziel === "projekt" ? "default" : "outline"}
-                  className="h-24 text-base flex-col gap-1"
+                  className="h-28 text-lg flex-col gap-2"
                   onClick={() => setZiel("projekt")}
                 >
-                  <Building2 className="size-6" /> Projekt
+                  <Building2 className="size-8" /> Projekt
                 </Button>
                 <Button
                   variant={ziel === "lager" ? "default" : "outline"}
-                  className="h-24 text-base flex-col gap-1"
+                  className="h-28 text-lg flex-col gap-2"
                   onClick={() => setZiel("lager")}
                 >
-                  <Boxes className="size-6" /> Lagerbefüllung
+                  <Boxes className="size-8" /> Lagerbefüllung
                 </Button>
               </div>
               {ziel === "auto" && (
-                <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
-                  <Label>Fahrzeug-QR-Code scannen</Label>
-                  <form onSubmit={(e) => { e.preventDefault(); handleFahrzeugScan(fzCode); }} className="flex items-center gap-2">
+                <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-5">
+                  <Label className="text-base">Fahrzeug-QR-Code scannen</Label>
+                  <form onSubmit={(e) => { e.preventDefault(); handleFahrzeugScan(fzCode); }} className="flex items-center gap-3">
                     <Input
                       ref={fzRef}
                       value={fzCode}
                       autoComplete="off"
                       placeholder="QR-Code am Fahrzeug scannen …"
-                      className="h-12 flex-1 text-center font-mono tracking-widest"
+                      className="h-14 flex-1 text-center font-mono text-lg tracking-widest"
                       onChange={(e) => { setFzCode(e.target.value); setError(null); }}
                       disabled={fzBusy}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      className="size-12 shrink-0"
+                      className="size-14 shrink-0"
                       aria-label="Fahrzeug mit Kamera scannen"
                       title="Fahrzeug mit Kamera scannen"
                       onClick={() => setFzCamOpen(true)}
                       disabled={fzBusy}
                     >
-                      {fzBusy ? <Loader2 className="size-5 animate-spin" /> : <Camera className="size-5" />}
+                      {fzBusy ? <Loader2 className="size-6 animate-spin" /> : <Camera className="size-6" />}
                     </Button>
                   </form>
                   <BarcodeScannerDialog
@@ -422,20 +422,20 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
               )}
               {ziel && ziel !== "lager" && (
                 <div>
-                  <Label>{ziel === "auto" ? "Fahrzeug" : "Projekt (optional)"}</Label>
+                  <Label className="text-base">{ziel === "auto" ? "Fahrzeug" : "Projekt (optional)"}</Label>
                   <Input
                     value={zielBezeichnung}
                     onChange={(e) => setZielBezeichnung(e.target.value)}
                     placeholder={ziel === "auto" ? "z. B. HH-AD 123" : "z. B. Objekt Musterstraße"}
-                    className="h-11"
+                    className="h-14 text-base"
                   />
                 </div>
               )}
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setStep("scan")}>
-                  <ArrowLeft className="size-4" /> Zurück
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 h-14 text-base" onClick={() => setStep("scan")}>
+                  <ArrowLeft className="size-5" /> Zurück
                 </Button>
-                <Button className="flex-1" disabled={!ziel} onClick={() => setStep("checkout")}>Weiter zum Checkout</Button>
+                <Button className="flex-1 h-14 text-base" disabled={!ziel} onClick={() => setStep("checkout")}>Weiter zum Checkout</Button>
               </div>
             </div>
           )}
