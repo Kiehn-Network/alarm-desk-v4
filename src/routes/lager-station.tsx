@@ -443,25 +443,32 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
             <div className="space-y-5">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} readOnly />
               <Badge variant="secondary" className="text-sm">
-                {ziel === "auto" ? "Auto" : "Projekt"}{zielBezeichnung.trim() ? ` · ${zielBezeichnung.trim()}` : ""}
+                {ziel === "lager" ? "Lagerbefüllung" : ziel === "auto" ? "Auto" : "Projekt"}
+                {ziel !== "lager" && zielBezeichnung.trim() ? ` · ${zielBezeichnung.trim()}` : ""}
               </Badge>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button
-                  variant={richtung === "eingang" ? "default" : "outline"}
-                  className="h-20 text-base"
-                  onClick={() => setRichtung("eingang")}
-                >
-                  <ArrowDownToLine className="size-5" /> Eingang
-                </Button>
-                <Button
-                  variant={richtung === "ausgang" ? "default" : "outline"}
-                  className="h-20 text-base"
-                  onClick={() => setRichtung("ausgang")}
-                >
-                  <ArrowUpFromLine className="size-5" /> Ausgang
-                </Button>
-              </div>
+              {ziel === "lager" ? (
+                <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                  Bei Lagerbefüllung wird automatisch ein <strong className="text-foreground">Wareneingang</strong> gebucht.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Button
+                    variant={richtung === "eingang" ? "default" : "outline"}
+                    className="h-20 text-base"
+                    onClick={() => setRichtung("eingang")}
+                  >
+                    <ArrowDownToLine className="size-5" /> Eingang
+                  </Button>
+                  <Button
+                    variant={richtung === "ausgang" ? "default" : "outline"}
+                    className="h-20 text-base"
+                    onClick={() => setRichtung("ausgang")}
+                  >
+                    <ArrowUpFromLine className="size-5" /> Ausgang
+                  </Button>
+                </div>
+              )}
 
               <div>
                 <Label>Notiz (optional)</Label>
