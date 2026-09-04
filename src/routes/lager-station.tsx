@@ -543,28 +543,28 @@ function VirtualKeyboard({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="space-y-1.5">
-        <div className="flex gap-1.5 justify-center">
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <div className="flex gap-2 justify-center">
           {numberRow.map((ch) => (
             <button
               key={ch}
               type="button"
               onClick={() => append(ch)}
-              className="h-14 min-w-[2.4rem] flex-1 max-w-[3.6rem] rounded-lg bg-card border border-border text-lg font-bold shadow-sm active:scale-95 active:bg-primary/10 transition"
+              className="h-16 min-w-[2.6rem] flex-1 max-w-[4rem] rounded-xl bg-card border border-border text-xl font-bold shadow-sm active:scale-95 active:bg-primary/10 transition"
             >
               {ch}
             </button>
           ))}
         </div>
         {letterRows.map((row, ri) => (
-          <div key={ri} className="flex gap-1.5 justify-center">
+          <div key={ri} className="flex gap-2 justify-center">
             {row.map((ch) => (
               <button
                 key={ch}
                 type="button"
                 onClick={() => append(ch)}
-                className="h-11 min-w-[2.1rem] flex-1 max-w-[3.2rem] rounded-lg bg-card border border-border text-sm font-semibold shadow-sm active:scale-95 active:bg-primary/10 transition"
+                className="h-14 min-w-[2.4rem] flex-1 max-w-[3.6rem] rounded-xl bg-card border border-border text-base font-semibold shadow-sm active:scale-95 active:bg-primary/10 transition"
               >
                 {ch === " " ? "␣" : ch}
               </button>
@@ -572,25 +572,25 @@ function VirtualKeyboard({
           </div>
         ))}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <button
           type="button"
           onClick={backspace}
-          className="h-12 flex-1 rounded-lg bg-muted border border-border text-sm font-semibold active:scale-95 transition"
+          className="h-14 flex-1 rounded-xl bg-muted border border-border text-base font-semibold active:scale-95 transition"
         >
           ⌫ Löschen
         </button>
         <button
           type="button"
           onClick={onClear}
-          className="h-12 flex-1 rounded-lg bg-muted border border-border text-sm font-semibold active:scale-95 transition"
+          className="h-14 flex-1 rounded-xl bg-muted border border-border text-base font-semibold active:scale-95 transition"
         >
           Leeren
         </button>
         <button
           type="button"
           onClick={onSubmit}
-          className="h-12 flex-[1.5] rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow active:scale-95 transition"
+          className="h-14 flex-[1.5] rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow active:scale-95 transition"
         >
           OK / Scan
         </button>
