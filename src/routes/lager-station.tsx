@@ -177,6 +177,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   const scanRef = useRef<HTMLInputElement>(null);
   const [code, setCode] = useState("");
   const [camOpen, setCamOpen] = useState(false);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const fzRef = useRef<HTMLInputElement>(null);
   const [fzCode, setFzCode] = useState("");
   const [fzCamOpen, setFzCamOpen] = useState(false);
