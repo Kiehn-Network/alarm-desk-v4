@@ -261,8 +261,28 @@ export async function buildErpPayload(einsatz: any) {
   return payload;
 }
 
+function assertRoutableBase(apiBase: string) {
+  let host = "";
+  try {
+    host = new URL(apiBase).hostname;
+  } catch {
+    throw new Error(`Ungültige ERP-URL: "${apiBase}"`);
+  }
+  const isIpv4 = /^\d{1,3}(\.\d{1,3}){3}$/.test(host);
+  const isIpv6 = host.startsWith("[");
+  if (isIpv4 || isIpv6) {
+    throw new Error(
+      `Die ERP-Schnittstelle ist über eine reine IP-Adresse (${host}) hinterlegt. ` +
+        "Der Server-Ausgang blockiert direkte IP-Aufrufe (Fehlercode 1003). " +
+        "Bitte in den ERP-Einstellungen einen Hostnamen (z. B. erp.example.de) statt der IP eintragen.",
+    );
+  }
+}
+
 async function getJwt(s: ErpSettings): Promise<string> {
+  assertRoutableBase(s.api_base);
   const res = await fetch(`${s.api_base.replace(/\/$/, "")}/login`, {
+
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username: s.api_user, token: s.api_token }),
