@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   Boxes, Nfc, LogOut, ShieldCheck, Loader2, ScanLine, ArrowLeft,
   ArrowDownToLine, ArrowUpFromLine, CheckCircle2, PenLine, AlertTriangle, Camera,
+  Trash2, Car, Building2, Plus, Minus, ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SignatureField } from "@/components/signature-field";
 import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
 import {
-  kioskTransponderLogin, kioskFindArtikel, kioskBuchen,
+  kioskTransponderLogin, kioskFindArtikel, kioskBuchenBatch,
   type LagerKioskPerson, type LagerKioskArtikel,
 } from "@/lib/lager-kiosk.functions";
 
@@ -147,27 +148,29 @@ function StationLogin({ onLogin }: { onLogin: (p: LagerKioskPerson) => void }) {
   );
 }
 
-type Step = "scan" | "richtung" | "menge" | "signatur" | "fertig";
+type Step = "scan" | "ziel" | "checkout" | "fertig";
 
 const STEP_LABEL: Record<Step, string> = {
   scan: "1. Artikel scannen",
-  richtung: "2. Ein- oder Ausbuchen",
-  menge: "3. Menge erfassen",
-  signatur: "4. Unterschrift (optional)",
+  ziel: "2. Auto oder Projekt",
+  checkout: "3. Checkout",
   fertig: "Fertig",
 };
 
+type CartItem = { artikel: LagerKioskArtikel; menge: number };
+
 function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout: () => void }) {
   const findArtikel = useServerFn(kioskFindArtikel);
-  const buchen = useServerFn(kioskBuchen);
+  const buchenBatch = useServerFn(kioskBuchenBatch);
 
   const [step, setStep] = useState<Step>("scan");
-  const [artikel, setArtikel] = useState<LagerKioskArtikel | null>(null);
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [ziel, setZiel] = useState<"auto" | "projekt" | null>(null);
+  const [zielBezeichnung, setZielBezeichnung] = useState("");
   const [richtung, setRichtung] = useState<"eingang" | "ausgang">("ausgang");
-  const [menge, setMenge] = useState("1");
   const [notiz, setNotiz] = useState("");
   const [signatur, setSignatur] = useState<string | null>(null);
-  const [result, setResult] = useState<{ bestand: number; bezeichnung: string; einheit: string } | null>(null);
+  const [result, setResult] = useState<{ anzahl: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scanRef = useRef<HTMLInputElement>(null);
@@ -177,8 +180,16 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   useEffect(() => { if (step === "scan") setTimeout(() => scanRef.current?.focus(), 80); }, [step]);
 
   function resetFlow() {
-    setArtikel(null); setRichtung("ausgang"); setMenge("1"); setNotiz("");
-    setSignatur(null); setResult(null); setError(null); setCode(""); setStep("scan");
+    setCart([]); setZiel(null); setZielBezeichnung(""); setRichtung("ausgang");
+    setNotiz(""); setSignatur(null); setResult(null); setError(null); setCode(""); setStep("scan");
+  }
+
+  function setMenge(artikelId: string, menge: number) {
+    setCart((prev) => prev.map((it) => (it.artikel.id === artikelId ? { ...it, menge: Math.max(1, menge) } : it)));
+  }
+
+  function removeItem(artikelId: string) {
+    setCart((prev) => prev.filter((it) => it.artikel.id !== artikelId));
   }
 
   async function handleScan(value: string) {
@@ -187,8 +198,15 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
     setBusy(true); setError(null);
     try {
       const res = await findArtikel({ data: { person_id: person.id, barcode: v } } as any);
-      setArtikel(res.artikel);
-      setStep("richtung");
+      const found = res.artikel;
+      setCart((prev) => {
+        const exists = prev.find((it) => it.artikel.id === found.id);
+        if (exists) return prev.map((it) => (it.artikel.id === found.id ? { ...it, menge: it.menge + 1 } : it));
+        return [...prev, { artikel: found, menge: 1 }];
+      });
+      setCode("");
+      toast.success(`${found.bezeichnung} hinzugefügt`);
+      scanRef.current?.focus();
     } catch (e: any) {
       setError(e?.message ?? "Artikel nicht gefunden");
       setCode("");
@@ -197,24 +215,27 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   }
 
   async function handleBuchen() {
-    if (!artikel) return;
+    if (cart.length === 0 || !ziel) return;
     setBusy(true); setError(null);
     try {
-      const res = await buchen({
+      const res = await buchenBatch({
         data: {
-          person_id: person.id, artikel_id: artikel.id, richtung,
-          menge: Number(menge), signatur, notiz: notiz.trim() || null,
+          person_id: person.id,
+          richtung,
+          ziel,
+          ziel_bezeichnung: zielBezeichnung.trim() || null,
+          signatur,
+          notiz: notiz.trim() || null,
+          positionen: cart.map((it) => ({ artikel_id: it.artikel.id, menge: it.menge })),
         },
       } as any);
-      setResult(res);
+      setResult({ anzahl: res.anzahl });
       setStep("fertig");
       toast.success("Buchung gespeichert");
     } catch (e: any) {
       setError(e?.message ?? "Buchung fehlgeschlagen");
     } finally { setBusy(false); }
   }
-
-  const mengeValid = Number(menge) > 0 && Number.isFinite(Number(menge));
 
   return (
     <main className="min-h-screen bg-background p-6 lg:p-8 space-y-6">
@@ -246,128 +267,135 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           )}
 
           {step === "scan" && (
-            <form onSubmit={(e) => { e.preventDefault(); handleScan(code); }} className="space-y-4 text-center">
-              <div className="mx-auto size-14 rounded-2xl bg-primary/10 grid place-items-center">
-                <ScanLine className="size-7 text-primary" />
-              </div>
-              <p className="text-sm text-muted-foreground">Artikel-Barcode oder QR-Code scannen – mit Handscanner oder Kamera.</p>
-              <div className="flex items-center gap-2">
-                <Input
-                  ref={scanRef}
-                  value={code}
-                  autoComplete="off"
-                  placeholder="Barcode scannen …"
-                  className="h-14 flex-1 text-center font-mono text-lg tracking-widest"
-                  onChange={(e) => { setCode(e.target.value); setError(null); }}
-                  onBlur={() => { if (!camOpen) setTimeout(() => { if (!camOpen) scanRef.current?.focus(); }, 50); }}
-                  disabled={busy}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="size-14 shrink-0"
-                  aria-label="Mit Kamera scannen"
-                  title="Mit Kamera scannen"
-                  onClick={() => setCamOpen(true)}
-                  disabled={busy}
-                >
-                  <Camera className="size-6" />
+            <div className="space-y-5">
+              <form onSubmit={(e) => { e.preventDefault(); handleScan(code); }} className="space-y-4 text-center">
+                <div className="mx-auto size-14 rounded-2xl bg-primary/10 grid place-items-center">
+                  <ScanLine className="size-7 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Mehrere Artikel nacheinander scannen – mit Handscanner oder Kamera.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Input
+                    ref={scanRef}
+                    value={code}
+                    autoComplete="off"
+                    placeholder="Barcode scannen …"
+                    className="h-14 flex-1 text-center font-mono text-lg tracking-widest"
+                    onChange={(e) => { setCode(e.target.value); setError(null); }}
+                    onBlur={() => { if (!camOpen) setTimeout(() => { if (!camOpen) scanRef.current?.focus(); }, 50); }}
+                    disabled={busy}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="size-14 shrink-0"
+                    aria-label="Mit Kamera scannen"
+                    title="Mit Kamera scannen"
+                    onClick={() => setCamOpen(true)}
+                    disabled={busy}
+                  >
+                    <Camera className="size-6" />
+                  </Button>
+                </div>
+                <Button type="submit" className="w-full h-12" disabled={busy || !code.trim()}>
+                  {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Zur Liste hinzufügen
                 </Button>
-              </div>
-              <Button type="submit" className="w-full h-12" disabled={busy || !code.trim()}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <ScanLine className="size-4" />} Artikel suchen
+                <BarcodeScannerDialog
+                  open={camOpen}
+                  onOpenChange={setCamOpen}
+                  onDetected={(value) => { setCode(value); handleScan(value); }}
+                />
+              </form>
+
+              <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
+
+              <Button className="w-full h-12" disabled={cart.length === 0} onClick={() => setStep("ziel")}>
+                Weiter ({cart.length} {cart.length === 1 ? "Artikel" : "Artikel"})
               </Button>
-              <BarcodeScannerDialog
-                open={camOpen}
-                onOpenChange={setCamOpen}
-                onDetected={(value) => { setCode(value); handleScan(value); }}
-              />
-            </form>
+            </div>
           )}
 
-          {step !== "scan" && artikel && (
-            <div className="mb-5 rounded-xl border border-border bg-muted/40 px-4 py-3">
-              <div className="font-semibold">{artikel.bezeichnung}</div>
-              <div className="text-xs text-muted-foreground font-mono mt-0.5">{artikel.barcode}</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Bestand: <span className="font-medium text-foreground">{artikel.bestand} {artikel.einheit}</span>
-                {artikel.lagerort ? ` · ${artikel.lagerort}` : ""}
+          {step === "ziel" && (
+            <div className="space-y-5">
+              <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button
+                  variant={ziel === "auto" ? "default" : "outline"}
+                  className="h-24 text-base flex-col gap-1"
+                  onClick={() => setZiel("auto")}
+                >
+                  <Car className="size-6" /> Auto
+                </Button>
+                <Button
+                  variant={ziel === "projekt" ? "default" : "outline"}
+                  className="h-24 text-base flex-col gap-1"
+                  onClick={() => setZiel("projekt")}
+                >
+                  <Building2 className="size-6" /> Projekt
+                </Button>
+              </div>
+              {ziel && (
+                <div>
+                  <Label>{ziel === "auto" ? "Fahrzeug (optional)" : "Projekt (optional)"}</Label>
+                  <Input
+                    value={zielBezeichnung}
+                    onChange={(e) => setZielBezeichnung(e.target.value)}
+                    placeholder={ziel === "auto" ? "z. B. HH-AD 123" : "z. B. Objekt Musterstraße"}
+                    className="h-11"
+                  />
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" onClick={() => setStep("scan")}>
+                  <ArrowLeft className="size-4" /> Zurück
+                </Button>
+                <Button className="flex-1" disabled={!ziel} onClick={() => setStep("checkout")}>Weiter zum Checkout</Button>
               </div>
             </div>
           )}
 
-          {step === "richtung" && (
-            <div className="space-y-3">
+          {step === "checkout" && (
+            <div className="space-y-5">
+              <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} readOnly />
+              <Badge variant="secondary" className="text-sm">
+                {ziel === "auto" ? "Auto" : "Projekt"}{zielBezeichnung.trim() ? ` · ${zielBezeichnung.trim()}` : ""}
+              </Badge>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Button
                   variant={richtung === "eingang" ? "default" : "outline"}
                   className="h-20 text-base"
-                  onClick={() => { setRichtung("eingang"); setStep("menge"); }}
+                  onClick={() => setRichtung("eingang")}
                 >
-                  <ArrowDownToLine className="size-5" /> Einbuchen
+                  <ArrowDownToLine className="size-5" /> Eingang
                 </Button>
                 <Button
                   variant={richtung === "ausgang" ? "default" : "outline"}
                   className="h-20 text-base"
-                  onClick={() => { setRichtung("ausgang"); setStep("menge"); }}
+                  onClick={() => setRichtung("ausgang")}
                 >
-                  <ArrowUpFromLine className="size-5" /> Ausbuchen
+                  <ArrowUpFromLine className="size-5" /> Ausgang
                 </Button>
               </div>
-              <Button variant="ghost" className="w-full" onClick={resetFlow}>
-                <ArrowLeft className="size-4" /> Zurück zum Scannen
-              </Button>
-            </div>
-          )}
 
-          {step === "menge" && (
-            <div className="space-y-4">
-              <Badge variant="secondary" className="text-sm">
-                {richtung === "eingang" ? "Einbuchen" : "Ausbuchen"}
-              </Badge>
-              <div>
-                <Label>Menge</Label>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="size-12 text-lg" onClick={() => setMenge(String(Math.max(1, Number(menge || 1) - 1)))}>–</Button>
-                  <Input
-                    type="number"
-                    min={1}
-                    className="h-12 text-center text-lg"
-                    value={menge}
-                    onChange={(e) => setMenge(e.target.value)}
-                  />
-                  <Button variant="outline" size="icon" className="size-12 text-lg" onClick={() => setMenge(String(Number(menge || 0) + 1))}>+</Button>
-                </div>
-              </div>
               <div>
                 <Label>Notiz (optional)</Label>
-                <Textarea rows={2} value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="z. B. Auftrag oder Fahrzeug" />
+                <Textarea rows={2} value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="z. B. Auftragsnummer" />
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setStep("richtung")}>
-                  <ArrowLeft className="size-4" /> Zurück
-                </Button>
-                <Button className="flex-1" disabled={!mengeValid} onClick={() => setStep("signatur")}>Weiter</Button>
-              </div>
-            </div>
-          )}
 
-          {step === "signatur" && (
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground flex items-center gap-2">
-                <PenLine className="size-4" /> Unterschrift ist optional – die Buchung geht auch ohne.
-              </p>
-              <SignatureField
-                label="Unterschrift"
-                value={signatur}
-                onChange={(v) => setSignatur(v)}
-                who={person.name}
-              />
+              <div>
+                <p className="text-sm text-muted-foreground flex items-center gap-2 mb-2">
+                  <PenLine className="size-4" /> Unterschrift ist optional – die Buchung geht auch ohne.
+                </p>
+                <SignatureField label="Unterschrift" value={signatur} onChange={(v) => setSignatur(v)} who={person.name} />
+              </div>
+
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setStep("menge")}>
+                <Button variant="outline" className="flex-1" onClick={() => setStep("ziel")}>
                   <ArrowLeft className="size-4" /> Zurück
                 </Button>
-                <Button className="flex-1" onClick={handleBuchen} disabled={busy}>
+                <Button className="flex-1" onClick={handleBuchen} disabled={busy || cart.length === 0}>
                   {busy ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />} Buchung abschließen
                 </Button>
               </div>
@@ -382,16 +410,71 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
               <div>
                 <div className="text-lg font-semibold">Buchung gespeichert</div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {result.bezeichnung} · neuer Bestand: <span className="font-medium text-foreground">{result.bestand} {result.einheit}</span>
+                  {result.anzahl} {result.anzahl === 1 ? "Artikel" : "Artikel"} gebucht.
                 </p>
               </div>
               <Button className="w-full h-12" onClick={resetFlow}>
-                <ScanLine className="size-4" /> Nächsten Artikel scannen
+                <ScanLine className="size-4" /> Neue Buchung starten
               </Button>
             </div>
           )}
         </div>
       </div>
     </main>
+  );
+}
+
+function CartList({
+  cart, onMenge, onRemove, readOnly = false,
+}: {
+  cart: CartItem[];
+  onMenge: (id: string, menge: number) => void;
+  onRemove: (id: string) => void;
+  readOnly?: boolean;
+}) {
+  if (cart.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+        Noch keine Artikel gescannt.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <div className="text-sm font-medium flex items-center gap-2">
+        <ListChecks className="size-4" /> Gescannte Artikel ({cart.length})
+      </div>
+      {cart.map((it) => (
+        <div key={it.artikel.id} className="rounded-xl border border-border bg-muted/40 px-4 py-3 flex flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold truncate">{it.artikel.bezeichnung}</div>
+            <div className="text-xs text-muted-foreground font-mono">{it.artikel.barcode}</div>
+            <div className="text-xs text-muted-foreground">Bestand: {it.artikel.bestand} {it.artikel.einheit}</div>
+          </div>
+          {readOnly ? (
+            <Badge variant="secondary">{it.menge} {it.artikel.einheit}</Badge>
+          ) : (
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="icon" className="size-9" aria-label="Menge verringern" onClick={() => onMenge(it.artikel.id, it.menge - 1)}>
+                <Minus className="size-4" />
+              </Button>
+              <Input
+                type="number"
+                min={1}
+                className="h-9 w-16 text-center"
+                value={it.menge}
+                onChange={(e) => onMenge(it.artikel.id, Number(e.target.value) || 1)}
+              />
+              <Button variant="outline" size="icon" className="size-9" aria-label="Menge erhöhen" onClick={() => onMenge(it.artikel.id, it.menge + 1)}>
+                <Plus className="size-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="size-9 text-destructive" aria-label="Artikel entfernen" onClick={() => onRemove(it.artikel.id)}>
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
