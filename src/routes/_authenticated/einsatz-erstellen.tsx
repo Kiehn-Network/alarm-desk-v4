@@ -149,7 +149,7 @@ function EinsatzErstellenPage() {
     if (zielMode === "partner" && !partnerId) { toast.error("Bitte einen Partner wählen"); return; }
     if (zielMode === "sub" && !subName.trim()) { toast.error("Bitte Sub-Unternehmen angeben"); return; }
     if (activeTyp === "av_einsatz" && !alarmAm) {
-      toast.error("Bitte die Alarmzeit eintragen"); return;
+      toast.error("Bitte die Alarmierungszeit eintragen"); return;
     }
     if (hausnotrufEnabled && einsatzTyp === "hausnotruf" && providerOptions.length > 0 && !hausnotrufProvider) {
       toast.error("Bitte einen Hausnotruf-Anbieter wählen"); return;
@@ -378,7 +378,7 @@ function EinsatzErstellenPage() {
 
       {picked && activeTyp === "av_einsatz" && (
         <section className="rounded-xl border border-border bg-card p-6 space-y-3" style={{ boxShadow: "var(--shadow-card)" }}>
-          <h2 className="font-semibold">Alarmzeit</h2>
+          <h2 className="font-semibold">Alarmierungszeit</h2>
           <p className="text-xs text-muted-foreground">
             Zeitpunkt, zu dem der Alarm eingegangen ist. Erscheint im Einsatzbericht.
           </p>
