@@ -228,6 +228,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
         return [...prev, { artikel: found, menge: 1 }];
       });
       toast.success(`${found.bezeichnung} hinzugefügt`);
+      setCode("");
       scanRef.current?.focus();
     } catch (e: any) {
       setError(e?.message ?? "Artikel nicht gefunden");
