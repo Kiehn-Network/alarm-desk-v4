@@ -568,9 +568,10 @@ function InventurTab() {
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
   }
 
-  function handlePrint() {
+  async function handlePrint() {
     const inv: any = (inventuren ?? []).find((i: any) => i.id === active);
     if (!inv) { toast.error("Keine Inventur ausgewählt."); return; }
+    const { downloadInventurPdf } = await import("@/lib/inventur-pdf");
     downloadInventurPdf({
       titel: inv.titel,
       gestartet_at: inv.gestartet_at,
