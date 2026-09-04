@@ -104,43 +104,43 @@ function StationLogin({ onLogin }: { onLogin: (p: LagerKioskPerson) => void }) {
   }
 
   return (
-    <main className="min-h-screen grid place-items-center bg-background p-6">
-      <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-border bg-card p-8 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
-          <div className="mx-auto size-16 rounded-2xl bg-primary/10 grid place-items-center">
-            <Nfc className="size-8 text-primary" />
+    <main className="min-h-screen grid place-items-center bg-background p-6 md:p-8">
+      <div className="w-full max-w-lg">
+        <div className="rounded-2xl border border-border bg-card p-8 md:p-10 text-center" style={{ boxShadow: "var(--shadow-card)" }}>
+          <div className="mx-auto size-20 rounded-2xl bg-primary/10 grid place-items-center">
+            <Nfc className="size-10 text-primary" />
           </div>
-          <h1 className="mt-5 text-2xl font-bold">Lager-Station</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="mt-6 text-3xl font-bold">Lager-Station</h1>
+          <p className="mt-2 text-base text-muted-foreground">
             Transponder an den Leser halten. Die Anmeldung erfolgt automatisch.
           </p>
 
-          <form className="mt-6 space-y-3 text-left" onSubmit={(e) => { e.preventDefault(); submit(code); }}>
-            <Label htmlFor="transponder">Transponder-Nummer</Label>
+          <form className="mt-8 space-y-4 text-left" onSubmit={(e) => { e.preventDefault(); submit(code); }}>
+            <Label htmlFor="transponder" className="text-base">Transponder-Nummer</Label>
             <Input
               id="transponder"
               ref={inputRef}
               value={code}
               autoComplete="off"
               placeholder="Transponder scannen …"
-              className="h-12 text-center font-mono text-lg tracking-widest"
+              className="h-16 text-center font-mono text-xl tracking-widest"
               onChange={(e) => { setCode(e.target.value); setError(null); }}
               onBlur={() => setTimeout(() => inputRef.current?.focus(), 50)}
               disabled={busy}
             />
-            <Button type="submit" className="w-full h-11" disabled={busy || !code.trim()}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
+            <Button type="submit" className="w-full h-14 text-base" disabled={busy || !code.trim()}>
+              {busy ? <Loader2 className="size-5 animate-spin" /> : <ShieldCheck className="size-5" />}
               Anmelden
             </Button>
           </form>
 
           {error && (
-            <div className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div className="mt-5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-base text-destructive">
               {error}
             </div>
           )}
         </div>
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="mt-5 text-center text-sm text-muted-foreground">
           Eigenständige Lager-Anmeldung – unabhängig vom AlarmDesk-Login.
         </p>
       </div>
@@ -152,7 +152,7 @@ type Step = "scan" | "ziel" | "checkout" | "fertig";
 
 const STEP_LABEL: Record<Step, string> = {
   scan: "1. Artikel scannen",
-  ziel: "2. Auto oder Projekt",
+  ziel: "2. Ziel wählen",
   checkout: "3. Checkout",
   fertig: "Fertig",
 };
@@ -263,14 +263,14 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   }
 
   return (
-    <main className="min-h-screen bg-background p-6 lg:p-8 space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="size-11 rounded-xl bg-primary/10 grid place-items-center">
-          <Boxes className="size-5 text-primary" />
+    <main className="min-h-screen bg-background p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="size-14 rounded-xl bg-primary/10 grid place-items-center shrink-0">
+          <Boxes className="size-7 text-primary" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold leading-tight">Lager</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-3xl font-bold leading-tight">Lager</h1>
+          <p className="text-base text-muted-foreground">
             Angemeldet als <span className="font-medium text-foreground">{person.name}</span>
             {person.personalnummer ? ` · Pers.-Nr. ${person.personalnummer}` : ""}
             {person.domain_name ? ` · ${person.domain_name}` : ""}
@@ -278,10 +278,10 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-3 text-sm font-medium text-muted-foreground">{STEP_LABEL[step]}</div>
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-3 text-base font-medium text-muted-foreground">{STEP_LABEL[step]}</div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 lg:p-8" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="rounded-2xl border border-border bg-card p-6 md:p-8 lg:p-10" style={{ boxShadow: "var(--shadow-card)" }}>
           {error && (
             <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center gap-2">
               <AlertTriangle className="size-4" /> {error}
@@ -289,21 +289,21 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           )}
 
           {step === "scan" && (
-            <div className="space-y-5">
-              <form onSubmit={(e) => { e.preventDefault(); handleScan(code); }} className="space-y-4 text-center">
-                <div className="mx-auto size-14 rounded-2xl bg-primary/10 grid place-items-center">
-                  <ScanLine className="size-7 text-primary" />
+            <div className="space-y-6">
+              <form onSubmit={(e) => { e.preventDefault(); handleScan(code); }} className="space-y-5 text-center">
+                <div className="mx-auto size-16 rounded-2xl bg-primary/10 grid place-items-center">
+                  <ScanLine className="size-8 text-primary" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base text-muted-foreground">
                   Mehrere Artikel nacheinander scannen – mit Handscanner oder Kamera.
                 </p>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <Input
                     ref={scanRef}
                     value={code}
                     autoComplete="off"
                     placeholder="Barcode scannen …"
-                    className="h-14 flex-1 text-center font-mono text-lg tracking-widest"
+                    className="h-16 flex-1 text-center font-mono text-xl tracking-widest"
                     onChange={(e) => { setCode(e.target.value); setError(null); }}
                     onBlur={() => { if (!camOpen) setTimeout(() => { if (!camOpen) scanRef.current?.focus(); }, 50); }}
                     disabled={busy}
@@ -311,17 +311,17 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                   <Button
                     type="button"
                     variant="outline"
-                    className="size-14 shrink-0"
+                    className="size-16 shrink-0"
                     aria-label="Mit Kamera scannen"
                     title="Mit Kamera scannen"
                     onClick={() => setCamOpen(true)}
                     disabled={busy}
                   >
-                    <Camera className="size-6" />
+                    <Camera className="size-7" />
                   </Button>
                 </div>
-                <Button type="submit" className="w-full h-12" disabled={busy || !code.trim()}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Zur Liste hinzufügen
+                <Button type="submit" className="w-full h-14 text-base" disabled={busy || !code.trim()}>
+                  {busy ? <Loader2 className="size-5 animate-spin" /> : <Plus className="size-5" />} Zur Liste hinzufügen
                 </Button>
                 <BarcodeScannerDialog
                   open={camOpen}
@@ -333,17 +333,17 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
               <Button
                 type="button"
                 variant={keyboardOpen ? "default" : "outline"}
-                className="w-full h-12"
+                className="w-full h-14 text-base"
                 onClick={() => setKeyboardOpen((v) => !v)}
               >
                 {keyboardOpen ? "Tastatur ausblenden" : "Tastatur einblenden"}
               </Button>
 
               {keyboardOpen && (
-                <div className="rounded-xl border border-border bg-muted/30 p-3">
-                  <div className="mb-2 flex items-center justify-between text-xs font-medium text-muted-foreground">
-                    <span className="flex items-center gap-1"><ScanLine className="size-3" /> Virtuelle Tastatur</span>
-                    <span className="text-[10px] uppercase tracking-wide">Touch</span>
+                <div className="rounded-xl border border-border bg-muted/30 p-4">
+                  <div className="mb-3 flex items-center justify-between text-sm font-medium text-muted-foreground">
+                    <span className="flex items-center gap-1"><ScanLine className="size-4" /> Virtuelle Tastatur</span>
+                    <span className="text-xs uppercase tracking-wide">Touch</span>
                   </div>
                   <VirtualKeyboard
                     value={code}
@@ -356,61 +356,61 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
 
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
 
-              <Button className="w-full h-12" disabled={cart.length === 0} onClick={() => setStep("ziel")}>
+              <Button className="w-full h-14 text-base" disabled={cart.length === 0} onClick={() => setStep("ziel")}>
                 Weiter ({cart.length} {cart.length === 1 ? "Artikel" : "Artikel"})
               </Button>
             </div>
           )}
 
           {step === "ziel" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Button
                   variant={ziel === "auto" ? "default" : "outline"}
-                  className="h-24 text-base flex-col gap-1"
+                  className="h-28 text-lg flex-col gap-2"
                   onClick={() => setZiel("auto")}
                 >
-                  <Car className="size-6" /> Auto
+                  <Car className="size-8" /> Auto
                 </Button>
                 <Button
                   variant={ziel === "projekt" ? "default" : "outline"}
-                  className="h-24 text-base flex-col gap-1"
+                  className="h-28 text-lg flex-col gap-2"
                   onClick={() => setZiel("projekt")}
                 >
-                  <Building2 className="size-6" /> Projekt
+                  <Building2 className="size-8" /> Projekt
                 </Button>
                 <Button
                   variant={ziel === "lager" ? "default" : "outline"}
-                  className="h-24 text-base flex-col gap-1"
+                  className="h-28 text-lg flex-col gap-2"
                   onClick={() => setZiel("lager")}
                 >
-                  <Boxes className="size-6" /> Lagerbefüllung
+                  <Boxes className="size-8" /> Lagerbefüllung
                 </Button>
               </div>
               {ziel === "auto" && (
-                <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
-                  <Label>Fahrzeug-QR-Code scannen</Label>
-                  <form onSubmit={(e) => { e.preventDefault(); handleFahrzeugScan(fzCode); }} className="flex items-center gap-2">
+                <div className="space-y-3 rounded-xl border border-border bg-muted/40 p-5">
+                  <Label className="text-base">Fahrzeug-QR-Code scannen</Label>
+                  <form onSubmit={(e) => { e.preventDefault(); handleFahrzeugScan(fzCode); }} className="flex items-center gap-3">
                     <Input
                       ref={fzRef}
                       value={fzCode}
                       autoComplete="off"
                       placeholder="QR-Code am Fahrzeug scannen …"
-                      className="h-12 flex-1 text-center font-mono tracking-widest"
+                      className="h-14 flex-1 text-center font-mono text-lg tracking-widest"
                       onChange={(e) => { setFzCode(e.target.value); setError(null); }}
                       disabled={fzBusy}
                     />
                     <Button
                       type="button"
                       variant="outline"
-                      className="size-12 shrink-0"
+                      className="size-14 shrink-0"
                       aria-label="Fahrzeug mit Kamera scannen"
                       title="Fahrzeug mit Kamera scannen"
                       onClick={() => setFzCamOpen(true)}
                       disabled={fzBusy}
                     >
-                      {fzBusy ? <Loader2 className="size-5 animate-spin" /> : <Camera className="size-5" />}
+                      {fzBusy ? <Loader2 className="size-6 animate-spin" /> : <Camera className="size-6" />}
                     </Button>
                   </form>
                   <BarcodeScannerDialog
@@ -422,94 +422,94 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
               )}
               {ziel && ziel !== "lager" && (
                 <div>
-                  <Label>{ziel === "auto" ? "Fahrzeug" : "Projekt (optional)"}</Label>
+                  <Label className="text-base">{ziel === "auto" ? "Fahrzeug" : "Projekt (optional)"}</Label>
                   <Input
                     value={zielBezeichnung}
                     onChange={(e) => setZielBezeichnung(e.target.value)}
                     placeholder={ziel === "auto" ? "z. B. HH-AD 123" : "z. B. Objekt Musterstraße"}
-                    className="h-11"
+                    className="h-14 text-base"
                   />
                 </div>
               )}
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setStep("scan")}>
-                  <ArrowLeft className="size-4" /> Zurück
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 h-14 text-base" onClick={() => setStep("scan")}>
+                  <ArrowLeft className="size-5" /> Zurück
                 </Button>
-                <Button className="flex-1" disabled={!ziel} onClick={() => setStep("checkout")}>Weiter zum Checkout</Button>
+                <Button className="flex-1 h-14 text-base" disabled={!ziel} onClick={() => setStep("checkout")}>Weiter zum Checkout</Button>
               </div>
             </div>
           )}
 
           {step === "checkout" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} readOnly />
-              <Badge variant="secondary" className="text-sm">
+              <Badge variant="secondary" className="text-base px-3 py-1">
                 {ziel === "lager" ? "Lagerbefüllung" : ziel === "auto" ? "Auto" : "Projekt"}
                 {ziel !== "lager" && zielBezeichnung.trim() ? ` · ${zielBezeichnung.trim()}` : ""}
               </Badge>
 
               {ziel === "lager" ? (
-                <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border bg-muted/40 px-5 py-4 text-base text-muted-foreground">
                   Bei Lagerbefüllung wird automatisch ein <strong className="text-foreground">Wareneingang</strong> gebucht.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Button
                     variant={richtung === "eingang" ? "default" : "outline"}
-                    className="h-20 text-base"
+                    className="h-24 text-lg"
                     onClick={() => setRichtung("eingang")}
                   >
-                    <ArrowDownToLine className="size-5" /> Eingang
+                    <ArrowDownToLine className="size-6" /> Eingang
                   </Button>
                   <Button
                     variant={richtung === "ausgang" ? "default" : "outline"}
-                    className="h-20 text-base"
+                    className="h-24 text-lg"
                     onClick={() => setRichtung("ausgang")}
                   >
-                    <ArrowUpFromLine className="size-5" /> Ausgang
+                    <ArrowUpFromLine className="size-6" /> Ausgang
                   </Button>
                 </div>
               )}
 
               <div>
-                <Label>Notiz (optional)</Label>
-                <Textarea rows={2} value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="z. B. Auftragsnummer" />
+                <Label className="text-base">Notiz (optional)</Label>
+                <Textarea rows={3} value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="z. B. Auftragsnummer" className="text-base" />
               </div>
 
               <div>
-                <p className="text-sm text-muted-foreground flex items-center gap-2 mb-2">
-                  <PenLine className="size-4" /> Unterschrift ist optional – die Buchung geht auch ohne.
+                <p className="text-base text-muted-foreground flex items-center gap-2 mb-3">
+                  <PenLine className="size-5" /> Unterschrift ist optional – die Buchung geht auch ohne.
                 </p>
                 <SignatureField label="Unterschrift" value={signatur} onChange={(v) => setSignatur(v)} who={person.name} />
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setStep("ziel")}>
-                  <ArrowLeft className="size-4" /> Zurück
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 h-14 text-base" onClick={() => setStep("ziel")}>
+                  <ArrowLeft className="size-5" /> Zurück
                 </Button>
-                <Button className="flex-1" onClick={handleBuchen} disabled={busy || cart.length === 0}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />} Buchung abschließen
+                <Button className="flex-1 h-14 text-base" onClick={handleBuchen} disabled={busy || cart.length === 0}>
+                  {busy ? <Loader2 className="size-5 animate-spin" /> : <CheckCircle2 className="size-5" />} Buchung abschließen
                 </Button>
               </div>
             </div>
           )}
 
           {step === "fertig" && result && (
-            <div className="space-y-4 text-center">
-              <div className="mx-auto size-14 rounded-full bg-emerald-500/10 grid place-items-center">
-                <CheckCircle2 className="size-7 text-emerald-500" />
+            <div className="space-y-5 text-center">
+              <div className="mx-auto size-16 rounded-full bg-emerald-500/10 grid place-items-center">
+                <CheckCircle2 className="size-8 text-emerald-500" />
               </div>
               <div>
-                <div className="text-lg font-semibold">Buchung gespeichert</div>
-                <p className="text-sm text-muted-foreground mt-1">
+                <div className="text-xl font-semibold">Buchung gespeichert</div>
+                <p className="text-base text-muted-foreground mt-1">
                   {result.anzahl} {result.anzahl === 1 ? "Artikel" : "Artikel"} gebucht.
                 </p>
               </div>
-              <Button className="w-full h-12" onClick={resetFlow}>
-                <ScanLine className="size-4" /> Neue Buchung starten
+              <Button className="w-full h-14 text-base" onClick={resetFlow}>
+                <ScanLine className="size-5" /> Neue Buchung starten
               </Button>
-              <Button variant="outline" className="w-full h-12" onClick={onLogout}>
-                <LogOut className="size-4" /> Abmelden
+              <Button variant="outline" className="w-full h-14 text-base" onClick={onLogout}>
+                <LogOut className="size-5" /> Abmelden
               </Button>
             </div>
           )}
@@ -543,28 +543,28 @@ function VirtualKeyboard({
   }
 
   return (
-    <div className="space-y-2">
-      <div className="space-y-1.5">
-        <div className="flex gap-1.5 justify-center">
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <div className="flex gap-2 justify-center">
           {numberRow.map((ch) => (
             <button
               key={ch}
               type="button"
               onClick={() => append(ch)}
-              className="h-14 min-w-[2.4rem] flex-1 max-w-[3.6rem] rounded-lg bg-card border border-border text-lg font-bold shadow-sm active:scale-95 active:bg-primary/10 transition"
+              className="h-16 min-w-[2.6rem] flex-1 max-w-[4rem] rounded-xl bg-card border border-border text-xl font-bold shadow-sm active:scale-95 active:bg-primary/10 transition"
             >
               {ch}
             </button>
           ))}
         </div>
         {letterRows.map((row, ri) => (
-          <div key={ri} className="flex gap-1.5 justify-center">
+          <div key={ri} className="flex gap-2 justify-center">
             {row.map((ch) => (
               <button
                 key={ch}
                 type="button"
                 onClick={() => append(ch)}
-                className="h-11 min-w-[2.1rem] flex-1 max-w-[3.2rem] rounded-lg bg-card border border-border text-sm font-semibold shadow-sm active:scale-95 active:bg-primary/10 transition"
+                className="h-14 min-w-[2.4rem] flex-1 max-w-[3.6rem] rounded-xl bg-card border border-border text-base font-semibold shadow-sm active:scale-95 active:bg-primary/10 transition"
               >
                 {ch === " " ? "␣" : ch}
               </button>
@@ -572,25 +572,25 @@ function VirtualKeyboard({
           </div>
         ))}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-3">
         <button
           type="button"
           onClick={backspace}
-          className="h-12 flex-1 rounded-lg bg-muted border border-border text-sm font-semibold active:scale-95 transition"
+          className="h-14 flex-1 rounded-xl bg-muted border border-border text-base font-semibold active:scale-95 transition"
         >
           ⌫ Löschen
         </button>
         <button
           type="button"
           onClick={onClear}
-          className="h-12 flex-1 rounded-lg bg-muted border border-border text-sm font-semibold active:scale-95 transition"
+          className="h-14 flex-1 rounded-xl bg-muted border border-border text-base font-semibold active:scale-95 transition"
         >
           Leeren
         </button>
         <button
           type="button"
           onClick={onSubmit}
-          className="h-12 flex-[1.5] rounded-lg bg-primary text-primary-foreground text-sm font-semibold shadow active:scale-95 transition"
+          className="h-14 flex-[1.5] rounded-xl bg-primary text-primary-foreground text-base font-semibold shadow active:scale-95 transition"
         >
           OK / Scan
         </button>
@@ -609,42 +609,42 @@ function CartList({
 }) {
   if (cart.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+      <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-base text-muted-foreground">
         Noch keine Artikel gescannt.
       </div>
     );
   }
   return (
-    <div className="space-y-2">
-      <div className="text-sm font-medium flex items-center gap-2">
-        <ListChecks className="size-4" /> Gescannte Artikel ({cart.length})
+    <div className="space-y-3">
+      <div className="text-base font-medium flex items-center gap-2">
+        <ListChecks className="size-5" /> Gescannte Artikel ({cart.length})
       </div>
       {cart.map((it) => (
-        <div key={it.artikel.id} className="rounded-xl border border-border bg-muted/40 px-4 py-3 flex flex-wrap items-center gap-3">
+        <div key={it.artikel.id} className="rounded-xl border border-border bg-muted/40 px-5 py-4 flex flex-wrap items-center gap-4">
           <div className="min-w-0 flex-1">
-            <div className="font-semibold truncate">{it.artikel.bezeichnung}</div>
-            <div className="text-xs text-muted-foreground font-mono">{it.artikel.barcode}</div>
-            <div className="text-xs text-muted-foreground">Bestand: {it.artikel.bestand} {it.artikel.einheit}</div>
+            <div className="text-base font-semibold truncate">{it.artikel.bezeichnung}</div>
+            <div className="text-sm text-muted-foreground font-mono">{it.artikel.barcode}</div>
+            <div className="text-sm text-muted-foreground">Bestand: {it.artikel.bestand} {it.artikel.einheit}</div>
           </div>
           {readOnly ? (
-            <Badge variant="secondary">{it.menge} {it.artikel.einheit}</Badge>
+            <Badge variant="secondary" className="text-base px-3 py-1">{it.menge} {it.artikel.einheit}</Badge>
           ) : (
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon" className="size-9" aria-label="Menge verringern" onClick={() => onMenge(it.artikel.id, it.menge - 1)}>
-                <Minus className="size-4" />
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" className="size-11" aria-label="Menge verringern" onClick={() => onMenge(it.artikel.id, it.menge - 1)}>
+                <Minus className="size-5" />
               </Button>
               <Input
                 type="number"
                 min={1}
-                className="h-9 w-16 text-center"
+                className="h-11 w-20 text-center text-base"
                 value={it.menge}
                 onChange={(e) => onMenge(it.artikel.id, Number(e.target.value) || 1)}
               />
-              <Button variant="outline" size="icon" className="size-9" aria-label="Menge erhöhen" onClick={() => onMenge(it.artikel.id, it.menge + 1)}>
-                <Plus className="size-4" />
+              <Button variant="outline" size="icon" className="size-11" aria-label="Menge erhöhen" onClick={() => onMenge(it.artikel.id, it.menge + 1)}>
+                <Plus className="size-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="size-9 text-destructive" aria-label="Artikel entfernen" onClick={() => onRemove(it.artikel.id)}>
-                <Trash2 className="size-4" />
+              <Button variant="ghost" size="icon" className="size-11 text-destructive" aria-label="Artikel entfernen" onClick={() => onRemove(it.artikel.id)}>
+                <Trash2 className="size-5" />
               </Button>
             </div>
           )}
