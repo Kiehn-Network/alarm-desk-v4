@@ -441,54 +441,54 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           )}
 
           {step === "checkout" && (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} readOnly />
-              <Badge variant="secondary" className="text-sm">
+              <Badge variant="secondary" className="text-base px-3 py-1">
                 {ziel === "lager" ? "Lagerbefüllung" : ziel === "auto" ? "Auto" : "Projekt"}
                 {ziel !== "lager" && zielBezeichnung.trim() ? ` · ${zielBezeichnung.trim()}` : ""}
               </Badge>
 
               {ziel === "lager" ? (
-                <div className="rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border bg-muted/40 px-5 py-4 text-base text-muted-foreground">
                   Bei Lagerbefüllung wird automatisch ein <strong className="text-foreground">Wareneingang</strong> gebucht.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Button
                     variant={richtung === "eingang" ? "default" : "outline"}
-                    className="h-20 text-base"
+                    className="h-24 text-lg"
                     onClick={() => setRichtung("eingang")}
                   >
-                    <ArrowDownToLine className="size-5" /> Eingang
+                    <ArrowDownToLine className="size-6" /> Eingang
                   </Button>
                   <Button
                     variant={richtung === "ausgang" ? "default" : "outline"}
-                    className="h-20 text-base"
+                    className="h-24 text-lg"
                     onClick={() => setRichtung("ausgang")}
                   >
-                    <ArrowUpFromLine className="size-5" /> Ausgang
+                    <ArrowUpFromLine className="size-6" /> Ausgang
                   </Button>
                 </div>
               )}
 
               <div>
-                <Label>Notiz (optional)</Label>
-                <Textarea rows={2} value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="z. B. Auftragsnummer" />
+                <Label className="text-base">Notiz (optional)</Label>
+                <Textarea rows={3} value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="z. B. Auftragsnummer" className="text-base" />
               </div>
 
               <div>
-                <p className="text-sm text-muted-foreground flex items-center gap-2 mb-2">
-                  <PenLine className="size-4" /> Unterschrift ist optional – die Buchung geht auch ohne.
+                <p className="text-base text-muted-foreground flex items-center gap-2 mb-3">
+                  <PenLine className="size-5" /> Unterschrift ist optional – die Buchung geht auch ohne.
                 </p>
                 <SignatureField label="Unterschrift" value={signatur} onChange={(v) => setSignatur(v)} who={person.name} />
               </div>
 
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => setStep("ziel")}>
-                  <ArrowLeft className="size-4" /> Zurück
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1 h-14 text-base" onClick={() => setStep("ziel")}>
+                  <ArrowLeft className="size-5" /> Zurück
                 </Button>
-                <Button className="flex-1" onClick={handleBuchen} disabled={busy || cart.length === 0}>
-                  {busy ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />} Buchung abschließen
+                <Button className="flex-1 h-14 text-base" onClick={handleBuchen} disabled={busy || cart.length === 0}>
+                  {busy ? <Loader2 className="size-5 animate-spin" /> : <CheckCircle2 className="size-5" />} Buchung abschließen
                 </Button>
               </div>
             </div>
