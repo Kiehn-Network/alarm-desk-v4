@@ -357,9 +357,41 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                   <Building2 className="size-6" /> Projekt
                 </Button>
               </div>
+              {ziel === "auto" && (
+                <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
+                  <Label>Fahrzeug-QR-Code scannen</Label>
+                  <form onSubmit={(e) => { e.preventDefault(); handleFahrzeugScan(fzCode); }} className="flex items-center gap-2">
+                    <Input
+                      ref={fzRef}
+                      value={fzCode}
+                      autoComplete="off"
+                      placeholder="QR-Code am Fahrzeug scannen …"
+                      className="h-12 flex-1 text-center font-mono tracking-widest"
+                      onChange={(e) => { setFzCode(e.target.value); setError(null); }}
+                      disabled={fzBusy}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="size-12 shrink-0"
+                      aria-label="Fahrzeug mit Kamera scannen"
+                      title="Fahrzeug mit Kamera scannen"
+                      onClick={() => setFzCamOpen(true)}
+                      disabled={fzBusy}
+                    >
+                      {fzBusy ? <Loader2 className="size-5 animate-spin" /> : <Camera className="size-5" />}
+                    </Button>
+                  </form>
+                  <BarcodeScannerDialog
+                    open={fzCamOpen}
+                    onOpenChange={setFzCamOpen}
+                    onDetected={(value) => { setFzCode(value); handleFahrzeugScan(value); }}
+                  />
+                </div>
+              )}
               {ziel && (
                 <div>
-                  <Label>{ziel === "auto" ? "Fahrzeug (optional)" : "Projekt (optional)"}</Label>
+                  <Label>{ziel === "auto" ? "Fahrzeug" : "Projekt (optional)"}</Label>
                   <Input
                     value={zielBezeichnung}
                     onChange={(e) => setZielBezeichnung(e.target.value)}
