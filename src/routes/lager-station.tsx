@@ -273,9 +273,6 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
             {person.domain_name ? ` · ${person.domain_name}` : ""}
           </p>
         </div>
-        <Button variant="outline" className="ml-auto" onClick={onLogout}>
-          <LogOut className="size-4" /> Abmelden
-        </Button>
       </div>
 
       <div className="mx-auto w-full max-w-2xl">
@@ -469,6 +466,9 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
               </div>
               <Button className="w-full h-12" onClick={resetFlow}>
                 <ScanLine className="size-4" /> Neue Buchung starten
+              </Button>
+              <Button variant="outline" className="w-full h-12" onClick={onLogout}>
+                <LogOut className="size-4" /> Abmelden
               </Button>
             </div>
           )}
