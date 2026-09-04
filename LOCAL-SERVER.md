@@ -98,7 +98,7 @@ Diese werden **nur vom Vite-Plugin** aufgelöst. Wrangler direkt auf
 Korrekter Ablauf: **immer über Vite starten** — entweder im Dev-Modus oder
 nach `vite build` über das fertige Worker-Bundle.
 
-### Variante A: Dev-Modus (empfohlen zum Testen)
+### Variante A: Dev-Modus (nur zum Testen, NICHT für den Dauerbetrieb)
 
 `@cloudflare/vite-plugin` führt SSR automatisch in `workerd` aus, sodass
 `cloudflare:sockets` & Co. funktionieren. `.env` wird von Vite automatisch
@@ -111,7 +111,17 @@ bun run dev -- --host 0.0.0.0 --port 8080
 
 Die App ist unter `http://<SERVER-IP>:8080` erreichbar.
 
-### Variante B: Produktions-Bundle
+> **Wichtig:** Im Dev-Modus lädt der Browser jede Seite als einzelne
+> Quelldatei nach (`/src/routes/....tsx?tsr-split=component`). Startet der
+> Dev-Server neu oder ändert sich eine Datei, sind diese Adressen ungültig
+> und es erscheint im Browser:
+> `Failed to fetch dynamically imported module: .../admin.tsx?tsr-split=component`.
+> Auch ein Reverse Proxy ohne WebSocket-Weiterleitung (HMR) verstärkt das.
+> Für den echten Betrieb deshalb immer **Variante B** (Produktions-Bundle)
+> verwenden. Als Sofort-Hilfe hilft ein Hard-Reload (Strg+Shift+R).
+
+### Variante B: Produktions-Bundle (empfohlen für den Server)
+
 
 1. Build erzeugen:
 
@@ -138,16 +148,22 @@ Die App ist unter `http://<SERVER-IP>:8080` erreichbar.
 ### Variante C: Als Dienst mit PM2
 
 ```bash
-sudo npm install -g pm2
+sudo npm install -g pm2 wrangler
 
-# Dev-Modus dauerhaft laufen lassen
+# Produktions-Bundle dauerhaft laufen lassen (empfohlen)
+NODE_OPTIONS="--max-old-space-size=2048" bun run build
+
 pm2 start --name alarmdesk \
   --interpreter none \
-  "$(which bun)" -- run dev -- --host 0.0.0.0 --port 8080
+  "$(which wrangler)" -- dev dist/_worker.js/index.js \
+  --ip 0.0.0.0 --port 8080 \
+  --compatibility-date 2025-09-24 \
+  --compatibility-flags nodejs_compat
 
 pm2 save
 pm2 startup
 ```
+
 
 ### Hinweise zu `.env`
 
