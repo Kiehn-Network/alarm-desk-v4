@@ -119,24 +119,16 @@ export function buildEinsatzPdf(e: any, fahrerName: string | null, zeiten?: PdfZ
   sep();
 
   const istAv = e.bericht_typ === "av_einsatz";
-  const zeilen: Array<[boolean, string, any]> = istAv
-    ? [
-        [true, "Alarmierung", e.assigned_at ?? e.created_at],
-        [true, "Startzeit (Erstellung)", e.created_at],
-        [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
-        [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
-        [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
-        [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
-        [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
-      ]
-    : [
-        [!!cfg.created, "Erstellt", e.created_at],
-        [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
-        [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
-        [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
-        [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
-        [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
-      ];
+  const zeilen: Array<[boolean, string, any]> = [
+    [!!cfg.alarmierung, "Alarmierung", e.assigned_at ?? e.created_at],
+    [!!cfg.created, istAv ? "Startzeit (Erstellung)" : "Erstellt", e.created_at],
+    [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
+    [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
+    [!!cfg.abfahrt_objekt, "Abfahrt Objekt", e.abfahrt_am],
+    [!!cfg.einsatz_ende, "Einsatz-Ende", e.einsatz_ende_am],
+    [!!cfg.abgeschlossen, "Abgeschlossen", e.abgeschlossen_am],
+  ];
+
   const visible = zeilen.filter(([on]) => on);
   if (visible.length > 0) {
     line("Zeiten", { size: 11, bold: true, gap: 16 });
