@@ -281,7 +281,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
       <div className="mx-auto w-full max-w-3xl">
         <div className="mb-3 text-base font-medium text-muted-foreground">{STEP_LABEL[step]}</div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 lg:p-8" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className="rounded-2xl border border-border bg-card p-6 md:p-8 lg:p-10" style={{ boxShadow: "var(--shadow-card)" }}>
           {error && (
             <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center gap-2">
               <AlertTriangle className="size-4" /> {error}
