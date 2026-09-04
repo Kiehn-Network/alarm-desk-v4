@@ -364,7 +364,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
           {step === "ziel" && (
             <div className="space-y-5">
               <CartList cart={cart} onMenge={setMenge} onRemove={removeItem} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Button
                   variant={ziel === "auto" ? "default" : "outline"}
                   className="h-24 text-base flex-col gap-1"
@@ -378,6 +378,13 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                   onClick={() => setZiel("projekt")}
                 >
                   <Building2 className="size-6" /> Projekt
+                </Button>
+                <Button
+                  variant={ziel === "lager" ? "default" : "outline"}
+                  className="h-24 text-base flex-col gap-1"
+                  onClick={() => setZiel("lager")}
+                >
+                  <Boxes className="size-6" /> Lagerbefüllung
                 </Button>
               </div>
               {ziel === "auto" && (
@@ -412,7 +419,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
                   />
                 </div>
               )}
-              {ziel && (
+              {ziel && ziel !== "lager" && (
                 <div>
                   <Label>{ziel === "auto" ? "Fahrzeug" : "Projekt (optional)"}</Label>
                   <Input
