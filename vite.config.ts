@@ -23,6 +23,9 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
+    server: {
+      allowedHosts: ["alarmdesk4.alarmzentrale-steinberg.de"],
+    },
     optimizeDeps: {
       exclude: ["worker-mailer"],
       esbuildOptions: {
