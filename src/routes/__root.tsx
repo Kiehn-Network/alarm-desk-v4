@@ -9,6 +9,20 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { supabase } from "@/integrations/supabase/client";
 
+const DYNAMIC_IMPORT_RELOAD_KEY = "alarmdesk:dynamic-import-reload";
+
+function reloadAfterStaleDynamicImport() {
+  const now = Date.now();
+  const lastReload = Number(sessionStorage.getItem(DYNAMIC_IMPORT_RELOAD_KEY) ?? "0");
+  if (now - lastReload < 15_000) return;
+  sessionStorage.setItem(DYNAMIC_IMPORT_RELOAD_KEY, String(now));
+  window.location.reload();
+}
+
+function isDynamicImportError(error: Error) {
+  return /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i.test(error.message);
+}
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -29,6 +43,9 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  useEffect(() => {
+    if (isDynamicImportError(error)) reloadAfterStaleDynamicImport();
+  }, [error]);
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -91,6 +108,14 @@ function RootComponent() {
     });
     return () => subscription.unsubscribe();
   }, [router, queryClient]);
+  useEffect(() => {
+    const handlePreloadError = (event: Event) => {
+      event.preventDefault();
+      reloadAfterStaleDynamicImport();
+    };
+    window.addEventListener("vite:preloadError", handlePreloadError);
+    return () => window.removeEventListener("vite:preloadError", handlePreloadError);
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />
