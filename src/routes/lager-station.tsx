@@ -161,6 +161,7 @@ type CartItem = { artikel: LagerKioskArtikel; menge: number };
 
 function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout: () => void }) {
   const findArtikel = useServerFn(kioskFindArtikel);
+  const findFahrzeug = useServerFn(kioskFindFahrzeug);
   const buchenBatch = useServerFn(kioskBuchenBatch);
 
   const [step, setStep] = useState<Step>("scan");
