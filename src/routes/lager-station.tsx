@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SignatureField } from "@/components/signature-field";
 import { BarcodeScannerDialog } from "@/components/barcode-scanner-dialog";
 import {
-  kioskTransponderLogin, kioskFindArtikel, kioskBuchenBatch,
+  kioskTransponderLogin, kioskFindArtikel, kioskBuchenBatch, kioskFindFahrzeug,
   type LagerKioskPerson, type LagerKioskArtikel,
 } from "@/lib/lager-kiosk.functions";
 
