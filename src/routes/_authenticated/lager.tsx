@@ -7,6 +7,7 @@ import { LagerArtikelPanel } from "@/components/admin/lager-artikel-panel";
 import { LagerBenutzerPanel } from "@/components/admin/lager-benutzer-panel";
 import { LagerAdminsPanel } from "@/components/admin/lager-admins-panel";
 import { LagerFahrzeugePanel } from "@/components/admin/lager-fahrzeuge-panel";
+import { LagerStatistikPanel } from "@/components/admin/lager-statistik-panel";
 import { useRole } from "@/hooks/use-role";
 import { useLagerAccess } from "@/hooks/use-lager-access";
 
