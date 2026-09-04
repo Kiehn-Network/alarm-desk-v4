@@ -263,14 +263,14 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
   }
 
   return (
-    <main className="min-h-screen bg-background p-6 lg:p-8 space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="size-11 rounded-xl bg-primary/10 grid place-items-center">
-          <Boxes className="size-5 text-primary" />
+    <main className="min-h-screen bg-background p-6 md:p-8 lg:p-10 space-y-6 md:space-y-8">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="size-14 rounded-xl bg-primary/10 grid place-items-center shrink-0">
+          <Boxes className="size-7 text-primary" />
         </div>
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold leading-tight">Lager</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-3xl font-bold leading-tight">Lager</h1>
+          <p className="text-base text-muted-foreground">
             Angemeldet als <span className="font-medium text-foreground">{person.name}</span>
             {person.personalnummer ? ` · Pers.-Nr. ${person.personalnummer}` : ""}
             {person.domain_name ? ` · ${person.domain_name}` : ""}
@@ -278,8 +278,8 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-2xl">
-        <div className="mb-3 text-sm font-medium text-muted-foreground">{STEP_LABEL[step]}</div>
+      <div className="mx-auto w-full max-w-3xl">
+        <div className="mb-3 text-base font-medium text-muted-foreground">{STEP_LABEL[step]}</div>
 
         <div className="rounded-2xl border border-border bg-card p-6 lg:p-8" style={{ boxShadow: "var(--shadow-card)" }}>
           {error && (
