@@ -70,7 +70,7 @@ export function renderEinsatzInlineHtml(
 
   const istAv = e.bericht_typ === "av_einsatz";
   const zeitenAlle: Array<[boolean, string, any]> = [
-    [!!cfg.alarmierung, "Alarmierung", e.assigned_at ?? e.created_at],
+    [!!cfg.alarmierung, "Alarmierung", e.alarm_am ?? e.assigned_at ?? e.created_at],
     [!!cfg.created, istAv ? "Startzeit (Erstellung)" : "Erstellt", e.created_at],
     [!!cfg.abfahrt_zentrale, "Abfahrt Zentrale", e.abfahrt_zentrale_am],
     [!!cfg.vor_ort, "Vor Ort", e.vor_ort_am],
