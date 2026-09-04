@@ -2,12 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import QRCode from "qrcode";
+import type QRCodeType from "qrcode";
 import {
   Boxes, Plus, Search, Upload, Download, QrCode, AlertTriangle, ClipboardCheck,
   Pencil, Trash2, RefreshCw, CheckCircle2, Link2, Printer,
 } from "lucide-react";
-import { downloadInventurPdf } from "@/lib/inventur-pdf";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,9 +168,11 @@ function SchluesselbestandPage() {
   async function printLabels() {
     const items = filtered.slice(0, 200);
     if (!items.length) { toast.error("Keine Einträge zum Drucken"); return; }
+    const mod = await import("qrcode");
+    const qr = ((mod as any).default ?? mod) as typeof QRCodeType;
     const cards = await Promise.all(items.map(async (r: any) => {
       const code = r.label_code || r.key_number;
-      const png = await QRCode.toDataURL(code, { width: 220, margin: 1 });
+      const png = await qr.toDataURL(code, { width: 220, margin: 1 });
       return `<div class="l"><img src="${png}"/><div><b>${escapeHtml(r.key_number)}</b>
         <div>${escapeHtml(r.bezeichnung ?? r.kunden_name ?? "")}</div>
         <div class="s">${escapeHtml([r.schrank, r.fach].filter(Boolean).join(" · "))}</div></div></div>`;
@@ -566,9 +567,10 @@ function InventurTab() {
     } catch (e: any) { toast.error(e?.message ?? "Fehler"); }
   }
 
-  function handlePrint() {
+  async function handlePrint() {
     const inv: any = (inventuren ?? []).find((i: any) => i.id === active);
     if (!inv) { toast.error("Keine Inventur ausgewählt."); return; }
+    const { downloadInventurPdf } = await import("@/lib/inventur-pdf");
     downloadInventurPdf({
       titel: inv.titel,
       gestartet_at: inv.gestartet_at,
