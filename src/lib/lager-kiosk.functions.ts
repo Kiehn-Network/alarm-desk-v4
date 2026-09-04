@@ -112,3 +112,30 @@ export const kioskBuchenBatch = createServerFn({ method: "POST" })
     }
     return { positionen: results, anzahl: results.length };
   });
+
+export type LagerKioskFahrzeug = {
+  id: string;
+  kennzeichen: string;
+  bezeichnung: string | null;
+  fahrer: string | null;
+  code: string;
+};
+
+export const kioskFindFahrzeug = createServerFn({ method: "POST" })
+  .inputValidator((input: { person_id: string; code: string }) => input)
+  .handler(async ({ data }) => {
+    const code = normalize(data.code);
+    if (!code) throw new Error("Bitte einen Fahrzeug-QR-Code scannen.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const person = await getActivePerson(supabaseAdmin, data.person_id);
+    const { data: fahrzeug, error } = await supabaseAdmin
+      .from("lager_fahrzeuge")
+      .select("id,kennzeichen,bezeichnung,fahrer,code")
+      .eq("domain_id", person.domain_id)
+      .eq("code", code)
+      .eq("aktiv", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!fahrzeug) throw new Error("Kein aktives Fahrzeug mit diesem QR-Code gefunden.");
+    return { fahrzeug: fahrzeug as LagerKioskFahrzeug };
+  });
