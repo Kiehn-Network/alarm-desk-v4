@@ -8,6 +8,7 @@ import { LagerBenutzerPanel } from "@/components/admin/lager-benutzer-panel";
 import { LagerAdminsPanel } from "@/components/admin/lager-admins-panel";
 import { LagerFahrzeugePanel } from "@/components/admin/lager-fahrzeuge-panel";
 import { LagerStatistikPanel } from "@/components/admin/lager-statistik-panel";
+import { LagerImportPanel } from "@/components/admin/lager-import-panel";
 import { useRole } from "@/hooks/use-role";
 import { useLagerAccess } from "@/hooks/use-lager-access";
 
@@ -81,6 +82,7 @@ function LagerAdminPage() {
           <TabsTrigger value="fahrzeuge">Fahrzeuge</TabsTrigger>
           <TabsTrigger value="benutzer">Lager-Benutzer</TabsTrigger>
           <TabsTrigger value="statistik">Statistik</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
           {isAdmin && <TabsTrigger value="admins">Lager-Admins</TabsTrigger>}
         </TabsList>
 
@@ -95,6 +97,9 @@ function LagerAdminPage() {
         </TabsContent>
         <TabsContent value="benutzer" className="mt-4">
           <LagerBenutzerPanel />
+        </TabsContent>
+        <TabsContent value="import" className="mt-4">
+          <LagerImportPanel />
         </TabsContent>
         {isAdmin && (
           <TabsContent value="admins" className="mt-4">
