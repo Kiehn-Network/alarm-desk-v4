@@ -356,3 +356,96 @@ export const getLagerStatistik = createServerFn({ method: "POST" })
     const personen = [...map.values()].sort((a, b) => b.buchungen - a.buchungen);
     return { personen, buchungen: list };
   });
+
+// =================================================================
+// CSV-Import fuer Lagerartikel
+// =================================================================
+
+export type LagerImportRow = {
+  kategorie?: string | null;
+  bezeichnung: string;
+  beschreibung?: string | null;
+  barcode?: string | null;
+  einheit?: string | null;
+  lagerort?: string | null;
+  bestand?: number | null;
+  mindestbestand?: number | null;
+};
+
+function randomBarcode() {
+  return "LAG" + Math.random().toString(36).slice(2, 10).toUpperCase();
+}
+
+export const importLagerArtikel = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { rows: LagerImportRow[]; modus?: "aktualisieren" | "ueberspringen" }) => input)
+  .handler(async ({ data, context }) => {
+    const { domainId, supabaseAdmin } = await lagerAdminContext(context);
+    const rows = Array.isArray(data.rows) ? data.rows.slice(0, 5000) : [];
+    const modus = data.modus ?? "aktualisieren";
+    if (rows.length === 0) throw new Error("Keine Zeilen zum Importieren.");
+
+    const { data: existing, error: exErr } = await supabaseAdmin
+      .from("lager_artikel")
+      .select("id, barcode")
+      .eq("domain_id", domainId);
+    if (exErr) throw new Error(exErr.message);
+    const byBarcode = new Map<string, string>(
+      (existing ?? []).map((r: any) => [String(r.barcode).toUpperCase(), r.id as string]),
+    );
+
+    let inserted = 0;
+    let updated = 0;
+    let skipped = 0;
+    const errors: { row: number; message: string }[] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      try {
+        const bezeichnung = String(r.bezeichnung ?? "").trim();
+        if (!bezeichnung) throw new Error("Bezeichnung fehlt.");
+        const rawBarcode = String(r.barcode ?? "").trim().toUpperCase();
+        const generiert = !rawBarcode;
+        const barcode = rawBarcode || randomBarcode();
+        const kategorie = (LAGER_KATEGORIEN as readonly string[]).includes(String(r.kategorie ?? "").trim())
+          ? String(r.kategorie).trim()
+          : "Sonstiges";
+        const payload = {
+          domain_id: domainId,
+          kategorie,
+          bezeichnung,
+          beschreibung: String(r.beschreibung ?? "").trim() || null,
+          barcode,
+          barcode_generiert: generiert,
+          einheit: String(r.einheit ?? "").trim() || "Stk",
+          lagerort: String(r.lagerort ?? "").trim() || null,
+          bestand: Math.max(0, Math.trunc(Number(r.bestand ?? 0) || 0)),
+          mindestbestand: Math.max(0, Math.trunc(Number(r.mindestbestand ?? 0) || 0)),
+          aktiv: true,
+        };
+        const existingId = byBarcode.get(barcode);
+        if (existingId) {
+          if (modus === "ueberspringen") {
+            skipped++;
+            continue;
+          }
+          const { error } = await supabaseAdmin
+            .from("lager_artikel")
+            .update(payload)
+            .eq("id", existingId)
+            .eq("domain_id", domainId);
+          if (error) throw new Error(error.message);
+          updated++;
+        } else {
+          const { error } = await supabaseAdmin.from("lager_artikel").insert(payload);
+          if (error) throw new Error(error.code === "23505" ? "Barcode bereits vergeben." : error.message);
+          byBarcode.set(barcode, "neu");
+          inserted++;
+        }
+      } catch (e: any) {
+        errors.push({ row: i + 1, message: e?.message ?? String(e) });
+      }
+    }
+
+    return { total: rows.length, inserted, updated, skipped, errors };
+  });
