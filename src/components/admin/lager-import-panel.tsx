@@ -20,6 +20,19 @@ type Encoding = "auto" | "utf-8" | "windows-1252" | "iso-8859-1";
 
 type PreviewRow = LagerImportRow & { _zeile: number; _fehler: string | null };
 
+function decodeBuffer(buf: ArrayBuffer, encoding: Encoding): string {
+  if (encoding === "auto") {
+    const utf8 = new TextDecoder("utf-8", { fatal: true }).decode(buf);
+    if (!utf8.includes("\uFFFD")) return utf8;
+    try {
+      return new TextDecoder("windows-1252", { fatal: false }).decode(buf);
+    } catch {
+      return new TextDecoder("iso-8859-1", { fatal: false }).decode(buf);
+    }
+  }
+  return new TextDecoder(encoding, { fatal: false }).decode(buf);
+}
+
 const FELDER: { key: keyof LagerImportRow; labels: string[] }[] = [
   { key: "kategorie", labels: ["kategorie", "category"] },
   { key: "bezeichnung", labels: ["bezeichnung", "artikel", "name", "titel"] },
