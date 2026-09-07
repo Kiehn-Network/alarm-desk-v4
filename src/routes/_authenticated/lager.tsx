@@ -82,6 +82,7 @@ function LagerAdminPage() {
           <TabsTrigger value="fahrzeuge">Fahrzeuge</TabsTrigger>
           <TabsTrigger value="benutzer">Lager-Benutzer</TabsTrigger>
           <TabsTrigger value="statistik">Statistik</TabsTrigger>
+          <TabsTrigger value="import">Import</TabsTrigger>
           {isAdmin && <TabsTrigger value="admins">Lager-Admins</TabsTrigger>}
         </TabsList>
 
