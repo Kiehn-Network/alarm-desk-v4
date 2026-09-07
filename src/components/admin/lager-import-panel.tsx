@@ -115,6 +115,7 @@ export function LagerImportPanel() {
   const [dateiname, setDateiname] = useState("");
   const [rows, setRows] = useState<PreviewRow[]>([]);
   const [modus, setModus] = useState<"aktualisieren" | "ueberspringen">("aktualisieren");
+  const [encoding, setEncoding] = useState<Encoding>("auto");
   const [busy, setBusy] = useState(false);
   const [ergebnis, setErgebnis] = useState<null | {
     total: number; inserted: number; updated: number; skipped: number;
@@ -126,7 +127,8 @@ export function LagerImportPanel() {
 
   async function onFile(file: File) {
     try {
-      const text = await file.text();
+      const buf = await file.arrayBuffer();
+      const text = decodeBuffer(buf, encoding);
       const parsed = parseCsv(text);
       setRows(parsed);
       setDateiname(file.name);
