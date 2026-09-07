@@ -206,6 +206,23 @@ export function LagerImportPanel() {
               <Upload className="size-4" /> CSV auswählen
             </Button>
             {dateiname && <span className="text-sm text-muted-foreground">{dateiname}</span>}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground">Kodierung:</Label>
+              <Select
+                value={encoding}
+                onValueChange={(v) => setEncoding(v as Encoding)}
+              >
+                <SelectTrigger className="h-8 w-[180px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Automatisch</SelectItem>
+                  <SelectItem value="utf-8">UTF-8</SelectItem>
+                  <SelectItem value="windows-1252">Windows-1252 (Excel)</SelectItem>
+                  <SelectItem value="iso-8859-1">ISO-8859-1</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
