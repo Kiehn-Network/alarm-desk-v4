@@ -7,9 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { importLagerArtikel, LAGER_KATEGORIEN, type LagerImportRow } from "@/lib/lager.functions";
 
+type Encoding = "auto" | "utf-8" | "windows-1252" | "iso-8859-1";
+
 type PreviewRow = LagerImportRow & { _zeile: number; _fehler: string | null };
+
+function decodeBuffer(buf: ArrayBuffer, encoding: Encoding): string {
+  if (encoding === "auto") {
+    const utf8 = new TextDecoder("utf-8", { fatal: true }).decode(buf);
+    if (!utf8.includes("\uFFFD")) return utf8;
+    try {
+      return new TextDecoder("windows-1252", { fatal: false }).decode(buf);
+    } catch {
+      return new TextDecoder("iso-8859-1", { fatal: false }).decode(buf);
+    }
+  }
+  return new TextDecoder(encoding, { fatal: false }).decode(buf);
+}
 
 const FELDER: { key: keyof LagerImportRow; labels: string[] }[] = [
   { key: "kategorie", labels: ["kategorie", "category"] },
@@ -93,6 +115,7 @@ export function LagerImportPanel() {
   const [dateiname, setDateiname] = useState("");
   const [rows, setRows] = useState<PreviewRow[]>([]);
   const [modus, setModus] = useState<"aktualisieren" | "ueberspringen">("aktualisieren");
+  const [encoding, setEncoding] = useState<Encoding>("auto");
   const [busy, setBusy] = useState(false);
   const [ergebnis, setErgebnis] = useState<null | {
     total: number; inserted: number; updated: number; skipped: number;
@@ -104,7 +127,8 @@ export function LagerImportPanel() {
 
   async function onFile(file: File) {
     try {
-      const text = await file.text();
+      const buf = await file.arrayBuffer();
+      const text = decodeBuffer(buf, encoding);
       const parsed = parseCsv(text);
       setRows(parsed);
       setDateiname(file.name);
@@ -182,6 +206,23 @@ export function LagerImportPanel() {
               <Upload className="size-4" /> CSV auswählen
             </Button>
             {dateiname && <span className="text-sm text-muted-foreground">{dateiname}</span>}
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground">Kodierung:</Label>
+              <Select
+                value={encoding}
+                onValueChange={(v) => setEncoding(v as Encoding)}
+              >
+                <SelectTrigger className="h-8 w-[180px] text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Automatisch</SelectItem>
+                  <SelectItem value="utf-8">UTF-8</SelectItem>
+                  <SelectItem value="windows-1252">Windows-1252 (Excel)</SelectItem>
+                  <SelectItem value="iso-8859-1">ISO-8859-1</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
