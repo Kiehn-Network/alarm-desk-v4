@@ -98,6 +98,9 @@ function LagerAdminPage() {
         <TabsContent value="benutzer" className="mt-4">
           <LagerBenutzerPanel />
         </TabsContent>
+        <TabsContent value="import" className="mt-4">
+          <LagerImportPanel />
+        </TabsContent>
         {isAdmin && (
           <TabsContent value="admins" className="mt-4">
             <LagerAdminsPanel />
