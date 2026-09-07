@@ -37,7 +37,7 @@ const FELDER: { key: keyof LagerImportRow; labels: string[] }[] = [
   { key: "kategorie", labels: ["kategorie", "category"] },
   { key: "bezeichnung", labels: ["bezeichnung", "artikel", "name", "titel"] },
   { key: "beschreibung", labels: ["beschreibung", "description", "info"] },
-  { key: "barcode", labels: ["barcode", "ean", "code", "artikelnummer", "art-nr", "artnr"] },
+  { key: "barcode", labels: ["barcode", "ean", "code", "artikelnummer", "art-nr", "artnr", "herstellerartikelnr", "herstellerartikelnummer", "herstellerartikel-nr", "herstellerartikel-nummer", "herst-artikelnr"] },
   { key: "einheit", labels: ["einheit", "unit", "me"] },
   { key: "lagerort", labels: ["lagerort", "ort", "regal", "platz"] },
   { key: "bestand", labels: ["bestand", "menge", "anzahl", "stück", "stueck"] },
