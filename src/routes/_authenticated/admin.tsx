@@ -8,7 +8,7 @@ import {
   KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
   Boxes, CheckCircle2, LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert, Download,
 } from "lucide-react";
-import { Mail } from "lucide-react";
+import { Mail, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
