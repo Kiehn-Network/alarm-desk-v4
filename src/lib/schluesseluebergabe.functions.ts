@@ -13,6 +13,7 @@ const itemSchema = z.object({
 const createSchema = z.object({
   richtung: z.enum(["ausgang", "eingang"]),
   kunden_name: z.string().trim().max(200).optional().nullable(),
+  kunden_nr: z.string().trim().max(100).optional().nullable(),
   strasse: z.string().trim().max(200).optional().nullable(),
   ort: z.string().trim().max(200).optional().nullable(),
   uebergeben_von_name: z.string().trim().max(200).optional().nullable(),
@@ -42,6 +43,7 @@ export const createSchluesselProtokoll = createServerFn({ method: "POST" })
         protokoll_nr: nrData as number,
         richtung: data.richtung,
         kunden_name: data.kunden_name ?? null,
+        kunden_nr: data.kunden_nr ?? null,
         strasse: data.strasse ?? null,
         ort: data.ort ?? null,
         uebergeben_von_name: data.uebergeben_von_name ?? null,
@@ -72,6 +74,7 @@ export const updateSchluesselProtokoll = createServerFn({ method: "POST" })
       .update({
         ...(rest.richtung !== undefined ? { richtung: rest.richtung } : {}),
         ...(rest.kunden_name !== undefined ? { kunden_name: rest.kunden_name ?? null } : {}),
+        ...(rest.kunden_nr !== undefined ? { kunden_nr: rest.kunden_nr ?? null } : {}),
         ...(rest.strasse !== undefined ? { strasse: rest.strasse ?? null } : {}),
         ...(rest.ort !== undefined ? { ort: rest.ort ?? null } : {}),
         ...(rest.uebergeben_von_name !== undefined ? { uebergeben_von_name: rest.uebergeben_von_name ?? null } : {}),
