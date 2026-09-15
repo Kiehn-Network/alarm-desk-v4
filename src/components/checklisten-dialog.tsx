@@ -12,7 +12,11 @@ import {
   listChecklistenVorlagen, listEinsatzChecklisten, startEinsatzCheckliste,
   toggleChecklistenPunkt, completeEinsatzCheckliste, type CheckPunkt,
 } from "@/lib/checklisten.functions";
-import { fmt } from "@/lib/utils-fmt";
+
+function fmt(d?: string | null) {
+  if (!d) return "–";
+  return new Date(d).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+}
 
 type Vorlage = any;
 type Checkliste = any;
