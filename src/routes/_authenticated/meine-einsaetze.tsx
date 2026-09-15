@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
   History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square, Info, Building2,
+  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,8 @@ import { HoldButton } from "@/components/hold-button";
 import { EinsatzDateienDialog } from "@/components/einsatz-dateien-dialog";
 import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 import { KundenInfoDialog } from "@/components/kunden-info-dialog";
+import { ChecklistenDialog, ChecklistenStatusBadge } from "@/components/checklisten-dialog";
+import { getEinsatzChecklistenStatus } from "@/lib/checklisten.functions";
 import { enqueue } from "@/lib/offline-queue";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
 
@@ -133,9 +136,21 @@ function MeineEinsaetzePage() {
   const [dateienFor, setDateienFor] = useState<string | null>(null);
   const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
   const [infoFor, setInfoFor] = useState<string | null>(null);
+  const [checklisteFor, setChecklisteFor] = useState<Einsatz | null>(null);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
+
+  const aktivIds = useMemo(
+    () => einsaetze.filter((e) => e.status === "in_bearbeitung").map((e) => e.id),
+    [einsaetze],
+  );
+  const checklistenStatusFn = useServerFn(getEinsatzChecklistenStatus);
+  const { data: clStatus } = useQuery({
+    queryKey: ["checklisten-status", aktivIds.join(",")],
+    queryFn: () => checklistenStatusFn({ data: { einsatz_ids: aktivIds } }),
+    enabled: aktivIds.length > 0,
+  });
 
   // Prefetch Kunden-Dateien für alle aktiven Einsätze → Dialog öffnet ohne Wartezeit.
   useEffect(() => {
@@ -284,6 +299,7 @@ function MeineEinsaetzePage() {
                   <span className={`text-xs px-2 py-0.5 rounded-md font-medium ${meta.cls}`}>
                     {meta.label}
                   </span>
+                  <ChecklistenStatusBadge status={(clStatus as any)?.status?.[e.id]} />
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Clock className="size-3" /> {fmt(e.assigned_at ?? e.created_at)}
                   </span>
@@ -365,6 +381,11 @@ function MeineEinsaetzePage() {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setInfoFor(e.id)}>
                     <Info className="size-4" /> Infos
                   </Button>
+                  {isAktiv(e) && (
+                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setChecklisteFor(e)}>
+                      <ListChecks className="size-4" /> Checkliste
+                    </Button>
+                  )}
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setBerichtFor(e)}>
                     <ClipboardList className="size-4" /> Bericht
                   </Button>
@@ -392,6 +413,12 @@ function MeineEinsaetzePage() {
       <EinsatzDateienDialog einsatzId={dateienFor} open={!!dateienFor} onClose={() => setDateienFor(null)} />
       <EinsatzBerichtDialog einsatz={berichtFor} open={!!berichtFor} onClose={() => setBerichtFor(null)} />
       <KundenInfoDialog einsatzId={infoFor} open={!!infoFor} onClose={() => setInfoFor(null)} />
+      <ChecklistenDialog
+        einsatzId={checklisteFor?.id ?? ""}
+        einsatzTyp={checklisteFor?.einsatz_typ ?? null}
+        open={!!checklisteFor}
+        onClose={() => setChecklisteFor(null)}
+      />
     </div>
   );
 }

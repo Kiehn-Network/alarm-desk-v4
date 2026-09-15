@@ -533,6 +533,42 @@ export type Database = {
           },
         ]
       }
+      checklisten_vorlagen: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          einsatz_typ: string
+          id: string
+          name: string
+          punkte: Json
+          updated_at: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          einsatz_typ?: string
+          id?: string
+          name: string
+          punkte?: Json
+          updated_at?: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          einsatz_typ?: string
+          id?: string
+          name?: string
+          punkte?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       data_purge_requests: {
         Row: {
           affected_count: number | null
@@ -1137,6 +1173,66 @@ export type Database = {
             columns: ["einsatzgrund_id"]
             isOneToOne: false
             referencedRelation: "einsatz_gruende"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      einsatz_checklisten: {
+        Row: {
+          abgeschlossen: boolean
+          abgeschlossen_am: string | null
+          abgeschlossen_by: string | null
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          einsatz_id: string
+          id: string
+          punkte: Json
+          updated_at: string
+          vorlage_id: string | null
+          vorlage_name: string
+        }
+        Insert: {
+          abgeschlossen?: boolean
+          abgeschlossen_am?: string | null
+          abgeschlossen_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          einsatz_id: string
+          id?: string
+          punkte?: Json
+          updated_at?: string
+          vorlage_id?: string | null
+          vorlage_name: string
+        }
+        Update: {
+          abgeschlossen?: boolean
+          abgeschlossen_am?: string | null
+          abgeschlossen_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          einsatz_id?: string
+          id?: string
+          punkte?: Json
+          updated_at?: string
+          vorlage_id?: string | null
+          vorlage_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "einsatz_checklisten_einsatz_id_fkey"
+            columns: ["einsatz_id"]
+            isOneToOne: false
+            referencedRelation: "einsaetze"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "einsatz_checklisten_vorlage_id_fkey"
+            columns: ["vorlage_id"]
+            isOneToOne: false
+            referencedRelation: "checklisten_vorlagen"
             referencedColumns: ["id"]
           },
         ]

@@ -8,7 +8,7 @@ import {
   KeyRound, Search, Shield, Truck, Radio, Lock, LogIn, Settings as SettingsIcon,
   Boxes, CheckCircle2, LifeBuoy, RefreshCw, Eye, EyeOff, Copy as CopyIcon, ShieldAlert, Download,
 } from "lucide-react";
-import { Mail } from "lucide-react";
+import { Mail, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,7 @@ import { SchluesselFooterPanel } from "@/components/admin/schluessel-footer-pane
 import { LagerBenutzerPanel } from "@/components/admin/lager-benutzer-panel";
 import { LagerArtikelPanel } from "@/components/admin/lager-artikel-panel";
 import { LagerAdminsPanel } from "@/components/admin/lager-admins-panel";
+import { ChecklistenPanel } from "@/components/admin/checklisten-panel";
 import { SupportPanel } from "@/routes/_authenticated/support";
 import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
@@ -116,6 +117,7 @@ function AdminPage() {
           <TabsTrigger value="lager"><Boxes className="size-4 mr-2" />Lager-Benutzer</TabsTrigger>
           <TabsTrigger value="lager-artikel"><Boxes className="size-4 mr-2" />Lager-Artikel</TabsTrigger>
           <TabsTrigger value="hilfe"><LifeBuoy className="size-4 mr-2" />Hilfe</TabsTrigger>
+          <TabsTrigger value="checklisten"><ListChecks className="size-4 mr-2" />Checklisten</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersPanel /></TabsContent>
@@ -138,6 +140,7 @@ function AdminPage() {
         </TabsContent>
         <TabsContent value="lager-artikel"><LagerArtikelPanel /></TabsContent>
         <TabsContent value="hilfe"><SupportPanel /></TabsContent>
+        <TabsContent value="checklisten"><ChecklistenPanel /></TabsContent>
       </Tabs>
     </div>
   );
