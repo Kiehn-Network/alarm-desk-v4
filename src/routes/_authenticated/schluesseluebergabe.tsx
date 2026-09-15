@@ -94,7 +94,10 @@ function Page() {
               <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Noch keine Protokolle.</td></tr>
             ) : protokolle.map((p) => (
               <tr key={p.id} className="hover:bg-muted/30">
-                <td className="px-3 py-2 font-mono">#{p.protokoll_nr}</td>
+                <td className="px-3 py-2 font-mono">
+                  <div>{p.kunden_nr ? p.kunden_nr : "–"}</div>
+                  <div className="text-xs text-muted-foreground">#{p.protokoll_nr}</div>
+                </td>
                 <td className="px-3 py-2">
                   {p.richtung === "ausgang" ? (
                     <Badge variant="outline" className="bg-cyan-500/15 text-cyan-400 border-cyan-500/30 gap-1">
@@ -147,6 +150,7 @@ function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer:
 
   const [richtung, setRichtung] = useState<"ausgang" | "eingang">(existing?.richtung ?? "ausgang");
   const [kunde, setKunde] = useState(existing?.kunden_name ?? "");
+  const [kundenNr, setKundenNr] = useState(existing?.kunden_nr ?? "");
   const [strasse, setStrasse] = useState(existing?.strasse ?? "");
   const [ort, setOrt] = useState(existing?.ort ?? "");
   const [vonName, setVonName] = useState(existing?.uebergeben_von_name ?? "");
@@ -174,6 +178,7 @@ function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer:
     return {
       richtung,
       kunden_name: kunde || null,
+      kunden_nr: kundenNr || null,
       strasse: strasse || null,
       ort: ort || null,
       uebergeben_von_name: vonName || null,
@@ -263,6 +268,7 @@ function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer:
                         className="w-full text-left px-3 py-2 hover:bg-muted text-sm border-b border-border last:border-b-0"
                         onClick={() => {
                           setKunde(r.kunden_name ?? "");
+                          setKundenNr(r.key_number ? String(r.key_number) : "");
                           const parts = String(r.address ?? "").split(",").map((s: string) => s.trim());
                           setStrasse(parts[0] ?? "");
                           setOrt(parts.slice(1).join(", "));
@@ -281,6 +287,10 @@ function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer:
 
           {/* Stammdaten */}
           <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Kunden-Nr. / Schlüssel-Nr. (ID)</Label>
+              <Input value={kundenNr} onChange={(e) => setKundenNr(e.target.value)} placeholder="z. B. 1234" />
+            </div>
             <div className="space-y-1.5">
               <Label>Kunde</Label>
               <Input value={kunde} onChange={(e) => setKunde(e.target.value)} />
