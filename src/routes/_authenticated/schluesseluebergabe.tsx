@@ -45,6 +45,7 @@ function Page() {
   const sq = useQuery({ queryKey: ["schluessel-settings"], queryFn: () => settingsFn() });
 
   const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<any | null>(null);
 
   const mDel = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } }),
@@ -108,7 +109,13 @@ function Page() {
                 <td className="px-3 py-2">{p.kunden_name ?? "–"}</td>
                 <td className="px-3 py-2 text-muted-foreground">{[p.strasse, p.ort].filter(Boolean).join(", ") || "–"}</td>
                 <td className="px-3 py-2 text-muted-foreground">{fmt(p.created_at)}</td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-3 py-2 text-right whitespace-nowrap">
+                  <Button size="sm" variant="ghost" onClick={() => setEdit(p)}>
+                    <Pencil className="size-4 mr-1" /> Bearbeiten
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => printSchluesselPdf(p, footer)}>
+                    <Printer className="size-4 mr-1" /> Drucken
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => downloadSchluesselPdf(p, footer)}>
                     <Download className="size-4 mr-1" /> PDF
                   </Button>
