@@ -133,25 +133,32 @@ function Page() {
       </div>
 
       {open && <NewDialog onClose={() => setOpen(false)} footer={footer} />}
+      {edit && <NewDialog key={edit.id} existing={edit} onClose={() => setEdit(null)} footer={footer} />}
     </div>
   );
 }
 
-function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
+function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer: any; existing?: any }) {
   const qc = useQueryClient();
   const createFn = useServerFn(createSchluesselProtokoll);
+  const updateFn = useServerFn(updateSchluesselProtokoll);
   const searchFn = useServerFn(searchKundenDateien);
+  const isEdit = Boolean(existing);
 
-  const [richtung, setRichtung] = useState<"ausgang" | "eingang">("ausgang");
-  const [kunde, setKunde] = useState("");
-  const [strasse, setStrasse] = useState("");
-  const [ort, setOrt] = useState("");
-  const [vonName, setVonName] = useState("");
-  const [anName, setAnName] = useState("");
-  const [items, setItems] = useState<Item[]>([{ anzahl: "", art: "", beschreibung: "" }]);
-  const [notiz, setNotiz] = useState("");
-  const [sigVon, setSigVon] = useState<string | null>(null);
-  const [sigAn, setSigAn] = useState<string | null>(null);
+  const [richtung, setRichtung] = useState<"ausgang" | "eingang">(existing?.richtung ?? "ausgang");
+  const [kunde, setKunde] = useState(existing?.kunden_name ?? "");
+  const [strasse, setStrasse] = useState(existing?.strasse ?? "");
+  const [ort, setOrt] = useState(existing?.ort ?? "");
+  const [vonName, setVonName] = useState(existing?.uebergeben_von_name ?? "");
+  const [anName, setAnName] = useState(existing?.uebergeben_an_name ?? "");
+  const [items, setItems] = useState<Item[]>(
+    Array.isArray(existing?.items) && existing.items.length > 0
+      ? existing.items.map((i: any) => ({ anzahl: i?.anzahl ?? "", art: i?.art ?? "", beschreibung: i?.beschreibung ?? "" }))
+      : [{ anzahl: "", art: "", beschreibung: "" }],
+  );
+  const [notiz, setNotiz] = useState(existing?.notiz ?? "");
+  const [sigVon, setSigVon] = useState<string | null>(existing?.signatur_von ?? null);
+  const [sigAn, setSigAn] = useState<string | null>(existing?.signatur_an ?? null);
   const [srcVon, setSrcVon] = useState<"pad" | "touch" | null>(null);
   const [srcAn, setSrcAn] = useState<"pad" | "touch" | null>(null);
 
