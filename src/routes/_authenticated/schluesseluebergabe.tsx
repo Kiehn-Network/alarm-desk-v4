@@ -170,28 +170,32 @@ function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer:
     enabled: q.trim().length >= 2,
   });
 
+  function payload() {
+    return {
+      richtung,
+      kunden_name: kunde || null,
+      strasse: strasse || null,
+      ort: ort || null,
+      uebergeben_von_name: vonName || null,
+      uebergeben_an_name: anName || null,
+      items: items.filter((i) => i.anzahl || i.art || i.beschreibung),
+      notiz: notiz || null,
+      signatur_von: sigVon,
+      signatur_an: sigAn,
+      signatur_quelle:
+        srcVon && srcAn ? (srcVon === srcAn ? srcVon : "gemischt") : (srcVon ?? srcAn ?? null),
+    };
+  }
+
   const mCreate = useMutation({
-    mutationFn: () => createFn({
-      data: {
-        richtung,
-        kunden_name: kunde || null,
-        strasse: strasse || null,
-        ort: ort || null,
-        uebergeben_von_name: vonName || null,
-        uebergeben_an_name: anName || null,
-        items: items.filter((i) => i.anzahl || i.art || i.beschreibung),
-        notiz: notiz || null,
-        signatur_von: sigVon,
-        signatur_an: sigAn,
-        signatur_quelle:
-          srcVon && srcAn ? (srcVon === srcAn ? srcVon : "gemischt") : (srcVon ?? srcAn ?? null),
-      },
-    }),
+    mutationFn: () =>
+      isEdit
+        ? updateFn({ data: { id: existing.id, ...payload() } })
+        : createFn({ data: payload() }),
     onSuccess: (row: any) => {
-      toast.success(`Protokoll #${row.protokoll_nr} angelegt`);
+      toast.success(isEdit ? `Protokoll #${row.protokoll_nr} gespeichert` : `Protokoll #${row.protokoll_nr} angelegt`);
       qc.invalidateQueries({ queryKey: ["schluessel-protokolle"] });
-      // direkt PDF anbieten
-      downloadSchluesselPdf(row, footer);
+      if (!isEdit) downloadSchluesselPdf(row, footer);
       onClose();
     },
     onError: (e: any) => toast.error(e?.message ?? "Fehler"),
