@@ -199,3 +199,17 @@ export function downloadSchluesselPdf(p: SchluesselProtokoll, footer: Schluessel
   const suffix = p.richtung === "ausgang" ? "Ausgang" : "Eingang";
   doc.save(`Schluesselprotokoll_${suffix}_${p.protokoll_nr}.pdf`);
 }
+
+export function printSchluesselPdf(p: SchluesselProtokoll, footer: SchluesselFooter) {
+  const doc = buildSchluesselPdf(p, footer);
+  const url = doc.output("bloburl") as unknown as string;
+  const win = window.open(String(url), "_blank");
+  if (!win) {
+    // Popup blockiert – dann herunterladen
+    downloadSchluesselPdf(p, footer);
+    return;
+  }
+  win.addEventListener("load", () => {
+    try { win.focus(); win.print(); } catch { /* ignorieren */ }
+  });
+}

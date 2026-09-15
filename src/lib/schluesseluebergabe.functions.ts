@@ -59,6 +59,28 @@ export const createSchluesselProtokoll = createServerFn({ method: "POST" })
     return row;
   });
 
+const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
+
+export const updateSchluesselProtokoll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => updateSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { id, ...rest } = data;
+    const patch: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(rest)) {
+      if (v !== undefined) patch[k] = v;
+    }
+    const { data: row, error } = await supabase
+      .from("schluesseluebergabe_protokolle")
+      .update(patch)
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
 export const listSchluesselProtokolle = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
