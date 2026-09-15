@@ -3179,6 +3179,7 @@ export type Database = {
           id: string
           items: Json
           kunden_name: string | null
+          kunden_nr: string | null
           notiz: string | null
           ort: string | null
           protokoll_nr: number
@@ -3197,6 +3198,7 @@ export type Database = {
           id?: string
           items?: Json
           kunden_name?: string | null
+          kunden_nr?: string | null
           notiz?: string | null
           ort?: string | null
           protokoll_nr: number
@@ -3215,6 +3217,7 @@ export type Database = {
           id?: string
           items?: Json
           kunden_name?: string | null
+          kunden_nr?: string | null
           notiz?: string | null
           ort?: string | null
           protokoll_nr?: number

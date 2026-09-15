@@ -4,6 +4,7 @@ export type SchluesselProtokoll = {
   protokoll_nr: number;
   richtung: "ausgang" | "eingang";
   kunden_name?: string | null;
+  kunden_nr?: string | null;
   strasse?: string | null;
   ort?: string | null;
   uebergeben_von_name?: string | null;
@@ -53,7 +54,8 @@ export function buildSchluesselPdf(p: SchluesselProtokoll, footer: SchluesselFoo
     doc.text(value || "", margin + labelW, y);
     y += 16;
   };
-  row("ID:", String(p.protokoll_nr));
+  row("ID:", p.kunden_nr ? String(p.kunden_nr) : "");
+  row("Protokoll:", `#${p.protokoll_nr}`);
   row("Kunde:", p.kunden_name ?? "");
   row("Straße:", p.strasse ?? "");
   row("Ort:", p.ort ?? "");

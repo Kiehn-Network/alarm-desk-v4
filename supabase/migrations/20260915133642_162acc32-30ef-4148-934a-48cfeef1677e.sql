@@ -1,0 +1,1 @@
+ALTER TABLE public.schluesseluebergabe_protokolle ADD COLUMN IF NOT EXISTS kunden_nr text;
