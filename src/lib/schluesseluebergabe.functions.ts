@@ -67,10 +67,11 @@ export const updateSchluesselProtokoll = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { id, ...rest } = data;
-    const patch: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(rest)) {
-      if (v !== undefined) patch[k] = v;
-    }
+    const patch = Object.fromEntries(
+      Object.entries(rest).filter(([, v]) => v !== undefined),
+    ) as Parameters<
+      ReturnType<typeof supabase.from<"schluesseluebergabe_protokolle">>["update"]
+    >[0];
     const { data: row, error } = await supabase
       .from("schluesseluebergabe_protokolle")
       .update(patch)
