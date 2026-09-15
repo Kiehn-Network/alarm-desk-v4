@@ -367,8 +367,16 @@ function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer:
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Abbrechen</Button>
+          {isEdit && (
+            <Button
+              variant="outline"
+              onClick={() => printSchluesselPdf({ ...existing, ...payload() }, footer)}
+            >
+              <Printer className="size-4 mr-1" /> Drucken
+            </Button>
+          )}
           <Button onClick={() => mCreate.mutate()} disabled={mCreate.isPending}>
-            {mCreate.isPending ? "Speichern…" : "Speichern & PDF erstellen"}
+            {mCreate.isPending ? "Speichern…" : isEdit ? "Änderungen speichern" : "Speichern & PDF erstellen"}
           </Button>
         </DialogFooter>
       </DialogContent>
