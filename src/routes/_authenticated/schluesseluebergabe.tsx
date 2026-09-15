@@ -209,8 +209,8 @@ function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer:
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Neues Schlüsselprotokoll</DialogTitle>
-          <DialogDescription>Kunde aus der Datei-Verwaltung wählen oder manuell ausfüllen.</DialogDescription>
+          <DialogTitle>{isEdit ? `Protokoll #${existing.protokoll_nr} bearbeiten` : "Neues Schlüsselprotokoll"}</DialogTitle>
+          <DialogDescription>Kunde aus der Datei-Verwaltung wählen oder manuell ausfüllen. Unterschriften können jederzeit nachträglich gesetzt werden.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
