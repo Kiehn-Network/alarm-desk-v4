@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Download, Trash2, Search, ArrowDownToLine, ArrowUpFromLine, KeySquare } from "lucide-react";
+import { Plus, Download, Trash2, Search, ArrowDownToLine, ArrowUpFromLine, KeySquare, Printer, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/popover";
 import { useRole } from "@/hooks/use-role";
 import {
-  listSchluesselProtokolle, createSchluesselProtokoll,
+  listSchluesselProtokolle, createSchluesselProtokoll, updateSchluesselProtokoll,
   deleteSchluesselProtokoll, getSchluesselSettings,
 } from "@/lib/schluesseluebergabe.functions";
 import { searchKundenDateien } from "@/lib/einsaetze.functions";
-import { downloadSchluesselPdf } from "@/lib/schluesseluebergabe-pdf";
+import { downloadSchluesselPdf, printSchluesselPdf } from "@/lib/schluesseluebergabe-pdf";
 import { SignatureField } from "@/components/signature-field";
 
 export const Route = createFileRoute("/_authenticated/schluesseluebergabe")({
