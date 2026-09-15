@@ -67,14 +67,21 @@ export const updateSchluesselProtokoll = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { id, ...rest } = data;
-    const patch = Object.fromEntries(
-      Object.entries(rest).filter(([, v]) => v !== undefined),
-    ) as Parameters<
-      ReturnType<typeof supabase.from<"schluesseluebergabe_protokolle">>["update"]
-    >[0];
     const { data: row, error } = await supabase
       .from("schluesseluebergabe_protokolle")
-      .update(patch)
+      .update({
+        ...(rest.richtung !== undefined ? { richtung: rest.richtung } : {}),
+        ...(rest.kunden_name !== undefined ? { kunden_name: rest.kunden_name ?? null } : {}),
+        ...(rest.strasse !== undefined ? { strasse: rest.strasse ?? null } : {}),
+        ...(rest.ort !== undefined ? { ort: rest.ort ?? null } : {}),
+        ...(rest.uebergeben_von_name !== undefined ? { uebergeben_von_name: rest.uebergeben_von_name ?? null } : {}),
+        ...(rest.uebergeben_an_name !== undefined ? { uebergeben_an_name: rest.uebergeben_an_name ?? null } : {}),
+        ...(rest.items !== undefined ? { items: rest.items } : {}),
+        ...(rest.notiz !== undefined ? { notiz: rest.notiz ?? null } : {}),
+        ...(rest.signatur_von !== undefined ? { signatur_von: rest.signatur_von ?? null } : {}),
+        ...(rest.signatur_an !== undefined ? { signatur_an: rest.signatur_an ?? null } : {}),
+        ...(rest.signatur_quelle !== undefined ? { signatur_quelle: rest.signatur_quelle ?? null } : {}),
+      })
       .eq("id", id)
       .select()
       .single();
