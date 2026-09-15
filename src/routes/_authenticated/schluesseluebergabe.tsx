@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Download, Trash2, Search, ArrowDownToLine, ArrowUpFromLine, KeySquare } from "lucide-react";
+import { Plus, Download, Trash2, Search, ArrowDownToLine, ArrowUpFromLine, KeySquare, Printer, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/popover";
 import { useRole } from "@/hooks/use-role";
 import {
-  listSchluesselProtokolle, createSchluesselProtokoll,
+  listSchluesselProtokolle, createSchluesselProtokoll, updateSchluesselProtokoll,
   deleteSchluesselProtokoll, getSchluesselSettings,
 } from "@/lib/schluesseluebergabe.functions";
 import { searchKundenDateien } from "@/lib/einsaetze.functions";
-import { downloadSchluesselPdf } from "@/lib/schluesseluebergabe-pdf";
+import { downloadSchluesselPdf, printSchluesselPdf } from "@/lib/schluesseluebergabe-pdf";
 import { SignatureField } from "@/components/signature-field";
 
 export const Route = createFileRoute("/_authenticated/schluesseluebergabe")({
@@ -45,6 +45,7 @@ function Page() {
   const sq = useQuery({ queryKey: ["schluessel-settings"], queryFn: () => settingsFn() });
 
   const [open, setOpen] = useState(false);
+  const [edit, setEdit] = useState<any | null>(null);
 
   const mDel = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } }),
@@ -108,7 +109,13 @@ function Page() {
                 <td className="px-3 py-2">{p.kunden_name ?? "–"}</td>
                 <td className="px-3 py-2 text-muted-foreground">{[p.strasse, p.ort].filter(Boolean).join(", ") || "–"}</td>
                 <td className="px-3 py-2 text-muted-foreground">{fmt(p.created_at)}</td>
-                <td className="px-3 py-2 text-right">
+                <td className="px-3 py-2 text-right whitespace-nowrap">
+                  <Button size="sm" variant="ghost" onClick={() => setEdit(p)}>
+                    <Pencil className="size-4 mr-1" /> Bearbeiten
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => printSchluesselPdf(p, footer)}>
+                    <Printer className="size-4 mr-1" /> Drucken
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => downloadSchluesselPdf(p, footer)}>
                     <Download className="size-4 mr-1" /> PDF
                   </Button>
@@ -126,25 +133,32 @@ function Page() {
       </div>
 
       {open && <NewDialog onClose={() => setOpen(false)} footer={footer} />}
+      {edit && <NewDialog key={edit.id} existing={edit} onClose={() => setEdit(null)} footer={footer} />}
     </div>
   );
 }
 
-function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
+function NewDialog({ onClose, footer, existing }: { onClose: () => void; footer: any; existing?: any }) {
   const qc = useQueryClient();
   const createFn = useServerFn(createSchluesselProtokoll);
+  const updateFn = useServerFn(updateSchluesselProtokoll);
   const searchFn = useServerFn(searchKundenDateien);
+  const isEdit = Boolean(existing);
 
-  const [richtung, setRichtung] = useState<"ausgang" | "eingang">("ausgang");
-  const [kunde, setKunde] = useState("");
-  const [strasse, setStrasse] = useState("");
-  const [ort, setOrt] = useState("");
-  const [vonName, setVonName] = useState("");
-  const [anName, setAnName] = useState("");
-  const [items, setItems] = useState<Item[]>([{ anzahl: "", art: "", beschreibung: "" }]);
-  const [notiz, setNotiz] = useState("");
-  const [sigVon, setSigVon] = useState<string | null>(null);
-  const [sigAn, setSigAn] = useState<string | null>(null);
+  const [richtung, setRichtung] = useState<"ausgang" | "eingang">(existing?.richtung ?? "ausgang");
+  const [kunde, setKunde] = useState(existing?.kunden_name ?? "");
+  const [strasse, setStrasse] = useState(existing?.strasse ?? "");
+  const [ort, setOrt] = useState(existing?.ort ?? "");
+  const [vonName, setVonName] = useState(existing?.uebergeben_von_name ?? "");
+  const [anName, setAnName] = useState(existing?.uebergeben_an_name ?? "");
+  const [items, setItems] = useState<Item[]>(
+    Array.isArray(existing?.items) && existing.items.length > 0
+      ? existing.items.map((i: any) => ({ anzahl: i?.anzahl ?? "", art: i?.art ?? "", beschreibung: i?.beschreibung ?? "" }))
+      : [{ anzahl: "", art: "", beschreibung: "" }],
+  );
+  const [notiz, setNotiz] = useState(existing?.notiz ?? "");
+  const [sigVon, setSigVon] = useState<string | null>(existing?.signatur_von ?? null);
+  const [sigAn, setSigAn] = useState<string | null>(existing?.signatur_an ?? null);
   const [srcVon, setSrcVon] = useState<"pad" | "touch" | null>(null);
   const [srcAn, setSrcAn] = useState<"pad" | "touch" | null>(null);
 
@@ -156,28 +170,32 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
     enabled: q.trim().length >= 2,
   });
 
+  function payload() {
+    return {
+      richtung,
+      kunden_name: kunde || null,
+      strasse: strasse || null,
+      ort: ort || null,
+      uebergeben_von_name: vonName || null,
+      uebergeben_an_name: anName || null,
+      items: items.filter((i) => i.anzahl || i.art || i.beschreibung),
+      notiz: notiz || null,
+      signatur_von: sigVon,
+      signatur_an: sigAn,
+      signatur_quelle:
+        srcVon && srcAn ? (srcVon === srcAn ? srcVon : "gemischt") : (srcVon ?? srcAn ?? null),
+    };
+  }
+
   const mCreate = useMutation({
-    mutationFn: () => createFn({
-      data: {
-        richtung,
-        kunden_name: kunde || null,
-        strasse: strasse || null,
-        ort: ort || null,
-        uebergeben_von_name: vonName || null,
-        uebergeben_an_name: anName || null,
-        items: items.filter((i) => i.anzahl || i.art || i.beschreibung),
-        notiz: notiz || null,
-        signatur_von: sigVon,
-        signatur_an: sigAn,
-        signatur_quelle:
-          srcVon && srcAn ? (srcVon === srcAn ? srcVon : "gemischt") : (srcVon ?? srcAn ?? null),
-      },
-    }),
+    mutationFn: () =>
+      isEdit
+        ? updateFn({ data: { id: existing.id, ...payload() } })
+        : createFn({ data: payload() }),
     onSuccess: (row: any) => {
-      toast.success(`Protokoll #${row.protokoll_nr} angelegt`);
+      toast.success(isEdit ? `Protokoll #${row.protokoll_nr} gespeichert` : `Protokoll #${row.protokoll_nr} angelegt`);
       qc.invalidateQueries({ queryKey: ["schluessel-protokolle"] });
-      // direkt PDF anbieten
-      downloadSchluesselPdf(row, footer);
+      if (!isEdit) downloadSchluesselPdf(row, footer);
       onClose();
     },
     onError: (e: any) => toast.error(e?.message ?? "Fehler"),
@@ -191,8 +209,8 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
     <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Neues Schlüsselprotokoll</DialogTitle>
-          <DialogDescription>Kunde aus der Datei-Verwaltung wählen oder manuell ausfüllen.</DialogDescription>
+          <DialogTitle>{isEdit ? `Protokoll #${existing.protokoll_nr} bearbeiten` : "Neues Schlüsselprotokoll"}</DialogTitle>
+          <DialogDescription>Kunde aus der Datei-Verwaltung wählen oder manuell ausfüllen. Unterschriften können jederzeit nachträglich gesetzt werden.</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
@@ -349,8 +367,16 @@ function NewDialog({ onClose, footer }: { onClose: () => void; footer: any }) {
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Abbrechen</Button>
+          {isEdit && (
+            <Button
+              variant="outline"
+              onClick={() => printSchluesselPdf({ ...existing, ...payload() }, footer)}
+            >
+              <Printer className="size-4 mr-1" /> Drucken
+            </Button>
+          )}
           <Button onClick={() => mCreate.mutate()} disabled={mCreate.isPending}>
-            {mCreate.isPending ? "Speichern…" : "Speichern & PDF erstellen"}
+            {mCreate.isPending ? "Speichern…" : isEdit ? "Änderungen speichern" : "Speichern & PDF erstellen"}
           </Button>
         </DialogFooter>
       </DialogContent>

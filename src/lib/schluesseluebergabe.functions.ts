@@ -59,6 +59,36 @@ export const createSchluesselProtokoll = createServerFn({ method: "POST" })
     return row;
   });
 
+const updateSchema = createSchema.partial().extend({ id: z.string().uuid() });
+
+export const updateSchluesselProtokoll = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => updateSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { id, ...rest } = data;
+    const { data: row, error } = await supabase
+      .from("schluesseluebergabe_protokolle")
+      .update({
+        ...(rest.richtung !== undefined ? { richtung: rest.richtung } : {}),
+        ...(rest.kunden_name !== undefined ? { kunden_name: rest.kunden_name ?? null } : {}),
+        ...(rest.strasse !== undefined ? { strasse: rest.strasse ?? null } : {}),
+        ...(rest.ort !== undefined ? { ort: rest.ort ?? null } : {}),
+        ...(rest.uebergeben_von_name !== undefined ? { uebergeben_von_name: rest.uebergeben_von_name ?? null } : {}),
+        ...(rest.uebergeben_an_name !== undefined ? { uebergeben_an_name: rest.uebergeben_an_name ?? null } : {}),
+        ...(rest.items !== undefined ? { items: rest.items } : {}),
+        ...(rest.notiz !== undefined ? { notiz: rest.notiz ?? null } : {}),
+        ...(rest.signatur_von !== undefined ? { signatur_von: rest.signatur_von ?? null } : {}),
+        ...(rest.signatur_an !== undefined ? { signatur_an: rest.signatur_an ?? null } : {}),
+        ...(rest.signatur_quelle !== undefined ? { signatur_quelle: rest.signatur_quelle ?? null } : {}),
+      })
+      .eq("id", id)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
 export const listSchluesselProtokolle = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
