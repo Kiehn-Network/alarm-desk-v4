@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
   History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square, Info, Building2,
+  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
