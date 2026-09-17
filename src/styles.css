@@ -42,7 +42,13 @@
 }
 
 /* ===== Base radius shared across themes ===== */
-:root { --radius: 0.75rem; }
+:root {
+  --radius: 0.75rem;
+  font-size: 16px;
+}
+
+html[data-ui-size="large"] { font-size: 18px; }
+html[data-ui-size="xlarge"] { font-size: 20px; }
 
 /* ============================================================
    THEMES

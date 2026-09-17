@@ -1,20 +1,39 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { User as UserIcon, Upload, Save, Lock, Sun, Moon, Palette } from "lucide-react";
+import { User as UserIcon, Upload, Save, Lock, Sun, Moon, Palette, Type } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useThemeMode } from "@/hooks/use-theme-mode";
+import { useUiSize, type UiSize } from "@/hooks/use-ui-size";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { toAuthPassword } from "@/lib/password-compat";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/profil")({
+  head: () => ({
+    meta: [
+      { title: "Mein Profil | AlarmDesk" },
+      { name: "description", content: "Persönliche Profildaten und Darstellung in AlarmDesk verwalten." },
+      { property: "og:title", content: "Mein Profil | AlarmDesk" },
+      { property: "og:description", content: "Persönliche Profildaten und Darstellung in AlarmDesk verwalten." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: ProfilPage,
 });
+
+const sizeOptions: Array<{ value: UiSize; label: string; example: string }> = [
+  { value: "standard", label: "Standard", example: "Aa" },
+  { value: "large", label: "Groß", example: "Aa" },
+  { value: "xlarge", label: "Sehr groß", example: "Aa" },
+];
 
 function ProfilPage() {
   const { user } = useAuth();
   const { mode, setMode } = useThemeMode();
+  const { size: uiSize, setSize: setUiSize } = useUiSize();
   const { data: settings } = useAppSettings();
   const theme = ((settings as any)?.theme as string) ?? "midnight";
   const themeLabel = ({ midnight: "Midnight Blue", emerald: "Emerald Pro", slate: "Slate Mono", sunset: "Sunset Warm", crimson: "Crimson Red", violet: "Royal Violet", ocean: "Deep Ocean", mono: "Pure Mono", lavender: "Soft Lavender" } as Record<string,string>)[theme] ?? theme;
@@ -156,6 +175,35 @@ function ProfilPage() {
             <p className="text-xs text-muted-foreground">Wird vom Administrator deiner Domäne festgelegt.</p>
           </div>
           <span className="text-sm px-3 h-8 inline-flex items-center rounded-md bg-muted text-muted-foreground">{themeLabel}</span>
+        </div>
+        <div className="space-y-3 pt-2 border-t border-border">
+          <div className="flex items-start gap-2 text-sm">
+            <Type className="size-4 text-primary mt-0.5 shrink-0" />
+            <div>
+              <div className="font-medium">Größe der Oberfläche</div>
+              <p className="text-xs text-muted-foreground">Vergrößert Texte und Bedienelemente auf diesem Gerät.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2" role="group" aria-label="Größe der Oberfläche">
+            {sizeOptions.map((option) => (
+              <Button
+                key={option.value}
+                type="button"
+                variant={uiSize === option.value ? "default" : "outline"}
+                onClick={() => setUiSize(option.value)}
+                aria-pressed={uiSize === option.value}
+                className="h-auto min-h-14 flex-col gap-1 px-2 py-2"
+              >
+                <span
+                  className={option.value === "standard" ? "text-sm" : option.value === "large" ? "text-base" : "text-lg"}
+                  aria-hidden="true"
+                >
+                  {option.example}
+                </span>
+                <span className="text-xs leading-tight">{option.label}</span>
+              </Button>
+            ))}
+          </div>
         </div>
       </section>
 
