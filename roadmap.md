@@ -2,9 +2,9 @@
 
 Auswahl des Users: Zentrale & Fahrer priorisiert.
 
-## Aktuell: Persönliche Oberflächengröße für Fahrer
-- Auswahl im Profil: Standard, Groß oder Sehr groß
-- Persönlich je Gerät speichern und auf die gesamte angemeldete Oberfläche anwenden
+## Erledigt: Persönliche Oberflächengröße für Fahrer
+- [x] Auswahl im Profil: Standard, Groß oder Sehr groß
+- [x] Persönlich je Gerät speichern und auf die gesamte angemeldete Oberfläche anwenden
 
 ## 1. Checklisten für Einsätze (in Arbeit)
 - Vorlagen pro Domäne, pro Einsatztyp (AV-Einsatz / Hausnotruf / Beide), Pflichtpunkte
