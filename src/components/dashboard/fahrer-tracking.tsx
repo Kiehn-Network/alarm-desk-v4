@@ -80,7 +80,7 @@ function TrackingCard({ t }: { t: EinsatzTracking }) {
         )}
         <div className="min-w-0 flex-1">
           <div className="font-medium truncate">{t.fahrer_name ?? "Unbekannt"}</div>
-          <div className="text-xs text-muted-foreground">{t.fahrer_telefon ?? "Keine Rufnummer hinterlegt"}</div>
+          <div className="text-xs text-muted-foreground">{t.fahrer_telefon ? (t.telefon_name ? `${t.telefon_name} · ${t.fahrer_telefon}` : t.fahrer_telefon) : "Keine Rufnummer hinterlegt"}</div>
         </div>
         {t.fahrer_telefon && (
           <a href={`tel:${t.fahrer_telefon.replace(/[^\d+]/g, "")}`} aria-label="Fahrer anrufen"
