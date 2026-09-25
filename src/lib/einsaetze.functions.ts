@@ -578,7 +578,10 @@ export const listFahrer = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase, userId } = context;
-    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { getEffectiveDomainId } = await import("@/lib/tenant.server");
+    const domainId = await getEffectiveDomainId(supabase, userId);
+    // No domain (e.g. superadmin without impersonation) → empty list instead of crashing the page.
+    if (!domainId) return { fahrer: [] as Array<{ id: string; display_name: string | null }> };
     // Strictly limit Fahrer to the caller's domain.
     const { data: roles, error } = await supabaseAdmin
       .from("user_roles").select("user_id")
