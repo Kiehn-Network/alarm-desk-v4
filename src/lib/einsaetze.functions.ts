@@ -445,6 +445,33 @@ export const updateEinsatzBericht = createServerFn({ method: "POST" })
     return row;
   });
 
+// Eindeutige Zuordnung Datei ↔ Kunde. Die Schlüssel-Nr. ist NICHT eindeutig
+// (z. B. "1", "31", "mit Code" bei vielen Kunden) und zählt deshalb nie allein.
+// Widersprechen sich gesetzte Kennungen (anderer Name/Teilnehmer/Anlage), gehört
+// die Datei nicht zum Kunden.
+function dateiGehoertZuKunde(e: any, d: any, loose = false): boolean {
+  const n = (s: any) => String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  const nameKey = (s: any) => n(s).replace(/[^a-z0-9äöüß]/g, "").split("").sort().join("");
+  const pairs: Array<[string, string]> = [
+    [n(e.teilnehmer_id), n(d.teilnehmer_id)],
+    [n(e.anlagen_nr), n(d.anlagen_nr)],
+  ];
+  for (const [a, b] of pairs) if (a && b && a !== b) return false;
+  const eName = nameKey(e.kunden_name), dName = nameKey(d.kunden_name);
+  if (eName && dName && eName !== dName) {
+    if (!(loose && n(d.kunden_name).includes(n(e.kunden_name)))) return false;
+  }
+  const eKey = n(e.key_number), dKey = n(d.key_number);
+  if (eKey && dKey && eKey !== dKey && !loose) return false;
+  if (pairs.some(([a, b]) => a && a === b)) return true;
+  if (eName && eName === dName) return true;
+  if (loose) {
+    if (eName && dName && n(d.kunden_name).includes(n(e.kunden_name))) return true;
+    if (e.address && n(d.address).includes(n(e.address)) && (!dName || !eName)) return true;
+  }
+  return false;
+}
+
 export const listDateienForEinsatz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ einsatz_id: z.string().uuid() }).parse(i))
@@ -505,24 +532,10 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
       .is("deleted_at", null)
       .or(ors.join(","))
       .order("created_at", { ascending: false })
-      .limit(100);
+      .limit(300);
     if (error) throw new Error(error.message);
-    // Fahrer: harte Nachfilterung – die Datei muss eindeutig zum Einsatz-Kunden gehören.
-    if (isFahrer && !elevated) {
-      const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-      const eName = norm(e.kunden_name);
-      const eKey = norm(e.key_number);
-      const eAnl = norm(e.anlagen_nr);
-      const eTn = norm(e.teilnehmer_id);
-      const filtered = (rows ?? []).filter((d: any) =>
-        (eKey && norm(d.key_number) === eKey) ||
-        (eAnl && norm(d.anlagen_nr) === eAnl) ||
-        (eTn && norm(d.teilnehmer_id) === eTn) ||
-        (eName && norm(d.kunden_name) === eName)
-      );
-      return { dateien: filtered };
-    }
-    return { dateien: rows ?? [] };
+    const filtered = (rows ?? []).filter((d: any) => dateiGehoertZuKunde(e, d, elevated));
+    return { dateien: filtered };
   });
 
 export const getEinsatzDateiSignedUrl = createServerFn({ method: "POST" })
@@ -559,19 +572,7 @@ export const getEinsatzDateiSignedUrl = createServerFn({ method: "POST" })
       .is("deleted_at", null)
       .maybeSingle();
     if (!row) throw new Error("Datei nicht gefunden");
-    const norm = (s: any) => String(s ?? "").trim().toLowerCase();
-    // Fahrer: nur eindeutige Kunden-Identifikatoren (kein Adress-Teiltreffer).
-    // Admin/Dispatcher/Superadmin: weiterhin auch Adress-/Namens-Teiltreffer erlaubt.
-    const strictMatch =
-      (e.key_number && norm(row.key_number) === norm(e.key_number)) ||
-      (e.anlagen_nr && norm(row.anlagen_nr) === norm(e.anlagen_nr)) ||
-      (e.teilnehmer_id && norm(row.teilnehmer_id) === norm(e.teilnehmer_id)) ||
-      (e.kunden_name && norm(row.kunden_name) === norm(e.kunden_name));
-    const looseMatch = elevated && (
-      (e.kunden_name && norm(row.kunden_name).includes(norm(e.kunden_name))) ||
-      (e.address && norm(row.address).includes(norm(e.address)))
-    );
-    if (!strictMatch && !looseMatch) throw new Error("Datei gehört nicht zu diesem Kunden");
+    if (!dateiGehoertZuKunde(e, row, elevated)) throw new Error("Datei gehört nicht zu diesem Kunden");
     const { signFileToken } = await import("@/lib/file-proxy.server");
     // Für Fahrer: kein Download (inline erzwungen). Für andere: gleiches Verhalten ok.
     const token = await signFileToken(data.storage_path, 60, { noDownload: true });
