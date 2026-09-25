@@ -123,7 +123,7 @@ function schadenStatusNormal(value: unknown) {
 async function anzeigeName(supabase: any, userId: string) {
   const { data } = await supabase
     .from("profiles")
-    .select("display_name, email")
+    .select("display_name")
     .eq("id", userId)
     .maybeSingle();
   return data?.display_name || data?.email || "Unbekannt";
