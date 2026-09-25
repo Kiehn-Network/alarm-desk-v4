@@ -86,8 +86,25 @@ export type SchadenRow = {
   kosten: number | null;
   gemeldet_von_name: string | null;
   notizen: string | null;
+  marker_seite: string | null;
+  marker_x: number | null;
+  marker_y: number | null;
   created_at: string;
 };
+
+const MARKER_SEITEN = ["front", "heck", "links", "rechts"];
+const markerSchema = z
+  .object({
+    seite: z.string().trim().max(10),
+    x: z.number().min(0).max(100),
+    y: z.number().min(0).max(100),
+  })
+  .nullish();
+
+function markerNormal(m: { seite: string; x: number; y: number } | null | undefined) {
+  if (!m || !MARKER_SEITEN.includes(m.seite)) return { marker_seite: null, marker_x: null, marker_y: null };
+  return { marker_seite: m.seite, marker_x: m.x, marker_y: m.y };
+}
 
 export type KmEintragRow = {
   id: string;
@@ -262,6 +279,9 @@ export const getFahrzeug = createServerFn({ method: "POST" })
         kosten: s.kosten != null ? Number(s.kosten) : null,
         gemeldet_von_name: s.gemeldet_von_name ?? null,
         notizen: s.notizen ?? null,
+        marker_seite: s.marker_seite ?? null,
+        marker_x: s.marker_x != null ? Number(s.marker_x) : null,
+        marker_y: s.marker_y != null ? Number(s.marker_y) : null,
         created_at: s.created_at,
       })) as SchadenRow[],
       kmLog: (kmLog.data ?? []).map((k: any) => ({
