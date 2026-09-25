@@ -843,6 +843,14 @@ function buildCreateTableDdl(table: string, cols: ColumnInfo[]): string {
   return `CREATE TABLE IF NOT EXISTS public.${pgIdent(table)} (\n${colDefs.join(",\n")}\n);`;
 }
 
+function assertDbUrl(u: string, name: string): string {
+  const v = u.trim().replace(/^["']|["']$/g, "");
+  if (!/^postgres(ql)?:\/\//i.test(v)) {
+    throw new Error(`${name} ist keine gültige Datenbank-Adresse. Erwartet wird z. B. postgresql://postgres:PASSWORT@db.xxxx.supabase.co:5432/postgres (kein psql-Befehl).`);
+  }
+  return v;
+}
+
 async function readSchemaColumns(dbUrl: string): Promise<ColumnInfo[]> {
   const { default: postgres } = await import("postgres");
   const sql = postgres(dbUrl, { ssl: "require", max: 1, idle_timeout: 5, connect_timeout: 15, prepare: false });
@@ -932,8 +940,8 @@ export const previewSchemaDiff = createServerFn({ method: "GET" })
     }
     try {
       const [source, target] = await Promise.all([
-        readSchemaColumns(sourceUrl),
-        readSchemaColumns(targetUrl),
+        readSchemaColumns(assertDbUrl(sourceUrl, "SUPABASE_DB_URL")),
+        readSchemaColumns(assertDbUrl(targetUrl, "SYNC_TARGET_DB_URL")),
       ]);
       const diff = computeSchemaDiff(source, target);
       return {
@@ -973,8 +981,8 @@ export const applySchemaDiff = createServerFn({ method: "POST" })
     await pushLog("info", "Struktur-Abgleich gestartet (keine Daten werden übertragen)");
 
     const [source, target] = await Promise.all([
-      readSchemaColumns(sourceUrl),
-      readSchemaColumns(targetUrl),
+      readSchemaColumns(assertDbUrl(sourceUrl, "SUPABASE_DB_URL")),
+      readSchemaColumns(assertDbUrl(targetUrl, "SYNC_TARGET_DB_URL")),
     ]);
     const diff = computeSchemaDiff(source, target);
 
@@ -1019,7 +1027,7 @@ export const applySchemaDiff = createServerFn({ method: "POST" })
     await persist({ total_tables: statements.length, processed_tables: 0 });
 
     const { default: postgres } = await import("postgres");
-    const sql = postgres(targetUrl, { ssl: "require", max: 1, idle_timeout: 10, connect_timeout: 15, prepare: false });
+    const sql = postgres(assertDbUrl(targetUrl, "SYNC_TARGET_DB_URL"), { ssl: "require", max: 1, idle_timeout: 10, connect_timeout: 15, prepare: false });
     let applied = 0;
     let failed = 0;
     const failures: { label: string; error: string }[] = [];
