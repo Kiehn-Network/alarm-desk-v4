@@ -509,17 +509,19 @@ export const updateSchaden = createServerFn({ method: "POST" })
         status: z.string().trim().max(30).optional(),
         kosten: z.number().min(0).nullish(),
         notizen: LONG,
+        marker: markerSchema,
       })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { id, ...rest } = data;
+    const { id, marker, ...rest } = data;
 
     const patch: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(rest)) if (v !== undefined) patch[k] = v;
     if (patch.schwere !== undefined) patch.schwere = schwereNormal(patch.schwere);
     if (patch.status !== undefined) patch.status = schadenStatusNormal(patch.status);
+    if (marker !== undefined) Object.assign(patch, markerNormal(marker));
 
     const { error } = await supabase.from("fuhrpark_schaeden").update(patch as never).eq("id", id);
     if (error) throw new Error(error.message);
