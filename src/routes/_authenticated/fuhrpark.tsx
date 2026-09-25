@@ -24,6 +24,7 @@ import {
   FAHRZEUG_STATUS, TANKARTEN, TERMIN_ARTEN, SCHADEN_SCHWERE, SCHADEN_STATUS,
   type FahrzeugRow, type TerminRow, type SchadenRow, type KmEintragRow,
 } from "@/lib/fuhrpark.functions";
+import { FahrzeugSkizze, type SkizzenMarker, type SkizzenSeite } from "@/components/fahrzeug-skizze";
 
 export const Route = createFileRoute("/_authenticated/fuhrpark")({
   head: () => ({
