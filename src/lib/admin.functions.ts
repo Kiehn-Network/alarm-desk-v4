@@ -82,8 +82,16 @@ export const listUsers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const domainId = await requireDomainAdmin(context.userId);
     // Only profiles within this domain.
-    const { data: profiles } = await supabaseAdmin
+    let { data: profiles, error: profErr } = await supabaseAdmin
       .from("profiles").select("id, display_name, avatar_url, einsatz_selectable, telefon").eq("domain_id", domainId);
+    if (profErr) {
+      // Fallback for databases where the newer "telefon" column is missing.
+      console.error("listUsers profiles query failed, retrying without telefon:", profErr.message);
+      const retry = await supabaseAdmin
+        .from("profiles").select("id, display_name, avatar_url, einsatz_selectable").eq("domain_id", domainId);
+      if (retry.error) throw new Error(retry.error.message);
+      profiles = retry.data as any;
+    }
     const ids = (profiles ?? []).map((p: any) => p.id);
     if (ids.length === 0) return { users: [] };
     const { data: roles } = await supabaseAdmin
