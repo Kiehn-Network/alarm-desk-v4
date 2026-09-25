@@ -808,6 +808,41 @@ export type Database = {
           },
         ]
       }
+      dienst_telefone: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          domain_id: string
+          id: string
+          name: string
+          nummer: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          domain_id: string
+          id?: string
+          name: string
+          nummer: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          domain_id?: string
+          id?: string
+          name?: string
+          nummer?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dienst_telefone_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dienstplaene: {
         Row: {
           created_at: string
@@ -2682,6 +2717,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          dienst_telefon_id: string | null
           display_name: string | null
           domain_id: string | null
           einsatz_selectable: boolean
@@ -2694,6 +2730,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          dienst_telefon_id?: string | null
           display_name?: string | null
           domain_id?: string | null
           einsatz_selectable?: boolean
@@ -2706,6 +2743,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          dienst_telefon_id?: string | null
           display_name?: string | null
           domain_id?: string | null
           einsatz_selectable?: boolean
@@ -2716,6 +2754,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_dienst_telefon_id_fkey"
+            columns: ["dienst_telefon_id"]
+            isOneToOne: false
+            referencedRelation: "dienst_telefone"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_domain_id_fkey"
             columns: ["domain_id"]

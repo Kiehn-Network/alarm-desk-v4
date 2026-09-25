@@ -8,6 +8,13 @@
       "when": 1790368711451,
       "tag": "0000_driver_phone_and_geo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790369510252,
+      "tag": "0001_dienst_telefone",
+      "breakpoints": true
     }
   ]
 }
