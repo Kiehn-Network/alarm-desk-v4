@@ -293,9 +293,6 @@ function DossierDetailPage() {
   );
 }
 
-const deleteKontaktFn = async (_unused: unknown, _input: unknown, _qc: unknown, _id: string) => {
-  throw new Error("bitte über den Kontakt-Dialog löschen");
-};
 
 function Feld({ label, wert, onChange }: { label: string; wert?: string | null; onChange: (v: string) => void }) {
   return (
