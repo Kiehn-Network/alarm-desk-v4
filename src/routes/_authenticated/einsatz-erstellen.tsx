@@ -20,6 +20,14 @@ import { listMyPartners, createEinsatzForPartner } from "@/lib/intervention.func
 import { Network } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/einsatz-erstellen")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    kunde: typeof search.kunde === "string" ? search.kunde : "",
+    adresse: typeof search.adresse === "string" ? search.adresse : "",
+    key: typeof search.key === "string" ? search.key : "",
+    anlage: typeof search.anlage === "string" ? search.anlage : "",
+    teilnehmer: typeof search.teilnehmer === "string" ? search.teilnehmer : "",
+    grund: typeof search.grund === "string" ? search.grund : "",
+  }),
   component: EinsatzErstellenPage,
 });
 
@@ -73,6 +81,25 @@ function EinsatzErstellenPage() {
   });
   const [hausnotrufProvider, setHausnotrufProvider] = useState<"malteser" | "johanniter" | "lgwa" | "">("");
   const [saving, setSaving] = useState(false);
+
+  // Prefill aus dem Service Center: ein Auftrag übernimmt Objekt + Betreff.
+  const prefill = Route.useSearch();
+  useEffect(() => {
+    if (prefill.kunde || prefill.adresse || prefill.key || prefill.teilnehmer) {
+      setPicked({
+        id: "uebernommen",
+        kunden_name: prefill.kunde || null,
+        address: prefill.adresse || null,
+        key_number: prefill.key || null,
+        anlagen_nr: prefill.anlage || null,
+        teilnehmer_id: prefill.teilnehmer || null,
+        notiz: null,
+        filename: "",
+      });
+    }
+    if (prefill.grund) setGrund(prefill.grund);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Schlüsselübergabe nach Einsatz-Erstellung
   const [handover, setHandover] = useState<null | {
