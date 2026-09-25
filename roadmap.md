@@ -1,22 +1,19 @@
-# Roadmap – geplante Erweiterungen (Stand 15.09.2026)
+# Roadmap – geplante Erweiterungen (Stand 25.09.2026)
 
-Auswahl des Users: Zentrale & Fahrer priorisiert.
+Auswahl des Users (25.09.): Push-Benachrichtigungen, Vorkommnis-Buch, Änderungshistorie.
 
-## Erledigt: Persönliche Oberflächengröße für Fahrer
-- [x] Auswahl im Profil: Standard, Groß oder Sehr groß
-- [x] Persönlich je Gerät speichern und auf die gesamte angemeldete Oberfläche anwenden
+## Erledigt
+- [x] Persönliche Oberflächengröße für Fahrer
+- [x] Checklisten für Einsätze
+- [x] Fahrer-Tracking & Diensttelefone im Dashboard
 
-## 1. Checklisten für Einsätze (in Arbeit)
-- Vorlagen pro Domäne, pro Einsatztyp (AV-Einsatz / Hausnotruf / Beide), Pflichtpunkte
-- Fahrer startet Checkliste am Einsatz, hakt Punkte ab, schließt ab
-- Admin-Verwaltung unter /admin → Reiter „Checklisten"
-
-## 2. Push-Benachrichtigungen (offen)
-- Web-Push für neue Einsätze an Fahrer & Zentrale (Service Worker + VAPID)
+## 1. Push-Benachrichtigungen (in Arbeit)
+- Web-Push bei neuen Einsätzen an Fahrer & Zentrale (Service Worker + VAPID)
 - Abo-Verwaltung pro Benutzer
 
-## 3. Integriertes Handbuch (offen)
-- Hilfe-Texte direkt in der App für Zentrale & Fahrer, Abschnitte pro Rolle/Menüpunkt
+## 2. Vorkommnis-Buch (offen)
+- Vorfälle pro Einsatz/Objekt festhalten, mit Suche
 
-## 4. Archiv & Volltextsuche (offen)
-- Abgeschlossene Einsätze dauerhaft durchsuchbar (Teilnehmernummer, Kunde, Adresse, Schlüssel-Nr.)
+## 3. Änderungshistorie (offen)
+- Änderungen an Einsätzen, Schlüsseln und Benutzern lückenlos protokollieren
+- Admin-Einsicht mit Filtern
