@@ -20,14 +20,23 @@ import { listMyPartners, createEinsatzForPartner } from "@/lib/intervention.func
 import { Network } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/einsatz-erstellen")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    kunde: typeof search.kunde === "string" ? search.kunde : "",
-    adresse: typeof search.adresse === "string" ? search.adresse : "",
-    key: typeof search.key === "string" ? search.key : "",
-    anlage: typeof search.anlage === "string" ? search.anlage : "",
-    teilnehmer: typeof search.teilnehmer === "string" ? search.teilnehmer : "",
-    grund: typeof search.grund === "string" ? search.grund : "",
-  }),
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): {
+    kunde?: string;
+    adresse?: string;
+    key?: string;
+    anlage?: string;
+    teilnehmer?: string;
+    grund?: string;
+  } => {
+    const out: Record<string, string> = {};
+    for (const feld of ["kunde", "adresse", "key", "anlage", "teilnehmer", "grund"] as const) {
+      const wert = search[feld];
+      if (typeof wert === "string" && wert.trim()) out[feld] = wert.trim();
+    }
+    return out;
+  },
   component: EinsatzErstellenPage,
 });
 

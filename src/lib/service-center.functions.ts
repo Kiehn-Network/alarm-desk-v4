@@ -265,7 +265,7 @@ export const updateAuftrag = createServerFn({ method: "POST" })
 
     const { data: row, error } = await supabase
       .from("service_auftraege")
-      .update(patch)
+      .update(patch as never)
       .eq("id", id)
       .select("*")
       .maybeSingle();
