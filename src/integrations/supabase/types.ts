@@ -162,50 +162,6 @@ export type Database = {
         }
         Relationships: []
       }
-      audit_log: {
-        Row: {
-          action: string
-          changes: Json
-          created_at: string
-          domain_id: string | null
-          id: number
-          record_id: string | null
-          table_name: string
-          user_id: string | null
-          user_name: string | null
-        }
-        Insert: {
-          action: string
-          changes?: Json
-          created_at?: string
-          domain_id?: string | null
-          id?: never
-          record_id?: string | null
-          table_name: string
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Update: {
-          action?: string
-          changes?: Json
-          created_at?: string
-          domain_id?: string | null
-          id?: never
-          record_id?: string | null
-          table_name?: string
-          user_id?: string | null
-          user_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "audit_log_domain_id_fkey"
-            columns: ["domain_id"]
-            isOneToOne: false
-            referencedRelation: "domains"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       auswertung_pins: {
         Row: {
           adresse: string | null
@@ -2814,47 +2770,6 @@ export type Database = {
           },
         ]
       }
-      push_subscriptions: {
-        Row: {
-          auth: string
-          created_at: string
-          domain_id: string | null
-          endpoint: string
-          id: string
-          p256dh: string
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          auth: string
-          created_at?: string
-          domain_id?: string | null
-          endpoint: string
-          id?: string
-          p256dh: string
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          auth?: string
-          created_at?: string
-          domain_id?: string | null
-          endpoint?: string
-          id?: string
-          p256dh?: string
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "push_subscriptions_domain_id_fkey"
-            columns: ["domain_id"]
-            isOneToOne: false
-            referencedRelation: "domains"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       rohrservice_berichte: {
         Row: {
           anrufer_adresse: string | null
@@ -3702,79 +3617,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      vorkommnisse: {
-        Row: {
-          beschreibung: string
-          created_at: string
-          datei_id: string | null
-          domain_id: string
-          einsatz_id: string | null
-          ereignis_am: string
-          erledigt: boolean
-          erstellt_von: string | null
-          erstellt_von_name: string | null
-          id: string
-          titel: string
-          typ: string
-          updated_at: string
-          wichtig: boolean
-        }
-        Insert: {
-          beschreibung?: string
-          created_at?: string
-          datei_id?: string | null
-          domain_id: string
-          einsatz_id?: string | null
-          ereignis_am?: string
-          erledigt?: boolean
-          erstellt_von?: string | null
-          erstellt_von_name?: string | null
-          id?: string
-          titel: string
-          typ?: string
-          updated_at?: string
-          wichtig?: boolean
-        }
-        Update: {
-          beschreibung?: string
-          created_at?: string
-          datei_id?: string | null
-          domain_id?: string
-          einsatz_id?: string | null
-          ereignis_am?: string
-          erledigt?: boolean
-          erstellt_von?: string | null
-          erstellt_von_name?: string | null
-          id?: string
-          titel?: string
-          typ?: string
-          updated_at?: string
-          wichtig?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vorkommnisse_datei_id_fkey"
-            columns: ["datei_id"]
-            isOneToOne: false
-            referencedRelation: "dateien"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vorkommnisse_domain_id_fkey"
-            columns: ["domain_id"]
-            isOneToOne: false
-            referencedRelation: "domains"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vorkommnisse_einsatz_id_fkey"
-            columns: ["einsatz_id"]
-            isOneToOne: false
-            referencedRelation: "einsaetze"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
