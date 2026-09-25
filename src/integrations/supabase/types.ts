@@ -1075,6 +1075,8 @@ export type Database = {
           teilnehmer_id: string | null
           updated_at: string
           vor_ort_am: string | null
+          ziel_lat: number | null
+          ziel_lng: number | null
         }
         Insert: {
           abfahrt_am?: string | null
@@ -1117,6 +1119,8 @@ export type Database = {
           teilnehmer_id?: string | null
           updated_at?: string
           vor_ort_am?: string | null
+          ziel_lat?: number | null
+          ziel_lng?: number | null
         }
         Update: {
           abfahrt_am?: string | null
@@ -1159,6 +1163,8 @@ export type Database = {
           teilnehmer_id?: string | null
           updated_at?: string
           vor_ort_am?: string | null
+          ziel_lat?: number | null
+          ziel_lng?: number | null
         }
         Relationships: [
           {
@@ -2682,6 +2688,7 @@ export type Database = {
           id: string
           onboarding_completed_at: string | null
           onboarding_demo_mode: boolean
+          telefon: string | null
           updated_at: string
         }
         Insert: {
@@ -2693,6 +2700,7 @@ export type Database = {
           id: string
           onboarding_completed_at?: string | null
           onboarding_demo_mode?: boolean
+          telefon?: string | null
           updated_at?: string
         }
         Update: {
@@ -2704,6 +2712,7 @@ export type Database = {
           id?: string
           onboarding_completed_at?: string | null
           onboarding_demo_mode?: boolean
+          telefon?: string | null
           updated_at?: string
         }
         Relationships: [
