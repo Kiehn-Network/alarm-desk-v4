@@ -44,6 +44,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
 import { Route as AuthenticatedObjektdossierRouteRouteImport } from './routes/_authenticated/objektdossier/route'
 import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
+import { Route as AuthenticatedObjektdossierIndexRouteImport } from './routes/_authenticated/objektdossier/index'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
@@ -263,6 +264,12 @@ const AuthenticatedRevierCenterIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
   } as any)
+const AuthenticatedObjektdossierIndexRoute =
+  AuthenticatedObjektdossierIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedObjektdossierRouteRoute,
+  } as any)
 const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
   id: '/api/public/version',
   path: '/api/public/version',
@@ -455,7 +462,7 @@ export interface FileRoutesByFullPath {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/objektdossier': typeof AuthenticatedObjektdossierRouteRoute
+  '/objektdossier': typeof AuthenticatedObjektdossierRouteRouteWithChildren
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -486,6 +493,7 @@ export interface FileRoutesByFullPath {
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/objektdossier/': typeof AuthenticatedObjektdossierIndexRoute
   '/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
@@ -522,7 +530,6 @@ export interface FileRoutesByTo {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/objektdossier': typeof AuthenticatedObjektdossierRouteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/auswertung': typeof AuthenticatedAuswertungRoute
@@ -549,6 +556,7 @@ export interface FileRoutesByTo {
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/objektdossier': typeof AuthenticatedObjektdossierIndexRoute
   '/revier-center': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
@@ -587,7 +595,7 @@ export interface FileRoutesById {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_authenticated/objektdossier': typeof AuthenticatedObjektdossierRouteRoute
+  '/_authenticated/objektdossier': typeof AuthenticatedObjektdossierRouteRouteWithChildren
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -618,6 +626,7 @@ export interface FileRoutesById {
   '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/_authenticated/objektdossier/': typeof AuthenticatedObjektdossierIndexRoute
   '/_authenticated/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/_authenticated/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/_authenticated/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
@@ -687,6 +696,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/objektdossier/'
     | '/revier-center/'
     | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/import'
@@ -723,7 +733,6 @@ export interface FileRouteTypes {
     | '/lager-station'
     | '/login'
     | '/reset-password'
-    | '/objektdossier'
     | '/admin'
     | '/alarmierung'
     | '/auswertung'
@@ -750,6 +759,7 @@ export interface FileRouteTypes {
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/api/public/version'
+    | '/objektdossier'
     | '/revier-center'
     | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/import'
@@ -818,6 +828,7 @@ export interface FileRouteTypes {
     | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
     | '/api/public/version'
+    | '/_authenticated/objektdossier/'
     | '/_authenticated/revier-center/'
     | '/_authenticated/abrechnung/$provider/versand'
     | '/_authenticated/notdienst/budeko/import'
@@ -1113,6 +1124,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRevierCenterIndexRouteImport
       parentRoute: typeof AuthenticatedRevierCenterRouteRoute
     }
+    '/_authenticated/objektdossier/': {
+      id: '/_authenticated/objektdossier/'
+      path: '/'
+      fullPath: '/objektdossier/'
+      preLoaderRoute: typeof AuthenticatedObjektdossierIndexRouteImport
+      parentRoute: typeof AuthenticatedObjektdossierRouteRoute
+    }
     '/api/public/version': {
       id: '/api/public/version'
       path: '/api/public/version'
@@ -1333,6 +1351,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedObjektdossierRouteRouteChildren {
+  AuthenticatedObjektdossierIndexRoute: typeof AuthenticatedObjektdossierIndexRoute
+}
+
+const AuthenticatedObjektdossierRouteRouteChildren: AuthenticatedObjektdossierRouteRouteChildren =
+  {
+    AuthenticatedObjektdossierIndexRoute: AuthenticatedObjektdossierIndexRoute,
+  }
+
+const AuthenticatedObjektdossierRouteRouteWithChildren =
+  AuthenticatedObjektdossierRouteRoute._addFileChildren(
+    AuthenticatedObjektdossierRouteRouteChildren,
+  )
+
 interface AuthenticatedRevierCenterOwksRouteRouteChildren {
   AuthenticatedRevierCenterOwksBestreifungsplaeneRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
   AuthenticatedRevierCenterOwksNfcPunkteRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
@@ -1452,7 +1484,7 @@ const AuthenticatedAbrechnungProviderRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedObjektdossierRouteRoute: typeof AuthenticatedObjektdossierRouteRoute
+  AuthenticatedObjektdossierRouteRoute: typeof AuthenticatedObjektdossierRouteRouteWithChildren
   AuthenticatedRevierCenterRouteRoute: typeof AuthenticatedRevierCenterRouteRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
@@ -1484,7 +1516,8 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedObjektdossierRouteRoute: AuthenticatedObjektdossierRouteRoute,
+  AuthenticatedObjektdossierRouteRoute:
+    AuthenticatedObjektdossierRouteRouteWithChildren,
   AuthenticatedRevierCenterRouteRoute:
     AuthenticatedRevierCenterRouteRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
