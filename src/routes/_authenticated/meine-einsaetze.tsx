@@ -34,6 +34,7 @@ import { ChecklistenDialog, ChecklistenStatusBadge } from "@/components/checklis
 import { getEinsatzChecklistenStatus } from "@/lib/checklisten.functions";
 import { enqueue } from "@/lib/offline-queue";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
+import { DienstTelefonPicker } from "@/components/dienst-telefon-picker";
 
 export const Route = createFileRoute("/_authenticated/meine-einsaetze")({
   component: MeineEinsaetzePage,
@@ -256,6 +257,8 @@ function MeineEinsaetzePage() {
           Alle dir zugewiesenen Einsätze auf einen Blick.
         </p>
       </header>
+
+      <DienstTelefonPicker />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="w-full md:w-auto">
