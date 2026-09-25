@@ -41,5 +41,3 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - [x] Schäden mit Schwere und Status (offen/in Reparatur/behandelt), Kosten
 - [x] Kilometerstand-Log; Fahrzeug-Km-Stand wird nur nach vorne korrigiert
 - [x] Kennzahlen oben: aktiv, Werkstatt, überfällige Termine, Gesamt
-
-## 3. Integriertes Handbuch (offen)
