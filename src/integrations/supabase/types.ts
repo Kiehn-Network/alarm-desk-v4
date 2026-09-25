@@ -2166,6 +2166,125 @@ export type Database = {
           },
         ]
       }
+      objekt_dossiers: {
+        Row: {
+          address: string | null
+          aktualisiert_von: string | null
+          alarm_plan: string | null
+          anfahrt: string | null
+          anlagen_nr: string | null
+          created_at: string
+          domain_id: string
+          erstellt_von: string | null
+          erstellt_von_name: string | null
+          fahrer_sichtbar: boolean
+          gefahren: string | null
+          id: string
+          key_number: string | null
+          kunden_name: string
+          notiz: string | null
+          oeffnungszeiten: string | null
+          parken: string | null
+          schluessel: string | null
+          technik: string | null
+          teilnehmer_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          aktualisiert_von?: string | null
+          alarm_plan?: string | null
+          anfahrt?: string | null
+          anlagen_nr?: string | null
+          created_at?: string
+          domain_id: string
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          fahrer_sichtbar?: boolean
+          gefahren?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name: string
+          notiz?: string | null
+          oeffnungszeiten?: string | null
+          parken?: string | null
+          schluessel?: string | null
+          technik?: string | null
+          teilnehmer_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          aktualisiert_von?: string | null
+          alarm_plan?: string | null
+          anfahrt?: string | null
+          anlagen_nr?: string | null
+          created_at?: string
+          domain_id?: string
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          fahrer_sichtbar?: boolean
+          gefahren?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string
+          notiz?: string | null
+          oeffnungszeiten?: string | null
+          parken?: string | null
+          schluessel?: string | null
+          technik?: string | null
+          teilnehmer_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      objekt_kontakte: {
+        Row: {
+          aktiv: boolean
+          created_at: string
+          domain_id: string
+          dossier_id: string
+          id: string
+          name: string
+          notiz: string | null
+          prioritaet: number
+          rolle: string | null
+          telefon: string
+        }
+        Insert: {
+          aktiv?: boolean
+          created_at?: string
+          domain_id: string
+          dossier_id: string
+          id?: string
+          name: string
+          notiz?: string | null
+          prioritaet?: number
+          rolle?: string | null
+          telefon: string
+        }
+        Update: {
+          aktiv?: boolean
+          created_at?: string
+          domain_id?: string
+          dossier_id?: string
+          id?: string
+          name?: string
+          notiz?: string | null
+          prioritaet?: number
+          rolle?: string | null
+          telefon?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "objekt_kontakte_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "objekt_dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       owks_bestreifungen: {
         Row: {
           created_at: string
@@ -3413,6 +3532,124 @@ export type Database = {
           },
         ]
       }
+      service_auftraege: {
+        Row: {
+          address: string | null
+          beschreibung: string | null
+          betreff: string
+          created_at: string
+          domain_id: string
+          einsatz_id: string | null
+          erledigt_am: string | null
+          erstellt_von: string | null
+          erstellt_von_name: string | null
+          faellig_am: string | null
+          id: string
+          key_number: string | null
+          kunden_name: string | null
+          nummer: number
+          prioritaet: string
+          status: string
+          teilnehmer_id: string | null
+          typ: string
+          updated_at: string
+          zugewiesen_an: string | null
+          zugewiesen_name: string | null
+        }
+        Insert: {
+          address?: string | null
+          beschreibung?: string | null
+          betreff: string
+          created_at?: string
+          domain_id: string
+          einsatz_id?: string | null
+          erledigt_am?: string | null
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          faellig_am?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          nummer: number
+          prioritaet?: string
+          status?: string
+          teilnehmer_id?: string | null
+          typ?: string
+          updated_at?: string
+          zugewiesen_an?: string | null
+          zugewiesen_name?: string | null
+        }
+        Update: {
+          address?: string | null
+          beschreibung?: string | null
+          betreff?: string
+          created_at?: string
+          domain_id?: string
+          einsatz_id?: string | null
+          erledigt_am?: string | null
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          faellig_am?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          nummer?: number
+          prioritaet?: string
+          status?: string
+          teilnehmer_id?: string | null
+          typ?: string
+          updated_at?: string
+          zugewiesen_an?: string | null
+          zugewiesen_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_auftraege_einsatz_id_fkey"
+            columns: ["einsatz_id"]
+            isOneToOne: false
+            referencedRelation: "einsaetze"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_notizen: {
+        Row: {
+          auftrag_id: string
+          created_at: string
+          domain_id: string
+          erstellt_von: string | null
+          erstellt_von_name: string | null
+          id: string
+          text: string
+        }
+        Insert: {
+          auftrag_id: string
+          created_at?: string
+          domain_id: string
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          id?: string
+          text: string
+        }
+        Update: {
+          auftrag_id?: string
+          created_at?: string
+          domain_id?: string
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          id?: string
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_notizen_auftrag_id_fkey"
+            columns: ["auftrag_id"]
+            isOneToOne: false
+            referencedRelation: "service_auftraege"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       superadmin_audit_log: {
         Row: {
           action: string
@@ -3835,6 +4072,7 @@ export type Database = {
         Args: { _domain_id: string }
         Returns: number
       }
+      next_service_nr: { Args: { _domain_id: string }; Returns: number }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
