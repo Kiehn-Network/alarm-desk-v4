@@ -7,6 +7,7 @@ import {
   Activity, Timer, Building2, Wallet, CheckSquare, ArrowRight, Info, Car, Mail, MapPin, Hash, Tag,
 } from "lucide-react";
 import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
+import { FahrerTrackingSection } from "@/components/dashboard/fahrer-tracking";
 import { editEinsatzFull, listFahrer } from "@/lib/einsaetze.functions";
 import { rueckgabeBestaetigen } from "@/lib/schluesselbuch.functions";
 import { toast } from "sonner";
@@ -215,6 +216,8 @@ function DashboardContent() {
           </div>
         )}
       </div>
+
+      <FahrerTrackingSection />
 
       {/* Online + Reaktionszeit + Stunden */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
