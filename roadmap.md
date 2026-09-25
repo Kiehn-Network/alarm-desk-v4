@@ -41,3 +41,6 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - [x] Schäden mit Schwere und Status (offen/in Reparatur/behandelt), Kosten
 - [x] Kilometerstand-Log; Fahrzeug-Km-Stand wird nur nach vorne korrigiert
 - [x] Kennzahlen oben: aktiv, Werkstatt, überfällige Termine, Gesamt
+- [x] Detail-Dialog getestet: Termine/Schäden/Kilometerstände anlegen, Überfällig-Markierung, „erledigt"-Button, KM-Korrektur nach vorne
+- [x] Bugfix: doppelte Schaltfläche „Termin anlegen" (Submit-Button war zweifach vorhanden)
+- [x] Ersteller-Name statt „Unbekannt" (Namensauflösung korrigiert; auch Objektdossier/Service Center)
