@@ -1837,6 +1837,9 @@ export type Database = {
           gemeldet_von_name: string | null
           id: string
           kosten: number | null
+          marker_seite: string | null
+          marker_x: number | null
+          marker_y: number | null
           notizen: string | null
           schwere: string
           status: string
@@ -1852,6 +1855,9 @@ export type Database = {
           gemeldet_von_name?: string | null
           id?: string
           kosten?: number | null
+          marker_seite?: string | null
+          marker_x?: number | null
+          marker_y?: number | null
           notizen?: string | null
           schwere?: string
           status?: string
@@ -1867,6 +1873,9 @@ export type Database = {
           gemeldet_von_name?: string | null
           id?: string
           kosten?: number | null
+          marker_seite?: string | null
+          marker_x?: number | null
+          marker_y?: number | null
           notizen?: string | null
           schwere?: string
           status?: string

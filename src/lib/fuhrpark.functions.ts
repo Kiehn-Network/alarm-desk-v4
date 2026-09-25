@@ -86,8 +86,25 @@ export type SchadenRow = {
   kosten: number | null;
   gemeldet_von_name: string | null;
   notizen: string | null;
+  marker_seite: string | null;
+  marker_x: number | null;
+  marker_y: number | null;
   created_at: string;
 };
+
+const MARKER_SEITEN = ["front", "heck", "links", "rechts"];
+const markerSchema = z
+  .object({
+    seite: z.string().trim().max(10),
+    x: z.number().min(0).max(100),
+    y: z.number().min(0).max(100),
+  })
+  .nullish();
+
+function markerNormal(m: { seite: string; x: number; y: number } | null | undefined) {
+  if (!m || !MARKER_SEITEN.includes(m.seite)) return { marker_seite: null, marker_x: null, marker_y: null };
+  return { marker_seite: m.seite, marker_x: m.x, marker_y: m.y };
+}
 
 export type KmEintragRow = {
   id: string;
@@ -262,6 +279,9 @@ export const getFahrzeug = createServerFn({ method: "POST" })
         kosten: s.kosten != null ? Number(s.kosten) : null,
         gemeldet_von_name: s.gemeldet_von_name ?? null,
         notizen: s.notizen ?? null,
+        marker_seite: s.marker_seite ?? null,
+        marker_x: s.marker_x != null ? Number(s.marker_x) : null,
+        marker_y: s.marker_y != null ? Number(s.marker_y) : null,
         created_at: s.created_at,
       })) as SchadenRow[],
       kmLog: (kmLog.data ?? []).map((k: any) => ({
@@ -454,6 +474,7 @@ export const createSchaden = createServerFn({ method: "POST" })
         schwere: z.string().trim().max(20).optional(),
         kosten: z.number().min(0).nullish(),
         notizen: LONG,
+        marker: markerSchema,
       })
       .parse(i),
   )
@@ -469,6 +490,7 @@ export const createSchaden = createServerFn({ method: "POST" })
       schwere: schwereNormal(data.schwere),
       kosten: data.kosten ?? null,
       notizen: data.notizen ?? null,
+      ...markerNormal(data.marker),
       domain_id: domainId,
       gemeldet_von: userId,
       gemeldet_von_name: name,
@@ -487,17 +509,19 @@ export const updateSchaden = createServerFn({ method: "POST" })
         status: z.string().trim().max(30).optional(),
         kosten: z.number().min(0).nullish(),
         notizen: LONG,
+        marker: markerSchema,
       })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { id, ...rest } = data;
+    const { id, marker, ...rest } = data;
 
     const patch: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(rest)) if (v !== undefined) patch[k] = v;
     if (patch.schwere !== undefined) patch.schwere = schwereNormal(patch.schwere);
     if (patch.status !== undefined) patch.status = schadenStatusNormal(patch.status);
+    if (marker !== undefined) Object.assign(patch, markerNormal(marker));
 
     const { error } = await supabase.from("fuhrpark_schaeden").update(patch as never).eq("id", id);
     if (error) throw new Error(error.message);
