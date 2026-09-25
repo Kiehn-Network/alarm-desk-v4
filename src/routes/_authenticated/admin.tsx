@@ -707,12 +707,14 @@ function EditUserDialog({ user, onOpenChange, onDone }: { user: any | null; onOp
   const updateProf = useServerFn(updateUserProfile);
   const setRole = useServerFn(setUserRole);
   const [displayName, setDisplayName] = useState("");
+  const [telefon, setTelefon] = useState("");
   const [role, setRoleVal] = useState<AppRole>("fahrer");
   const [busy, setBusy] = useState(false);
 
   useMemo(() => {
     if (user) {
       setDisplayName(user.display_name ?? "");
+      setTelefon(user.telefon ?? "");
       setRoleVal(((user.roles?.[0] as AppRole) ?? "fahrer"));
     }
   }, [user]);
@@ -721,7 +723,7 @@ function EditUserDialog({ user, onOpenChange, onDone }: { user: any | null; onOp
     if (!user) return;
     setBusy(true);
     try {
-      await updateProf({ data: { user_id: user.id, display_name: displayName } });
+      await updateProf({ data: { user_id: user.id, display_name: displayName, telefon } });
       await setRole({ data: { user_id: user.id, role } });
       toast.success("Benutzer aktualisiert");
       onOpenChange(false);
@@ -742,6 +744,10 @@ function EditUserDialog({ user, onOpenChange, onDone }: { user: any | null; onOp
           <div>
             <Label>Anzeigename</Label>
             <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+          </div>
+          <div>
+            <Label>Rufnummer (für Anruf-Button im Dashboard)</Label>
+            <Input type="tel" value={telefon} onChange={(e) => setTelefon(e.target.value)} placeholder="+49 170 1234567" />
           </div>
           <div>
             <Label>Rolle</Label>

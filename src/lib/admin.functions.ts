@@ -83,7 +83,7 @@ export const listUsers = createServerFn({ method: "GET" })
     const domainId = await requireDomainAdmin(context.userId);
     // Only profiles within this domain.
     const { data: profiles } = await supabaseAdmin
-      .from("profiles").select("id, display_name, avatar_url, einsatz_selectable").eq("domain_id", domainId);
+      .from("profiles").select("id, display_name, avatar_url, einsatz_selectable, telefon").eq("domain_id", domainId);
     const ids = (profiles ?? []).map((p: any) => p.id);
     if (ids.length === 0) return { users: [] };
     const { data: roles } = await supabaseAdmin
@@ -109,6 +109,7 @@ export const listUsers = createServerFn({ method: "GET" })
           banned_until: u.banned_until ?? null,
           display_name: profMap[id]?.display_name ?? null,
           avatar_url: profMap[id]?.avatar_url ?? null,
+          telefon: (profMap[id] as any)?.telefon ?? null,
           einsatz_selectable: (profMap[id] as any)?.einsatz_selectable !== false,
           roles: roleMap[id] ?? [],
         };
@@ -169,13 +170,16 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     z.object({
       user_id: z.string().uuid(),
       display_name: z.string().trim().min(1).max(120),
+      telefon: z.string().trim().max(40).optional().nullable(),
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
     const domainId = await requireDomainAdmin(context.userId);
     await assertUserInDomain(data.user_id, domainId);
+    const patch: any = { display_name: data.display_name };
+    if (data.telefon !== undefined) patch.telefon = data.telefon || null;
     const { error } = await supabaseAdmin
-      .from("profiles").update({ display_name: data.display_name }).eq("id", data.user_id);
+      .from("profiles").update(patch).eq("id", data.user_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
