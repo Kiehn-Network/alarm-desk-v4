@@ -200,6 +200,10 @@ export const createEinsatz = createServerFn({ method: "POST" })
       old_value: null, new_value: row.status, changed_by: userId,
       domain_id: domainId,
     });
+    try {
+      const { notifyNeuerEinsatz } = await import("@/lib/push.server");
+      await notifyNeuerEinsatz({ ...row, domain_id: domainId, created_by: userId });
+    } catch { /* best effort */ }
     return row;
   });
 
