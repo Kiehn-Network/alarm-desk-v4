@@ -65,6 +65,7 @@ const sections: Section[] = [
 
   { label: "Center", items: [
     { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher"] },
+    { to: "/fuhrpark", label: "Fuhrpark", icon: CarFront, roles: ["admin", "dispatcher"] },
     { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher"] },
     { to: "/esrp", label: "ESRP (ERP-Anbindung)", icon: Cable, roles: ["admin"], module: "esrp" },
     { to: "/intervention", label: "Intervention", icon: Network, roles: ["admin", "dispatcher"], module: "intervention" },
