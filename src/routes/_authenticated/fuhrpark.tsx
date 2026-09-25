@@ -415,6 +415,7 @@ function FahrzeugDialog({
   // Neuer Termin / Schaden / KM
   const [nTermin, setNTermin] = useState({ art: "inspektion", faellig_am: "", km_stand: "", kosten: "", beschreibung: "" });
   const [nSchaden, setNSchaden] = useState({ gemeldet_am: heute(), beschreibung: "", schwere: "leicht", kosten: "", notizen: "" });
+  const [nSchadenMarker, setNSchadenMarker] = useState<SkizzenMarker | null>(null);
   const [nKm, setNKm] = useState({ km_stand: "", notiert_am: heute(), notizen: "" });
 
   async function speichernStamm() {
@@ -723,6 +724,7 @@ function FahrzeugDialog({
                   </div>
                   <Input value={nSchaden.beschreibung} onChange={(e) => setNSchaden((s) => ({ ...s, beschreibung: e.target.value }))} placeholder="Was ist passiert? *" />
                   <Textarea rows={2} value={nSchaden.notizen} onChange={(e) => setNSchaden((s) => ({ ...s, notizen: e.target.value }))} placeholder="Notizen (optional)" />
+                  <FahrzeugSkizze marker={nSchadenMarker} onChange={setNSchadenMarker} />
                   <Button size="sm" className="gap-1.5" disabled={busy || !nSchaden.beschreibung.trim()}
                     onClick={() =>
                       run(async () => {
@@ -734,9 +736,11 @@ function FahrzeugDialog({
                             schwere: nSchaden.schwere,
                             kosten: nSchaden.kosten ? Number(nSchaden.kosten) : null,
                             notizen: nSchaden.notizen.trim() || null,
+                            marker: nSchadenMarker,
                           },
                         });
                         setNSchaden({ gemeldet_am: heute(), beschreibung: "", schwere: "leicht", kosten: "", notizen: "" });
+                        setNSchadenMarker(null);
                       }, "Schaden gemeldet.")
                     }
                   >
@@ -766,6 +770,13 @@ function FahrzeugDialog({
                         </div>
                         <p className="text-sm">{s.beschreibung}</p>
                         {s.notizen && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{s.notizen}</p>}
+                        {s.marker_seite && s.marker_x != null && s.marker_y != null && (
+                          <FahrzeugSkizze
+                            readOnly
+                            className="max-w-xs"
+                            marker={{ seite: s.marker_seite as SkizzenSeite, x: s.marker_x, y: s.marker_y }}
+                          />
+                        )}
                         <div className="grid sm:grid-cols-3 gap-2">
                           <Select value={s.status} onValueChange={(v) => run(async () => { await schadenUpdateFn({ data: { id: s.id, status: v } }); }, "Schaden aktualisiert.")}>
                             <SelectTrigger><SelectValue /></SelectTrigger>
