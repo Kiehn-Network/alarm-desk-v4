@@ -42,6 +42,7 @@ import { Route as AuthenticatedAuswertungRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
+import { Route as AuthenticatedObjektdossierRouteRouteImport } from './routes/_authenticated/objektdossier/route'
 import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
@@ -250,6 +251,12 @@ const AuthenticatedRevierCenterRouteRoute =
     path: '/revier-center',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedObjektdossierRouteRoute =
+  AuthenticatedObjektdossierRouteRouteImport.update({
+    id: '/objektdossier',
+    path: '/objektdossier',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRevierCenterIndexRoute =
   AuthenticatedRevierCenterIndexRouteImport.update({
     id: '/',
@@ -448,6 +455,7 @@ export interface FileRoutesByFullPath {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/objektdossier': typeof AuthenticatedObjektdossierRouteRoute
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -514,6 +522,7 @@ export interface FileRoutesByTo {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/objektdossier': typeof AuthenticatedObjektdossierRouteRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
   '/auswertung': typeof AuthenticatedAuswertungRoute
@@ -578,6 +587,7 @@ export interface FileRoutesById {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/objektdossier': typeof AuthenticatedObjektdossierRouteRoute
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -646,6 +656,7 @@ export interface FileRouteTypes {
     | '/lager-station'
     | '/login'
     | '/reset-password'
+    | '/objektdossier'
     | '/revier-center'
     | '/admin'
     | '/alarmierung'
@@ -712,6 +723,7 @@ export interface FileRouteTypes {
     | '/lager-station'
     | '/login'
     | '/reset-password'
+    | '/objektdossier'
     | '/admin'
     | '/alarmierung'
     | '/auswertung'
@@ -775,6 +787,7 @@ export interface FileRouteTypes {
     | '/lager-station'
     | '/login'
     | '/reset-password'
+    | '/_authenticated/objektdossier'
     | '/_authenticated/revier-center'
     | '/_authenticated/admin'
     | '/_authenticated/alarmierung'
@@ -1084,6 +1097,13 @@ declare module '@tanstack/react-router' {
       path: '/revier-center'
       fullPath: '/revier-center'
       preLoaderRoute: typeof AuthenticatedRevierCenterRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/objektdossier': {
+      id: '/_authenticated/objektdossier'
+      path: '/objektdossier'
+      fullPath: '/objektdossier'
+      preLoaderRoute: typeof AuthenticatedObjektdossierRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/revier-center/': {
@@ -1432,6 +1452,7 @@ const AuthenticatedAbrechnungProviderRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedObjektdossierRouteRoute: typeof AuthenticatedObjektdossierRouteRoute
   AuthenticatedRevierCenterRouteRoute: typeof AuthenticatedRevierCenterRouteRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
@@ -1463,6 +1484,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedObjektdossierRouteRoute: AuthenticatedObjektdossierRouteRoute,
   AuthenticatedRevierCenterRouteRoute:
     AuthenticatedRevierCenterRouteRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
