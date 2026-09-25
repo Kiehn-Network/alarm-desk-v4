@@ -485,9 +485,12 @@ function FahrzeugDialog({
     return (
       <Dialog open onOpenChange={(o) => !o && onClose()}>
         <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Fahrzeug wird geladen ...</DialogTitle>
+          </DialogHeader>
           <div className="grid place-items-center py-16 text-muted-foreground gap-2">
             <Loader2 className="size-5 animate-spin" />
-            <span className="text-sm">Fahrzeug wird geladen ...</span>
+            <span className="text-sm">Einen Moment ...</span>
           </div>
         </DialogContent>
       </Dialog>
