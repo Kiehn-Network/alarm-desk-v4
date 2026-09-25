@@ -1690,6 +1690,282 @@ export type Database = {
         }
         Relationships: []
       }
+      fuhrpark_fahrzeuge: {
+        Row: {
+          art: string
+          baujahr: number | null
+          bezeichnung: string | null
+          created_at: string
+          domain_id: string
+          erstellt_von: string | null
+          erstellt_von_name: string | null
+          hauptfahrer: string | null
+          id: string
+          kennzeichen: string
+          km_stand: number | null
+          marke: string | null
+          modell: string | null
+          notizen: string | null
+          status: string
+          tankart: string
+          updated_at: string
+          vin: string | null
+        }
+        Insert: {
+          art?: string
+          baujahr?: number | null
+          bezeichnung?: string | null
+          created_at?: string
+          domain_id: string
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          hauptfahrer?: string | null
+          id?: string
+          kennzeichen: string
+          km_stand?: number | null
+          marke?: string | null
+          modell?: string | null
+          notizen?: string | null
+          status?: string
+          tankart?: string
+          updated_at?: string
+          vin?: string | null
+        }
+        Update: {
+          art?: string
+          baujahr?: number | null
+          bezeichnung?: string | null
+          created_at?: string
+          domain_id?: string
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          hauptfahrer?: string | null
+          id?: string
+          kennzeichen?: string
+          km_stand?: number | null
+          marke?: string | null
+          modell?: string | null
+          notizen?: string | null
+          status?: string
+          tankart?: string
+          updated_at?: string
+          vin?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuhrpark_fahrzeuge_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuhrpark_fahrzeuge_erstellt_von_fkey"
+            columns: ["erstellt_von"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuhrpark_km_log: {
+        Row: {
+          created_at: string
+          domain_id: string
+          fahrzeug_id: string
+          id: string
+          km_stand: number
+          notiert_am: string
+          notiert_von: string | null
+          notiert_von_name: string | null
+          notizen: string | null
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          fahrzeug_id: string
+          id?: string
+          km_stand: number
+          notiert_am?: string
+          notiert_von?: string | null
+          notiert_von_name?: string | null
+          notizen?: string | null
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          fahrzeug_id?: string
+          id?: string
+          km_stand?: number
+          notiert_am?: string
+          notiert_von?: string | null
+          notiert_von_name?: string | null
+          notizen?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuhrpark_km_log_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuhrpark_km_log_fahrzeug_id_fkey"
+            columns: ["fahrzeug_id"]
+            isOneToOne: false
+            referencedRelation: "fuhrpark_fahrzeuge"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuhrpark_km_log_notiert_von_fkey"
+            columns: ["notiert_von"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuhrpark_schaeden: {
+        Row: {
+          beschreibung: string
+          created_at: string
+          domain_id: string
+          fahrzeug_id: string
+          gemeldet_am: string
+          gemeldet_von: string | null
+          gemeldet_von_name: string | null
+          id: string
+          kosten: number | null
+          notizen: string | null
+          schwere: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          beschreibung: string
+          created_at?: string
+          domain_id: string
+          fahrzeug_id: string
+          gemeldet_am?: string
+          gemeldet_von?: string | null
+          gemeldet_von_name?: string | null
+          id?: string
+          kosten?: number | null
+          notizen?: string | null
+          schwere?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          beschreibung?: string
+          created_at?: string
+          domain_id?: string
+          fahrzeug_id?: string
+          gemeldet_am?: string
+          gemeldet_von?: string | null
+          gemeldet_von_name?: string | null
+          id?: string
+          kosten?: number | null
+          notizen?: string | null
+          schwere?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuhrpark_schaeden_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuhrpark_schaeden_fahrzeug_id_fkey"
+            columns: ["fahrzeug_id"]
+            isOneToOne: false
+            referencedRelation: "fuhrpark_fahrzeuge"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuhrpark_schaeden_gemeldet_von_fkey"
+            columns: ["gemeldet_von"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fuhrpark_termine: {
+        Row: {
+          art: string
+          beschreibung: string | null
+          created_at: string
+          domain_id: string
+          erledigt_am: string | null
+          erstellt_von: string | null
+          erstellt_von_name: string | null
+          faellig_am: string | null
+          fahrzeug_id: string
+          id: string
+          km_stand: number | null
+          kosten: number | null
+          updated_at: string
+        }
+        Insert: {
+          art?: string
+          beschreibung?: string | null
+          created_at?: string
+          domain_id: string
+          erledigt_am?: string | null
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          faellig_am?: string | null
+          fahrzeug_id: string
+          id?: string
+          km_stand?: number | null
+          kosten?: number | null
+          updated_at?: string
+        }
+        Update: {
+          art?: string
+          beschreibung?: string | null
+          created_at?: string
+          domain_id?: string
+          erledigt_am?: string | null
+          erstellt_von?: string | null
+          erstellt_von_name?: string | null
+          faellig_am?: string | null
+          fahrzeug_id?: string
+          id?: string
+          km_stand?: number | null
+          kosten?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fuhrpark_termine_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuhrpark_termine_erstellt_von_fkey"
+            columns: ["erstellt_von"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fuhrpark_termine_fahrzeug_id_fkey"
+            columns: ["fahrzeug_id"]
+            isOneToOne: false
+            referencedRelation: "fuhrpark_fahrzeuge"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hausnotruf_abrechnung_log: {
         Row: {
           domain_id: string
