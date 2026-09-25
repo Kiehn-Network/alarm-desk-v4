@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -38,10 +38,12 @@ const FELDER = [
 
 function DossierDetailPage() {
   const { dossierId } = Route.useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const getFn = useServerFn(getDossier);
   const updateFn = useServerFn(updateDossier);
   const deleteFn = useServerFn(deleteDossier);
+  const deleteKontaktFn = useServerFn(deleteKontakt);
 
   const [bearbeiten, setBearbeiten] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -107,7 +109,8 @@ function DossierDetailPage() {
     try {
       await deleteFn({ data: { id: dossier.id } });
       toast.success("Objektdossier gelöscht.");
-      window.location.assign("/objektdossier");
+      queryClient.invalidateQueries({ queryKey: ["objekt-dossiers"] });
+      navigate({ to: "/objektdossier" });
     } catch (e) {
       toast.error((e as Error).message);
       setBusy(false);
@@ -237,7 +240,9 @@ function DossierDetailPage() {
                   className="text-destructive"
                   onClick={async () => {
                     try {
-                      await deleteKontaktFn(deleteFn, { id: k.id }, queryClient, dossierId);
+                      await deleteKontaktFn({ data: { id: k.id } });
+                      toast.success("Kontakt gelöscht.");
+                      queryClient.invalidateQueries({ queryKey: ["objekt-dossier", dossierId] });
                     } catch (e) {
                       toast.error((e as Error).message);
                     }
