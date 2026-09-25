@@ -323,14 +323,14 @@ export const findDossierForKunde = createServerFn({ method: "POST" })
     const erlaubt = istNurFahrer ? (rows ?? []).filter((r: any) => r.fahrer_sichtbar !== false) : (rows ?? []);
 
     // Trefferqualität: exakte Schlüssel-Nr. > exakte Adresse > Name
-    const评分 = (r: any) => {
+    const punktzahl = (r: any) => {
       let score = 0;
       if (key && leer(r.key_number).toLowerCase() === key) score += 6;
       if (addr && leer(r.address).toLowerCase() === addr) score += 4;
       if (name && leer(r.kunden_name).toLowerCase() === name) score += 3;
       return score;
     };
-    const bester = [...erlaubt].sort((a: any, b: any) => 评分(b) - 评分(a))[0];
+    const bester = [...erlaubt].sort((a: any, b: any) => punktzahl(b) - punktzahl(a))[0];
     if (!bester) return { dossier: null, kontakte: [] as KontaktRow[] };
 
     const { data: kontakte } = await supabase
