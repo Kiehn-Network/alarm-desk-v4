@@ -15,6 +15,13 @@
       "when": 1790369510252,
       "tag": "0001_dienst_telefone",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790372399823,
+      "tag": "0002_vorkommnisse_audit_push",
+      "breakpoints": true
     }
   ]
 }
