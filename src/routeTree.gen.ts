@@ -28,6 +28,7 @@ import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
 import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authenticated/meine-einsaetze'
 import { Route as AuthenticatedLagerRouteImport } from './routes/_authenticated/lager'
+import { Route as AuthenticatedKundenakteRouteImport } from './routes/_authenticated/kundenakte'
 import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated/kunden'
 import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
 import { Route as AuthenticatedInterventionRouteImport } from './routes/_authenticated/intervention'
@@ -176,6 +177,11 @@ const AuthenticatedMeineEinsaetzeRoute =
 const AuthenticatedLagerRoute = AuthenticatedLagerRouteImport.update({
   id: '/lager',
   path: '/lager',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedKundenakteRoute = AuthenticatedKundenakteRouteImport.update({
+  id: '/kundenakte',
+  path: '/kundenakte',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedKundenRoute = AuthenticatedKundenRouteImport.update({
@@ -491,6 +497,7 @@ export interface FileRoutesByFullPath {
   '/intervention': typeof AuthenticatedInterventionRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
+  '/kundenakte': typeof AuthenticatedKundenakteRoute
   '/lager': typeof AuthenticatedLagerRoute
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
@@ -559,6 +566,7 @@ export interface FileRoutesByTo {
   '/intervention': typeof AuthenticatedInterventionRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
   '/kunden': typeof AuthenticatedKundenRoute
+  '/kundenakte': typeof AuthenticatedKundenakteRoute
   '/lager': typeof AuthenticatedLagerRoute
   '/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/monitor': typeof AuthenticatedMonitorRoute
@@ -628,6 +636,7 @@ export interface FileRoutesById {
   '/_authenticated/intervention': typeof AuthenticatedInterventionRoute
   '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
   '/_authenticated/kunden': typeof AuthenticatedKundenRoute
+  '/_authenticated/kundenakte': typeof AuthenticatedKundenakteRoute
   '/_authenticated/lager': typeof AuthenticatedLagerRoute
   '/_authenticated/meine-einsaetze': typeof AuthenticatedMeineEinsaetzeRoute
   '/_authenticated/monitor': typeof AuthenticatedMonitorRoute
@@ -700,6 +709,7 @@ export interface FileRouteTypes {
     | '/intervention'
     | '/intrahub'
     | '/kunden'
+    | '/kundenakte'
     | '/lager'
     | '/meine-einsaetze'
     | '/monitor'
@@ -768,6 +778,7 @@ export interface FileRouteTypes {
     | '/intervention'
     | '/intrahub'
     | '/kunden'
+    | '/kundenakte'
     | '/lager'
     | '/meine-einsaetze'
     | '/monitor'
@@ -836,6 +847,7 @@ export interface FileRouteTypes {
     | '/_authenticated/intervention'
     | '/_authenticated/intrahub'
     | '/_authenticated/kunden'
+    | '/_authenticated/kundenakte'
     | '/_authenticated/lager'
     | '/_authenticated/meine-einsaetze'
     | '/_authenticated/monitor'
@@ -1035,6 +1047,13 @@ declare module '@tanstack/react-router' {
       path: '/lager'
       fullPath: '/lager'
       preLoaderRoute: typeof AuthenticatedLagerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/kundenakte': {
+      id: '/_authenticated/kundenakte'
+      path: '/kundenakte'
+      fullPath: '/kundenakte'
+      preLoaderRoute: typeof AuthenticatedKundenakteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/kunden': {
@@ -1542,6 +1561,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInterventionRoute: typeof AuthenticatedInterventionRoute
   AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
   AuthenticatedKundenRoute: typeof AuthenticatedKundenRoute
+  AuthenticatedKundenakteRoute: typeof AuthenticatedKundenakteRoute
   AuthenticatedLagerRoute: typeof AuthenticatedLagerRoute
   AuthenticatedMeineEinsaetzeRoute: typeof AuthenticatedMeineEinsaetzeRoute
   AuthenticatedMonitorRoute: typeof AuthenticatedMonitorRoute
@@ -1577,6 +1597,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedInterventionRoute: AuthenticatedInterventionRoute,
   AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,
   AuthenticatedKundenRoute: AuthenticatedKundenRoute,
+  AuthenticatedKundenakteRoute: AuthenticatedKundenakteRoute,
   AuthenticatedLagerRoute: AuthenticatedLagerRoute,
   AuthenticatedMeineEinsaetzeRoute: AuthenticatedMeineEinsaetzeRoute,
   AuthenticatedMonitorRoute: AuthenticatedMonitorRoute,
