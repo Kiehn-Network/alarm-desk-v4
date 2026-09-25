@@ -22,6 +22,13 @@
       "when": 1790373255925,
       "tag": "0002_push_einsatz_pref",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790374026758,
+      "tag": "0003_objektdossier_und_service_center",
+      "breakpoints": true
     }
   ]
 }

@@ -42,8 +42,11 @@ import { Route as AuthenticatedAuswertungRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
+import { Route as AuthenticatedObjektdossierRouteRouteImport } from './routes/_authenticated/objektdossier/route'
 import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
+import { Route as AuthenticatedObjektdossierIndexRouteImport } from './routes/_authenticated/objektdossier/index'
 import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
+import { Route as AuthenticatedObjektdossierDossierIdRouteImport } from './routes/_authenticated/objektdossier/$dossierId'
 import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
 import { Route as AuthenticatedRevierCenterOwksRouteRouteImport } from './routes/_authenticated/revier-center/owks/route'
@@ -250,17 +253,35 @@ const AuthenticatedRevierCenterRouteRoute =
     path: '/revier-center',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedObjektdossierRouteRoute =
+  AuthenticatedObjektdossierRouteRouteImport.update({
+    id: '/objektdossier',
+    path: '/objektdossier',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedRevierCenterIndexRoute =
   AuthenticatedRevierCenterIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
   } as any)
+const AuthenticatedObjektdossierIndexRoute =
+  AuthenticatedObjektdossierIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedObjektdossierRouteRoute,
+  } as any)
 const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
   id: '/api/public/version',
   path: '/api/public/version',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedObjektdossierDossierIdRoute =
+  AuthenticatedObjektdossierDossierIdRouteImport.update({
+    id: '/$dossierId',
+    path: '/$dossierId',
+    getParentRoute: () => AuthenticatedObjektdossierRouteRoute,
+  } as any)
 const AuthenticatedNotdienstLutzRoute =
   AuthenticatedNotdienstLutzRouteImport.update({
     id: '/notdienst/lutz',
@@ -448,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/objektdossier': typeof AuthenticatedObjektdossierRouteRouteWithChildren
   '/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/admin': typeof AuthenticatedAdminRoute
   '/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -477,7 +499,9 @@ export interface FileRoutesByFullPath {
   '/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/objektdossier/$dossierId': typeof AuthenticatedObjektdossierDossierIdRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/objektdossier/': typeof AuthenticatedObjektdossierIndexRoute
   '/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
@@ -539,7 +563,9 @@ export interface FileRoutesByTo {
   '/support': typeof AuthenticatedSupportRoute
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/objektdossier/$dossierId': typeof AuthenticatedObjektdossierDossierIdRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/objektdossier': typeof AuthenticatedObjektdossierIndexRoute
   '/revier-center': typeof AuthenticatedRevierCenterIndexRoute
   '/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
@@ -578,6 +604,7 @@ export interface FileRoutesById {
   '/lager-station': typeof LagerStationRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authenticated/objektdossier': typeof AuthenticatedObjektdossierRouteRouteWithChildren
   '/_authenticated/revier-center': typeof AuthenticatedRevierCenterRouteRouteWithChildren
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/alarmierung': typeof AuthenticatedAlarmierungRoute
@@ -607,7 +634,9 @@ export interface FileRoutesById {
   '/_authenticated/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
   '/_authenticated/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/_authenticated/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
+  '/_authenticated/objektdossier/$dossierId': typeof AuthenticatedObjektdossierDossierIdRoute
   '/api/public/version': typeof ApiPublicVersionRoute
+  '/_authenticated/objektdossier/': typeof AuthenticatedObjektdossierIndexRoute
   '/_authenticated/revier-center/': typeof AuthenticatedRevierCenterIndexRoute
   '/_authenticated/abrechnung/$provider/versand': typeof AuthenticatedAbrechnungProviderVersandRoute
   '/_authenticated/notdienst/budeko/import': typeof AuthenticatedNotdienstBudekoImportRoute
@@ -646,6 +675,7 @@ export interface FileRouteTypes {
     | '/lager-station'
     | '/login'
     | '/reset-password'
+    | '/objektdossier'
     | '/revier-center'
     | '/admin'
     | '/alarmierung'
@@ -675,7 +705,9 @@ export interface FileRouteTypes {
     | '/revier-center/owks'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
+    | '/objektdossier/$dossierId'
     | '/api/public/version'
+    | '/objektdossier/'
     | '/revier-center/'
     | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/import'
@@ -737,7 +769,9 @@ export interface FileRouteTypes {
     | '/support'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
+    | '/objektdossier/$dossierId'
     | '/api/public/version'
+    | '/objektdossier'
     | '/revier-center'
     | '/abrechnung/$provider/versand'
     | '/notdienst/budeko/import'
@@ -775,6 +809,7 @@ export interface FileRouteTypes {
     | '/lager-station'
     | '/login'
     | '/reset-password'
+    | '/_authenticated/objektdossier'
     | '/_authenticated/revier-center'
     | '/_authenticated/admin'
     | '/_authenticated/alarmierung'
@@ -804,7 +839,9 @@ export interface FileRouteTypes {
     | '/_authenticated/revier-center/owks'
     | '/_authenticated/abrechnung/$provider'
     | '/_authenticated/notdienst/lutz'
+    | '/_authenticated/objektdossier/$dossierId'
     | '/api/public/version'
+    | '/_authenticated/objektdossier/'
     | '/_authenticated/revier-center/'
     | '/_authenticated/abrechnung/$provider/versand'
     | '/_authenticated/notdienst/budeko/import'
@@ -1086,6 +1123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRevierCenterRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/objektdossier': {
+      id: '/_authenticated/objektdossier'
+      path: '/objektdossier'
+      fullPath: '/objektdossier'
+      preLoaderRoute: typeof AuthenticatedObjektdossierRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/revier-center/': {
       id: '/_authenticated/revier-center/'
       path: '/'
@@ -1093,12 +1137,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRevierCenterIndexRouteImport
       parentRoute: typeof AuthenticatedRevierCenterRouteRoute
     }
+    '/_authenticated/objektdossier/': {
+      id: '/_authenticated/objektdossier/'
+      path: '/'
+      fullPath: '/objektdossier/'
+      preLoaderRoute: typeof AuthenticatedObjektdossierIndexRouteImport
+      parentRoute: typeof AuthenticatedObjektdossierRouteRoute
+    }
     '/api/public/version': {
       id: '/api/public/version'
       path: '/api/public/version'
       fullPath: '/api/public/version'
       preLoaderRoute: typeof ApiPublicVersionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/objektdossier/$dossierId': {
+      id: '/_authenticated/objektdossier/$dossierId'
+      path: '/$dossierId'
+      fullPath: '/objektdossier/$dossierId'
+      preLoaderRoute: typeof AuthenticatedObjektdossierDossierIdRouteImport
+      parentRoute: typeof AuthenticatedObjektdossierRouteRoute
     }
     '/_authenticated/notdienst/lutz': {
       id: '/_authenticated/notdienst/lutz'
@@ -1313,6 +1371,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedObjektdossierRouteRouteChildren {
+  AuthenticatedObjektdossierDossierIdRoute: typeof AuthenticatedObjektdossierDossierIdRoute
+  AuthenticatedObjektdossierIndexRoute: typeof AuthenticatedObjektdossierIndexRoute
+}
+
+const AuthenticatedObjektdossierRouteRouteChildren: AuthenticatedObjektdossierRouteRouteChildren =
+  {
+    AuthenticatedObjektdossierDossierIdRoute:
+      AuthenticatedObjektdossierDossierIdRoute,
+    AuthenticatedObjektdossierIndexRoute: AuthenticatedObjektdossierIndexRoute,
+  }
+
+const AuthenticatedObjektdossierRouteRouteWithChildren =
+  AuthenticatedObjektdossierRouteRoute._addFileChildren(
+    AuthenticatedObjektdossierRouteRouteChildren,
+  )
+
 interface AuthenticatedRevierCenterOwksRouteRouteChildren {
   AuthenticatedRevierCenterOwksBestreifungsplaeneRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRoute
   AuthenticatedRevierCenterOwksNfcPunkteRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRoute
@@ -1432,6 +1507,7 @@ const AuthenticatedAbrechnungProviderRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedObjektdossierRouteRoute: typeof AuthenticatedObjektdossierRouteRouteWithChildren
   AuthenticatedRevierCenterRouteRoute: typeof AuthenticatedRevierCenterRouteRouteWithChildren
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAlarmierungRoute: typeof AuthenticatedAlarmierungRoute
@@ -1463,6 +1539,8 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedObjektdossierRouteRoute:
+    AuthenticatedObjektdossierRouteRouteWithChildren,
   AuthenticatedRevierCenterRouteRoute:
     AuthenticatedRevierCenterRouteRouteWithChildren,
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,

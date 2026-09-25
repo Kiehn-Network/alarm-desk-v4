@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   Truck, CheckSquare, Clock, MapPin, KeyRound, Hash, User, Phone, Navigation,
   History as HistoryIcon, Flag, FolderOpen, ClipboardList, MapPinned, LogOut, Square, Info, Building2,
-  ListChecks,
+  ListChecks, DoorOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ import { EinsatzBerichtDialog } from "@/components/einsatz-bericht-dialog";
 import { KundenInfoDialog } from "@/components/kunden-info-dialog";
 import { ChecklistenDialog, ChecklistenStatusBadge } from "@/components/checklisten-dialog";
 import { getEinsatzChecklistenStatus } from "@/lib/checklisten.functions";
+import { ObjektDossierDialog } from "@/components/objekt-dossier-dialog";
 import { enqueue } from "@/lib/offline-queue";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
 import { DienstTelefonPicker } from "@/components/dienst-telefon-picker";
@@ -138,6 +139,7 @@ function MeineEinsaetzePage() {
   const [berichtFor, setBerichtFor] = useState<Einsatz | null>(null);
   const [infoFor, setInfoFor] = useState<string | null>(null);
   const [checklisteFor, setChecklisteFor] = useState<Einsatz | null>(null);
+  const [objektFor, setObjektFor] = useState<Einsatz | null>(null);
 
   const einsaetze: Einsatz[] = data?.einsaetze ?? [];
   const profiles: Record<string, string> = data?.profiles ?? {};
@@ -384,6 +386,9 @@ function MeineEinsaetzePage() {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setInfoFor(e.id)}>
                     <Info className="size-4" /> Infos
                   </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setObjektFor(e)}>
+                    <DoorOpen className="size-4" /> Objektinfo
+                  </Button>
                   {isAktiv(e) && (
                     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setChecklisteFor(e)}>
                       <ListChecks className="size-4" /> Checkliste
@@ -421,6 +426,11 @@ function MeineEinsaetzePage() {
         einsatzTyp={checklisteFor?.einsatz_typ ?? null}
         open={!!checklisteFor}
         onClose={() => setChecklisteFor(null)}
+      />
+      <ObjektDossierDialog
+        open={!!objektFor}
+        onClose={() => setObjektFor(null)}
+        kunde={objektFor ? { kunden_name: objektFor.kunden_name, key_number: objektFor.key_number, address: objektFor.address } : null}
       />
     </div>
   );
