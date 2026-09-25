@@ -302,6 +302,7 @@ export const createFahrzeug = createServerFn({ method: "POST" })
       .from("fuhrpark_fahrzeuge")
       .insert({
         ...data,
+        art: data.art?.trim() || "",
         tankart: tankNormal(data.tankart),
         status: statusNormal(data.status),
         domain_id: domainId,
