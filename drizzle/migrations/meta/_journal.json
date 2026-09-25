@@ -29,6 +29,13 @@
       "when": 1790374026758,
       "tag": "0003_objektdossier_und_service_center",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790375240114,
+      "tag": "0004_fuhrpark_grundstock",
+      "breakpoints": true
     }
   ]
 }

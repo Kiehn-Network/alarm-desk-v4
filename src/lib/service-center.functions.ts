@@ -78,7 +78,7 @@ function prioNormal(value: unknown) {
 async function anzeigeName(supabase: any, userId: string) {
   const { data } = await supabase
     .from("profiles")
-    .select("display_name, email")
+    .select("display_name")
     .eq("id", userId)
     .maybeSingle();
   return data?.display_name || data?.email || "Unbekannt";
@@ -324,7 +324,7 @@ export const listTeam = createServerFn({ method: "GET" })
 
     const { data: profiles, error } = await supabase
       .from("profiles")
-      .select("id, display_name, email")
+      .select("id, display_name")
       .eq("domain_id", domainId)
       .order("display_name", { ascending: true, nullsFirst: false })
       .limit(300);

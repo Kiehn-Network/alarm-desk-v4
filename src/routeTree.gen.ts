@@ -32,6 +32,7 @@ import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
 import { Route as AuthenticatedInterventionRouteImport } from './routes/_authenticated/intervention'
 import { Route as AuthenticatedHilfeRouteImport } from './routes/_authenticated/hilfe'
+import { Route as AuthenticatedFuhrparkRouteImport } from './routes/_authenticated/fuhrpark'
 import { Route as AuthenticatedEsrpRouteImport } from './routes/_authenticated/esrp'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
@@ -196,6 +197,11 @@ const AuthenticatedInterventionRoute =
 const AuthenticatedHilfeRoute = AuthenticatedHilfeRouteImport.update({
   id: '/hilfe',
   path: '/hilfe',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFuhrparkRoute = AuthenticatedFuhrparkRouteImport.update({
+  id: '/fuhrpark',
+  path: '/fuhrpark',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEsrpRoute = AuthenticatedEsrpRouteImport.update({
@@ -480,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/esrp': typeof AuthenticatedEsrpRoute
+  '/fuhrpark': typeof AuthenticatedFuhrparkRoute
   '/hilfe': typeof AuthenticatedHilfeRoute
   '/intervention': typeof AuthenticatedInterventionRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
@@ -547,6 +554,7 @@ export interface FileRoutesByTo {
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/esrp': typeof AuthenticatedEsrpRoute
+  '/fuhrpark': typeof AuthenticatedFuhrparkRoute
   '/hilfe': typeof AuthenticatedHilfeRoute
   '/intervention': typeof AuthenticatedInterventionRoute
   '/intrahub': typeof AuthenticatedIntrahubRoute
@@ -615,6 +623,7 @@ export interface FileRoutesById {
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/_authenticated/esrp': typeof AuthenticatedEsrpRoute
+  '/_authenticated/fuhrpark': typeof AuthenticatedFuhrparkRoute
   '/_authenticated/hilfe': typeof AuthenticatedHilfeRoute
   '/_authenticated/intervention': typeof AuthenticatedInterventionRoute
   '/_authenticated/intrahub': typeof AuthenticatedIntrahubRoute
@@ -686,6 +695,7 @@ export interface FileRouteTypes {
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/esrp'
+    | '/fuhrpark'
     | '/hilfe'
     | '/intervention'
     | '/intrahub'
@@ -753,6 +763,7 @@ export interface FileRouteTypes {
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/esrp'
+    | '/fuhrpark'
     | '/hilfe'
     | '/intervention'
     | '/intrahub'
@@ -820,6 +831,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
     | '/_authenticated/esrp'
+    | '/_authenticated/fuhrpark'
     | '/_authenticated/hilfe'
     | '/_authenticated/intervention'
     | '/_authenticated/intrahub'
@@ -1051,6 +1063,13 @@ declare module '@tanstack/react-router' {
       path: '/hilfe'
       fullPath: '/hilfe'
       preLoaderRoute: typeof AuthenticatedHilfeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fuhrpark': {
+      id: '/_authenticated/fuhrpark'
+      path: '/fuhrpark'
+      fullPath: '/fuhrpark'
+      preLoaderRoute: typeof AuthenticatedFuhrparkRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/esrp': {
@@ -1518,6 +1537,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
   AuthenticatedEsrpRoute: typeof AuthenticatedEsrpRoute
+  AuthenticatedFuhrparkRoute: typeof AuthenticatedFuhrparkRoute
   AuthenticatedHilfeRoute: typeof AuthenticatedHilfeRoute
   AuthenticatedInterventionRoute: typeof AuthenticatedInterventionRoute
   AuthenticatedIntrahubRoute: typeof AuthenticatedIntrahubRoute
@@ -1552,6 +1572,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
   AuthenticatedEsrpRoute: AuthenticatedEsrpRoute,
+  AuthenticatedFuhrparkRoute: AuthenticatedFuhrparkRoute,
   AuthenticatedHilfeRoute: AuthenticatedHilfeRoute,
   AuthenticatedInterventionRoute: AuthenticatedInterventionRoute,
   AuthenticatedIntrahubRoute: AuthenticatedIntrahubRoute,

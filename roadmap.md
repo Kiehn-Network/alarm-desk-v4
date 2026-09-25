@@ -33,3 +33,14 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 
 ## 4. Archiv & Volltextsuche (offen)
 - Abgeschlossene Einsätze dauerhaft durchsuchbar (Teilnehmernummer, Kunde, Adresse, Schlüssel-Nr.)
+
+## Erledigt: Fuhrpark
+- [x] Menüpunkt „Fuhrpark" (Admin/Disponent) unter Center
+- [x] Fahrzeuge: Kennzeichen, Bezeichnung, Art, Marke/Modell, Baujahr, VIN, Antrieb, Hauptfahrer, Status (aktiv/Werkstatt/ausgemustert)
+- [x] Termine (HU/TÜV, Inspektion, Erste-Hilfe-Kurs, Sonstiges) mit Fälligkeit, KM, Kosten — überfällige fallen rot auf
+- [x] Schäden mit Schwere und Status (offen/in Reparatur/behandelt), Kosten
+- [x] Kilometerstand-Log; Fahrzeug-Km-Stand wird nur nach vorne korrigiert
+- [x] Kennzahlen oben: aktiv, Werkstatt, überfällige Termine, Gesamt
+- [x] Detail-Dialog getestet: Termine/Schäden/Kilometerstände anlegen, Überfällig-Markierung, „erledigt"-Button, KM-Korrektur nach vorne
+- [x] Bugfix: doppelte Schaltfläche „Termin anlegen" (Submit-Button war zweifach vorhanden)
+- [x] Ersteller-Name statt „Unbekannt" (Namensauflösung korrigiert; auch Objektdossier/Service Center)

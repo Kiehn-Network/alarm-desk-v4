@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, Boxes, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
-  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon, ExternalLink, DoorOpen,
+  Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon, ExternalLink, DoorOpen, CarFront,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +65,7 @@ const sections: Section[] = [
 
   { label: "Center", items: [
     { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher"] },
+    { to: "/fuhrpark", label: "Fuhrpark", icon: CarFront, roles: ["admin", "dispatcher"] },
     { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher"] },
     { to: "/esrp", label: "ESRP (ERP-Anbindung)", icon: Cable, roles: ["admin"], module: "esrp" },
     { to: "/intervention", label: "Intervention", icon: Network, roles: ["admin", "dispatcher"], module: "intervention" },
