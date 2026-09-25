@@ -9,6 +9,7 @@ import { useUiSize, type UiSize } from "@/hooks/use-ui-size";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { toAuthPassword } from "@/lib/password-compat";
 import { Button } from "@/components/ui/button";
+import { PushSettings } from "@/components/push-settings";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   head: () => ({
@@ -148,6 +149,8 @@ function ProfilPage() {
           Bearbeite deinen Namen, dein Profilbild und dein Passwort.
         </p>
       </div>
+
+      <PushSettings />
 
       <section className="rounded-xl border border-border bg-card p-5 md:p-6 space-y-5">
         <h2 className="text-base font-semibold flex items-center gap-2">

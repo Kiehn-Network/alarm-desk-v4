@@ -11,7 +11,7 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - Fahrer startet Checkliste am Einsatz, hakt Punkte ab, schließt ab
 - Admin-Verwaltung unter /admin → Reiter „Checklisten"
 
-## 2. Push-Benachrichtigungen (offen)
+- [x] Push-Benachrichtigungen (erledigt)
 - Web-Push für neue Einsätze an Fahrer & Zentrale (Service Worker + VAPID)
 - Abo-Verwaltung pro Benutzer
 
