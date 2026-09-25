@@ -319,7 +319,7 @@ export const findDossierForKunde = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const rollen = await rollenVon(supabase, userId);
-    const istNurFahrer = rollen.length > 0 && rollen.every((r) => r === "fahrer" || r === "user");
+    const istNurFahrer = rollen.length > 0 && rollen.every((r: string) => r === "fahrer" || r === "user");
     const erlaubt = istNurFahrer ? (rows ?? []).filter((r: any) => r.fahrer_sichtbar !== false) : (rows ?? []);
 
     // Trefferqualität: exakte Schlüssel-Nr. > exakte Adresse > Name
