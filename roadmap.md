@@ -45,3 +45,4 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - [x] Bugfix: doppelte Schaltfläche „Termin anlegen" (Submit-Button war zweifach vorhanden)
 - [x] Ersteller-Name statt „Unbekannt" (Namensauflösung korrigiert; auch Objektdossier/Service Center)
 - [x] Fahrzeugskizze bei Schäden: Klick markiert die Schadenposition auf der Karosserie (Vorne/Hinten/Links/Rechts), gespeichert pro Schaden und in der Liste als Mini-Skizze angezeigt
+- [x] Kundenakte: ein Menüpunkt für Dateien, Schlüssel, Objektdossier, Einsätze pro Kunde
