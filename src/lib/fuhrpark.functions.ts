@@ -474,6 +474,7 @@ export const createSchaden = createServerFn({ method: "POST" })
         schwere: z.string().trim().max(20).optional(),
         kosten: z.number().min(0).nullish(),
         notizen: LONG,
+        marker: markerSchema,
       })
       .parse(i),
   )
@@ -489,6 +490,7 @@ export const createSchaden = createServerFn({ method: "POST" })
       schwere: schwereNormal(data.schwere),
       kosten: data.kosten ?? null,
       notizen: data.notizen ?? null,
+      ...markerNormal(data.marker),
       domain_id: domainId,
       gemeldet_von: userId,
       gemeldet_von_name: name,
