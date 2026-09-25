@@ -35,6 +35,8 @@ import { LagerBenutzerPanel } from "@/components/admin/lager-benutzer-panel";
 import { LagerArtikelPanel } from "@/components/admin/lager-artikel-panel";
 import { LagerAdminsPanel } from "@/components/admin/lager-admins-panel";
 import { ChecklistenPanel } from "@/components/admin/checklisten-panel";
+import { DienstTelefonePanel } from "@/components/admin/dienst-telefone-panel";
+import { Phone } from "lucide-react";
 import { SupportPanel } from "@/routes/_authenticated/support";
 import {
   adminStats, listUsers, createUser, setUserRole, updateUserProfile,
@@ -118,6 +120,7 @@ function AdminPage() {
           <TabsTrigger value="lager-artikel"><Boxes className="size-4 mr-2" />Lager-Artikel</TabsTrigger>
           <TabsTrigger value="hilfe"><LifeBuoy className="size-4 mr-2" />Hilfe</TabsTrigger>
           <TabsTrigger value="checklisten"><ListChecks className="size-4 mr-2" />Checklisten</TabsTrigger>
+          <TabsTrigger value="telefone"><Phone className="size-4 mr-2" />Diensttelefone</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users"><UsersPanel /></TabsContent>
@@ -141,6 +144,7 @@ function AdminPage() {
         <TabsContent value="lager-artikel"><LagerArtikelPanel /></TabsContent>
         <TabsContent value="hilfe"><SupportPanel /></TabsContent>
         <TabsContent value="checklisten"><ChecklistenPanel /></TabsContent>
+        <TabsContent value="telefone"><DienstTelefonePanel /></TabsContent>
       </Tabs>
     </div>
   );

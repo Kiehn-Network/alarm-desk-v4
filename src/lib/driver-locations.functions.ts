@@ -122,6 +122,7 @@ export type EinsatzTracking = {
   fahrer_id: string;
   fahrer_name: string | null;
   fahrer_telefon: string | null;
+  telefon_name: string | null;
   fahrer_avatar: string | null;
   position_at: string | null;
   distance_km: number | null;
@@ -173,10 +174,16 @@ export const getEinsatzTracking = createServerFn({ method: "GET" })
     if (!es || es.length === 0) return [];
     const ids = Array.from(new Set(es.map((e) => e.assigned_to!)));
     const [{ data: profs }, { data: locs }] = await Promise.all([
-      supabase.from("profiles").select("id, display_name, telefon, avatar_url").in("id", ids),
+      supabase.from("profiles").select("id, display_name, telefon, avatar_url, dienst_telefon_id").in("id", ids),
       supabase.from("driver_locations").select("user_id, lat, lng, updated_at").in("user_id", ids),
     ]);
     const pm = new Map((profs ?? []).map((p: any) => [p.id, p]));
+    const telIds = (profs ?? []).map((p: any) => p.dienst_telefon_id).filter(Boolean);
+    const tm = new Map<string, any>();
+    if (telIds.length) {
+      const { data: tels } = await supabase.from("dienst_telefone").select("id, name, nummer").in("id", telIds);
+      (tels ?? []).forEach((t: any) => tm.set(t.id, t));
+    }
     const lm = new Map((locs ?? []).map((l: any) => [l.user_id, l]));
 
     return Promise.all(es.map(async (e: any) => {
@@ -200,7 +207,8 @@ export const getEinsatzTracking = createServerFn({ method: "GET" })
       const p: any = pm.get(e.assigned_to);
       return {
         einsatz_id: e.id, einsatzgrund: e.einsatzgrund, kunden_name: e.kunden_name, address: e.address, phase,
-        fahrer_id: e.assigned_to, fahrer_name: p?.display_name ?? null, fahrer_telefon: p?.telefon ?? null,
+        fahrer_id: e.assigned_to, fahrer_name: p?.display_name ?? null, fahrer_telefon: tm.get(p?.dienst_telefon_id)?.nummer ?? p?.telefon ?? null,
+        telefon_name: tm.get(p?.dienst_telefon_id)?.name ?? null,
         fahrer_avatar: p?.avatar_url ?? null, position_at: loc?.updated_at ?? null,
         distance_km: distance_km != null ? Math.round(distance_km * 10) / 10 : null,
         eta_min: eta_min != null ? Math.round(eta_min) : null,
