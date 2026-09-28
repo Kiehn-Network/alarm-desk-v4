@@ -696,10 +696,31 @@ const MIGRATION_MODULES = import.meta.glob("/supabase/migrations/*.sql", {
   eager: true,
 }) as Record<string, string>;
 
+// Neuere Migrationen (Diensttelefone, Push, Objektdossier, Service Center, Fuhrpark …)
+const DRIZZLE_MODULES = import.meta.glob("/drizzle/migrations/*.sql", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+}) as Record<string, string>;
+
+const EXTRA_MIGRATIONS: { name: string; sql: string }[] = [
+  {
+    name: "zz_9001_fuhrpark_schaden_marker.sql",
+    sql: `ALTER TABLE public.fuhrpark_schaeden ADD COLUMN IF NOT EXISTS marker_seite text, ADD COLUMN IF NOT EXISTS marker_x numeric, ADD COLUMN IF NOT EXISTS marker_y numeric;\nNOTIFY pgrst, 'reload schema';`,
+  },
+];
+
 function loadMigrations(): { name: string; sql: string }[] {
-  return Object.entries(MIGRATION_MODULES)
+  const base = Object.entries(MIGRATION_MODULES)
     .map(([path, sql]) => ({ name: path.split("/").pop() as string, sql }))
     .sort((a, b) => a.name.localeCompare(b.name));
+  const drizzle = Object.entries(DRIZZLE_MODULES)
+    .map(([path, sql]) => ({
+      name: `zz_drizzle_${path.split("/").pop()}`,
+      sql: sql.replace(/--> statement-breakpoint/g, ""),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  return [...base, ...drizzle, ...EXTRA_MIGRATIONS];
 }
 
 export const startSchemaMigrationJob = createServerFn({ method: "POST" })
