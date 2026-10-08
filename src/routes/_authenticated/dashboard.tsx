@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import {
   BarChart3, CheckCircle2, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Users, KeyRound,
-  Activity, Timer, Building2, Wallet, CheckSquare, ArrowRight, Info, Car, Mail, MapPin, Hash, Tag,
+  Activity, Timer, Check, LayoutGrid, ChevronLeft, ChevronRight, Eye, EyeOff, Building2, Wallet, CheckSquare, ArrowRight, Info, Car, Mail, MapPin, Hash, Tag,
 } from "lucide-react";
 import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
 import { FahrerTrackingSection } from "@/components/dashboard/fahrer-tracking";
@@ -178,7 +178,11 @@ function DashboardContent() {
     { label: "Gesamt Einsätze", value: data.stats.gesamtEinsaetze, icon: ListChecks, tone: "warning" },
     { label: "Storno / Abgelaufen", value: data.stats.storniert, icon: XCircle, tone: "destructive" },
     { label: "Datensätze", value: data.stats.datensaetze, icon: FolderOpen, tone: "muted" },
-  ] as const;
+  ];
+  const allWidgets: Array<{ id: string; label: string; span: number; node: React.ReactNode }> = [
+    ...cards.map((c) => ({ id: c.label, label: c.label, span: 1, node: <StatCard {...c} /> })),
+    ...(schluesselbuchAktiv ? [{ id: "schluessel", label: "Schlüssel", span: 2, node: <SchluesselCard entries={schluessel ?? []} /> }] : []),
+  ];
 
   return (
     <div className="p-6 lg:p-8 space-y-8 max-w-[1600px]">
@@ -208,14 +212,7 @@ function DashboardContent() {
         </section>
       )}
 
-      <div className={`grid grid-cols-2 sm:grid-cols-3 ${schluesselbuchAktiv ? "lg:grid-cols-7" : "lg:grid-cols-5"} gap-3`}>
-        {cards.map((c) => <StatCard key={c.label} {...c} />)}
-        {schluesselbuchAktiv && (
-          <div className="col-span-2">
-            <SchluesselCard entries={schluessel ?? []} />
-          </div>
-        )}
-      </div>
+      <WidgetGrid userId={user?.id ?? "anon"} widgets={allWidgets} />
 
       <FahrerTrackingSection />
 
@@ -394,6 +391,78 @@ function RecentEinsaetzeCard({
 
 function DashboardDetail({ icon, label, value, mono = false }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) {
   return <div className="min-w-0"><div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">{icon}{label}</div><div className={`mt-1 truncate text-sm ${mono ? "font-mono text-xs" : ""}`} title={value}>{value}</div></div>;
+}
+
+function WidgetGrid({ userId, widgets }: { userId: string; widgets: Array<{ id: string; label: string; span: number; node: React.ReactNode }> }) {
+  const key = `dashboard-widgets:${userId}`;
+  const [order, setOrder] = useState<string[]>([]);
+  const [hidden, setHidden] = useState<string[]>([]);
+  const [edit, setEdit] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const v = JSON.parse(localStorage.getItem(key) ?? "{}");
+      setOrder(Array.isArray(v.order) ? v.order : []);
+      setHidden(Array.isArray(v.hidden) ? v.hidden : []);
+    } catch { /* ignore */ }
+  }, [key]);
+  const save = (o: string[], h: string[]) => {
+    setOrder(o); setHidden(h);
+    localStorage.setItem(key, JSON.stringify({ order: o, hidden: h }));
+  };
+  const ids = widgets.map((w) => w.id);
+  const sorted = [...order.filter((id) => ids.includes(id)), ...ids.filter((id) => !order.includes(id))];
+  const move = (id: string, to: number) => {
+    const o = sorted.filter((x) => x !== id);
+    o.splice(Math.max(0, Math.min(to, o.length)), 0, id);
+    save(o, hidden);
+  };
+  const toggle = (id: string) => save(sorted, hidden.includes(id) ? hidden.filter((x) => x !== id) : [...hidden, id]);
+  const visible = sorted.filter((id) => edit || !hidden.includes(id));
+  const totalCols = Math.min(7, Math.max(1, visible.reduce((n, id) => n + (widgets.find((w) => w.id === id)?.span ?? 1), 0)));
+  const lgCols: Record<number, string> = { 1: "lg:grid-cols-1", 2: "lg:grid-cols-2", 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6", 7: "lg:grid-cols-7" };
+  return (
+    <section className="space-y-2">
+      <div className="flex items-center justify-end gap-2">
+        {edit && <span className="text-xs text-muted-foreground mr-auto">Kacheln ziehen oder mit den Pfeilen verschieben, Auge zum Aus-/Einblenden.</span>}
+        {edit && <Button size="sm" variant="ghost" onClick={() => save([], [])}>Zurücksetzen</Button>}
+        <Button size="sm" variant={edit ? "default" : "outline"} onClick={() => setEdit(!edit)}>
+          {edit ? <><Check className="size-4 mr-1" />Fertig</> : <><LayoutGrid className="size-4 mr-1" />Kacheln anpassen</>}
+        </Button>
+      </div>
+      {visible.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Alle Kacheln ausgeblendet.</p>
+      ) : (
+      <div className={`grid grid-cols-2 sm:grid-cols-3 ${lgCols[totalCols]} gap-3`}>
+        {visible.map((id) => {
+          const w = widgets.find((x) => x.id === id)!;
+          const idx = sorted.indexOf(id);
+          const off = hidden.includes(id);
+          return (
+            <div
+              key={id}
+              className={`relative ${w.span === 2 ? "col-span-2" : ""} ${edit ? "cursor-move" : ""} ${off ? "opacity-40" : ""} ${dragId === id ? "ring-2 ring-primary rounded-xl" : ""}`}
+              draggable={edit}
+              onDragStart={() => setDragId(id)}
+              onDragEnd={() => setDragId(null)}
+              onDragOver={(e) => { if (edit) e.preventDefault(); }}
+              onDrop={() => { if (dragId && dragId !== id) move(dragId, sorted.filter((x) => x !== dragId).indexOf(id)); setDragId(null); }}
+            >
+              {w.node}
+              {edit && (
+                <div className="absolute top-1 right-1 flex gap-0.5 rounded-md bg-background/90 border border-border p-0.5">
+                  <button aria-label="Nach links" className="p-1 hover:bg-accent rounded" onClick={() => move(id, idx - 1)}><ChevronLeft className="size-3.5" /></button>
+                  <button aria-label="Nach rechts" className="p-1 hover:bg-accent rounded" onClick={() => move(id, idx + 1)}><ChevronRight className="size-3.5" /></button>
+                  <button aria-label={off ? "Einblenden" : "Ausblenden"} className="p-1 hover:bg-accent rounded" onClick={() => toggle(id)}>{off ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}</button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      )}
+    </section>
+  );
 }
 
 function StatCard({ label, value, icon: Icon, tone }: { label: string; value: number; icon: any; tone: string }) {
