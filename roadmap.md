@@ -46,3 +46,11 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - [x] Ersteller-Name statt „Unbekannt" (Namensauflösung korrigiert; auch Objektdossier/Service Center)
 - [x] Fahrzeugskizze bei Schäden: Klick markiert die Schadenposition auf der Karosserie (Vorne/Hinten/Links/Rechts), gespeichert pro Schaden und in der Liste als Mini-Skizze angezeigt
 - [x] Kundenakte: ein Menüpunkt für Dateien, Schlüssel, Objektdossier, Einsätze pro Kunde
+
+## Erledigt: Dienstausweise
+- [x] Menüpunkt „Dienstausweise" (nur Admins), 15 Designs, eigene Designs, QR-Prüfseite
+- [x] Rückseite mit Text, Kontakt, Notruf, Webseite, eigenem Feld, Anordnung und Schriftgröße
+- [x] Bearbeitungsfenster vergrößert: Daten 768 px, Design 1152 px, beide max. 92 % Bildschirmhöhe
+- [x] Inhalte laufen innerhalb des Fensters mit, „Abbrechen"/„Speichern" bleiben sichtbar
+- [x] Design-Vorschau bleibt beim Scrollen stehen (vorderste Karte immer sichtbar)
+- [x] Im Browser geprüft (1280x800 und 1280x1800): nichts abgeschnitten, keine Überlappung
