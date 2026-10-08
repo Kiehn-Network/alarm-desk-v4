@@ -8,13 +8,14 @@ import { useRole } from "@/hooks/use-role";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { AusweisKarte, type AusweisPerson } from "@/components/dienstausweis/ausweis-karte";
+import { AusweisKarte, AusweisRueckseite, type AusweisPerson } from "@/components/dienstausweis/ausweis-karte";
 import { STANDARD_DESIGNS, type AusweisDesign, type AusweisStil } from "@/components/dienstausweis/designs";
 
 export const Route = createFileRoute("/_authenticated/dienstausweise")({
@@ -177,7 +178,7 @@ function Inhalt({ domainId }: { domainId: string }) {
                     </label>
                     <Button size="sm" variant="ghost" onClick={() => setBearbeiten(m)}><Pencil className="h-4 w-4 mr-1" />Daten</Button>
                   </div>
-                  <div className="flex justify-center"><AusweisKarte design={design} person={person(m)} /></div>
+                  <div className="flex flex-wrap justify-center gap-2"><AusweisKarte design={design} person={person(m)} scale={0.8} /><AusweisRueckseite design={design} person={person(m)} scale={0.8} /></div>
                 </div>
               ))}
               {!liste.length && <p className="text-sm text-muted-foreground">Keine Mitarbeiter gefunden.</p>}
@@ -202,7 +203,7 @@ function Inhalt({ domainId }: { domainId: string }) {
                     <Button size="sm" variant={d.id === designId ? "default" : "outline"} onClick={() => setDesignId(d.id)}>Wählen</Button>
                   </div>
                 </div>
-                <div className="flex justify-center"><AusweisKarte design={d} person={{ name: "Max Mustermann", funktion: "Sicherheitsmitarbeiter", ausweisNr: "0001", gueltigBis: "2027-12-31" }} /></div>
+                <div className="flex flex-wrap justify-center gap-2"><AusweisKarte design={d} scale={0.8} person={{ name: "Max Mustermann", funktion: "Sicherheitsmitarbeiter", ausweisNr: "0001", gueltigBis: "2027-12-31" }} /><AusweisRueckseite design={d} scale={0.8} person={{ name: "Max Mustermann", ausweisNr: "0001" }} /></div>
               </div>
             ))}
           </div>
@@ -212,7 +213,12 @@ function Inhalt({ domainId }: { domainId: string }) {
       {/* Druckbereich */}
       <div className="hidden print:block ausweis-druck">
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6mm" }}>
-          {druckListe.map((m) => <AusweisKarte key={m.id} design={design} person={person(m)} />)}
+          {druckListe.map((m) => (
+            <div key={m.id} style={{ display: "flex", gap: "4mm", breakInside: "avoid" }}>
+              <AusweisKarte design={design} person={person(m)} />
+              <AusweisRueckseite design={design} person={person(m)} />
+            </div>
+          ))}
         </div>
       </div>
 
@@ -231,7 +237,7 @@ function DatenDialog({ m, design, onClose, onSave }: { m: Mitarbeiter; design: A
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Ausweisdaten: {m.display_name}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="flex justify-center"><AusweisKarte design={design} person={{ name: m.display_name || "Unbekannt", funktion: v.funktion, ausweisNr: v.ausweis_nr, gueltigBis: v.gueltig_bis, foto: v.foto }} /></div>
+          <div className="flex flex-wrap justify-center gap-2"><AusweisKarte design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", funktion: v.funktion, ausweisNr: v.ausweis_nr, gueltigBis: v.gueltig_bis, foto: v.foto }} /><AusweisRueckseite design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", ausweisNr: v.ausweis_nr }} /></div>
           <div className="space-y-1">
             <Label>Foto</Label>
             <div className="flex gap-2">
@@ -286,10 +292,13 @@ function DesignDialog({ d, onClose, onSave }: { d: AusweisDesign; onClose: () =>
             <div className="grid grid-cols-4 gap-2">
               {farbe("bg", "Hintergrund")}{farbe("akzent", "Farbe 1")}{farbe("akzent2", "Farbe 2")}{farbe("text", "Schrift")}
             </div>
+            <div className="space-y-1"><Label>Rückseite: Text</Label><Textarea rows={3} value={x.config.rueckText} maxLength={400} onChange={(e) => set("rueckText", e.target.value)} /></div>
+            <div className="space-y-1"><Label>Rückseite: Kontakt / Adresse</Label><Textarea rows={2} value={x.config.rueckKontakt} maxLength={200} onChange={(e) => set("rueckKontakt", e.target.value)} placeholder="z. B. Musterstraße 1, 12345 Musterstadt · Tel. 0123 456789" /></div>
             <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.fotoRund} onCheckedChange={(v) => set("fotoRund", v)} />Rundes Foto</label>
           </div>
-          <div className="flex items-center justify-center rounded-md bg-muted p-4">
+          <div className="flex flex-col items-center justify-center gap-3 rounded-md bg-muted p-4">
             <AusweisKarte design={x} person={{ name: "Max Mustermann", funktion: "Sicherheitsmitarbeiter", ausweisNr: "0001", gueltigBis: "2027-12-31" }} />
+            <AusweisRueckseite design={x} person={{ name: "Max Mustermann", ausweisNr: "0001" }} />
           </div>
         </div>
         <DialogFooter><Button variant="outline" onClick={onClose}>Abbrechen</Button><Button onClick={() => onSave(x)}>Speichern</Button></DialogFooter>
