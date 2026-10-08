@@ -333,7 +333,7 @@ function DesignDialog({ d, onClose, onSave }: { d: AusweisDesign; onClose: () =>
             </div>
             <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.fotoRund} onCheckedChange={(v) => set("fotoRund", v)} />Rundes Foto</label>
           </div>
-          <div className="flex flex-col items-center justify-center gap-3 rounded-md bg-muted p-4">
+          <div className="flex flex-col items-center gap-3 self-start rounded-md bg-muted p-4 lg:sticky lg:top-0">
             <AusweisKarte design={x} person={{ name: "Max Mustermann", funktion: "Sicherheitsmitarbeiter", ausweisNr: "0001", gueltigBis: "2027-12-31" }} />
             <AusweisRueckseite design={x} person={{ name: "Max Mustermann", ausweisNr: "0001" }} />
           </div>
