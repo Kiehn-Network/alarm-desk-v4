@@ -18,6 +18,7 @@ import { Route as HomepageRouteImport } from './routes/homepage'
 import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AusweisTokenRouteImport } from './routes/ausweis.$token'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
@@ -123,6 +124,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AusweisTokenRoute = AusweisTokenRouteImport.update({
+  id: '/ausweis/$token',
+  path: '/ausweis/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
@@ -516,6 +522,7 @@ export interface FileRoutesByFullPath {
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/support': typeof AuthenticatedSupportRoute
+  '/ausweis/$token': typeof AusweisTokenRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   '/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
@@ -586,6 +593,7 @@ export interface FileRoutesByTo {
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/support': typeof AuthenticatedSupportRoute
+  '/ausweis/$token': typeof AusweisTokenRoute
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
   '/objektdossier/$dossierId': typeof AuthenticatedObjektdossierDossierIdRoute
@@ -657,6 +665,7 @@ export interface FileRoutesById {
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
+  '/ausweis/$token': typeof AusweisTokenRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
   '/_authenticated/revier-center/owks': typeof AuthenticatedRevierCenterOwksRouteRouteWithChildren
@@ -731,6 +740,7 @@ export interface FileRouteTypes {
     | '/service-center'
     | '/superadmin'
     | '/support'
+    | '/ausweis/$token'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
     | '/revier-center/owks'
@@ -801,6 +811,7 @@ export interface FileRouteTypes {
     | '/service-center'
     | '/superadmin'
     | '/support'
+    | '/ausweis/$token'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
     | '/objektdossier/$dossierId'
@@ -871,6 +882,7 @@ export interface FileRouteTypes {
     | '/_authenticated/service-center'
     | '/_authenticated/superadmin'
     | '/_authenticated/support'
+    | '/ausweis/$token'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/rohrservice'
     | '/_authenticated/revier-center/owks'
@@ -917,6 +929,7 @@ export interface RootRouteChildren {
   LagerStationRoute: typeof LagerStationRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  AusweisTokenRoute: typeof AusweisTokenRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicFilesGetRoute: typeof ApiPublicFilesGetRoute
   ApiPublicHooksEsrpWorkerRoute: typeof ApiPublicHooksEsrpWorkerRoute
@@ -990,6 +1003,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ausweis/$token': {
+      id: '/ausweis/$token'
+      path: '/ausweis/$token'
+      fullPath: '/ausweis/$token'
+      preLoaderRoute: typeof AusweisTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/support': {
@@ -1653,6 +1673,7 @@ const rootRouteChildren: RootRouteChildren = {
   LagerStationRoute: LagerStationRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  AusweisTokenRoute: AusweisTokenRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicFilesGetRoute: ApiPublicFilesGetRoute,
   ApiPublicHooksEsrpWorkerRoute: ApiPublicHooksEsrpWorkerRoute,

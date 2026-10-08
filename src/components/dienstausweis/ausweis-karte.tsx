@@ -8,6 +8,7 @@ export type AusweisPerson = {
   ausweisNr?: string | null;
   gueltigBis?: string | null;
   foto?: string | null;
+  pruefToken?: string | null;
 };
 
 /* Farben kommen bewusst aus dem frei gestaltbaren Design (Inline-Styles). */
@@ -17,7 +18,9 @@ export function AusweisKarte({ design, person, scale = 1 }: { design: AusweisDes
   const w = (quer ? 85.6 : 54) * scale;
   const h = (quer ? 54 : 85.6) * scale;
   const [qr, setQr] = useState("");
-  const qrText = `AlarmDesk Dienstausweis\n${person.name}\nNr: ${person.ausweisNr || "-"}\nGültig bis: ${person.gueltigBis || "-"}`;
+  const qrText = person.pruefToken && typeof window !== "undefined"
+    ? `${window.location.origin}/ausweis/${person.pruefToken}`
+    : `AlarmDesk Dienstausweis\n${person.name}\nNr: ${person.ausweisNr || "-"}\nGültig bis: ${person.gueltigBis || "-"}`;
   useEffect(() => {
     QRCode.toDataURL(qrText, { margin: 0, width: 200, color: { dark: "#000000", light: "#ffffff" } }).then(setQr).catch(() => {});
   }, [qrText]);
