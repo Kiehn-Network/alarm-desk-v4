@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogD
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { safeUUID } from "@/lib/utils";
+import { KundenNotizenTab } from "@/components/kunden-notizen";
 import { searchKunden, getKundenakte, type KundenKennung } from "@/lib/kundenakte.functions";
 import { createDatei, softDeleteDatei, getDateiSignedUrl } from "@/lib/dateien.functions";
 import { upsertSchluesselBestand, deleteSchluesselBestand } from "@/lib/schluesselbestand.functions";
@@ -173,6 +174,7 @@ function Akte({ k }: { k: KundenKennung }) {
           <TabsTrigger value="dateien">Dateien ({data.dateien.length})</TabsTrigger>
           <TabsTrigger value="schluessel">Schlüssel ({data.schluessel.length})</TabsTrigger>
           <TabsTrigger value="dossier">Objektdossier</TabsTrigger>
+          <TabsTrigger value="notizen">Fahrer-Notizen</TabsTrigger>
           <TabsTrigger value="einsaetze">Einsätze ({data.einsaetze.length})</TabsTrigger>
         </TabsList>
 
@@ -189,6 +191,7 @@ function Akte({ k }: { k: KundenKennung }) {
         <TabsContent value="dateien"><DateienTab kopf={kopf} dateien={data.dateien} refresh={refresh} /></TabsContent>
         <TabsContent value="schluessel"><SchluesselTab kopf={kopf} data={data} refresh={refresh} /></TabsContent>
         <TabsContent value="dossier"><DossierTab kopf={kopf} dossier={data.dossier} refresh={refresh} /></TabsContent>
+        <TabsContent value="notizen"><KundenNotizenTab kennung={k} /></TabsContent>
         <TabsContent value="einsaetze">
           <div className="grid gap-2">
             {data.einsaetze.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Einsätze.</p>}
