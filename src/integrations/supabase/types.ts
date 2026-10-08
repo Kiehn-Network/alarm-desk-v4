@@ -896,6 +896,7 @@ export type Database = {
           funktion: string | null
           gueltig_bis: string | null
           id: string
+          pruef_token: string
           updated_at: string
           user_id: string
         }
@@ -907,6 +908,7 @@ export type Database = {
           funktion?: string | null
           gueltig_bis?: string | null
           id?: string
+          pruef_token?: string
           updated_at?: string
           user_id: string
         }
@@ -918,6 +920,7 @@ export type Database = {
           funktion?: string | null
           gueltig_bis?: string | null
           id?: string
+          pruef_token?: string
           updated_at?: string
           user_id?: string
         }

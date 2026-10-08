@@ -50,6 +50,13 @@
       "when": 1791472034830,
       "tag": "0006_dienstausweise",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791473152685,
+      "tag": "0007_migration",
+      "breakpoints": true
     }
   ]
 }
