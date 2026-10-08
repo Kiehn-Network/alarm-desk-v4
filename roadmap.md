@@ -59,3 +59,11 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 ## Erledigt: Findo-ID
 - [x] Eigener Menübereich „Findo-ID": Anhänger (FID, Besitzer, Paket, Ersatzschlüssel-Lagerort), Fundmeldungen mit Status, Eingang erfassen
 - [x] Öffentliche Fundseite /findo (FID prüfen, Fund melden, keine Besitzerdaten sichtbar)
+
+## Erledigt: Dienstkleidung
+- [x] Menüpunkt „Dienstkleidung" (Admin/Disponent) unter Center
+- [x] Kleidungsarten: Bezeichnung, Kategorie, übliche Größen, Notizen
+- [x] Ausgaben mit Mitarbeiter, Größe, Zustand (neu/getragen/abgenutzt/defekt), Ausgabedatum
+- [x] Rückgabe mit Datum und Zustand; offene Rückgaben mit Fälligkeit, überfällige fallen rot auf
+- [x] Kennzahlen: Teile im Umlauf, offene Rückgaben, überfällig, Mitarbeiter mit Kleidung
+- [x] Verbleib je Mitarbeiter: Suche über Name, Kleidung, Größe; „im Umlauf"-Zähler je Kleidungsart
