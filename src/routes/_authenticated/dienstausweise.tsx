@@ -240,9 +240,9 @@ function DatenDialog({ m, design, onClose, onSave }: { m: Mitarbeiter; design: A
   });
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-3xl max-h-[92vh] grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader><DialogTitle>Ausweisdaten: {m.display_name}</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+        <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
           <div className="flex flex-wrap justify-center gap-2"><AusweisKarte design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", funktion: v.funktion, ausweisNr: v.ausweis_nr, gueltigBis: v.gueltig_bis, foto: v.foto, pruefToken: m.daten?.pruef_token }} /><AusweisRueckseite design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", ausweisNr: v.ausweis_nr }} /></div>
           <div className="space-y-1">
             <Label>Foto</Label>
@@ -274,9 +274,9 @@ function DesignDialog({ d, onClose, onSave }: { d: AusweisDesign; onClose: () =>
   );
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-6xl max-h-[92vh] grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader><DialogTitle>Design gestalten</DialogTitle></DialogHeader>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid min-h-0 gap-4 overflow-y-auto pr-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
           <div className="space-y-3">
             <div className="space-y-1"><Label>Name</Label><Input value={x.name} maxLength={60} onChange={(e) => setX({ ...x, name: e.target.value })} /></div>
             <div className="grid grid-cols-2 gap-3">
