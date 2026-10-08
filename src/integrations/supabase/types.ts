@@ -1759,6 +1759,125 @@ export type Database = {
         }
         Relationships: []
       }
+      findo_anhaenger: {
+        Row: {
+          besitzer_adresse: string | null
+          besitzer_email: string | null
+          besitzer_name: string
+          besitzer_telefon: string | null
+          created_at: string
+          domain_id: string
+          ersatz_lagerort: string | null
+          fid: string
+          id: string
+          notizen: string | null
+          paket: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          besitzer_adresse?: string | null
+          besitzer_email?: string | null
+          besitzer_name: string
+          besitzer_telefon?: string | null
+          created_at?: string
+          domain_id: string
+          ersatz_lagerort?: string | null
+          fid: string
+          id?: string
+          notizen?: string | null
+          paket?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          besitzer_adresse?: string | null
+          besitzer_email?: string | null
+          besitzer_name?: string
+          besitzer_telefon?: string | null
+          created_at?: string
+          domain_id?: string
+          ersatz_lagerort?: string | null
+          fid?: string
+          id?: string
+          notizen?: string | null
+          paket?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "findo_anhaenger_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      findo_fundmeldungen: {
+        Row: {
+          anhaenger_id: string
+          bearbeitet_von_name: string | null
+          created_at: string
+          domain_id: string
+          finder_kontakt: string | null
+          finder_name: string | null
+          fundort: string | null
+          id: string
+          nachricht: string | null
+          notizen: string | null
+          status: string
+          updated_at: string
+          weg: string
+        }
+        Insert: {
+          anhaenger_id: string
+          bearbeitet_von_name?: string | null
+          created_at?: string
+          domain_id: string
+          finder_kontakt?: string | null
+          finder_name?: string | null
+          fundort?: string | null
+          id?: string
+          nachricht?: string | null
+          notizen?: string | null
+          status?: string
+          updated_at?: string
+          weg?: string
+        }
+        Update: {
+          anhaenger_id?: string
+          bearbeitet_von_name?: string | null
+          created_at?: string
+          domain_id?: string
+          finder_kontakt?: string | null
+          finder_name?: string | null
+          fundort?: string | null
+          id?: string
+          nachricht?: string | null
+          notizen?: string | null
+          status?: string
+          updated_at?: string
+          weg?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "findo_fundmeldungen_anhaenger_id_fkey"
+            columns: ["anhaenger_id"]
+            isOneToOne: false
+            referencedRelation: "findo_anhaenger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "findo_fundmeldungen_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fuhrpark_fahrzeuge: {
         Row: {
           art: string
