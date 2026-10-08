@@ -2352,6 +2352,117 @@ export type Database = {
         }
         Relationships: []
       }
+      kleidung_artikel: {
+        Row: {
+          created_at: string
+          domain_id: string
+          groessen: string | null
+          id: string
+          kategorie: string
+          name: string
+          notizen: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          domain_id: string
+          groessen?: string | null
+          id?: string
+          kategorie?: string
+          name: string
+          notizen?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string
+          groessen?: string | null
+          id?: string
+          kategorie?: string
+          name?: string
+          notizen?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kleidung_artikel_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kleidung_ausgaben: {
+        Row: {
+          artikel_id: string
+          ausgegeben_am: string
+          created_at: string
+          domain_id: string
+          groesse: string | null
+          id: string
+          mitarbeiter_id: string
+          notizen: string | null
+          rueckgabe_faellig: string | null
+          rueckgabe_zustand: string | null
+          updated_at: string
+          zurueckgegeben_am: string | null
+          zustand: string
+        }
+        Insert: {
+          artikel_id: string
+          ausgegeben_am?: string
+          created_at?: string
+          domain_id: string
+          groesse?: string | null
+          id?: string
+          mitarbeiter_id: string
+          notizen?: string | null
+          rueckgabe_faellig?: string | null
+          rueckgabe_zustand?: string | null
+          updated_at?: string
+          zurueckgegeben_am?: string | null
+          zustand?: string
+        }
+        Update: {
+          artikel_id?: string
+          ausgegeben_am?: string
+          created_at?: string
+          domain_id?: string
+          groesse?: string | null
+          id?: string
+          mitarbeiter_id?: string
+          notizen?: string | null
+          rueckgabe_faellig?: string | null
+          rueckgabe_zustand?: string | null
+          updated_at?: string
+          zurueckgegeben_am?: string | null
+          zustand?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kleidung_ausgaben_artikel_id_fkey"
+            columns: ["artikel_id"]
+            isOneToOne: false
+            referencedRelation: "kleidung_artikel"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kleidung_ausgaben_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kleidung_ausgaben_mitarbeiter_id_fkey"
+            columns: ["mitarbeiter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kunden_notizen: {
         Row: {
           address: string | null
