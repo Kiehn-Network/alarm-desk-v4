@@ -2164,6 +2164,51 @@ export type Database = {
         }
         Relationships: []
       }
+      kunden_notizen: {
+        Row: {
+          address: string | null
+          anlagen_nr: string | null
+          created_at: string
+          created_by: string
+          domain_id: string
+          einsatz_id: string | null
+          id: string
+          key_number: string | null
+          kunden_name: string | null
+          teilnehmer_id: string | null
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          anlagen_nr?: string | null
+          created_at?: string
+          created_by?: string
+          domain_id: string
+          einsatz_id?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          teilnehmer_id?: string | null
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          anlagen_nr?: string | null
+          created_at?: string
+          created_by?: string
+          domain_id?: string
+          einsatz_id?: string | null
+          id?: string
+          key_number?: string | null
+          kunden_name?: string | null
+          teilnehmer_id?: string | null
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lager_admins: {
         Row: {
           created_at: string

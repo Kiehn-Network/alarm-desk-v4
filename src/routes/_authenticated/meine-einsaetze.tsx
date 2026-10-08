@@ -33,6 +33,8 @@ import { KundenInfoDialog } from "@/components/kunden-info-dialog";
 import { ChecklistenDialog, ChecklistenStatusBadge } from "@/components/checklisten-dialog";
 import { getEinsatzChecklistenStatus } from "@/lib/checklisten.functions";
 import { ObjektDossierDialog } from "@/components/objekt-dossier-dialog";
+import { KundenNotizenDialog } from "@/components/kunden-notizen";
+import { StickyNote } from "lucide-react";
 import { enqueue } from "@/lib/offline-queue";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
 import { DienstTelefonPicker } from "@/components/dienst-telefon-picker";
@@ -59,6 +61,7 @@ function fmt(d?: string | null) {
 function MeineEinsaetzePage() {
   const { loading: roleLoading, isFahrer, isAdmin } = useRole();
   const { user } = useAuth();
+  const [notizFor, setNotizFor] = useState<string | null>(null);
   const qc = useQueryClient();
   const list = useServerFn(listMeineEinsaetze);
   const prefetchDateien = useServerFn(listDateienForEinsatz);
@@ -389,6 +392,9 @@ function MeineEinsaetzePage() {
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setObjektFor(e)}>
                     <DoorOpen className="size-4" /> Objektinfo
                   </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setNotizFor(e.id)}>
+                    <StickyNote className="size-4" /> Notizen
+                  </Button>
                   {isAktiv(e) && (
                     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setChecklisteFor(e)}>
                       <ListChecks className="size-4" /> Checkliste
@@ -417,6 +423,7 @@ function MeineEinsaetzePage() {
         </ul>
       )}
 
+      <KundenNotizenDialog einsatzId={notizFor} open={!!notizFor} onClose={() => setNotizFor(null)} />
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
       <EinsatzDateienDialog einsatzId={dateienFor} open={!!dateienFor} onClose={() => setDateienFor(null)} />
       <EinsatzBerichtDialog einsatz={berichtFor} open={!!berichtFor} onClose={() => setBerichtFor(null)} />

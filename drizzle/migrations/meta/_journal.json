@@ -36,6 +36,13 @@
       "when": 1790375240114,
       "tag": "0004_fuhrpark_grundstock",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791467577188,
+      "tag": "0005_kunden_notizen",
+      "breakpoints": true
     }
   ]
 }
