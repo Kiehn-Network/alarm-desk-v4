@@ -1,4 +1,4 @@
-export type AusweisStil = "streifen" | "band" | "verlauf" | "rahmen" | "diagonal" | "seite";
+export type AusweisStil = "streifen" | "band" | "verlauf" | "rahmen" | "diagonal" | "seite" | "schlicht";
 export type AusweisDesign = {
   id: string;
   name: string;
@@ -12,6 +12,9 @@ export type AusweisDesign = {
     text: string;
     titel: string;
     firma: string;
+    logo?: string;
+    vorderKontakt?: string;
+    rueckStandort?: string;
     fotoRund: boolean;
     rueckText: string;
     rueckKontakt: string;
@@ -56,4 +59,10 @@ export const STANDARD_DESIGNS: AusweisDesign[] = [
   d("std-13", "Petrol", { stil: "verlauf", akzent: "#134e4a", akzent2: "#14b8a6" }),
   d("std-14", "Violett Modern", { stil: "seite", akzent: "#4c1d95", akzent2: "#a78bfa", fotoRund: true }),
   d("std-15", "Hochformat Grün", { format: "hoch", stil: "rahmen", akzent: "#166534", akzent2: "#86efac" }),
+  d("std-16", "Schlicht · Firmenausweis", {
+    stil: "schlicht", titel: "Dienstausweis", bg: "#ffffff", text: "#202522",
+    akzent: "#202522", akzent2: "#202522", logo: "", vorderKontakt: "",
+    rueckText: "", rueckKontakt: "", rueckStandort: "", rueckAusrichtung: "mitte",
+    rueckZeigeUnterschrift: false, rueckZeigeNummer: true,
+  }),
 ];
