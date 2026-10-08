@@ -40,6 +40,7 @@ import { Route as AuthenticatedFindoIdRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedEsrpRouteImport } from './routes/_authenticated/esrp'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
+import { Route as AuthenticatedDienstkleidungRouteImport } from './routes/_authenticated/dienstkleidung'
 import { Route as AuthenticatedDienstausweiseRouteImport } from './routes/_authenticated/dienstausweise'
 import { Route as AuthenticatedDatenImportRouteImport } from './routes/_authenticated/daten-import'
 import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticated/dateien'
@@ -244,6 +245,12 @@ const AuthenticatedDienstplaeneRoute =
   AuthenticatedDienstplaeneRouteImport.update({
     id: '/dienstplaene',
     path: '/dienstplaene',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDienstkleidungRoute =
+  AuthenticatedDienstkleidungRouteImport.update({
+    id: '/dienstkleidung',
+    path: '/dienstkleidung',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedDienstausweiseRoute =
@@ -516,6 +523,7 @@ export interface FileRoutesByFullPath {
   '/dateien': typeof AuthenticatedDateienRoute
   '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstausweise': typeof AuthenticatedDienstausweiseRoute
+  '/dienstkleidung': typeof AuthenticatedDienstkleidungRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/esrp': typeof AuthenticatedEsrpRoute
@@ -589,6 +597,7 @@ export interface FileRoutesByTo {
   '/dateien': typeof AuthenticatedDateienRoute
   '/daten-import': typeof AuthenticatedDatenImportRoute
   '/dienstausweise': typeof AuthenticatedDienstausweiseRoute
+  '/dienstkleidung': typeof AuthenticatedDienstkleidungRoute
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/esrp': typeof AuthenticatedEsrpRoute
@@ -663,6 +672,7 @@ export interface FileRoutesById {
   '/_authenticated/dateien': typeof AuthenticatedDateienRoute
   '/_authenticated/daten-import': typeof AuthenticatedDatenImportRoute
   '/_authenticated/dienstausweise': typeof AuthenticatedDienstausweiseRoute
+  '/_authenticated/dienstkleidung': typeof AuthenticatedDienstkleidungRoute
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/_authenticated/esrp': typeof AuthenticatedEsrpRoute
@@ -740,6 +750,7 @@ export interface FileRouteTypes {
     | '/dateien'
     | '/daten-import'
     | '/dienstausweise'
+    | '/dienstkleidung'
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/esrp'
@@ -813,6 +824,7 @@ export interface FileRouteTypes {
     | '/dateien'
     | '/daten-import'
     | '/dienstausweise'
+    | '/dienstkleidung'
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/esrp'
@@ -886,6 +898,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dateien'
     | '/_authenticated/daten-import'
     | '/_authenticated/dienstausweise'
+    | '/_authenticated/dienstkleidung'
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
     | '/_authenticated/esrp'
@@ -1182,6 +1195,13 @@ declare module '@tanstack/react-router' {
       path: '/dienstplaene'
       fullPath: '/dienstplaene'
       preLoaderRoute: typeof AuthenticatedDienstplaeneRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dienstkleidung': {
+      id: '/_authenticated/dienstkleidung'
+      path: '/dienstkleidung'
+      fullPath: '/dienstkleidung'
+      preLoaderRoute: typeof AuthenticatedDienstkleidungRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dienstausweise': {
@@ -1633,6 +1653,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDateienRoute: typeof AuthenticatedDateienRoute
   AuthenticatedDatenImportRoute: typeof AuthenticatedDatenImportRoute
   AuthenticatedDienstausweiseRoute: typeof AuthenticatedDienstausweiseRoute
+  AuthenticatedDienstkleidungRoute: typeof AuthenticatedDienstkleidungRoute
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
   AuthenticatedEsrpRoute: typeof AuthenticatedEsrpRoute
@@ -1671,6 +1692,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDateienRoute: AuthenticatedDateienRoute,
   AuthenticatedDatenImportRoute: AuthenticatedDatenImportRoute,
   AuthenticatedDienstausweiseRoute: AuthenticatedDienstausweiseRoute,
+  AuthenticatedDienstkleidungRoute: AuthenticatedDienstkleidungRoute,
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
   AuthenticatedEsrpRoute: AuthenticatedEsrpRoute,
