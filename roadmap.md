@@ -48,7 +48,7 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - [x] Kundenakte: ein Menüpunkt für Dateien, Schlüssel, Objektdossier, Einsätze pro Kunde
 
 ## Erledigt: Dienstausweise
-- [ ] Zusätzliche schlichte Firmenvorlage nach Fotoreferenz mit Logo, Kontakt und reduzierter Rückseite
+- [x] Zusätzliche schlichte Firmenvorlage nach Fotoreferenz mit eigenem Logo, Kontakt und reduzierter Rückseite; QR-Code auf der Rückseite, Vorschau im Browser geprüft
 - [x] Menüpunkt „Dienstausweise" (nur Admins), 15 Designs, eigene Designs, QR-Prüfseite
 - [x] Rückseite mit Text, Kontakt, Notruf, Webseite, eigenem Feld, Anordnung und Schriftgröße
 - [x] Bearbeitungsfenster vergrößert: Daten 768 px, Design 1152 px, beide max. 92 % Bildschirmhöhe
