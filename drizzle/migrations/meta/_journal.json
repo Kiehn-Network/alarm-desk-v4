@@ -43,6 +43,13 @@
       "when": 1791467577188,
       "tag": "0005_kunden_notizen",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791472034830,
+      "tag": "0006_dienstausweise",
+      "breakpoints": true
     }
   ]
 }
