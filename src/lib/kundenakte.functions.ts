@@ -27,7 +27,7 @@ const clean = (s: string) => s.replace(/[%_,()*"\\]/g, " ").trim();
  * Strenge Zuordnung einer Zeile zum Kunden:
  * Teilnehmer-/Anlagennummer vorrangig, dann Name; Schlüsselnummer allein zählt nie.
  */
-function gehoertZuKunde(k: KundenKennung, r: any): boolean {
+export function gehoertZuKunde(k: KundenKennung, r: any): boolean {
   const pairs: Array<[string, string]> = [
     [n(k.tn), n(r.teilnehmer_id)],
     [n(k.anl), n(r.anlagen_nr)],
