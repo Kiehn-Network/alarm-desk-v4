@@ -80,7 +80,13 @@ function Inhalt({ domainId }: { domainId: string }) {
         supabase.from("dienstausweis_daten").select("*").eq("domain_id", domainId),
       ]);
       if (error) throw error;
-      const map = new Map((dd ?? []).map((d: any) => [d.user_id, d]));
+      let rows: any[] = dd ?? [];
+      const fehlend = (ps ?? []).filter((p: any) => !rows.some((d) => d.user_id === p.id));
+      if (fehlend.length) {
+        const { data: neu } = await supabase.from("dienstausweis_daten").insert(fehlend.map((p: any) => ({ domain_id: domainId, user_id: p.id }))).select("*");
+        rows = [...rows, ...(neu ?? [])];
+      }
+      const map = new Map(rows.map((d: any) => [d.user_id, d]));
       return (ps ?? []).map((p: any) => ({ ...p, daten: map.get(p.id) })) as Mitarbeiter[];
     },
   });
@@ -97,7 +103,7 @@ function Inhalt({ domainId }: { domainId: string }) {
 
   const person = (m: Mitarbeiter): AusweisPerson => ({
     name: m.display_name || "Unbekannt",
-    funktion: m.daten?.funktion, ausweisNr: m.daten?.ausweis_nr, gueltigBis: m.daten?.gueltig_bis, foto: m.daten?.foto,
+    funktion: m.daten?.funktion, ausweisNr: m.daten?.ausweis_nr, gueltigBis: m.daten?.gueltig_bis, foto: m.daten?.foto, pruefToken: m.daten?.pruef_token,
   });
   const liste = (ma.data ?? []).filter((m) => (m.display_name ?? "").toLowerCase().includes(suche.toLowerCase()));
   const druckListe = (ma.data ?? []).filter((m) => auswahl.includes(m.id));
@@ -237,7 +243,7 @@ function DatenDialog({ m, design, onClose, onSave }: { m: Mitarbeiter; design: A
       <DialogContent className="max-w-lg">
         <DialogHeader><DialogTitle>Ausweisdaten: {m.display_name}</DialogTitle></DialogHeader>
         <div className="space-y-3">
-          <div className="flex flex-wrap justify-center gap-2"><AusweisKarte design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", funktion: v.funktion, ausweisNr: v.ausweis_nr, gueltigBis: v.gueltig_bis, foto: v.foto }} /><AusweisRueckseite design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", ausweisNr: v.ausweis_nr }} /></div>
+          <div className="flex flex-wrap justify-center gap-2"><AusweisKarte design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", funktion: v.funktion, ausweisNr: v.ausweis_nr, gueltigBis: v.gueltig_bis, foto: v.foto, pruefToken: m.daten?.pruef_token }} /><AusweisRueckseite design={design} scale={0.8} person={{ name: m.display_name || "Unbekannt", ausweisNr: v.ausweis_nr }} /></div>
           <div className="space-y-1">
             <Label>Foto</Label>
             <div className="flex gap-2">

@@ -1,0 +1,2 @@
+ALTER TABLE public.dienstausweis_daten ADD COLUMN IF NOT EXISTS pruef_token uuid NOT NULL DEFAULT gen_random_uuid();
+CREATE UNIQUE INDEX IF NOT EXISTS dienstausweis_daten_pruef_token_idx ON public.dienstausweis_daten(pruef_token);
