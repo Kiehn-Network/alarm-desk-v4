@@ -88,3 +88,34 @@ export function AusweisKarte({ design, person, scale = 1 }: { design: AusweisDes
     </div>
   );
 }
+
+export function AusweisRueckseite({ design, person, scale = 1 }: { design: AusweisDesign; person: AusweisPerson; scale?: number }) {
+  const c = design.config;
+  const quer = c.format === "quer";
+  const mm = (v: number) => `${v * scale}mm`;
+  const band = c.stil === "verlauf" ? `linear-gradient(90deg, ${c.akzent}, ${c.akzent2})` : c.akzent;
+  return (
+    <div
+      className="ausweis-karte"
+      style={{
+        width: mm(quer ? 85.6 : 54), height: mm(quer ? 54 : 85.6), background: c.bg, borderRadius: mm(3), overflow: "hidden",
+        fontFamily: "Arial, Helvetica, sans-serif", boxShadow: "0 1px 4px rgba(0,0,0,.25)", boxSizing: "border-box",
+        border: c.stil === "rahmen" ? `${mm(1.2)} solid ${c.akzent}` : "none", display: "flex", flexDirection: "column",
+        color: c.text, WebkitPrintColorAdjust: "exact", printColorAdjust: "exact",
+      }}
+    >
+      <div style={{ height: mm(4), background: band }} />
+      <div style={{ flex: 1, padding: mm(3), display: "flex", flexDirection: "column", gap: mm(1.5), fontSize: mm(2.1), lineHeight: 1.35 }}>
+        {c.firma && <div style={{ fontWeight: 700, fontSize: mm(2.8), color: c.stil === "rahmen" ? c.akzent : c.text }}>{c.firma}</div>}
+        <div style={{ opacity: 0.9 }}>{c.rueckText}</div>
+        {c.rueckKontakt && <div style={{ whiteSpace: "pre-line", fontWeight: 600 }}>{c.rueckKontakt}</div>}
+        <div style={{ marginTop: "auto", display: "flex", gap: mm(4), fontSize: mm(1.9) }}>
+          <div style={{ flex: 1, borderTop: `${mm(0.3)} solid ${c.text}`, paddingTop: mm(0.6), opacity: 0.8 }}>Unterschrift Inhaber</div>
+          <div style={{ flex: 1, borderTop: `${mm(0.3)} solid ${c.text}`, paddingTop: mm(0.6), opacity: 0.8 }}>Unterschrift Unternehmen</div>
+        </div>
+        <div style={{ fontSize: mm(1.8), opacity: 0.7 }}>Ausweis-Nr.: {person.ausweisNr || "—"}</div>
+      </div>
+      <div style={{ height: mm(2), background: band }} />
+    </div>
+  );
+}

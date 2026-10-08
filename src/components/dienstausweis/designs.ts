@@ -13,6 +13,8 @@ export type AusweisDesign = {
     titel: string;
     firma: string;
     fotoRund: boolean;
+    rueckText: string;
+    rueckKontakt: string;
   };
 };
 
@@ -20,7 +22,9 @@ const d = (id: string, name: string, c: Partial<AusweisDesign["config"]>): Auswe
   id, name,
   config: {
     format: "quer", stil: "band", bg: "#ffffff", akzent: "#1e3a8a", akzent2: "#3b82f6",
-    text: "#0f172a", titel: "DIENSTAUSWEIS", firma: "", fotoRund: false, ...c,
+    text: "#0f172a", titel: "DIENSTAUSWEIS", firma: "", fotoRund: false,
+    rueckText: "Der Inhaber dieses Ausweises ist berechtigt, im Auftrag des Unternehmens tätig zu werden. Der Ausweis ist nicht übertragbar und bei Verlust sofort zu melden. Finder werden gebeten, ihn an die unten genannte Adresse zurückzusenden.",
+    rueckKontakt: "", ...c,
   },
 });
 
