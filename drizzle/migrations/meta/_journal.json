@@ -57,6 +57,13 @@
       "when": 1791473152685,
       "tag": "0007_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791476059054,
+      "tag": "0008_findo_id",
+      "breakpoints": true
     }
   ]
 }

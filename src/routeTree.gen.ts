@@ -15,6 +15,7 @@ import { Route as LagerStationRouteImport } from './routes/lager-station'
 import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
 import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as HomepageRouteImport } from './routes/homepage'
+import { Route as FindoRouteImport } from './routes/findo'
 import { Route as DatenschutzRouteImport } from './routes/datenschutz'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -35,6 +36,7 @@ import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedInterventionRouteImport } from './routes/_authenticated/intervention'
 import { Route as AuthenticatedHilfeRouteImport } from './routes/_authenticated/hilfe'
 import { Route as AuthenticatedFuhrparkRouteImport } from './routes/_authenticated/fuhrpark'
+import { Route as AuthenticatedFindoIdRouteImport } from './routes/_authenticated/findo-id'
 import { Route as AuthenticatedEsrpRouteImport } from './routes/_authenticated/esrp'
 import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
 import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
@@ -110,6 +112,11 @@ const ImpressumRoute = ImpressumRouteImport.update({
 const HomepageRoute = HomepageRouteImport.update({
   id: '/homepage',
   path: '/homepage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FindoRoute = FindoRouteImport.update({
+  id: '/findo',
+  path: '/findo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DatenschutzRoute = DatenschutzRouteImport.update({
@@ -215,6 +222,11 @@ const AuthenticatedHilfeRoute = AuthenticatedHilfeRouteImport.update({
 const AuthenticatedFuhrparkRoute = AuthenticatedFuhrparkRouteImport.update({
   id: '/fuhrpark',
   path: '/fuhrpark',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFindoIdRoute = AuthenticatedFindoIdRouteImport.update({
+  id: '/findo-id',
+  path: '/findo-id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedEsrpRoute = AuthenticatedEsrpRouteImport.update({
@@ -488,6 +500,7 @@ const AuthenticatedAbrechnungProviderVersandRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/datenschutz': typeof DatenschutzRoute
+  '/findo': typeof FindoRoute
   '/homepage': typeof HomepageRoute
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
@@ -506,6 +519,7 @@ export interface FileRoutesByFullPath {
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/esrp': typeof AuthenticatedEsrpRoute
+  '/findo-id': typeof AuthenticatedFindoIdRoute
   '/fuhrpark': typeof AuthenticatedFuhrparkRoute
   '/hilfe': typeof AuthenticatedHilfeRoute
   '/intervention': typeof AuthenticatedInterventionRoute
@@ -561,6 +575,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/datenschutz': typeof DatenschutzRoute
+  '/findo': typeof FindoRoute
   '/homepage': typeof HomepageRoute
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
@@ -577,6 +592,7 @@ export interface FileRoutesByTo {
   '/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/esrp': typeof AuthenticatedEsrpRoute
+  '/findo-id': typeof AuthenticatedFindoIdRoute
   '/fuhrpark': typeof AuthenticatedFuhrparkRoute
   '/hilfe': typeof AuthenticatedHilfeRoute
   '/intervention': typeof AuthenticatedInterventionRoute
@@ -631,6 +647,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/datenschutz': typeof DatenschutzRoute
+  '/findo': typeof FindoRoute
   '/homepage': typeof HomepageRoute
   '/impressum': typeof ImpressumRoute
   '/kiehn-systeme-login': typeof KiehnSystemeLoginRoute
@@ -649,6 +666,7 @@ export interface FileRoutesById {
   '/_authenticated/dienstplaene': typeof AuthenticatedDienstplaeneRoute
   '/_authenticated/einsatz-erstellen': typeof AuthenticatedEinsatzErstellenRoute
   '/_authenticated/esrp': typeof AuthenticatedEsrpRoute
+  '/_authenticated/findo-id': typeof AuthenticatedFindoIdRoute
   '/_authenticated/fuhrpark': typeof AuthenticatedFuhrparkRoute
   '/_authenticated/hilfe': typeof AuthenticatedHilfeRoute
   '/_authenticated/intervention': typeof AuthenticatedInterventionRoute
@@ -706,6 +724,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/datenschutz'
+    | '/findo'
     | '/homepage'
     | '/impressum'
     | '/kiehn-systeme-login'
@@ -724,6 +743,7 @@ export interface FileRouteTypes {
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/esrp'
+    | '/findo-id'
     | '/fuhrpark'
     | '/hilfe'
     | '/intervention'
@@ -779,6 +799,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/datenschutz'
+    | '/findo'
     | '/homepage'
     | '/impressum'
     | '/kiehn-systeme-login'
@@ -795,6 +816,7 @@ export interface FileRouteTypes {
     | '/dienstplaene'
     | '/einsatz-erstellen'
     | '/esrp'
+    | '/findo-id'
     | '/fuhrpark'
     | '/hilfe'
     | '/intervention'
@@ -848,6 +870,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/datenschutz'
+    | '/findo'
     | '/homepage'
     | '/impressum'
     | '/kiehn-systeme-login'
@@ -866,6 +889,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dienstplaene'
     | '/_authenticated/einsatz-erstellen'
     | '/_authenticated/esrp'
+    | '/_authenticated/findo-id'
     | '/_authenticated/fuhrpark'
     | '/_authenticated/hilfe'
     | '/_authenticated/intervention'
@@ -923,6 +947,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   DatenschutzRoute: typeof DatenschutzRoute
+  FindoRoute: typeof FindoRoute
   HomepageRoute: typeof HomepageRoute
   ImpressumRoute: typeof ImpressumRoute
   KiehnSystemeLoginRoute: typeof KiehnSystemeLoginRoute
@@ -982,6 +1007,13 @@ declare module '@tanstack/react-router' {
       path: '/homepage'
       fullPath: '/homepage'
       preLoaderRoute: typeof HomepageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/findo': {
+      id: '/findo'
+      path: '/findo'
+      fullPath: '/findo'
+      preLoaderRoute: typeof FindoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/datenschutz': {
@@ -1122,6 +1154,13 @@ declare module '@tanstack/react-router' {
       path: '/fuhrpark'
       fullPath: '/fuhrpark'
       preLoaderRoute: typeof AuthenticatedFuhrparkRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/findo-id': {
+      id: '/_authenticated/findo-id'
+      path: '/findo-id'
+      fullPath: '/findo-id'
+      preLoaderRoute: typeof AuthenticatedFindoIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/esrp': {
@@ -1597,6 +1636,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDienstplaeneRoute: typeof AuthenticatedDienstplaeneRoute
   AuthenticatedEinsatzErstellenRoute: typeof AuthenticatedEinsatzErstellenRoute
   AuthenticatedEsrpRoute: typeof AuthenticatedEsrpRoute
+  AuthenticatedFindoIdRoute: typeof AuthenticatedFindoIdRoute
   AuthenticatedFuhrparkRoute: typeof AuthenticatedFuhrparkRoute
   AuthenticatedHilfeRoute: typeof AuthenticatedHilfeRoute
   AuthenticatedInterventionRoute: typeof AuthenticatedInterventionRoute
@@ -1634,6 +1674,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDienstplaeneRoute: AuthenticatedDienstplaeneRoute,
   AuthenticatedEinsatzErstellenRoute: AuthenticatedEinsatzErstellenRoute,
   AuthenticatedEsrpRoute: AuthenticatedEsrpRoute,
+  AuthenticatedFindoIdRoute: AuthenticatedFindoIdRoute,
   AuthenticatedFuhrparkRoute: AuthenticatedFuhrparkRoute,
   AuthenticatedHilfeRoute: AuthenticatedHilfeRoute,
   AuthenticatedInterventionRoute: AuthenticatedInterventionRoute,
@@ -1667,6 +1708,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   DatenschutzRoute: DatenschutzRoute,
+  FindoRoute: FindoRoute,
   HomepageRoute: HomepageRoute,
   ImpressumRoute: ImpressumRoute,
   KiehnSystemeLoginRoute: KiehnSystemeLoginRoute,

@@ -55,3 +55,7 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - [x] Inhalte laufen innerhalb des Fensters mit, „Abbrechen"/„Speichern" bleiben sichtbar
 - [x] Design-Vorschau bleibt beim Scrollen stehen (vorderste Karte immer sichtbar)
 - [x] Im Browser geprüft (1280x800 und 1280x1800): nichts abgeschnitten, keine Überlappung
+
+## Erledigt: Findo-ID
+- [x] Eigener Menübereich „Findo-ID": Anhänger (FID, Besitzer, Paket, Ersatzschlüssel-Lagerort), Fundmeldungen mit Status, Eingang erfassen
+- [x] Öffentliche Fundseite /findo (FID prüfen, Fund melden, keine Besitzerdaten sichtbar)
