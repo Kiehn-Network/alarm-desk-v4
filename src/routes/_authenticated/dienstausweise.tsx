@@ -41,19 +41,22 @@ const STILE: { value: AusweisStil; label: string }[] = [
   { value: "diagonal", label: "Diagonal" },
   { value: "rahmen", label: "Rahmen" },
   { value: "seite", label: "Seitenleiste" },
+  { value: "schlicht", label: "Schlicht · Firmenausweis" },
 ];
 
-async function bildVerkleinern(file: File): Promise<string> {
+async function bildVerkleinern(file: File, logo = false): Promise<string> {
   const url = URL.createObjectURL(file);
   const img = new Image();
   await new Promise((r, j) => { img.onload = r; img.onerror = j; img.src = url; });
-  const max = 360;
+  const max = logo ? 800 : 360;
   const s = Math.min(1, max / Math.max(img.width, img.height));
   const cv = document.createElement("canvas");
   cv.width = Math.round(img.width * s); cv.height = Math.round(img.height * s);
-  cv.getContext("2d")!.drawImage(img, 0, 0, cv.width, cv.height);
+  const context = cv.getContext("2d");
+  if (!context) { URL.revokeObjectURL(url); throw new Error("Bild konnte nicht verarbeitet werden"); }
+  context.drawImage(img, 0, 0, cv.width, cv.height);
   URL.revokeObjectURL(url);
-  return cv.toDataURL("image/jpeg", 0.82);
+  return cv.toDataURL(logo ? "image/png" : "image/jpeg", 0.82);
 }
 
 function Page() {
@@ -295,6 +298,22 @@ function DesignDialog({ d, onClose, onSave }: { d: AusweisDesign; onClose: () =>
             </div>
             <div className="space-y-1"><Label>Titel</Label><Input value={x.config.titel} maxLength={30} onChange={(e) => set("titel", e.target.value)} /></div>
             <div className="space-y-1"><Label>Firmenname</Label><Input value={x.config.firma} maxLength={40} onChange={(e) => set("firma", e.target.value)} /></div>
+            {x.config.stil === "schlicht" && <>
+              <div className="space-y-1"><Label htmlFor="ausweis-logo">Firmenlogo</Label>
+                <div className="flex gap-2">
+                  <Input id="ausweis-logo" type="file" accept="image/png,image/jpeg,image/webp" onChange={async (e) => {
+                    const file = e.target.files?.[0]; if (!file) return;
+                    try {
+                      const logo = await bildVerkleinern(file, true);
+                      setX((prev) => ({ ...prev, config: { ...prev.config, logo } }));
+                    } catch { toast.error("Logo konnte nicht gelesen werden"); }
+                  }} />
+                  {x.config.logo && <Button variant="outline" onClick={() => set("logo", "")}>Entfernen</Button>}
+                </div>
+              </div>
+              <div className="space-y-1"><Label htmlFor="ausweis-vorderkontakt">Vorderseite: Kontakt / Adresse</Label><Textarea id="ausweis-vorderkontakt" rows={3} maxLength={160} value={x.config.vorderKontakt ?? ""} onChange={(e) => set("vorderKontakt", e.target.value)} /></div>
+              <div className="space-y-1"><Label htmlFor="ausweis-standort">Rückseite: Niederlassung / Standort</Label><Input id="ausweis-standort" maxLength={50} value={x.config.rueckStandort ?? ""} onChange={(e) => set("rueckStandort", e.target.value)} /></div>
+            </>}
             <div className="grid grid-cols-4 gap-2">
               {farbe("bg", "Hintergrund")}{farbe("akzent", "Farbe 1")}{farbe("akzent2", "Farbe 2")}{farbe("text", "Schrift")}
             </div>
@@ -331,7 +350,7 @@ function DesignDialog({ d, onClose, onSave }: { d: AusweisDesign; onClose: () =>
                 <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.rueckZeigeNummer !== false} onCheckedChange={(v) => set("rueckZeigeNummer", v)} />Ausweis-Nr.</label>
               </div>
             </div>
-            <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.fotoRund} onCheckedChange={(v) => set("fotoRund", v)} />Rundes Foto</label>
+            {x.config.stil !== "schlicht" && <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.fotoRund} onCheckedChange={(v) => set("fotoRund", v)} />Rundes Foto</label>}
           </div>
           <div className="flex flex-col items-center gap-3 self-start rounded-md bg-muted p-4 lg:sticky lg:top-0">
             <AusweisKarte design={x} person={{ name: "Max Mustermann", funktion: "Sicherheitsmitarbeiter", ausweisNr: "0001", gueltigBis: "2027-12-31" }} />
