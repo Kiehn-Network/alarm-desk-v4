@@ -9,105 +9,84 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LagerStationRouteImport } from './routes/lager-station'
-import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
-import { Route as ImpressumRouteImport } from './routes/impressum'
-import { Route as HomepageRouteImport } from './routes/homepage'
-import { Route as DatenschutzRouteImport } from './routes/datenschutz'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
-import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
-import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
-import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
-import { Route as AuthenticatedSchluesselbuchRouteImport } from './routes/_authenticated/schluesselbuch'
-import { Route as AuthenticatedSchluesselbestandRouteImport } from './routes/_authenticated/schluesselbestand'
-import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
-import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
-import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authenticated/meine-einsaetze'
-import { Route as AuthenticatedLagerRouteImport } from './routes/_authenticated/lager'
-import { Route as AuthenticatedKundenakteRouteImport } from './routes/_authenticated/kundenakte'
-import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated/kunden'
-import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
-import { Route as AuthenticatedInterventionRouteImport } from './routes/_authenticated/intervention'
-import { Route as AuthenticatedHilfeRouteImport } from './routes/_authenticated/hilfe'
-import { Route as AuthenticatedFuhrparkRouteImport } from './routes/_authenticated/fuhrpark'
-import { Route as AuthenticatedEsrpRouteImport } from './routes/_authenticated/esrp'
-import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
-import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
-import { Route as AuthenticatedDatenImportRouteImport } from './routes/_authenticated/daten-import'
-import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticated/dateien'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedAuswertungRouteImport } from './routes/_authenticated/auswertung'
-import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as DatenschutzRouteImport } from './routes/datenschutz'
+import { Route as HomepageRouteImport } from './routes/homepage'
+import { Route as ImpressumRouteImport } from './routes/impressum'
+import { Route as KiehnSystemeLoginRouteImport } from './routes/kiehn-systeme-login'
+import { Route as LagerStationRouteImport } from './routes/lager-station'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
+import { Route as AuthenticatedAlarmierungRouteImport } from './routes/_authenticated/alarmierung'
+import { Route as AuthenticatedAuswertungRouteImport } from './routes/_authenticated/auswertung'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDateienRouteImport } from './routes/_authenticated/dateien'
+import { Route as AuthenticatedDatenImportRouteImport } from './routes/_authenticated/daten-import'
+import { Route as AuthenticatedDienstplaeneRouteImport } from './routes/_authenticated/dienstplaene'
+import { Route as AuthenticatedEinsatzErstellenRouteImport } from './routes/_authenticated/einsatz-erstellen'
+import { Route as AuthenticatedEsrpRouteImport } from './routes/_authenticated/esrp'
+import { Route as AuthenticatedFuhrparkRouteImport } from './routes/_authenticated/fuhrpark'
+import { Route as AuthenticatedHilfeRouteImport } from './routes/_authenticated/hilfe'
+import { Route as AuthenticatedInterventionRouteImport } from './routes/_authenticated/intervention'
+import { Route as AuthenticatedIntrahubRouteImport } from './routes/_authenticated/intrahub'
+import { Route as AuthenticatedKundenRouteImport } from './routes/_authenticated/kunden'
+import { Route as AuthenticatedKundenakteRouteImport } from './routes/_authenticated/kundenakte'
+import { Route as AuthenticatedLagerRouteImport } from './routes/_authenticated/lager'
+import { Route as AuthenticatedMeineEinsaetzeRouteImport } from './routes/_authenticated/meine-einsaetze'
+import { Route as AuthenticatedMonitorRouteImport } from './routes/_authenticated/monitor'
 import { Route as AuthenticatedObjektdossierRouteRouteImport } from './routes/_authenticated/objektdossier/route'
-import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
-import { Route as AuthenticatedObjektdossierIndexRouteImport } from './routes/_authenticated/objektdossier/index'
-import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
-import { Route as AuthenticatedObjektdossierDossierIdRouteImport } from './routes/_authenticated/objektdossier/$dossierId'
-import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
+import { Route as AuthenticatedRevierCenterRouteRouteImport } from './routes/_authenticated/revier-center/route'
+import { Route as AuthenticatedSchluesselbestandRouteImport } from './routes/_authenticated/schluesselbestand'
+import { Route as AuthenticatedSchluesselbuchRouteImport } from './routes/_authenticated/schluesselbuch'
+import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_authenticated/schluesseluebergabe'
+import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
+import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
+import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
-import { Route as AuthenticatedRevierCenterOwksRouteRouteImport } from './routes/_authenticated/revier-center/owks/route'
-import { Route as AuthenticatedNotdienstRohrserviceRouteRouteImport } from './routes/_authenticated/notdienst/rohrservice/route'
 import { Route as AuthenticatedNotdienstBudekoRouteRouteImport } from './routes/_authenticated/notdienst/budeko/route'
-import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes/_authenticated/revier-center/owks/index'
-import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
-import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiPublicHooksSchluesselRueckgabeReminderRouteImport } from './routes/api/public/hooks/schluessel-rueckgabe-reminder'
-import { Route as ApiPublicHooksLicenseExpiryRouteImport } from './routes/api/public/hooks/license-expiry'
-import { Route as ApiPublicHooksEsrpWorkerRouteImport } from './routes/api/public/hooks/esrp-worker'
-import { Route as ApiPublicFilesGetRouteImport } from './routes/api/public/files/get'
-import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
-import { Route as AuthenticatedRevierCenterOwksScanRouteImport } from './routes/_authenticated/revier-center/owks/scan'
-import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
-import { Route as AuthenticatedRevierCenterOwksObjekteRouteImport } from './routes/_authenticated/revier-center/owks/objekte'
-import { Route as AuthenticatedRevierCenterOwksNfcPunkteRouteImport } from './routes/_authenticated/revier-center/owks/nfc-punkte'
-import { Route as AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport } from './routes/_authenticated/revier-center/owks/bestreifungsplaene'
-import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
-import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
-import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from './routes/_authenticated/notdienst/rohrservice/mitarbeiter'
-import { Route as AuthenticatedNotdienstRohrserviceImportRouteImport } from './routes/_authenticated/notdienst/rohrservice/import'
-import { Route as AuthenticatedNotdienstBudekoNeuRouteImport } from './routes/_authenticated/notdienst/budeko/neu'
-import { Route as AuthenticatedNotdienstBudekoNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/budeko/nachbearbeitung'
-import { Route as AuthenticatedNotdienstBudekoMitarbeiterRouteImport } from './routes/_authenticated/notdienst/budeko/mitarbeiter'
-import { Route as AuthenticatedNotdienstBudekoImportRouteImport } from './routes/_authenticated/notdienst/budeko/import'
+import { Route as AuthenticatedNotdienstLutzRouteImport } from './routes/_authenticated/notdienst/lutz'
+import { Route as AuthenticatedNotdienstRohrserviceRouteRouteImport } from './routes/_authenticated/notdienst/rohrservice/route'
+import { Route as AuthenticatedObjektdossierIndexRouteImport } from './routes/_authenticated/objektdossier/index'
+import { Route as AuthenticatedObjektdossierDossierIdRouteImport } from './routes/_authenticated/objektdossier/$dossierId'
+import { Route as AuthenticatedRevierCenterIndexRouteImport } from './routes/_authenticated/revier-center/index'
+import { Route as AuthenticatedRevierCenterOwksRouteRouteImport } from './routes/_authenticated/revier-center/owks/route'
+import { Route as ApiPublicVersionRouteImport } from './routes/api/public/version'
 import { Route as AuthenticatedAbrechnungProviderVersandRouteImport } from './routes/_authenticated/abrechnung.$provider.versand'
+import { Route as AuthenticatedNotdienstBudekoIndexRouteImport } from './routes/_authenticated/notdienst/budeko/index'
+import { Route as AuthenticatedNotdienstBudekoImportRouteImport } from './routes/_authenticated/notdienst/budeko/import'
+import { Route as AuthenticatedNotdienstBudekoMitarbeiterRouteImport } from './routes/_authenticated/notdienst/budeko/mitarbeiter'
+import { Route as AuthenticatedNotdienstBudekoNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/budeko/nachbearbeitung'
+import { Route as AuthenticatedNotdienstBudekoNeuRouteImport } from './routes/_authenticated/notdienst/budeko/neu'
+import { Route as AuthenticatedNotdienstRohrserviceIndexRouteImport } from './routes/_authenticated/notdienst/rohrservice/index'
+import { Route as AuthenticatedNotdienstRohrserviceImportRouteImport } from './routes/_authenticated/notdienst/rohrservice/import'
+import { Route as AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport } from './routes/_authenticated/notdienst/rohrservice/mitarbeiter'
+import { Route as AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport } from './routes/_authenticated/notdienst/rohrservice/nachbearbeitung'
+import { Route as AuthenticatedNotdienstRohrserviceNeuRouteImport } from './routes/_authenticated/notdienst/rohrservice/neu'
+import { Route as AuthenticatedRevierCenterOwksIndexRouteImport } from './routes/_authenticated/revier-center/owks/index'
+import { Route as AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport } from './routes/_authenticated/revier-center/owks/bestreifungsplaene'
+import { Route as AuthenticatedRevierCenterOwksNfcPunkteRouteImport } from './routes/_authenticated/revier-center/owks/nfc-punkte'
+import { Route as AuthenticatedRevierCenterOwksObjekteRouteImport } from './routes/_authenticated/revier-center/owks/objekte'
+import { Route as AuthenticatedRevierCenterOwksRundgaengeRouteImport } from './routes/_authenticated/revier-center/owks/rundgaenge'
+import { Route as AuthenticatedRevierCenterOwksScanRouteImport } from './routes/_authenticated/revier-center/owks/scan'
+import { Route as AuthenticatedRevierCenterOwksZeitstrahlRouteImport } from './routes/_authenticated/revier-center/owks/zeitstrahl'
+import { Route as ApiPublicFilesGetRouteImport } from './routes/api/public/files/get'
+import { Route as ApiPublicHooksEsrpWorkerRouteImport } from './routes/api/public/hooks/esrp-worker'
+import { Route as ApiPublicHooksLicenseExpiryRouteImport } from './routes/api/public/hooks/license-expiry'
+import { Route as ApiPublicHooksSchluesselRueckgabeReminderRouteImport } from './routes/api/public/hooks/schluessel-rueckgabe-reminder'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LagerStationRoute = LagerStationRouteImport.update({
-  id: '/lager-station',
-  path: '/lager-station',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
-  id: '/kiehn-systeme-login',
-  path: '/kiehn-systeme-login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ImpressumRoute = ImpressumRouteImport.update({
-  id: '/impressum',
-  path: '/impressum',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HomepageRoute = HomepageRouteImport.update({
-  id: '/homepage',
-  path: '/homepage',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DatenschutzRoute = DatenschutzRouteImport.update({
@@ -115,137 +94,39 @@ const DatenschutzRoute = DatenschutzRouteImport.update({
   path: '/datenschutz',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const HomepageRoute = HomepageRouteImport.update({
+  id: '/homepage',
+  path: '/homepage',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => AuthenticatedRoute,
+const KiehnSystemeLoginRoute = KiehnSystemeLoginRouteImport.update({
+  id: '/kiehn-systeme-login',
+  path: '/kiehn-systeme-login',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
-  id: '/superadmin',
-  path: '/superadmin',
-  getParentRoute: () => AuthenticatedRoute,
+const LagerStationRoute = LagerStationRouteImport.update({
+  id: '/lager-station',
+  path: '/lager-station',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedServiceCenterRoute =
-  AuthenticatedServiceCenterRouteImport.update({
-    id: '/service-center',
-    path: '/service-center',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSchluesseluebergabeRoute =
-  AuthenticatedSchluesseluebergabeRouteImport.update({
-    id: '/schluesseluebergabe',
-    path: '/schluesseluebergabe',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSchluesselbuchRoute =
-  AuthenticatedSchluesselbuchRouteImport.update({
-    id: '/schluesselbuch',
-    path: '/schluesselbuch',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSchluesselbestandRoute =
-  AuthenticatedSchluesselbestandRouteImport.update({
-    id: '/schluesselbestand',
-    path: '/schluesselbestand',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
-  id: '/profil',
-  path: '/profil',
-  getParentRoute: () => AuthenticatedRoute,
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedMonitorRoute = AuthenticatedMonitorRouteImport.update({
-  id: '/monitor',
-  path: '/monitor',
-  getParentRoute: () => AuthenticatedRoute,
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedMeineEinsaetzeRoute =
-  AuthenticatedMeineEinsaetzeRouteImport.update({
-    id: '/meine-einsaetze',
-    path: '/meine-einsaetze',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedLagerRoute = AuthenticatedLagerRouteImport.update({
-  id: '/lager',
-  path: '/lager',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedKundenakteRoute = AuthenticatedKundenakteRouteImport.update({
-  id: '/kundenakte',
-  path: '/kundenakte',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedKundenRoute = AuthenticatedKundenRouteImport.update({
-  id: '/kunden',
-  path: '/kunden',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedIntrahubRoute = AuthenticatedIntrahubRouteImport.update({
-  id: '/intrahub',
-  path: '/intrahub',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedInterventionRoute =
-  AuthenticatedInterventionRouteImport.update({
-    id: '/intervention',
-    path: '/intervention',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedHilfeRoute = AuthenticatedHilfeRouteImport.update({
-  id: '/hilfe',
-  path: '/hilfe',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedFuhrparkRoute = AuthenticatedFuhrparkRouteImport.update({
-  id: '/fuhrpark',
-  path: '/fuhrpark',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedEsrpRoute = AuthenticatedEsrpRouteImport.update({
-  id: '/esrp',
-  path: '/esrp',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedEinsatzErstellenRoute =
-  AuthenticatedEinsatzErstellenRouteImport.update({
-    id: '/einsatz-erstellen',
-    path: '/einsatz-erstellen',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDienstplaeneRoute =
-  AuthenticatedDienstplaeneRouteImport.update({
-    id: '/dienstplaene',
-    path: '/dienstplaene',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDatenImportRoute =
-  AuthenticatedDatenImportRouteImport.update({
-    id: '/daten-import',
-    path: '/daten-import',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDateienRoute = AuthenticatedDateienRouteImport.update({
-  id: '/dateien',
-  path: '/dateien',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedAuswertungRoute = AuthenticatedAuswertungRouteImport.update({
-  id: '/auswertung',
-  path: '/auswertung',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedAlarmierungRoute =
@@ -254,9 +135,100 @@ const AuthenticatedAlarmierungRoute =
     path: '/alarmierung',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedAuswertungRoute = AuthenticatedAuswertungRouteImport.update({
+  id: '/auswertung',
+  path: '/auswertung',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDateienRoute = AuthenticatedDateienRouteImport.update({
+  id: '/dateien',
+  path: '/dateien',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedDatenImportRoute =
+  AuthenticatedDatenImportRouteImport.update({
+    id: '/daten-import',
+    path: '/daten-import',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDienstplaeneRoute =
+  AuthenticatedDienstplaeneRouteImport.update({
+    id: '/dienstplaene',
+    path: '/dienstplaene',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedEinsatzErstellenRoute =
+  AuthenticatedEinsatzErstellenRouteImport.update({
+    id: '/einsatz-erstellen',
+    path: '/einsatz-erstellen',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedEsrpRoute = AuthenticatedEsrpRouteImport.update({
+  id: '/esrp',
+  path: '/esrp',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFuhrparkRoute = AuthenticatedFuhrparkRouteImport.update({
+  id: '/fuhrpark',
+  path: '/fuhrpark',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedHilfeRoute = AuthenticatedHilfeRouteImport.update({
+  id: '/hilfe',
+  path: '/hilfe',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedInterventionRoute =
+  AuthenticatedInterventionRouteImport.update({
+    id: '/intervention',
+    path: '/intervention',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedIntrahubRoute = AuthenticatedIntrahubRouteImport.update({
+  id: '/intrahub',
+  path: '/intrahub',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedKundenRoute = AuthenticatedKundenRouteImport.update({
+  id: '/kunden',
+  path: '/kunden',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedKundenakteRoute = AuthenticatedKundenakteRouteImport.update({
+  id: '/kundenakte',
+  path: '/kundenakte',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedLagerRoute = AuthenticatedLagerRouteImport.update({
+  id: '/lager',
+  path: '/lager',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMeineEinsaetzeRoute =
+  AuthenticatedMeineEinsaetzeRouteImport.update({
+    id: '/meine-einsaetze',
+    path: '/meine-einsaetze',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMonitorRoute = AuthenticatedMonitorRouteImport.update({
+  id: '/monitor',
+  path: '/monitor',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedObjektdossierRouteRoute =
+  AuthenticatedObjektdossierRouteRouteImport.update({
+    id: '/objektdossier',
+    path: '/objektdossier',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedRevierCenterRouteRoute =
@@ -265,57 +237,44 @@ const AuthenticatedRevierCenterRouteRoute =
     path: '/revier-center',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedObjektdossierRouteRoute =
-  AuthenticatedObjektdossierRouteRouteImport.update({
-    id: '/objektdossier',
-    path: '/objektdossier',
+const AuthenticatedSchluesselbestandRoute =
+  AuthenticatedSchluesselbestandRouteImport.update({
+    id: '/schluesselbestand',
+    path: '/schluesselbestand',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedRevierCenterIndexRoute =
-  AuthenticatedRevierCenterIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
+const AuthenticatedSchluesselbuchRoute =
+  AuthenticatedSchluesselbuchRouteImport.update({
+    id: '/schluesselbuch',
+    path: '/schluesselbuch',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedObjektdossierIndexRoute =
-  AuthenticatedObjektdossierIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedObjektdossierRouteRoute,
+const AuthenticatedSchluesseluebergabeRoute =
+  AuthenticatedSchluesseluebergabeRouteImport.update({
+    id: '/schluesseluebergabe',
+    path: '/schluesseluebergabe',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
-const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
-  id: '/api/public/version',
-  path: '/api/public/version',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedServiceCenterRoute =
+  AuthenticatedServiceCenterRouteImport.update({
+    id: '/service-center',
+    path: '/service-center',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSuperadminRoute = AuthenticatedSuperadminRouteImport.update({
+  id: '/superadmin',
+  path: '/superadmin',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedObjektdossierDossierIdRoute =
-  AuthenticatedObjektdossierDossierIdRouteImport.update({
-    id: '/$dossierId',
-    path: '/$dossierId',
-    getParentRoute: () => AuthenticatedObjektdossierRouteRoute,
-  } as any)
-const AuthenticatedNotdienstLutzRoute =
-  AuthenticatedNotdienstLutzRouteImport.update({
-    id: '/notdienst/lutz',
-    path: '/notdienst/lutz',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
+const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAbrechnungProviderRoute =
   AuthenticatedAbrechnungProviderRouteImport.update({
     id: '/abrechnung/$provider',
     path: '/abrechnung/$provider',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedRevierCenterOwksRouteRoute =
-  AuthenticatedRevierCenterOwksRouteRouteImport.update({
-    id: '/owks',
-    path: '/owks',
-    getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
-  } as any)
-const AuthenticatedNotdienstRohrserviceRouteRoute =
-  AuthenticatedNotdienstRohrserviceRouteRouteImport.update({
-    id: '/notdienst/rohrservice',
-    path: '/notdienst/rohrservice',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedNotdienstBudekoRouteRoute =
@@ -324,139 +283,57 @@ const AuthenticatedNotdienstBudekoRouteRoute =
     path: '/notdienst/budeko',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedRevierCenterOwksIndexRoute =
-  AuthenticatedRevierCenterOwksIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+const AuthenticatedNotdienstLutzRoute =
+  AuthenticatedNotdienstLutzRouteImport.update({
+    id: '/notdienst/lutz',
+    path: '/notdienst/lutz',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedNotdienstRohrserviceIndexRoute =
-  AuthenticatedNotdienstRohrserviceIndexRouteImport.update({
+const AuthenticatedNotdienstRohrserviceRouteRoute =
+  AuthenticatedNotdienstRohrserviceRouteRouteImport.update({
+    id: '/notdienst/rohrservice',
+    path: '/notdienst/rohrservice',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedObjektdossierIndexRoute =
+  AuthenticatedObjektdossierIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+    getParentRoute: () => AuthenticatedObjektdossierRouteRoute,
+  } as any)
+const AuthenticatedObjektdossierDossierIdRoute =
+  AuthenticatedObjektdossierDossierIdRouteImport.update({
+    id: '/$dossierId',
+    path: '/$dossierId',
+    getParentRoute: () => AuthenticatedObjektdossierRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterIndexRoute =
+  AuthenticatedRevierCenterIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksRouteRoute =
+  AuthenticatedRevierCenterOwksRouteRouteImport.update({
+    id: '/owks',
+    path: '/owks',
+    getParentRoute: () => AuthenticatedRevierCenterRouteRoute,
+  } as any)
+const ApiPublicVersionRoute = ApiPublicVersionRouteImport.update({
+  id: '/api/public/version',
+  path: '/api/public/version',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAbrechnungProviderVersandRoute =
+  AuthenticatedAbrechnungProviderVersandRouteImport.update({
+    id: '/versand',
+    path: '/versand',
+    getParentRoute: () => AuthenticatedAbrechnungProviderRoute,
   } as any)
 const AuthenticatedNotdienstBudekoIndexRoute =
   AuthenticatedNotdienstBudekoIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
-  } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicHooksSchluesselRueckgabeReminderRoute =
-  ApiPublicHooksSchluesselRueckgabeReminderRouteImport.update({
-    id: '/api/public/hooks/schluessel-rueckgabe-reminder',
-    path: '/api/public/hooks/schluessel-rueckgabe-reminder',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksLicenseExpiryRoute =
-  ApiPublicHooksLicenseExpiryRouteImport.update({
-    id: '/api/public/hooks/license-expiry',
-    path: '/api/public/hooks/license-expiry',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksEsrpWorkerRoute =
-  ApiPublicHooksEsrpWorkerRouteImport.update({
-    id: '/api/public/hooks/esrp-worker',
-    path: '/api/public/hooks/esrp-worker',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicFilesGetRoute = ApiPublicFilesGetRouteImport.update({
-  id: '/api/public/files/get',
-  path: '/api/public/files/get',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRevierCenterOwksZeitstrahlRoute =
-  AuthenticatedRevierCenterOwksZeitstrahlRouteImport.update({
-    id: '/zeitstrahl',
-    path: '/zeitstrahl',
-    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
-  } as any)
-const AuthenticatedRevierCenterOwksScanRoute =
-  AuthenticatedRevierCenterOwksScanRouteImport.update({
-    id: '/scan',
-    path: '/scan',
-    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
-  } as any)
-const AuthenticatedRevierCenterOwksRundgaengeRoute =
-  AuthenticatedRevierCenterOwksRundgaengeRouteImport.update({
-    id: '/rundgaenge',
-    path: '/rundgaenge',
-    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
-  } as any)
-const AuthenticatedRevierCenterOwksObjekteRoute =
-  AuthenticatedRevierCenterOwksObjekteRouteImport.update({
-    id: '/objekte',
-    path: '/objekte',
-    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
-  } as any)
-const AuthenticatedRevierCenterOwksNfcPunkteRoute =
-  AuthenticatedRevierCenterOwksNfcPunkteRouteImport.update({
-    id: '/nfc-punkte',
-    path: '/nfc-punkte',
-    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
-  } as any)
-const AuthenticatedRevierCenterOwksBestreifungsplaeneRoute =
-  AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport.update({
-    id: '/bestreifungsplaene',
-    path: '/bestreifungsplaene',
-    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
-  } as any)
-const AuthenticatedNotdienstRohrserviceNeuRoute =
-  AuthenticatedNotdienstRohrserviceNeuRouteImport.update({
-    id: '/neu',
-    path: '/neu',
-    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
-  } as any)
-const AuthenticatedNotdienstRohrserviceNachbearbeitungRoute =
-  AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport.update({
-    id: '/nachbearbeitung',
-    path: '/nachbearbeitung',
-    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
-  } as any)
-const AuthenticatedNotdienstRohrserviceMitarbeiterRoute =
-  AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport.update({
-    id: '/mitarbeiter',
-    path: '/mitarbeiter',
-    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
-  } as any)
-const AuthenticatedNotdienstRohrserviceImportRoute =
-  AuthenticatedNotdienstRohrserviceImportRouteImport.update({
-    id: '/import',
-    path: '/import',
-    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
-  } as any)
-const AuthenticatedNotdienstBudekoNeuRoute =
-  AuthenticatedNotdienstBudekoNeuRouteImport.update({
-    id: '/neu',
-    path: '/neu',
-    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
-  } as any)
-const AuthenticatedNotdienstBudekoNachbearbeitungRoute =
-  AuthenticatedNotdienstBudekoNachbearbeitungRouteImport.update({
-    id: '/nachbearbeitung',
-    path: '/nachbearbeitung',
-    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
-  } as any)
-const AuthenticatedNotdienstBudekoMitarbeiterRoute =
-  AuthenticatedNotdienstBudekoMitarbeiterRouteImport.update({
-    id: '/mitarbeiter',
-    path: '/mitarbeiter',
     getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
   } as any)
 const AuthenticatedNotdienstBudekoImportRoute =
@@ -465,11 +342,134 @@ const AuthenticatedNotdienstBudekoImportRoute =
     path: '/import',
     getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
   } as any)
-const AuthenticatedAbrechnungProviderVersandRoute =
-  AuthenticatedAbrechnungProviderVersandRouteImport.update({
-    id: '/versand',
-    path: '/versand',
-    getParentRoute: () => AuthenticatedAbrechnungProviderRoute,
+const AuthenticatedNotdienstBudekoMitarbeiterRoute =
+  AuthenticatedNotdienstBudekoMitarbeiterRouteImport.update({
+    id: '/mitarbeiter',
+    path: '/mitarbeiter',
+    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
+  } as any)
+const AuthenticatedNotdienstBudekoNachbearbeitungRoute =
+  AuthenticatedNotdienstBudekoNachbearbeitungRouteImport.update({
+    id: '/nachbearbeitung',
+    path: '/nachbearbeitung',
+    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
+  } as any)
+const AuthenticatedNotdienstBudekoNeuRoute =
+  AuthenticatedNotdienstBudekoNeuRouteImport.update({
+    id: '/neu',
+    path: '/neu',
+    getParentRoute: () => AuthenticatedNotdienstBudekoRouteRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceIndexRoute =
+  AuthenticatedNotdienstRohrserviceIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceImportRoute =
+  AuthenticatedNotdienstRohrserviceImportRouteImport.update({
+    id: '/import',
+    path: '/import',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceMitarbeiterRoute =
+  AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport.update({
+    id: '/mitarbeiter',
+    path: '/mitarbeiter',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceNachbearbeitungRoute =
+  AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport.update({
+    id: '/nachbearbeitung',
+    path: '/nachbearbeitung',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
+const AuthenticatedNotdienstRohrserviceNeuRoute =
+  AuthenticatedNotdienstRohrserviceNeuRouteImport.update({
+    id: '/neu',
+    path: '/neu',
+    getParentRoute: () => AuthenticatedNotdienstRohrserviceRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksIndexRoute =
+  AuthenticatedRevierCenterOwksIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksBestreifungsplaeneRoute =
+  AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport.update({
+    id: '/bestreifungsplaene',
+    path: '/bestreifungsplaene',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksNfcPunkteRoute =
+  AuthenticatedRevierCenterOwksNfcPunkteRouteImport.update({
+    id: '/nfc-punkte',
+    path: '/nfc-punkte',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksObjekteRoute =
+  AuthenticatedRevierCenterOwksObjekteRouteImport.update({
+    id: '/objekte',
+    path: '/objekte',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksRundgaengeRoute =
+  AuthenticatedRevierCenterOwksRundgaengeRouteImport.update({
+    id: '/rundgaenge',
+    path: '/rundgaenge',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksScanRoute =
+  AuthenticatedRevierCenterOwksScanRouteImport.update({
+    id: '/scan',
+    path: '/scan',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const AuthenticatedRevierCenterOwksZeitstrahlRoute =
+  AuthenticatedRevierCenterOwksZeitstrahlRouteImport.update({
+    id: '/zeitstrahl',
+    path: '/zeitstrahl',
+    getParentRoute: () => AuthenticatedRevierCenterOwksRouteRoute,
+  } as any)
+const ApiPublicFilesGetRoute = ApiPublicFilesGetRouteImport.update({
+  id: '/api/public/files/get',
+  path: '/api/public/files/get',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksEsrpWorkerRoute =
+  ApiPublicHooksEsrpWorkerRouteImport.update({
+    id: '/api/public/hooks/esrp-worker',
+    path: '/api/public/hooks/esrp-worker',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksLicenseExpiryRoute =
+  ApiPublicHooksLicenseExpiryRouteImport.update({
+    id: '/api/public/hooks/license-expiry',
+    path: '/api/public/hooks/license-expiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSchluesselRueckgabeReminderRoute =
+  ApiPublicHooksSchluesselRueckgabeReminderRouteImport.update({
+    id: '/api/public/hooks/schluessel-rueckgabe-reminder',
+    path: '/api/public/hooks/schluessel-rueckgabe-reminder',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -916,53 +916,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lager-station': {
-      id: '/lager-station'
-      path: '/lager-station'
-      fullPath: '/lager-station'
-      preLoaderRoute: typeof LagerStationRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/kiehn-systeme-login': {
-      id: '/kiehn-systeme-login'
-      path: '/kiehn-systeme-login'
-      fullPath: '/kiehn-systeme-login'
-      preLoaderRoute: typeof KiehnSystemeLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/impressum': {
-      id: '/impressum'
-      path: '/impressum'
-      fullPath: '/impressum'
-      preLoaderRoute: typeof ImpressumRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/homepage': {
-      id: '/homepage'
-      path: '/homepage'
-      fullPath: '/homepage'
-      preLoaderRoute: typeof HomepageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/datenschutz': {
-      id: '/datenschutz'
-      path: '/datenschutz'
-      fullPath: '/datenschutz'
-      preLoaderRoute: typeof DatenschutzRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -972,172 +930,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/datenschutz': {
+      id: '/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/datenschutz'
+      preLoaderRoute: typeof DatenschutzRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/support': {
-      id: '/_authenticated/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof AuthenticatedSupportRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/homepage': {
+      id: '/homepage'
+      path: '/homepage'
+      fullPath: '/homepage'
+      preLoaderRoute: typeof HomepageRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/superadmin': {
-      id: '/_authenticated/superadmin'
-      path: '/superadmin'
-      fullPath: '/superadmin'
-      preLoaderRoute: typeof AuthenticatedSuperadminRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/service-center': {
-      id: '/_authenticated/service-center'
-      path: '/service-center'
-      fullPath: '/service-center'
-      preLoaderRoute: typeof AuthenticatedServiceCenterRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/kiehn-systeme-login': {
+      id: '/kiehn-systeme-login'
+      path: '/kiehn-systeme-login'
+      fullPath: '/kiehn-systeme-login'
+      preLoaderRoute: typeof KiehnSystemeLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/schluesseluebergabe': {
-      id: '/_authenticated/schluesseluebergabe'
-      path: '/schluesseluebergabe'
-      fullPath: '/schluesseluebergabe'
-      preLoaderRoute: typeof AuthenticatedSchluesseluebergabeRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/lager-station': {
+      id: '/lager-station'
+      path: '/lager-station'
+      fullPath: '/lager-station'
+      preLoaderRoute: typeof LagerStationRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/schluesselbuch': {
-      id: '/_authenticated/schluesselbuch'
-      path: '/schluesselbuch'
-      fullPath: '/schluesselbuch'
-      preLoaderRoute: typeof AuthenticatedSchluesselbuchRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/schluesselbestand': {
-      id: '/_authenticated/schluesselbestand'
-      path: '/schluesselbestand'
-      fullPath: '/schluesselbestand'
-      preLoaderRoute: typeof AuthenticatedSchluesselbestandRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/profil': {
-      id: '/_authenticated/profil'
-      path: '/profil'
-      fullPath: '/profil'
-      preLoaderRoute: typeof AuthenticatedProfilRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/monitor': {
-      id: '/_authenticated/monitor'
-      path: '/monitor'
-      fullPath: '/monitor'
-      preLoaderRoute: typeof AuthenticatedMonitorRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/meine-einsaetze': {
-      id: '/_authenticated/meine-einsaetze'
-      path: '/meine-einsaetze'
-      fullPath: '/meine-einsaetze'
-      preLoaderRoute: typeof AuthenticatedMeineEinsaetzeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/lager': {
-      id: '/_authenticated/lager'
-      path: '/lager'
-      fullPath: '/lager'
-      preLoaderRoute: typeof AuthenticatedLagerRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/kundenakte': {
-      id: '/_authenticated/kundenakte'
-      path: '/kundenakte'
-      fullPath: '/kundenakte'
-      preLoaderRoute: typeof AuthenticatedKundenakteRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/kunden': {
-      id: '/_authenticated/kunden'
-      path: '/kunden'
-      fullPath: '/kunden'
-      preLoaderRoute: typeof AuthenticatedKundenRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/intrahub': {
-      id: '/_authenticated/intrahub'
-      path: '/intrahub'
-      fullPath: '/intrahub'
-      preLoaderRoute: typeof AuthenticatedIntrahubRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/intervention': {
-      id: '/_authenticated/intervention'
-      path: '/intervention'
-      fullPath: '/intervention'
-      preLoaderRoute: typeof AuthenticatedInterventionRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/hilfe': {
-      id: '/_authenticated/hilfe'
-      path: '/hilfe'
-      fullPath: '/hilfe'
-      preLoaderRoute: typeof AuthenticatedHilfeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/fuhrpark': {
-      id: '/_authenticated/fuhrpark'
-      path: '/fuhrpark'
-      fullPath: '/fuhrpark'
-      preLoaderRoute: typeof AuthenticatedFuhrparkRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/esrp': {
-      id: '/_authenticated/esrp'
-      path: '/esrp'
-      fullPath: '/esrp'
-      preLoaderRoute: typeof AuthenticatedEsrpRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/einsatz-erstellen': {
-      id: '/_authenticated/einsatz-erstellen'
-      path: '/einsatz-erstellen'
-      fullPath: '/einsatz-erstellen'
-      preLoaderRoute: typeof AuthenticatedEinsatzErstellenRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dienstplaene': {
-      id: '/_authenticated/dienstplaene'
-      path: '/dienstplaene'
-      fullPath: '/dienstplaene'
-      preLoaderRoute: typeof AuthenticatedDienstplaeneRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/daten-import': {
-      id: '/_authenticated/daten-import'
-      path: '/daten-import'
-      fullPath: '/daten-import'
-      preLoaderRoute: typeof AuthenticatedDatenImportRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dateien': {
-      id: '/_authenticated/dateien'
-      path: '/dateien'
-      fullPath: '/dateien'
-      preLoaderRoute: typeof AuthenticatedDateienRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/auswertung': {
-      id: '/_authenticated/auswertung'
-      path: '/auswertung'
-      fullPath: '/auswertung'
-      preLoaderRoute: typeof AuthenticatedAuswertungRouteImport
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/alarmierung': {
@@ -1147,18 +993,116 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAlarmierungRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+    '/_authenticated/auswertung': {
+      id: '/_authenticated/auswertung'
+      path: '/auswertung'
+      fullPath: '/auswertung'
+      preLoaderRoute: typeof AuthenticatedAuswertungRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/revier-center': {
-      id: '/_authenticated/revier-center'
-      path: '/revier-center'
-      fullPath: '/revier-center'
-      preLoaderRoute: typeof AuthenticatedRevierCenterRouteRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dateien': {
+      id: '/_authenticated/dateien'
+      path: '/dateien'
+      fullPath: '/dateien'
+      preLoaderRoute: typeof AuthenticatedDateienRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/daten-import': {
+      id: '/_authenticated/daten-import'
+      path: '/daten-import'
+      fullPath: '/daten-import'
+      preLoaderRoute: typeof AuthenticatedDatenImportRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/dienstplaene': {
+      id: '/_authenticated/dienstplaene'
+      path: '/dienstplaene'
+      fullPath: '/dienstplaene'
+      preLoaderRoute: typeof AuthenticatedDienstplaeneRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/einsatz-erstellen': {
+      id: '/_authenticated/einsatz-erstellen'
+      path: '/einsatz-erstellen'
+      fullPath: '/einsatz-erstellen'
+      preLoaderRoute: typeof AuthenticatedEinsatzErstellenRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/esrp': {
+      id: '/_authenticated/esrp'
+      path: '/esrp'
+      fullPath: '/esrp'
+      preLoaderRoute: typeof AuthenticatedEsrpRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fuhrpark': {
+      id: '/_authenticated/fuhrpark'
+      path: '/fuhrpark'
+      fullPath: '/fuhrpark'
+      preLoaderRoute: typeof AuthenticatedFuhrparkRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/hilfe': {
+      id: '/_authenticated/hilfe'
+      path: '/hilfe'
+      fullPath: '/hilfe'
+      preLoaderRoute: typeof AuthenticatedHilfeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/intervention': {
+      id: '/_authenticated/intervention'
+      path: '/intervention'
+      fullPath: '/intervention'
+      preLoaderRoute: typeof AuthenticatedInterventionRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/intrahub': {
+      id: '/_authenticated/intrahub'
+      path: '/intrahub'
+      fullPath: '/intrahub'
+      preLoaderRoute: typeof AuthenticatedIntrahubRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/kunden': {
+      id: '/_authenticated/kunden'
+      path: '/kunden'
+      fullPath: '/kunden'
+      preLoaderRoute: typeof AuthenticatedKundenRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/kundenakte': {
+      id: '/_authenticated/kundenakte'
+      path: '/kundenakte'
+      fullPath: '/kundenakte'
+      preLoaderRoute: typeof AuthenticatedKundenakteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/lager': {
+      id: '/_authenticated/lager'
+      path: '/lager'
+      fullPath: '/lager'
+      preLoaderRoute: typeof AuthenticatedLagerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/meine-einsaetze': {
+      id: '/_authenticated/meine-einsaetze'
+      path: '/meine-einsaetze'
+      fullPath: '/meine-einsaetze'
+      preLoaderRoute: typeof AuthenticatedMeineEinsaetzeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/monitor': {
+      id: '/_authenticated/monitor'
+      path: '/monitor'
+      fullPath: '/monitor'
+      preLoaderRoute: typeof AuthenticatedMonitorRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/objektdossier': {
@@ -1168,39 +1112,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedObjektdossierRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/revier-center/': {
-      id: '/_authenticated/revier-center/'
-      path: '/'
-      fullPath: '/revier-center/'
-      preLoaderRoute: typeof AuthenticatedRevierCenterIndexRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterRouteRoute
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/objektdossier/': {
-      id: '/_authenticated/objektdossier/'
-      path: '/'
-      fullPath: '/objektdossier/'
-      preLoaderRoute: typeof AuthenticatedObjektdossierIndexRouteImport
-      parentRoute: typeof AuthenticatedObjektdossierRouteRoute
+    '/_authenticated/revier-center': {
+      id: '/_authenticated/revier-center'
+      path: '/revier-center'
+      fullPath: '/revier-center'
+      preLoaderRoute: typeof AuthenticatedRevierCenterRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/api/public/version': {
-      id: '/api/public/version'
-      path: '/api/public/version'
-      fullPath: '/api/public/version'
-      preLoaderRoute: typeof ApiPublicVersionRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/schluesselbestand': {
+      id: '/_authenticated/schluesselbestand'
+      path: '/schluesselbestand'
+      fullPath: '/schluesselbestand'
+      preLoaderRoute: typeof AuthenticatedSchluesselbestandRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/objektdossier/$dossierId': {
-      id: '/_authenticated/objektdossier/$dossierId'
-      path: '/$dossierId'
-      fullPath: '/objektdossier/$dossierId'
-      preLoaderRoute: typeof AuthenticatedObjektdossierDossierIdRouteImport
-      parentRoute: typeof AuthenticatedObjektdossierRouteRoute
+    '/_authenticated/schluesselbuch': {
+      id: '/_authenticated/schluesselbuch'
+      path: '/schluesselbuch'
+      fullPath: '/schluesselbuch'
+      preLoaderRoute: typeof AuthenticatedSchluesselbuchRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/notdienst/lutz': {
-      id: '/_authenticated/notdienst/lutz'
-      path: '/notdienst/lutz'
-      fullPath: '/notdienst/lutz'
-      preLoaderRoute: typeof AuthenticatedNotdienstLutzRouteImport
+    '/_authenticated/schluesseluebergabe': {
+      id: '/_authenticated/schluesseluebergabe'
+      path: '/schluesseluebergabe'
+      fullPath: '/schluesseluebergabe'
+      preLoaderRoute: typeof AuthenticatedSchluesseluebergabeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/service-center': {
+      id: '/_authenticated/service-center'
+      path: '/service-center'
+      fullPath: '/service-center'
+      preLoaderRoute: typeof AuthenticatedServiceCenterRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/superadmin': {
+      id: '/_authenticated/superadmin'
+      path: '/superadmin'
+      fullPath: '/superadmin'
+      preLoaderRoute: typeof AuthenticatedSuperadminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/support': {
+      id: '/_authenticated/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthenticatedSupportRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/abrechnung/$provider': {
@@ -1210,12 +1175,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAbrechnungProviderRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/revier-center/owks': {
-      id: '/_authenticated/revier-center/owks'
-      path: '/owks'
-      fullPath: '/revier-center/owks'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksRouteRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterRouteRoute
+    '/_authenticated/notdienst/budeko': {
+      id: '/_authenticated/notdienst/budeko'
+      path: '/notdienst/budeko'
+      fullPath: '/notdienst/budeko'
+      preLoaderRoute: typeof AuthenticatedNotdienstBudekoRouteRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/notdienst/lutz': {
+      id: '/_authenticated/notdienst/lutz'
+      path: '/notdienst/lutz'
+      fullPath: '/notdienst/lutz'
+      preLoaderRoute: typeof AuthenticatedNotdienstLutzRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/notdienst/rohrservice': {
       id: '/_authenticated/notdienst/rohrservice'
@@ -1224,172 +1196,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceRouteRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/notdienst/budeko': {
-      id: '/_authenticated/notdienst/budeko'
-      path: '/notdienst/budeko'
-      fullPath: '/notdienst/budeko'
-      preLoaderRoute: typeof AuthenticatedNotdienstBudekoRouteRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/revier-center/owks/': {
-      id: '/_authenticated/revier-center/owks/'
+    '/_authenticated/objektdossier/': {
+      id: '/_authenticated/objektdossier/'
       path: '/'
-      fullPath: '/revier-center/owks/'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksIndexRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+      fullPath: '/objektdossier/'
+      preLoaderRoute: typeof AuthenticatedObjektdossierIndexRouteImport
+      parentRoute: typeof AuthenticatedObjektdossierRouteRoute
     }
-    '/_authenticated/notdienst/rohrservice/': {
-      id: '/_authenticated/notdienst/rohrservice/'
+    '/_authenticated/objektdossier/$dossierId': {
+      id: '/_authenticated/objektdossier/$dossierId'
+      path: '/$dossierId'
+      fullPath: '/objektdossier/$dossierId'
+      preLoaderRoute: typeof AuthenticatedObjektdossierDossierIdRouteImport
+      parentRoute: typeof AuthenticatedObjektdossierRouteRoute
+    }
+    '/_authenticated/revier-center/': {
+      id: '/_authenticated/revier-center/'
       path: '/'
-      fullPath: '/notdienst/rohrservice/'
-      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceIndexRouteImport
-      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+      fullPath: '/revier-center/'
+      preLoaderRoute: typeof AuthenticatedRevierCenterIndexRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterRouteRoute
+    }
+    '/_authenticated/revier-center/owks': {
+      id: '/_authenticated/revier-center/owks'
+      path: '/owks'
+      fullPath: '/revier-center/owks'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksRouteRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterRouteRoute
+    }
+    '/api/public/version': {
+      id: '/api/public/version'
+      path: '/api/public/version'
+      fullPath: '/api/public/version'
+      preLoaderRoute: typeof ApiPublicVersionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/abrechnung/$provider/versand': {
+      id: '/_authenticated/abrechnung/$provider/versand'
+      path: '/versand'
+      fullPath: '/abrechnung/$provider/versand'
+      preLoaderRoute: typeof AuthenticatedAbrechnungProviderVersandRouteImport
+      parentRoute: typeof AuthenticatedAbrechnungProviderRoute
     }
     '/_authenticated/notdienst/budeko/': {
       id: '/_authenticated/notdienst/budeko/'
       path: '/'
       fullPath: '/notdienst/budeko/'
       preLoaderRoute: typeof AuthenticatedNotdienstBudekoIndexRouteImport
-      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
-    }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/schluessel-rueckgabe-reminder': {
-      id: '/api/public/hooks/schluessel-rueckgabe-reminder'
-      path: '/api/public/hooks/schluessel-rueckgabe-reminder'
-      fullPath: '/api/public/hooks/schluessel-rueckgabe-reminder'
-      preLoaderRoute: typeof ApiPublicHooksSchluesselRueckgabeReminderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/license-expiry': {
-      id: '/api/public/hooks/license-expiry'
-      path: '/api/public/hooks/license-expiry'
-      fullPath: '/api/public/hooks/license-expiry'
-      preLoaderRoute: typeof ApiPublicHooksLicenseExpiryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/esrp-worker': {
-      id: '/api/public/hooks/esrp-worker'
-      path: '/api/public/hooks/esrp-worker'
-      fullPath: '/api/public/hooks/esrp-worker'
-      preLoaderRoute: typeof ApiPublicHooksEsrpWorkerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/files/get': {
-      id: '/api/public/files/get'
-      path: '/api/public/files/get'
-      fullPath: '/api/public/files/get'
-      preLoaderRoute: typeof ApiPublicFilesGetRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/revier-center/owks/zeitstrahl': {
-      id: '/_authenticated/revier-center/owks/zeitstrahl'
-      path: '/zeitstrahl'
-      fullPath: '/revier-center/owks/zeitstrahl'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksZeitstrahlRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
-    }
-    '/_authenticated/revier-center/owks/scan': {
-      id: '/_authenticated/revier-center/owks/scan'
-      path: '/scan'
-      fullPath: '/revier-center/owks/scan'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksScanRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
-    }
-    '/_authenticated/revier-center/owks/rundgaenge': {
-      id: '/_authenticated/revier-center/owks/rundgaenge'
-      path: '/rundgaenge'
-      fullPath: '/revier-center/owks/rundgaenge'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksRundgaengeRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
-    }
-    '/_authenticated/revier-center/owks/objekte': {
-      id: '/_authenticated/revier-center/owks/objekte'
-      path: '/objekte'
-      fullPath: '/revier-center/owks/objekte'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksObjekteRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
-    }
-    '/_authenticated/revier-center/owks/nfc-punkte': {
-      id: '/_authenticated/revier-center/owks/nfc-punkte'
-      path: '/nfc-punkte'
-      fullPath: '/revier-center/owks/nfc-punkte'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
-    }
-    '/_authenticated/revier-center/owks/bestreifungsplaene': {
-      id: '/_authenticated/revier-center/owks/bestreifungsplaene'
-      path: '/bestreifungsplaene'
-      fullPath: '/revier-center/owks/bestreifungsplaene'
-      preLoaderRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport
-      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
-    }
-    '/_authenticated/notdienst/rohrservice/neu': {
-      id: '/_authenticated/notdienst/rohrservice/neu'
-      path: '/neu'
-      fullPath: '/notdienst/rohrservice/neu'
-      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceNeuRouteImport
-      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
-    }
-    '/_authenticated/notdienst/rohrservice/nachbearbeitung': {
-      id: '/_authenticated/notdienst/rohrservice/nachbearbeitung'
-      path: '/nachbearbeitung'
-      fullPath: '/notdienst/rohrservice/nachbearbeitung'
-      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport
-      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
-    }
-    '/_authenticated/notdienst/rohrservice/mitarbeiter': {
-      id: '/_authenticated/notdienst/rohrservice/mitarbeiter'
-      path: '/mitarbeiter'
-      fullPath: '/notdienst/rohrservice/mitarbeiter'
-      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport
-      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
-    }
-    '/_authenticated/notdienst/rohrservice/import': {
-      id: '/_authenticated/notdienst/rohrservice/import'
-      path: '/import'
-      fullPath: '/notdienst/rohrservice/import'
-      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceImportRouteImport
-      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
-    }
-    '/_authenticated/notdienst/budeko/neu': {
-      id: '/_authenticated/notdienst/budeko/neu'
-      path: '/neu'
-      fullPath: '/notdienst/budeko/neu'
-      preLoaderRoute: typeof AuthenticatedNotdienstBudekoNeuRouteImport
-      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
-    }
-    '/_authenticated/notdienst/budeko/nachbearbeitung': {
-      id: '/_authenticated/notdienst/budeko/nachbearbeitung'
-      path: '/nachbearbeitung'
-      fullPath: '/notdienst/budeko/nachbearbeitung'
-      preLoaderRoute: typeof AuthenticatedNotdienstBudekoNachbearbeitungRouteImport
-      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
-    }
-    '/_authenticated/notdienst/budeko/mitarbeiter': {
-      id: '/_authenticated/notdienst/budeko/mitarbeiter'
-      path: '/mitarbeiter'
-      fullPath: '/notdienst/budeko/mitarbeiter'
-      preLoaderRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRouteImport
       parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
     }
     '/_authenticated/notdienst/budeko/import': {
@@ -1399,12 +1252,159 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedNotdienstBudekoImportRouteImport
       parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
     }
-    '/_authenticated/abrechnung/$provider/versand': {
-      id: '/_authenticated/abrechnung/$provider/versand'
-      path: '/versand'
-      fullPath: '/abrechnung/$provider/versand'
-      preLoaderRoute: typeof AuthenticatedAbrechnungProviderVersandRouteImport
-      parentRoute: typeof AuthenticatedAbrechnungProviderRoute
+    '/_authenticated/notdienst/budeko/mitarbeiter': {
+      id: '/_authenticated/notdienst/budeko/mitarbeiter'
+      path: '/mitarbeiter'
+      fullPath: '/notdienst/budeko/mitarbeiter'
+      preLoaderRoute: typeof AuthenticatedNotdienstBudekoMitarbeiterRouteImport
+      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
+    }
+    '/_authenticated/notdienst/budeko/nachbearbeitung': {
+      id: '/_authenticated/notdienst/budeko/nachbearbeitung'
+      path: '/nachbearbeitung'
+      fullPath: '/notdienst/budeko/nachbearbeitung'
+      preLoaderRoute: typeof AuthenticatedNotdienstBudekoNachbearbeitungRouteImport
+      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
+    }
+    '/_authenticated/notdienst/budeko/neu': {
+      id: '/_authenticated/notdienst/budeko/neu'
+      path: '/neu'
+      fullPath: '/notdienst/budeko/neu'
+      preLoaderRoute: typeof AuthenticatedNotdienstBudekoNeuRouteImport
+      parentRoute: typeof AuthenticatedNotdienstBudekoRouteRoute
+    }
+    '/_authenticated/notdienst/rohrservice/': {
+      id: '/_authenticated/notdienst/rohrservice/'
+      path: '/'
+      fullPath: '/notdienst/rohrservice/'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceIndexRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
+    '/_authenticated/notdienst/rohrservice/import': {
+      id: '/_authenticated/notdienst/rohrservice/import'
+      path: '/import'
+      fullPath: '/notdienst/rohrservice/import'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceImportRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
+    '/_authenticated/notdienst/rohrservice/mitarbeiter': {
+      id: '/_authenticated/notdienst/rohrservice/mitarbeiter'
+      path: '/mitarbeiter'
+      fullPath: '/notdienst/rohrservice/mitarbeiter'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceMitarbeiterRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
+    '/_authenticated/notdienst/rohrservice/nachbearbeitung': {
+      id: '/_authenticated/notdienst/rohrservice/nachbearbeitung'
+      path: '/nachbearbeitung'
+      fullPath: '/notdienst/rohrservice/nachbearbeitung'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceNachbearbeitungRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
+    '/_authenticated/notdienst/rohrservice/neu': {
+      id: '/_authenticated/notdienst/rohrservice/neu'
+      path: '/neu'
+      fullPath: '/notdienst/rohrservice/neu'
+      preLoaderRoute: typeof AuthenticatedNotdienstRohrserviceNeuRouteImport
+      parentRoute: typeof AuthenticatedNotdienstRohrserviceRouteRoute
+    }
+    '/_authenticated/revier-center/owks/': {
+      id: '/_authenticated/revier-center/owks/'
+      path: '/'
+      fullPath: '/revier-center/owks/'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksIndexRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/bestreifungsplaene': {
+      id: '/_authenticated/revier-center/owks/bestreifungsplaene'
+      path: '/bestreifungsplaene'
+      fullPath: '/revier-center/owks/bestreifungsplaene'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksBestreifungsplaeneRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/nfc-punkte': {
+      id: '/_authenticated/revier-center/owks/nfc-punkte'
+      path: '/nfc-punkte'
+      fullPath: '/revier-center/owks/nfc-punkte'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksNfcPunkteRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/objekte': {
+      id: '/_authenticated/revier-center/owks/objekte'
+      path: '/objekte'
+      fullPath: '/revier-center/owks/objekte'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksObjekteRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/rundgaenge': {
+      id: '/_authenticated/revier-center/owks/rundgaenge'
+      path: '/rundgaenge'
+      fullPath: '/revier-center/owks/rundgaenge'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksRundgaengeRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/scan': {
+      id: '/_authenticated/revier-center/owks/scan'
+      path: '/scan'
+      fullPath: '/revier-center/owks/scan'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksScanRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/_authenticated/revier-center/owks/zeitstrahl': {
+      id: '/_authenticated/revier-center/owks/zeitstrahl'
+      path: '/zeitstrahl'
+      fullPath: '/revier-center/owks/zeitstrahl'
+      preLoaderRoute: typeof AuthenticatedRevierCenterOwksZeitstrahlRouteImport
+      parentRoute: typeof AuthenticatedRevierCenterOwksRouteRoute
+    }
+    '/api/public/files/get': {
+      id: '/api/public/files/get'
+      path: '/api/public/files/get'
+      fullPath: '/api/public/files/get'
+      preLoaderRoute: typeof ApiPublicFilesGetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/esrp-worker': {
+      id: '/api/public/hooks/esrp-worker'
+      path: '/api/public/hooks/esrp-worker'
+      fullPath: '/api/public/hooks/esrp-worker'
+      preLoaderRoute: typeof ApiPublicHooksEsrpWorkerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/license-expiry': {
+      id: '/api/public/hooks/license-expiry'
+      path: '/api/public/hooks/license-expiry'
+      fullPath: '/api/public/hooks/license-expiry'
+      preLoaderRoute: typeof ApiPublicHooksLicenseExpiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/schluessel-rueckgabe-reminder': {
+      id: '/api/public/hooks/schluessel-rueckgabe-reminder'
+      path: '/api/public/hooks/schluessel-rueckgabe-reminder'
+      fullPath: '/api/public/hooks/schluessel-rueckgabe-reminder'
+      preLoaderRoute: typeof ApiPublicHooksSchluesselRueckgabeReminderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
