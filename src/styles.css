@@ -773,3 +773,10 @@ html.light { color-scheme: light; }
   --radius: 0.75rem;
 }
 
+
+@media print {
+  body * { visibility: hidden; }
+  .ausweis-druck, .ausweis-druck * { visibility: visible; }
+  .ausweis-druck { position: absolute; left: 0; top: 0; padding: 8mm; }
+  .ausweis-druck .ausweis-karte { box-shadow: none !important; break-inside: avoid; }
+}

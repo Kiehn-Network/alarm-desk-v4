@@ -887,6 +887,72 @@ export type Database = {
           },
         ]
       }
+      dienstausweis_daten: {
+        Row: {
+          ausweis_nr: string | null
+          created_at: string
+          domain_id: string
+          foto: string | null
+          funktion: string | null
+          gueltig_bis: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ausweis_nr?: string | null
+          created_at?: string
+          domain_id: string
+          foto?: string | null
+          funktion?: string | null
+          gueltig_bis?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ausweis_nr?: string | null
+          created_at?: string
+          domain_id?: string
+          foto?: string | null
+          funktion?: string | null
+          gueltig_bis?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dienstausweis_designs: {
+        Row: {
+          config: Json
+          created_at: string
+          created_by: string | null
+          domain_id: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          domain_id: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          created_by?: string | null
+          domain_id?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       dienstplaene: {
         Row: {
           created_at: string
