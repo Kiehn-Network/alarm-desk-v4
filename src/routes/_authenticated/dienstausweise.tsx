@@ -294,6 +294,37 @@ function DesignDialog({ d, onClose, onSave }: { d: AusweisDesign; onClose: () =>
             </div>
             <div className="space-y-1"><Label>Rückseite: Text</Label><Textarea rows={3} value={x.config.rueckText} maxLength={400} onChange={(e) => set("rueckText", e.target.value)} /></div>
             <div className="space-y-1"><Label>Rückseite: Kontakt / Adresse</Label><Textarea rows={2} value={x.config.rueckKontakt} maxLength={200} onChange={(e) => set("rueckKontakt", e.target.value)} placeholder="z. B. Musterstraße 1, 12345 Musterstadt · Tel. 0123 456789" /></div>
+            <div className="space-y-3 rounded-md border p-3">
+              <div className="text-sm font-semibold">Rückseite: Anordnung & Felder</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1"><Label>Ausrichtung</Label>
+                  <Select value={x.config.rueckAusrichtung ?? "links"} onValueChange={(v) => set("rueckAusrichtung", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="links">Links</SelectItem><SelectItem value="mitte">Mittig</SelectItem><SelectItem value="rechts">Rechts</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1"><Label>Reihenfolge</Label>
+                  <Select value={x.config.rueckReihenfolge ?? "text-zuerst"} onValueChange={(v) => set("rueckReihenfolge", v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="text-zuerst">Text, dann Kontakt</SelectItem><SelectItem value="kontakt-zuerst">Kontakt, dann Text</SelectItem></SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1"><Label>Schriftgröße: {x.config.rueckSchrift ?? 100} %</Label>
+                <input type="range" min={70} max={140} step={5} value={x.config.rueckSchrift ?? 100} onChange={(e) => set("rueckSchrift", Number(e.target.value))} className="w-full accent-primary" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1"><Label>Notrufnummer</Label><Input value={x.config.rueckNotruf ?? ""} maxLength={40} onChange={(e) => set("rueckNotruf", e.target.value)} placeholder="z. B. 0800 123456" /></div>
+                <div className="space-y-1"><Label>Webseite</Label><Input value={x.config.rueckWebseite ?? ""} maxLength={60} onChange={(e) => set("rueckWebseite", e.target.value)} placeholder="www.beispiel.de" /></div>
+                <div className="space-y-1"><Label>Eigenes Feld: Name</Label><Input value={x.config.rueckFeldName ?? ""} maxLength={25} onChange={(e) => set("rueckFeldName", e.target.value)} placeholder="z. B. Bewacher-ID" /></div>
+                <div className="space-y-1"><Label>Eigenes Feld: Wert</Label><Input value={x.config.rueckFeldWert ?? ""} maxLength={60} onChange={(e) => set("rueckFeldWert", e.target.value)} /></div>
+              </div>
+              <div className="flex flex-wrap gap-4">
+                <label className="flex items-center gap-2 text-sm"><Switch checked={!!x.config.rueckZeigeGueltig} onCheckedChange={(v) => set("rueckZeigeGueltig", v)} />„Gültig bis" zeigen</label>
+                <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.rueckZeigeUnterschrift !== false} onCheckedChange={(v) => set("rueckZeigeUnterschrift", v)} />Unterschriften</label>
+                <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.rueckZeigeNummer !== false} onCheckedChange={(v) => set("rueckZeigeNummer", v)} />Ausweis-Nr.</label>
+              </div>
+            </div>
             <label className="flex items-center gap-2 text-sm"><Switch checked={x.config.fotoRund} onCheckedChange={(v) => set("fotoRund", v)} />Rundes Foto</label>
           </div>
           <div className="flex flex-col items-center justify-center gap-3 rounded-md bg-muted p-4">

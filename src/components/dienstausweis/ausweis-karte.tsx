@@ -94,6 +94,16 @@ export function AusweisRueckseite({ design, person, scale = 1 }: { design: Auswe
   const quer = c.format === "quer";
   const mm = (v: number) => `${v * scale}mm`;
   const band = c.stil === "verlauf" ? `linear-gradient(90deg, ${c.akzent}, ${c.akzent2})` : c.akzent;
+  const f = Math.min(1.4, Math.max(0.7, (c.rueckSchrift ?? 100) / 100));
+  const align = c.rueckAusrichtung === "mitte" ? "center" : c.rueckAusrichtung === "rechts" ? "right" : "left";
+  const kontaktZuerst = c.rueckReihenfolge === "kontakt-zuerst";
+  const text = c.rueckText ? <div style={{ opacity: 0.9 }}>{c.rueckText}</div> : null;
+  const kontakt = c.rueckKontakt ? <div style={{ whiteSpace: "pre-line", fontWeight: 600 }}>{c.rueckKontakt}</div> : null;
+  const extras: [string, string][] = [];
+  if (c.rueckNotruf) extras.push(["Notruf", c.rueckNotruf]);
+  if (c.rueckWebseite) extras.push(["Web", c.rueckWebseite]);
+  if (c.rueckFeldName && c.rueckFeldWert) extras.push([c.rueckFeldName, c.rueckFeldWert]);
+  if (c.rueckZeigeGueltig) extras.push(["Gültig bis", person.gueltigBis ? new Date(person.gueltigBis).toLocaleDateString("de-DE") : "—"]);
   return (
     <div
       className="ausweis-karte"
@@ -105,15 +115,21 @@ export function AusweisRueckseite({ design, person, scale = 1 }: { design: Auswe
       }}
     >
       <div style={{ height: mm(4), background: band }} />
-      <div style={{ flex: 1, padding: mm(3), display: "flex", flexDirection: "column", gap: mm(1.5), fontSize: mm(2.1), lineHeight: 1.35 }}>
-        {c.firma && <div style={{ fontWeight: 700, fontSize: mm(2.8), color: c.stil === "rahmen" ? c.akzent : c.text }}>{c.firma}</div>}
-        <div style={{ opacity: 0.9 }}>{c.rueckText}</div>
-        {c.rueckKontakt && <div style={{ whiteSpace: "pre-line", fontWeight: 600 }}>{c.rueckKontakt}</div>}
-        <div style={{ marginTop: "auto", display: "flex", gap: mm(4), fontSize: mm(1.9) }}>
-          <div style={{ flex: 1, borderTop: `${mm(0.3)} solid ${c.text}`, paddingTop: mm(0.6), opacity: 0.8 }}>Unterschrift Inhaber</div>
-          <div style={{ flex: 1, borderTop: `${mm(0.3)} solid ${c.text}`, paddingTop: mm(0.6), opacity: 0.8 }}>Unterschrift Unternehmen</div>
-        </div>
-        <div style={{ fontSize: mm(1.8), opacity: 0.7 }}>Ausweis-Nr.: {person.ausweisNr || "—"}</div>
+      <div style={{ flex: 1, padding: mm(3), display: "flex", flexDirection: "column", gap: mm(1.2 * f), fontSize: mm(2.1 * f), lineHeight: 1.35, textAlign: align }}>
+        {c.firma && <div style={{ fontWeight: 700, fontSize: mm(2.8 * f), color: c.stil === "rahmen" ? c.akzent : c.text }}>{c.firma}</div>}
+        {kontaktZuerst ? <>{kontakt}{text}</> : <>{text}{kontakt}</>}
+        {extras.length > 0 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: mm(0.3) }}>
+            {extras.map(([k, v]) => <div key={k}><span style={{ opacity: 0.7 }}>{k}: </span><b>{v}</b></div>)}
+          </div>
+        )}
+        {c.rueckZeigeUnterschrift !== false && (
+          <div style={{ marginTop: "auto", display: "flex", gap: mm(4), fontSize: mm(1.9 * f), textAlign: "left" }}>
+            <div style={{ flex: 1, borderTop: `${mm(0.3)} solid ${c.text}`, paddingTop: mm(0.6), opacity: 0.8 }}>Unterschrift Inhaber</div>
+            <div style={{ flex: 1, borderTop: `${mm(0.3)} solid ${c.text}`, paddingTop: mm(0.6), opacity: 0.8 }}>Unterschrift Unternehmen</div>
+          </div>
+        )}
+        {c.rueckZeigeNummer !== false && <div style={{ fontSize: mm(1.8 * f), opacity: 0.7, marginTop: c.rueckZeigeUnterschrift === false ? "auto" : undefined }}>Ausweis-Nr.: {person.ausweisNr || "—"}</div>}
       </div>
       <div style={{ height: mm(2), background: band }} />
     </div>
