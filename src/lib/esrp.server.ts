@@ -106,10 +106,11 @@ export async function buildErpPayload(einsatz: any) {
   if (einsatz.assigned_to) {
     const { data: prof } = await supabaseAdmin
       .from("profiles")
-      .select("display_name")
+      .select("schicht_name")
       .eq("id", einsatz.assigned_to)
       .maybeSingle();
-    fahrerName = prof?.display_name ?? null;
+    // Nur der vom Fahrer nach dem Login eingetippte Name wird ans ERP übertragen.
+    fahrerName = ((prof as any)?.schicht_name ?? "").trim() || null;
     personalEmail = (await lookupUserEmail(einsatz.assigned_to)) ?? "";
   }
   // Fallback-Kette: zugewiesener Fahrer -> Ersteller des Einsatzes.
@@ -208,7 +209,7 @@ export async function buildErpPayload(einsatz: any) {
     const b = ynBool(v);
     if (b !== null) customFields[k] = b ? "Ja" : "Nein";
   };
-  // Fahrername bewusst NICHT an das ERP übertragen (nur Personalnummer/-E-Mail bleiben).
+  if (fahrerName) customFields.Fahrer = fahrerName;
   if (bd.linie_nr) customFields.LinieNr = String(bd.linie_nr).slice(0, 255);
   if (bd.errichter) customFields.Errichter = String(bd.errichter).slice(0, 80);
   setBool("AlarmLinie", bd.alarm_linie);
@@ -237,7 +238,7 @@ export async function buildErpPayload(einsatz: any) {
         .maybeSingle();
       pdfZeiten = (as as any)?.pdf_zeiten_config ?? null;
     }
-    const base64 = einsatzPdfBase64(einsatz, null, pdfZeiten);
+    const base64 = einsatzPdfBase64(einsatz, fahrerName, pdfZeiten);
     if (base64 && base64.length > 0) {
       const idSafe = idPart.replace(/[^A-Za-z0-9_-]/g, "").slice(0, 40) || "einsatz";
       pdf = {
