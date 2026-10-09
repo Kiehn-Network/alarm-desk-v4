@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLocationTracker } from "@/hooks/use-location-tracker";
 import { useSupportNotifications } from "@/hooks/use-support-notifications";
 import { usePresenceBroadcast } from "@/hooks/use-presence";
+import { FahrerNameDialog } from "@/components/fahrer-name-dialog";
 import { useRole } from "@/hooks/use-role";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -53,6 +54,7 @@ function AuthLayout() {
         </main>
       </div>
       <ChatWidget />
+      <FahrerNameDialog />
     </div>
   );
 }

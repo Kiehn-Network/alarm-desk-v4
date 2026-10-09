@@ -3517,6 +3517,7 @@ export type Database = {
           onboarding_completed_at: string | null
           onboarding_demo_mode: boolean
           push_einsaetze: boolean
+          schicht_name: string | null
           telefon: string | null
           updated_at: string
         }
@@ -3531,6 +3532,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           onboarding_demo_mode?: boolean
           push_einsaetze?: boolean
+          schicht_name?: string | null
           telefon?: string | null
           updated_at?: string
         }
@@ -3545,6 +3547,7 @@ export type Database = {
           onboarding_completed_at?: string | null
           onboarding_demo_mode?: boolean
           push_einsaetze?: boolean
+          schicht_name?: string | null
           telefon?: string | null
           updated_at?: string
         }

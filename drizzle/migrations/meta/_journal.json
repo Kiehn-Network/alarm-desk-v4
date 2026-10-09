@@ -71,6 +71,13 @@
       "when": 1791477136422,
       "tag": "0009_dienstkleidung",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791546015602,
+      "tag": "0010_profiles_schicht_name",
+      "breakpoints": true
     }
   ]
 }
