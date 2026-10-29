@@ -79,7 +79,6 @@ export const Route = createFileRoute("/api/diktat")({
           if (e.type === "transcript.text.delta") roh += e.delta ?? "";
           if (e.type === "transcript.text.done") fertig = e.text ?? "";
         });
-        console.log("[diktat]", tr.headers.get("content-type"), file.type, file.size, roh.length, fertig.length);
         roh = (fertig || roh).trim();
         if (!roh) return json(422, { error: "Es wurde keine Sprache erkannt – bitte deutlicher sprechen." });
 
