@@ -13,8 +13,8 @@ async function readSse(res: Response, onEvent: (e: any) => void) {
   let buf = "";
   for (;;) {
     const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
+    if (!done) buf += dec.decode(value, { stream: true }).replace(/\r/g, "");
+    if (done) buf += "\n\n";
     let i;
     while ((i = buf.indexOf("\n\n")) >= 0) {
       const block = buf.slice(0, i);
@@ -26,6 +26,7 @@ async function readSse(res: Response, onEvent: (e: any) => void) {
         try { onEvent(JSON.parse(data)); } catch { /* ignore */ }
       }
     }
+    if (done) break;
   }
 }
 
