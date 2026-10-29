@@ -5,6 +5,7 @@ import { Save, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { DiktatButton } from "@/components/diktat-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -107,13 +108,13 @@ export function EinsatzBerichtDialog({
 
           <TabsContent value="hausnotruf" className="space-y-4 pt-4">
             <div className="space-y-2">
-              <Label>Problem</Label>
+              <div className="flex items-center justify-between gap-2"><Label>Problem</Label>{!readonly && <DiktatButton feld="Problem" onText={(t) => setHnProblem((p) => (p ? p.trimEnd() + " " : "") + t)} />}</div>
               <Textarea rows={4} value={hnProblem} disabled={readonly}
                 onChange={(e) => setHnProblem(e.target.value)}
                 placeholder="Was war das Problem beim Teilnehmer?" />
             </div>
             <div className="space-y-2">
-              <Label>Problemlösung</Label>
+              <div className="flex items-center justify-between gap-2"><Label>Problemlösung</Label>{!readonly && <DiktatButton feld="Problemlösung" onText={(t) => setHnLoesung((p) => (p ? p.trimEnd() + " " : "") + t)} />}</div>
               <Textarea rows={4} value={hnLoesung} disabled={readonly}
                 onChange={(e) => setHnLoesung(e.target.value)}
                 placeholder="Wie wurde das Problem gelöst?" />
@@ -148,7 +149,7 @@ export function EinsatzBerichtDialog({
               <Row label="Innenkontrolle?"><YesNo value={av.innenkontrolle} onChange={(v) => set("innenkontrolle", v)} disabled={readonly} /></Row>
               <Row label="Rückstellung des Alarms?"><YesNo value={av.rueckstellung} onChange={(v) => set("rueckstellung", v)} disabled={readonly} /></Row>
               <div className="space-y-2">
-                <Label>Weitere Maßnahmen</Label>
+                <div className="flex items-center justify-between gap-2"><Label>Weitere Maßnahmen</Label>{!readonly && <DiktatButton feld="Weitere Maßnahmen" onText={(t) => set("weitere_massnahmen", ((av.weitere_massnahmen ?? "") ? (av.weitere_massnahmen ?? "").trimEnd() + " " : "") + t)} />}</div>
                 <Textarea rows={2} value={av.weitere_massnahmen ?? ""} disabled={readonly}
                   onChange={(e) => set("weitere_massnahmen", e.target.value)} />
               </div>

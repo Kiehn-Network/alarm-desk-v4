@@ -49,6 +49,7 @@ import { Route as AuthenticatedSchluesseluebergabeRouteImport } from './routes/_
 import { Route as AuthenticatedServiceCenterRouteImport } from './routes/_authenticated/service-center'
 import { Route as AuthenticatedSuperadminRouteImport } from './routes/_authenticated/superadmin'
 import { Route as AuthenticatedSupportRouteImport } from './routes/_authenticated/support'
+import { Route as ApiDiktatRouteImport } from './routes/api/diktat'
 import { Route as AusweisTokenRouteImport } from './routes/ausweis.$token'
 import { Route as AuthenticatedAbrechnungProviderRouteImport } from './routes/_authenticated/abrechnung.$provider'
 import { Route as AuthenticatedNotdienstBudekoRouteRouteImport } from './routes/_authenticated/notdienst/budeko/route'
@@ -298,6 +299,11 @@ const AuthenticatedSupportRoute = AuthenticatedSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const ApiDiktatRoute = ApiDiktatRouteImport.update({
+  id: '/api/diktat',
+  path: '/api/diktat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AusweisTokenRoute = AusweisTokenRouteImport.update({
   id: '/ausweis/$token',
   path: '/ausweis/$token',
@@ -544,6 +550,7 @@ export interface FileRoutesByFullPath {
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/support': typeof AuthenticatedSupportRoute
+  '/api/diktat': typeof ApiDiktatRoute
   '/ausweis/$token': typeof AusweisTokenRoute
   '/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
@@ -618,6 +625,7 @@ export interface FileRoutesByTo {
   '/service-center': typeof AuthenticatedServiceCenterRoute
   '/superadmin': typeof AuthenticatedSuperadminRoute
   '/support': typeof AuthenticatedSupportRoute
+  '/api/diktat': typeof ApiDiktatRoute
   '/ausweis/$token': typeof AusweisTokenRoute
   '/abrechnung/$provider': typeof AuthenticatedAbrechnungProviderRouteWithChildren
   '/notdienst/lutz': typeof AuthenticatedNotdienstLutzRoute
@@ -693,6 +701,7 @@ export interface FileRoutesById {
   '/_authenticated/service-center': typeof AuthenticatedServiceCenterRoute
   '/_authenticated/superadmin': typeof AuthenticatedSuperadminRoute
   '/_authenticated/support': typeof AuthenticatedSupportRoute
+  '/api/diktat': typeof ApiDiktatRoute
   '/ausweis/$token': typeof AusweisTokenRoute
   '/_authenticated/notdienst/budeko': typeof AuthenticatedNotdienstBudekoRouteRouteWithChildren
   '/_authenticated/notdienst/rohrservice': typeof AuthenticatedNotdienstRohrserviceRouteRouteWithChildren
@@ -771,6 +780,7 @@ export interface FileRouteTypes {
     | '/service-center'
     | '/superadmin'
     | '/support'
+    | '/api/diktat'
     | '/ausweis/$token'
     | '/notdienst/budeko'
     | '/notdienst/rohrservice'
@@ -845,6 +855,7 @@ export interface FileRouteTypes {
     | '/service-center'
     | '/superadmin'
     | '/support'
+    | '/api/diktat'
     | '/ausweis/$token'
     | '/abrechnung/$provider'
     | '/notdienst/lutz'
@@ -919,6 +930,7 @@ export interface FileRouteTypes {
     | '/_authenticated/service-center'
     | '/_authenticated/superadmin'
     | '/_authenticated/support'
+    | '/api/diktat'
     | '/ausweis/$token'
     | '/_authenticated/notdienst/budeko'
     | '/_authenticated/notdienst/rohrservice'
@@ -967,6 +979,7 @@ export interface RootRouteChildren {
   LagerStationRoute: typeof LagerStationRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  ApiDiktatRoute: typeof ApiDiktatRoute
   AusweisTokenRoute: typeof AusweisTokenRoute
   ApiPublicVersionRoute: typeof ApiPublicVersionRoute
   ApiPublicFilesGetRoute: typeof ApiPublicFilesGetRoute
@@ -1259,6 +1272,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/support'
       preLoaderRoute: typeof AuthenticatedSupportRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/api/diktat': {
+      id: '/api/diktat'
+      path: '/api/diktat'
+      fullPath: '/api/diktat'
+      preLoaderRoute: typeof ApiDiktatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/ausweis/$token': {
       id: '/ausweis/$token'
@@ -1737,6 +1757,7 @@ const rootRouteChildren: RootRouteChildren = {
   LagerStationRoute: LagerStationRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  ApiDiktatRoute: ApiDiktatRoute,
   AusweisTokenRoute: AusweisTokenRoute,
   ApiPublicVersionRoute: ApiPublicVersionRoute,
   ApiPublicFilesGetRoute: ApiPublicFilesGetRoute,
