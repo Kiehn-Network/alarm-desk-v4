@@ -186,6 +186,7 @@ function IntraHubPage() {
 }
 
 function PostDialog({ open, onClose, editing }: { open: boolean; onClose: () => void; editing: Post | null }) {
+  const { user } = useAuth();
   const qc = useQueryClient();
   const create = useServerFn(createIntrahubPost);
   const update = useServerFn(updateIntrahubPost);
@@ -216,7 +217,7 @@ function PostDialog({ open, onClose, editing }: { open: boolean; onClose: () => 
       for (const f of Array.from(files)) {
         if (f.size > 25 * 1024 * 1024) { toast.error(`${f.name}: max. 25 MB`); continue; }
         const ext = f.name.split(".").pop() ?? "bin";
-        const path = `${safeUUID()}.${ext}`;
+        const path = `${user?.id}/${safeUUID()}.${ext}`;
         const { error } = await supabase.storage.from("intrahub").upload(path, f, { contentType: f.type, upsert: false });
         if (error) { toast.error(`${f.name}: ${error.message}`); continue; }
         next.push({ path, name: f.name, mime: f.type, size: f.size });

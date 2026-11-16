@@ -23,13 +23,14 @@ function KiehnSystemeLogin() {
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [setupToken, setSetupToken] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await create({ data: { email, password, display_name: displayName } });
+      await create({ data: { email, password, display_name: displayName, setup_token: setupToken } });
       toast.success("SuperAdmin wurde angelegt. Du kannst dich jetzt einloggen.");
       setEmail(""); setDisplayName(""); setPassword("");
     } catch (err: any) {
@@ -63,6 +64,11 @@ function KiehnSystemeLogin() {
               <Label htmlFor="pw">Passwort (min. 4 Zeichen)</Label>
               <Input id="pw" type="password" autoComplete="new-password" value={password}
                 onChange={(e) => setPassword(e.target.value)} minLength={4} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="setup-token">Einrichtungs-Code</Label>
+              <Input id="setup-token" type="password" autoComplete="off" value={setupToken}
+                onChange={(e) => setSetupToken(e.target.value)} minLength={8} required />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Wird angelegt…" : "SuperAdmin anlegen"}

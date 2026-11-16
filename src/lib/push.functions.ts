@@ -31,7 +31,16 @@ export const savePushSubscription = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: prof } = await context.supabase
       .from("profiles").select("domain_id").eq("id", context.userId).maybeSingle();
-    await supabaseAdmin.from("push_subscriptions").delete().eq("endpoint", data.endpoint);
+    const { data: existing } = await supabaseAdmin.from("push_subscriptions")
+      .select("id,user_id,p256dh,auth").eq("endpoint", data.endpoint).maybeSingle();
+    if (existing) {
+      const ex = existing as any;
+      // Fremde Registrierung nur übernehmen, wenn dieselben Geräteschlüssel vorliegen (gleicher Browser)
+      if (ex.user_id !== context.userId && (ex.p256dh !== data.p256dh || ex.auth !== data.auth)) {
+        throw new Error("Dieses Gerät ist bereits für ein anderes Konto registriert.");
+      }
+      await supabaseAdmin.from("push_subscriptions").delete().eq("id", ex.id);
+    }
     const { error } = await supabaseAdmin.from("push_subscriptions").insert({
       user_id: context.userId, domain_id: (prof as any)?.domain_id ?? null,
       endpoint: data.endpoint, p256dh: data.p256dh, auth: data.auth, user_agent: data.user_agent ?? null,

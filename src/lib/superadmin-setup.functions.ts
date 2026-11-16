@@ -20,11 +20,11 @@ export const createSuperadmin = createServerFn({ method: "POST" })
       .select("user_id", { count: "exact", head: true })
       .eq("role", "superadmin");
     if (cntErr) throw new Error(cntErr.message);
-    if ((count ?? 0) > 0) {
-      const expected = process.env.SUPERADMIN_SETUP_TOKEN;
-      if (!expected || data.setup_token !== expected) {
-        throw new Response("Forbidden: superadmin already exists", { status: 403 });
-      }
+    void count;
+    // Einrichtung immer nur mit dem geheimen Setup-Token
+    const expected = process.env.SUPERADMIN_SETUP_TOKEN;
+    if (!expected || data.setup_token !== expected) {
+      throw new Response("Forbidden", { status: 403 });
     }
 
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({

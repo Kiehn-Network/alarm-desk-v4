@@ -846,7 +846,9 @@ export const globalSearch = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertSuper(context.userId);
     const q = data.query.trim();
-    const like = `%${q}%`;
+    // Filter-Steuerzeichen entfernen und LIKE-Platzhalter maskieren
+    const safe = q.replace(/[,()*:"\\]/g, " ").replace(/[%_]/g, (m) => "\\" + m).trim();
+    const like = `%${safe}%`;
     const [dom, lic, prof, auth] = await Promise.all([
       supabaseAdmin.from("domains").select("id, name, slug, status")
         .or(`name.ilike.${like},slug.ilike.${like}`).limit(20),

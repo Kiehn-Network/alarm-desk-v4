@@ -1,3 +1,4 @@
+import { csvCell } from "@/lib/csv-safe";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -119,7 +120,7 @@ function SchluesselbestandPage() {
       r.key_number, r.kategorie, r.bezeichnung ?? "", r.kunden_name ?? "", r.address ?? "", r.objekt ?? "",
       r.schrank ?? "", r.fach ?? "", r.anzahl_soll, r.draussen, r.im_depot, r.zustand,
       r.aktiv ? "ja" : "nein", (r.notiz ?? "").replace(/[\r\n;]+/g, " "),
-    ].join(";")));
+    ].map((c) => csvCell(c)).join(";")));
     const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

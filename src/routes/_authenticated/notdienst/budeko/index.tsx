@@ -180,7 +180,7 @@ function NotizDialog({ cfg }: { cfg: any }) {
   useEffect(() => {
     if (open) {
       setBerichtEmail(cfg?.bericht_email ?? "");
-      if (editorRef.current) editorRef.current.innerHTML = cfg?.notiz ?? "";
+      if (editorRef.current) editorRef.current.innerHTML = DOMPurify.sanitize(cfg?.notiz ?? "");
     }
   }, [open, cfg]);
 

@@ -193,7 +193,7 @@ function NotizDialog({ cfg }: { cfg: any }) {
     if (open) {
       setVariante(cfg?.variante ?? "standard");
       setBerichtEmail(cfg?.bericht_email ?? "");
-      if (editorRef.current) editorRef.current.innerHTML = cfg?.notiz ?? "";
+      if (editorRef.current) editorRef.current.innerHTML = DOMPurify.sanitize(cfg?.notiz ?? "");
     }
   }, [open, cfg]);
 

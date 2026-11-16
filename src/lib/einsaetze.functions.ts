@@ -299,12 +299,20 @@ export const editEinsatzFull = createServerFn({ method: "POST" })
     return row;
   });
 
+async function assertDispoOrAdmin(supabase: any, userId: string, domainId: string) {
+  const { data } = await supabase.from("user_roles").select("role,domain_id").eq("user_id", userId)
+    .in("role", ["admin", "dispatcher", "superadmin"]);
+  const ok = (data ?? []).some((r: any) => r.role === "superadmin" || r.domain_id === domainId || r.domain_id === null);
+  if (!ok) throw new Error("Nur Admins und Disponenten dürfen Einsätze freigeben oder ablehnen.");
+}
+
 export const freigebenEinsatz = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertDispoOrAdmin(supabase, userId, domainId);
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
     const patch = { status: "freigegeben" as const, approved_by: userId, approved_at: new Date().toISOString(), ablehnung_grund: null };
@@ -321,6 +329,7 @@ export const ablehnenEinsatz = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertDispoOrAdmin(supabase, userId, domainId);
     const { data: before } = await supabase
       .from("einsaetze").select("*").eq("id", data.id).single();
     const patch = { status: "abgelehnt" as const, approved_by: userId, approved_at: new Date().toISOString(), ablehnung_grund: data.grund };

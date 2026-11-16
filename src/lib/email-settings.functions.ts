@@ -98,6 +98,10 @@ export const sendPlatformTestEmail = createServerFn({ method: "POST" })
   .inputValidator((i) => z.object({ to: z.string().email().max(200) }).parse(i))
   .handler(async ({ data, context }) => {
     await assertSuperadmin(context.userId);
+    const ownEmail = String((context as any).claims?.email ?? "").trim().toLowerCase();
+    if (!ownEmail || data.to.trim().toLowerCase() !== ownEmail) {
+      throw new Error("Testmails können nur an die eigene Anmelde-E-Mail-Adresse gesendet werden.");
+    }
     const { data: ps } = await supabaseAdmin
       .from("platform_email_settings").select("*").eq("id", true).maybeSingle() as any;
     if (!ps?.from_email || !ps?.provider) throw new Error("Plattform-E-Mail noch nicht konfiguriert.");
@@ -230,6 +234,10 @@ export const sendDomainTestEmail = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const domainId = await requireEffectiveDomainId(context.supabase, context.userId);
     await assertDomainAdmin(context.userId, domainId);
+    const ownEmail = String((context as any).claims?.email ?? "").trim().toLowerCase();
+    if (!ownEmail || data.to.trim().toLowerCase() !== ownEmail) {
+      throw new Error("Testmails können nur an die eigene Anmelde-E-Mail-Adresse gesendet werden.");
+    }
     const cfg = await resolveEmailConfigForDomain(domainId);
     const branding = await loadDomainBranding(domainId);
     const html = renderBrandedEmail({

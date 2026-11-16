@@ -7,6 +7,7 @@ export type LagerKioskPerson = {
   personalnummer: string | null;
   domain_id: string;
   domain_name: string | null;
+  session_token?: string;
 };
 
 export type LagerKioskArtikel = {
@@ -23,7 +24,33 @@ export type LagerKioskArtikel = {
 
 function normalize(value: unknown) { return String(value ?? "").trim().toUpperCase(); }
 
-async function getActivePerson(supabaseAdmin: any, personId: string) {
+// Signierte Stations-Sitzung: nur wer sich per Transponder angemeldet hat, erhält ein gültiges Token.
+const SESSION_MS = 12 * 60 * 60 * 1000;
+function b64url(bytes: Uint8Array) {
+  let bin = ""; for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+async function hmac(payload: string) {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("Server nicht konfiguriert.");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode("lager-kiosk:" + secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return b64url(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload))));
+}
+async function signSession(personId: string) {
+  const payload = `${personId}.${Date.now() + SESSION_MS}`;
+  return `${payload}.${await hmac(payload)}`;
+}
+async function verifySession(token: unknown): Promise<string> {
+  const parts = String(token ?? "").split(".");
+  if (parts.length !== 3) throw new Error("Bitte erneut mit dem Transponder anmelden.");
+  const [pid, exp, sig] = parts;
+  const expected = await hmac(`${pid}.${exp}`);
+  if (sig !== expected || !(Number(exp) > Date.now())) throw new Error("Bitte erneut mit dem Transponder anmelden.");
+  return pid;
+}
+
+async function getActivePerson(supabaseAdmin: any, sessionToken: string) {
+  const personId = await verifySession(sessionToken);
   const { data: person, error } = await supabaseAdmin.from("lager_personen").select("id,name,personalnummer,aktiv,domain_id").eq("id", personId).maybeSingle();
   if (error) throw new Error(error.message);
   if (!person || !person.aktiv) throw new Error("Die Lager-Anmeldung ist nicht mehr aktiv.");
@@ -42,16 +69,17 @@ export const kioskTransponderLogin = createServerFn({ method: "POST" })
     if (!person.aktiv) throw new Error("Dieser Transponder ist gesperrt.");
     await supabaseAdmin.from("lager_personen").update({ last_login_at: new Date().toISOString() }).eq("id", person.id);
     const { data: domain } = await supabaseAdmin.from("domains").select("name").eq("id", person.domain_id).maybeSingle();
-    return { person: { id: person.id, name: person.name, personalnummer: person.personalnummer ?? null, domain_id: person.domain_id, domain_name: domain?.name ?? null } satisfies LagerKioskPerson };
+    const session_token = await signSession(person.id);
+    return { session_token, person: { id: person.id, name: person.name, personalnummer: person.personalnummer ?? null, domain_id: person.domain_id, domain_name: domain?.name ?? null } satisfies LagerKioskPerson };
   });
 
 export const kioskFindArtikel = createServerFn({ method: "POST" })
-  .inputValidator((input: { person_id: string; barcode: string }) => input)
+  .inputValidator((input: { session_token: string; barcode: string }) => input)
   .handler(async ({ data }) => {
     const barcode = normalize(data.barcode);
     if (!barcode) throw new Error("Bitte einen Artikel scannen.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const person = await getActivePerson(supabaseAdmin, data.person_id);
+    const person = await getActivePerson(supabaseAdmin, data.session_token);
     const { data: artikel, error } = await supabaseAdmin.from("lager_artikel").select("id,bezeichnung,beschreibung,barcode,barcode_generiert,einheit,lagerort,bestand,mindestbestand").eq("domain_id", person.domain_id).eq("barcode", barcode).eq("aktiv", true).maybeSingle();
     if (error) throw new Error(error.message);
     if (!artikel) throw new Error("Kein aktiver Artikel mit diesem Barcode gefunden.");
@@ -59,10 +87,10 @@ export const kioskFindArtikel = createServerFn({ method: "POST" })
   });
 
 export const kioskBuchen = createServerFn({ method: "POST" })
-  .inputValidator((input: { person_id: string; artikel_id: string; richtung: "eingang" | "ausgang"; menge: number; signatur?: string | null; notiz?: string | null }) => input)
+  .inputValidator((input: { session_token: string; artikel_id: string; richtung: "eingang" | "ausgang"; menge: number; signatur?: string | null; notiz?: string | null }) => input)
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const person = await getActivePerson(supabaseAdmin, data.person_id);
+    const person = await getActivePerson(supabaseAdmin, data.session_token);
     const { data: artikel } = await supabaseAdmin.from("lager_artikel").select("id,domain_id").eq("id", data.artikel_id).eq("domain_id", person.domain_id).maybeSingle();
     if (!artikel) throw new Error("Artikel gehört nicht zur aktiven Domäne.");
     const { performBuchung } = await import("@/lib/lager-buchung.server");
@@ -71,7 +99,7 @@ export const kioskBuchen = createServerFn({ method: "POST" })
 
 export const kioskBuchenBatch = createServerFn({ method: "POST" })
   .inputValidator((input: {
-    person_id: string;
+    session_token: string;
     richtung: "eingang" | "ausgang";
     ziel: "auto" | "projekt" | "lager";
     ziel_bezeichnung?: string | null;
@@ -84,7 +112,7 @@ export const kioskBuchenBatch = createServerFn({ method: "POST" })
       throw new Error("Bitte mindestens einen Artikel scannen.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const person = await getActivePerson(supabaseAdmin, data.person_id);
+    const person = await getActivePerson(supabaseAdmin, data.session_token);
     const { performBuchung } = await import("@/lib/lager-buchung.server");
 
     const richtung = data.ziel === "lager" ? "eingang" : data.richtung;
@@ -128,12 +156,12 @@ export type LagerKioskFahrzeug = {
 };
 
 export const kioskFindFahrzeug = createServerFn({ method: "POST" })
-  .inputValidator((input: { person_id: string; code: string }) => input)
+  .inputValidator((input: { session_token: string; code: string }) => input)
   .handler(async ({ data }) => {
     const code = normalize(data.code);
     if (!code) throw new Error("Bitte einen Fahrzeug-QR-Code scannen.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const person = await getActivePerson(supabaseAdmin, data.person_id);
+    const person = await getActivePerson(supabaseAdmin, data.session_token);
     const { data: fahrzeug, error } = await supabaseAdmin
       .from("lager_fahrzeuge")
       .select("id,kennzeichen,bezeichnung,fahrer,code")

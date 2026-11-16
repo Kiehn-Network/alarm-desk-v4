@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { detectAllowedMime, stripActiveHtml, assertCanSendBericht } from "@/lib/upload-guard.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId } from "@/lib/tenant.server";
@@ -66,7 +67,7 @@ export const updateRohrserviceConfig = createServerFn({ method: "POST" })
 
     const patch: any = { domain_id: domainId, updated_by: userId };
     if (data.variante !== undefined) patch.rohrservice_variante = data.variante;
-    if (data.notiz !== undefined) patch.rohrservice_notiz = data.notiz;
+    if (data.notiz !== undefined) patch.rohrservice_notiz = stripActiveHtml(data.notiz);
     if (data.bericht_email !== undefined) patch.rohrservice_bericht_email = data.bericht_email;
 
     const { error } = await supabase
@@ -94,10 +95,11 @@ export const uploadNotizDatei = createServerFn({ method: "POST" })
     const safeName = data.filename.replace(/\s+/g, "_");
     const path = `${domainId}/${Date.now()}_${safeName}`;
     const buf = Buffer.from(data.file_base64, "base64");
+    const realMime = detectAllowedMime(buf, safeName);
     const up = await supabaseAdmin.storage
       .from("rohrservice-notizen")
       .upload(path, buf, {
-        contentType: data.mime_type ?? "application/octet-stream",
+        contentType: realMime,
         upsert: false,
       });
     if (up.error) throw new Error("Upload fehlgeschlagen: " + up.error.message);
@@ -108,7 +110,7 @@ export const uploadNotizDatei = createServerFn({ method: "POST" })
         domain_id: domainId,
         label: data.label,
         storage_path: path,
-        mime_type: data.mime_type ?? null,
+        mime_type: realMime,
         size_bytes: buf.byteLength,
         created_by: userId,
       })
@@ -423,6 +425,7 @@ export const sendBericht = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const domainId = await requireEffectiveDomainId(supabase, userId);
+    await assertCanSendBericht(supabase, userId, domainId);
 
     const { data: bericht, error: bErr } = await supabase
       .from("rohrservice_berichte")

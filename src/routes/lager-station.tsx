@@ -58,7 +58,7 @@ function LagerStationPage() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setPerson(JSON.parse(raw) as LagerKioskPerson);
+      if (raw) { const p = JSON.parse(raw) as LagerKioskPerson; if (p.session_token) setPerson(p); else localStorage.removeItem(STORAGE_KEY); }
     } catch { /* ignore */ }
     setReady(true);
   }, []);
@@ -95,7 +95,7 @@ function StationLogin({ onLogin }: { onLogin: (p: LagerKioskPerson) => void }) {
     try {
       const res = await login({ data: { transponder_id: v } } as any);
       toast.success(`Willkommen, ${res.person.name}`);
-      onLogin(res.person);
+      onLogin({ ...res.person, session_token: res.session_token });
     } catch (e: any) {
       setError(e?.message ?? "Anmeldung fehlgeschlagen");
       setCode("");
@@ -192,7 +192,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
     if (!v || fzBusy) return;
     setFzBusy(true); setError(null);
     try {
-      const res = await findFahrzeug({ data: { person_id: person.id, code: v } } as any);
+      const res = await findFahrzeug({ data: { session_token: person.session_token ?? "", code: v } } as any);
       const fz = res.fahrzeug;
       const label = [fz.kennzeichen, fz.bezeichnung].filter(Boolean).join(" · ");
       setZielBezeichnung(label);
@@ -222,7 +222,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
     if (!v || busy) return;
     setBusy(true); setError(null);
     try {
-      const res = await findArtikel({ data: { person_id: person.id, barcode: v } } as any);
+      const res = await findArtikel({ data: { session_token: person.session_token ?? "", barcode: v } } as any);
       const found = res.artikel;
       setCart((prev) => {
         const exists = prev.find((it) => it.artikel.id === found.id);
@@ -245,7 +245,7 @@ function StationHome({ person, onLogout }: { person: LagerKioskPerson; onLogout:
     try {
       const res = await buchenBatch({
         data: {
-          person_id: person.id,
+          session_token: person.session_token ?? "",
           richtung,
           ziel,
           ziel_bezeichnung: zielBezeichnung.trim() || null,

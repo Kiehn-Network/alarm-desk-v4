@@ -210,6 +210,6 @@ export const meldeFund = createServerFn({ method: "POST" })
       finder_name: data.finder_name || null, finder_kontakt: data.finder_kontakt || null,
       fundort: data.fundort || null, nachricht: data.nachricht || null,
     });
-    await supabaseAdmin.from("findo_anhaenger").update({ status: "verloren" }).eq("id", a.id);
+    // Status des Anhängers ändert nur die Zentrale nach Prüfung der Meldung.
     return { ok: true as const };
   });

@@ -1,3 +1,4 @@
+import { csvCell } from "@/lib/csv-safe";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -496,10 +497,7 @@ function UsersPanel() {
       einsatz_auswaehlbar: u.einsatz_selectable ? "ja" : "nein",
     }));
     const headers = ["name", "email", "rolle", "erstellt_am", "letzter_login", "einsatz_auswaehlbar"];
-    const esc = (v: any) => {
-      const s = String(v ?? "");
-      return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
+    const esc = (v: any) => csvCell(v);
     const csv = [headers.join(";"), ...rows.map((r) => headers.map((h) => esc((r as any)[h])).join(";"))].join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
