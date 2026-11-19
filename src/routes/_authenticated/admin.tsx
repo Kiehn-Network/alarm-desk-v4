@@ -59,11 +59,12 @@ export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminPage,
 });
 
-type AppRole = "admin" | "dispatcher" | "fahrer";
+type AppRole = "admin" | "dispatcher" | "service" | "fahrer";
 
 const ROLE_META: Record<AppRole, { label: string; cls: string; icon: any }> = {
   admin:      { label: "Administrator", cls: "bg-red-500/15 text-red-400 border border-red-500/30", icon: Shield },
   dispatcher: { label: "Dispatcher",    cls: "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30", icon: Radio },
+  service: { label: "Service",    cls: "bg-teal-500/15 text-teal-400 border border-teal-500/30", icon: Radio },
   fahrer:     { label: "Fahrer",        cls: "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30", icon: Truck },
 };
 
@@ -73,7 +74,7 @@ function fmt(d?: string | null) {
 }
 
 function AdminPage() {
-  const { isAdmin, loading } = useRole();
+  const { isAdminOrService: isAdmin, isService, loading } = useRole();
 
   if (loading) {
     return <div className="p-6 lg:p-8 text-sm text-muted-foreground">Lade…</div>;
@@ -105,8 +106,8 @@ function AdminPage() {
 
       <StatsCards />
 
-      <ForcedImpersonationAlert />
-      <SupportPinCard />
+      {!isService && <ForcedImpersonationAlert />}
+      {!isService && <SupportPinCard />}
 
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
@@ -440,7 +441,7 @@ function StatsCards() {
   const { data } = useQuery({ queryKey: ["admin-stats"], queryFn: () => fetchStats() });
 
   const roleHint = data
-    ? `${data.byRole.admin ?? 0} Admin · ${data.byRole.dispatcher ?? 0} Dispatcher · ${data.byRole.fahrer ?? 0} Fahrer`
+    ? `${data.byRole.admin ?? 0} Admin · ${data.byRole.dispatcher ?? 0} Dispatcher · ${data.byRole.service ?? 0} Service · ${data.byRole.fahrer ?? 0} Fahrer`
     : undefined;
 
   return (
@@ -542,6 +543,7 @@ function UsersPanel() {
             <SelectItem value="all">Alle Rollen</SelectItem>
             <SelectItem value="admin">Administrator</SelectItem>
             <SelectItem value="dispatcher">Dispatcher</SelectItem>
+                <SelectItem value="service">Service</SelectItem>
             <SelectItem value="fahrer">Fahrer</SelectItem>
             <SelectItem value="user">Benutzer</SelectItem>
           </SelectContent>
@@ -689,6 +691,7 @@ function CreateUserDialog({ open, onOpenChange, onDone }: { open: boolean; onOpe
               <SelectContent>
                 <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="dispatcher">Dispatcher</SelectItem>
+                <SelectItem value="service">Service</SelectItem>
                 <SelectItem value="fahrer">Fahrer</SelectItem>
               </SelectContent>
             </Select>
@@ -758,6 +761,7 @@ function EditUserDialog({ user, onOpenChange, onDone }: { user: any | null; onOp
               <SelectContent>
                 <SelectItem value="admin">Administrator</SelectItem>
                 <SelectItem value="dispatcher">Dispatcher</SelectItem>
+                <SelectItem value="service">Service</SelectItem>
                 <SelectItem value="fahrer">Fahrer</SelectItem>
               </SelectContent>
             </Select>

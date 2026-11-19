@@ -92,6 +92,27 @@
       "when": 1795103572983,
       "tag": "0012_fuhrpark_fahrer_auswahl",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795103759335,
+      "tag": "0013_app_role_service",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795103829460,
+      "tag": "0014_service_rolle_rechte",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1795103963174,
+      "tag": "0015_service_rolle_zusatzrechte",
+      "breakpoints": true
     }
   ]
 }

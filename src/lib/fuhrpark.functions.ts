@@ -652,7 +652,7 @@ export const meldeFahrerSchaden = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     try {
       const { data: empf } = await supabaseAdmin
-        .from("user_roles").select("user_id").eq("domain_id", domainId).in("role", ["admin", "dispatcher"]);
+        .from("user_roles").select("user_id").eq("domain_id", domainId).in("role", ["admin", "dispatcher", "service"]);
       const { sendPushToUsers } = await import("./push.server");
       await sendPushToUsers((empf ?? []).map((r: any) => r.user_id).filter((id: string) => id !== userId), {
         title: `Fahrzeugschaden: ${fz.kennzeichen}`,

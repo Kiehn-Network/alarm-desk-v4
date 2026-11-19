@@ -27,7 +27,7 @@ export const TOUR_STEPS: TourStep[] = [
       "Wartungs- und Status-Hinweise erscheinen oben als Banner.",
     ],
     icon: LayoutDashboard,
-    roles: ["admin", "dispatcher"],
+    roles: ["admin", "dispatcher", "service"],
     route: "/dashboard",
   },
   {
@@ -53,7 +53,7 @@ export const TOUR_STEPS: TourStep[] = [
       "Optional direkt einem Fahrer zuweisen.",
     ],
     icon: PlusCircle,
-    roles: ["admin", "dispatcher"],
+    roles: ["admin", "dispatcher", "service"],
     route: "/einsatz-erstellen",
   },
   {
@@ -65,7 +65,7 @@ export const TOUR_STEPS: TourStep[] = [
       "Laufende Einsätze auf der Karte.",
     ],
     icon: Monitor,
-    roles: ["admin", "dispatcher"],
+    roles: ["admin", "dispatcher", "service"],
     route: "/monitor",
   },
   {
@@ -77,7 +77,7 @@ export const TOUR_STEPS: TourStep[] = [
       "Nur Domänen-Admins dürfen Einsätze löschen.",
     ],
     icon: Bell,
-    roles: ["admin", "dispatcher"],
+    roles: ["admin", "dispatcher", "service"],
     route: "/alarmierung",
   },
   {
@@ -90,7 +90,7 @@ export const TOUR_STEPS: TourStep[] = [
       "Verknüpfte Dateien und Schlüssel pro Kunde einsehen.",
     ],
     icon: Users,
-    roles: ["admin", "dispatcher"],
+    roles: ["admin", "dispatcher", "service"],
     route: "/kunden",
   },
   {
@@ -103,7 +103,7 @@ export const TOUR_STEPS: TourStep[] = [
       "Bearbeiten von Stammdaten und Notizen direkt im Dialog.",
     ],
     icon: FolderOpen,
-    roles: ["admin", "dispatcher"],
+    roles: ["admin", "dispatcher", "service"],
     route: "/dateien",
   },
   {
@@ -119,7 +119,7 @@ export const TOUR_STEPS: TourStep[] = [
       "Fahrer sehen im Schlüsselbuch nur ihre eigenen ausgegebenen Schlüssel.",
     ],
     icon: KeyRound,
-    roles: ["admin", "dispatcher"],
+    roles: ["admin", "dispatcher", "service"],
     route: "/schluesselbuch",
   },
   {

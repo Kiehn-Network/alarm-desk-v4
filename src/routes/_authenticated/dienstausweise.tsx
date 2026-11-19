@@ -60,9 +60,9 @@ async function bildVerkleinern(file: File, logo = false): Promise<string> {
 }
 
 function Page() {
-  const { isAdmin, loading, domainId } = useRole() as any;
+  const { isAdminOrService: isAdmin, loading, domainId } = useRole() as any;
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Lade…</div>;
-  if (!isAdmin || !domainId) return <div className="p-6 text-sm text-muted-foreground">Nur Admins haben Zugriff auf die Dienstausweise.</div>;
+  if (!isAdmin || !domainId) return <div className="p-6 text-sm text-muted-foreground">Nur Admins und Service haben Zugriff auf die Dienstausweise.</div>;
   return <Inhalt domainId={domainId} />;
 }
 

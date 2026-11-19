@@ -27,7 +27,7 @@ export const sendBerichtEmail = createServerFn({ method: "POST" })
     const { data: roles } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", userId);
     const canSend = (roles ?? []).some(
-      (r: any) => r.role === "admin" || r.role === "dispatcher",
+      (r: any) => r.role === "admin" || r.role === "dispatcher" || r.role === "service",
     );
     if (!canSend) throw new Error("Nur Admin / Disponent dürfen Berichte versenden");
 

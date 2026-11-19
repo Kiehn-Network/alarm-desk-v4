@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./use-auth";
 
-export type AppRole = "superadmin" | "admin" | "dispatcher" | "fahrer" | "user";
+export type AppRole = "superadmin" | "admin" | "dispatcher" | "service" | "fahrer" | "user";
 
 export function useRole() {
   const { user } = useAuth();
@@ -22,7 +22,7 @@ export function useRole() {
       ]);
       if (cancel) return;
       const rs = (roles ?? []).map((r: any) => r.role as AppRole);
-      const order: AppRole[] = ["superadmin", "admin", "dispatcher", "fahrer", "user"];
+      const order: AppRole[] = ["superadmin", "admin", "service", "dispatcher", "fahrer", "user"];
       const best = order.find((r) => rs.includes(r)) ?? null;
       const impersonatedDomain = (imp as any)?.target_domain_id ?? null;
       setRole(best);
@@ -49,8 +49,11 @@ export function useRole() {
     isImpersonating,
     isSuperAdmin: role === "superadmin",
     isAdmin: effectiveRole === "admin" || role === "superadmin",
+    isService: effectiveRole === "service",
+    /** Admin oder Service: Benutzer, Einstellungen/ERP, Dienstausweise, Fuhrpark */
+    isAdminOrService: effectiveRole === "admin" || effectiveRole === "service" || role === "superadmin",
     isDispatcher: effectiveRole === "dispatcher",
     isFahrer: effectiveRole === "fahrer",
-    canManage: effectiveRole === "admin" || effectiveRole === "dispatcher" || role === "superadmin",
+    canManage: effectiveRole === "admin" || effectiveRole === "dispatcher" || effectiveRole === "service" || role === "superadmin",
   };
 }

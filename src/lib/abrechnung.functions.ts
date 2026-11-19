@@ -109,7 +109,7 @@ export const sendAbrechnungEmail = createServerFn({ method: "POST" })
 
     const { data: roles } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", userId);
-    const canSend = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher" || r.role === "superadmin");
+    const canSend = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher" || r.role === "service" || r.role === "superadmin");
     if (!canSend) throw new Error("Nur Admin / Disponent dürfen Abrechnungen versenden");
 
     const providerLabel =

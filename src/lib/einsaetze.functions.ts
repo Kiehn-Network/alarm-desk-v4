@@ -236,7 +236,7 @@ export const editEinsatzFull = createServerFn({ method: "POST" })
     const { data: roles } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", userId);
     const canEdit = (roles ?? []).some((r: any) =>
-      r.role === "admin" || r.role === "dispatcher" || r.role === "superadmin");
+      r.role === "admin" || r.role === "dispatcher" || r.role === "service" || r.role === "superadmin");
     if (!canEdit) throw new Error("Keine Berechtigung");
 
     const { id, ...rest } = data;
@@ -301,7 +301,7 @@ export const editEinsatzFull = createServerFn({ method: "POST" })
 
 async function assertDispoOrAdmin(supabase: any, userId: string, domainId: string) {
   const { data } = await supabase.from("user_roles").select("role,domain_id").eq("user_id", userId)
-    .in("role", ["admin", "dispatcher", "superadmin"]);
+    .in("role", ["admin", "dispatcher", "service", "superadmin"]);
   const ok = (data ?? []).some((r: any) => r.role === "superadmin" || r.domain_id === domainId || r.domain_id === null);
   if (!ok) throw new Error("Nur Admins und Disponenten dürfen Einsätze freigeben oder ablehnen.");
 }
@@ -430,7 +430,7 @@ export const updateEinsatzBericht = createServerFn({ method: "POST" })
     if (before?.status === "abgeschlossen") {
       const { data: roles } = await supabaseAdmin
         .from("user_roles").select("role").eq("user_id", userId);
-      const canEdit = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher" || r.role === "superadmin");
+      const canEdit = (roles ?? []).some((r: any) => r.role === "admin" || r.role === "dispatcher" || r.role === "service" || r.role === "superadmin");
       if (!canEdit) {
         throw new Error("Bericht kann nach Abschluss nicht mehr bearbeitet werden");
       }
@@ -498,7 +498,7 @@ export const listDateienForEinsatz = createServerFn({ method: "POST" })
     if (!e) return { dateien: [] };
     const roles = new Set((rolesRes.data ?? []).map((r: any) => r.role));
     const isFahrer = roles.has("fahrer");
-    const elevated = roles.has("admin") || roles.has("dispatcher") || roles.has("superadmin");
+    const elevated = roles.has("admin") || roles.has("dispatcher") || roles.has("service") || roles.has("superadmin");
     if (isFahrer && !elevated) {
       if (e.assigned_to !== userId) return { dateien: [] };
       if (e.status !== "in_bearbeitung") return { dateien: [] };
@@ -568,7 +568,7 @@ export const getEinsatzDateiSignedUrl = createServerFn({ method: "POST" })
     if (!e) throw new Error("Einsatz nicht gefunden");
     const roles = new Set((rolesRes.data ?? []).map((r: any) => r.role));
     const isFahrer = roles.has("fahrer");
-    const elevated = roles.has("admin") || roles.has("dispatcher") || roles.has("superadmin");
+    const elevated = roles.has("admin") || roles.has("dispatcher") || roles.has("service") || roles.has("superadmin");
     if (isFahrer && !elevated) {
       if (e.assigned_to !== userId) throw new Error("Kein Zugriff");
       if (e.status !== "in_bearbeitung") throw new Error("Einsatz beendet – kein Zugriff mehr");

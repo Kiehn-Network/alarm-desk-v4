@@ -281,7 +281,7 @@ export const partnerAssignFahrer = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId)
-      .in("role", ["admin", "dispatcher", "superadmin"]);
+      .in("role", ["admin", "dispatcher", "service", "superadmin"]);
     if (!roles || roles.length === 0) throw new Error("Nur Admins und Disponenten dürfen Fahrer zuweisen.");
     const { data: row, error } = await (supabase as any)
       .from("einsatz_partner_shares")

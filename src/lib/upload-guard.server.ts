@@ -33,7 +33,7 @@ export async function assertCanSendBericht(supabase: any, userId: string, domain
     .from("user_roles")
     .select("role,domain_id")
     .eq("user_id", userId)
-    .in("role", ["admin", "dispatcher", "superadmin"]);
+    .in("role", ["admin", "dispatcher", "service", "superadmin"]);
   const ok = (data ?? []).some(
     (r: any) => r.role === "superadmin" || r.domain_id === domainId || r.domain_id === null,
   );

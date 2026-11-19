@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getEffectiveDomainId, requireEffectiveDomainId } from "@/lib/tenant.server";
 
 async function assertAdmin(supabase: any, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).in("role", ["admin", "superadmin"]);
+  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId).in("role", ["admin", "service", "superadmin"]);
   if (!data || data.length === 0) throw new Error("Nicht autorisiert");
 }
 

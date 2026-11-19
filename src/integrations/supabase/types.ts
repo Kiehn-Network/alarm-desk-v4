@@ -4692,6 +4692,7 @@ export type Database = {
         Returns: boolean
       }
       is_domain_admin: { Args: { _domain_id: string }; Returns: boolean }
+      is_domain_service: { Args: { _domain_id: string }; Returns: boolean }
       is_lager_admin: { Args: { _domain_id: string }; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
       move_to_dlq: {
@@ -4738,7 +4739,13 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "dispatcher" | "fahrer" | "superadmin" | "user"
+      app_role:
+        | "admin"
+        | "dispatcher"
+        | "fahrer"
+        | "superadmin"
+        | "user"
+        | "service"
       einsatz_prioritaet: "niedrig" | "normal" | "hoch" | "kritisch"
       einsatz_status:
         | "entwurf"
@@ -4910,7 +4917,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "dispatcher", "fahrer", "superadmin", "user"],
+      app_role: [
+        "admin",
+        "dispatcher",
+        "fahrer",
+        "superadmin",
+        "user",
+        "service",
+      ],
       einsatz_prioritaet: ["niedrig", "normal", "hoch", "kritisch"],
       einsatz_status: [
         "entwurf",

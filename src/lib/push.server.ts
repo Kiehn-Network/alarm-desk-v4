@@ -67,7 +67,7 @@ export async function notifyNeuerEinsatz(e: {
 }) {
   try {
     const { data: roles } = await supabaseAdmin
-      .from("user_roles").select("user_id,role").eq("domain_id", e.domain_id).in("role", ["admin", "dispatcher"]);
+      .from("user_roles").select("user_id,role").eq("domain_id", e.domain_id).in("role", ["admin", "dispatcher", "service"]);
     const zentrale = (roles ?? []).map((r: any) => r.user_id).filter((id: string) => id !== e.created_by);
     const text = [e.einsatzgrund, e.kunden_name, e.address].filter(Boolean).join(" · ");
     const jobs: Promise<void>[] = [];

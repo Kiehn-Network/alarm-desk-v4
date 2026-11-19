@@ -25,7 +25,7 @@ async function assertDomainAdmin(userId: string, domainId: string) {
   if (su) return;
   const { data } = await supabaseAdmin
     .from("user_roles").select("role")
-    .eq("user_id", userId).eq("role", "admin").eq("domain_id", domainId).maybeSingle();
+    .eq("user_id", userId).in("role", ["admin", "service"]).eq("domain_id", domainId).limit(1).maybeSingle();
   if (!data) throw new Error("Nur Domain-Admins");
 }
 

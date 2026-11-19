@@ -127,7 +127,7 @@ function ErrorDetails({ error, payload }: { error: string; payload: any }) {
 }
 
 function EsrpPage() {
-  const { isAdmin, loading } = useRole();
+  const { isAdminOrService: isAdmin, loading } = useRole();
   if (loading) return null;
   if (!isAdmin) return <AccessDenied />;
   return (

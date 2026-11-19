@@ -4,6 +4,7 @@ import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, Boxes, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
   Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon, ExternalLink, DoorOpen, CarFront, Contact, Nfc, Shirt,
+  IdCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,38 +28,38 @@ type Section = { label: string; items: Item[] };
 
 const sections: Section[] = [
   { label: "Übersicht", items: [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "dispatcher"] },
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "dispatcher", "service"] },
     { to: "/meine-einsaetze", label: "Meine Einsätze", icon: Truck, roles: ["fahrer", "admin"] },
-    { to: "/einsatz-erstellen", label: "Einsatz erstellen", icon: PlusCircle, roles: ["admin", "dispatcher"] },
-    { to: "/monitor", label: "Monitor", icon: Monitor, roles: ["admin", "dispatcher"] },
+    { to: "/einsatz-erstellen", label: "Einsatz erstellen", icon: PlusCircle, roles: ["admin", "dispatcher", "service"] },
+    { to: "/monitor", label: "Monitor", icon: Monitor, roles: ["admin", "dispatcher", "service"] },
   ]},
   { label: "Menü", items: [
-    { to: "/alarmierung", label: "Alarmierung", icon: Bell, roles: ["admin", "dispatcher"] },
-    { to: "/kundenakte", label: "Kundenakte", icon: Contact, roles: ["admin", "dispatcher"] },
-    { to: "/kunden", label: "Kunden", icon: Users, roles: ["admin", "dispatcher"] },
-    { to: "/objektdossier", label: "Objektdossier", icon: DoorOpen, roles: ["admin", "dispatcher"] },
+    { to: "/alarmierung", label: "Alarmierung", icon: Bell, roles: ["admin", "dispatcher", "service"] },
+    { to: "/kundenakte", label: "Kundenakte", icon: Contact, roles: ["admin", "dispatcher", "service"] },
+    { to: "/kunden", label: "Kunden", icon: Users, roles: ["admin", "dispatcher", "service"] },
+    { to: "/objektdossier", label: "Objektdossier", icon: DoorOpen, roles: ["admin", "dispatcher", "service"] },
     { to: "/dienstplaene", label: "Dienstpläne", icon: CalendarDays },
-    { to: "/dateien", label: "Datei-Verwaltung", icon: FolderOpen, roles: ["admin", "dispatcher"] },
+    { to: "/dateien", label: "Datei-Verwaltung", icon: FolderOpen, roles: ["admin", "dispatcher", "service"] },
     { to: "/intrahub", label: "IntraHub", icon: Network },
   ]},
   { label: "Notdienste", items: [
-    { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice", roles: ["admin", "dispatcher"] },
-    { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko", roles: ["admin", "dispatcher"] },
-    { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz", roles: ["admin", "dispatcher"] },
-    { to: "/notdienst/lutz/pisaweb", label: "Lutz · PisaWeb", icon: ExternalLink, module: "notdienst_lutz", roles: ["admin", "dispatcher"], external: "https://desktop.pisa.lutz-aufzuege.de/" },
+    { to: "/notdienst/rohrservice", label: "Rohrservice", icon: Wrench, module: "notdienst_rohrservice", roles: ["admin", "dispatcher", "service"] },
+    { to: "/notdienst/budeko",      label: "Budeko",      icon: Home,   module: "notdienst_budeko", roles: ["admin", "dispatcher", "service"] },
+    { to: "/notdienst/lutz",        label: "Lutz",        icon: Building2, module: "notdienst_lutz", roles: ["admin", "dispatcher", "service"] },
+    { to: "/notdienst/lutz/pisaweb", label: "Lutz · PisaWeb", icon: ExternalLink, module: "notdienst_lutz", roles: ["admin", "dispatcher", "service"], external: "https://desktop.pisa.lutz-aufzuege.de/" },
   ]},
   { label: "Abrechnung Hausnotruf", items: [
-    { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser", roles: ["admin", "dispatcher"] },
-    { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter", roles: ["admin", "dispatcher"] },
-    { to: "/abrechnung/lgwa",       label: "LüWa",        icon: Receipt, module: "lgwa", roles: ["admin", "dispatcher"] },
+    { to: "/abrechnung/malteser",   label: "Malteser",    icon: Receipt, module: "malteser", roles: ["admin", "dispatcher", "service"] },
+    { to: "/abrechnung/johanniter", label: "Johanniter",  icon: Receipt, module: "johanniter", roles: ["admin", "dispatcher", "service"] },
+    { to: "/abrechnung/lgwa",       label: "LüWa",        icon: Receipt, module: "lgwa", roles: ["admin", "dispatcher", "service"] },
   ]},
   { label: "Schlüsselverwaltung", items: [
-    { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher"], module: "schluesselbuch" },
-    { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher"] },
-    { to: "/schluesselbestand", label: "Schlüsselbestand", icon: Boxes, roles: ["admin", "dispatcher"] },
+    { to: "/schluesselbuch", label: "Schlüsselbuch", icon: KeyRound, roles: ["admin", "dispatcher", "service"], module: "schluesselbuch" },
+    { to: "/schluesseluebergabe", label: "Schlüsselübergabe", icon: KeySquare, roles: ["admin", "dispatcher", "service"] },
+    { to: "/schluesselbestand", label: "Schlüsselbestand", icon: Boxes, roles: ["admin", "dispatcher", "service"] },
   ]},
   { label: "Findo-ID", items: [
-    { to: "/findo-id", label: "Findo-ID", icon: Nfc, roles: ["admin", "dispatcher"] },
+    { to: "/findo-id", label: "Findo-ID", icon: Nfc, roles: ["admin", "dispatcher", "service"] },
   ]},
   { label: "Lager", items: [
     { to: "/lager", label: "Lager", icon: Boxes, module: "lager", lagerOnly: true },
@@ -68,17 +69,18 @@ const sections: Section[] = [
   ]},
 
   { label: "Center", items: [
-    { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher"] },
-    { to: "/fuhrpark", label: "Fuhrpark", icon: CarFront, roles: ["admin", "dispatcher"] },
-    { to: "/dienstkleidung", label: "Dienstkleidung", icon: Shirt, roles: ["admin", "dispatcher"] },
-    { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher"] },
-    { to: "/esrp", label: "ESRP (ERP-Anbindung)", icon: Cable, roles: ["admin"], module: "esrp" },
-    { to: "/intervention", label: "Intervention", icon: Network, roles: ["admin", "dispatcher"], module: "intervention" },
-    { to: "/admin", label: "Admin Center", icon: Settings, roles: ["admin"] },
+    { to: "/service-center", label: "Service Center", icon: Building2, roles: ["admin", "dispatcher", "service"] },
+    { to: "/fuhrpark", label: "Fuhrpark", icon: CarFront, roles: ["admin", "dispatcher", "service"] },
+    { to: "/dienstausweise", label: "Dienstausweise", icon: IdCard, roles: ["admin", "service"] },
+    { to: "/dienstkleidung", label: "Dienstkleidung", icon: Shirt, roles: ["admin", "dispatcher", "service"] },
+    { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher", "service"] },
+    { to: "/esrp", label: "ESRP (ERP-Anbindung)", icon: Cable, roles: ["admin", "service"], module: "esrp" },
+    { to: "/intervention", label: "Intervention", icon: Network, roles: ["admin", "dispatcher", "service"], module: "intervention" },
+    { to: "/admin", label: "Admin Center", icon: Settings, roles: ["admin", "service"] },
     { to: "/superadmin", label: "SuperAdmin", icon: Crown, roles: ["superadmin"] },
   ]},
   { label: "Auswertung", items: [
-    { to: "/auswertung", label: "Karten-Auswertung", icon: MapIcon, roles: ["admin", "dispatcher"], module: "auswertung" },
+    { to: "/auswertung", label: "Karten-Auswertung", icon: MapIcon, roles: ["admin", "dispatcher", "service"], module: "auswertung" },
   ]},
   { label: "Hilfe", items: [
     { to: "/hilfe", label: "Hilfe & Anleitung", icon: HelpCircle },

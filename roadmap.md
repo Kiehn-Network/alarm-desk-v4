@@ -67,3 +67,6 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 - [x] Rückgabe mit Datum und Zustand; offene Rückgaben mit Fälligkeit, überfällige fallen rot auf
 - [x] Kennzahlen: Teile im Umlauf, offene Rückgaben, überfällig, Mitarbeiter mit Kleidung
 - [x] Verbleib je Mitarbeiter: Suche über Name, Kleidung, Größe; „im Umlauf"-Zähler je Kleidungsart
+
+- [x] Neue Rolle „Service“ (Disponent mit mehr Rechten), erhält Fahrzeugschaden-Meldungen
+- [x] Service-Zusatzrechte: Fuhrpark, Benutzer, Einstellungen/ERP, Dienstausweise

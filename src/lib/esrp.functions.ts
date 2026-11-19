@@ -8,7 +8,7 @@ import { buildErpPayload, enqueueErpForEinsatz, processErpOutboxItem } from "@/l
 async function isDomainAdmin(userId: string, domainId: string) {
   const { data } = await supabaseAdmin
     .from("user_roles").select("role,domain_id")
-    .eq("user_id", userId).in("role", ["admin", "superadmin"]);
+    .eq("user_id", userId).in("role", ["admin", "service", "superadmin"]);
   return (data ?? []).some(
     (r: any) => r.role === "superadmin" || r.domain_id === domainId,
   );

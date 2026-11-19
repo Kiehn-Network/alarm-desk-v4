@@ -101,7 +101,7 @@ export const rueckgabeBestaetigen = createServerFn({ method: "POST" })
     const { data: roles } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", userId);
     const allowed = (roles ?? []).some((r: any) =>
-      r.role === "dispatcher" || r.role === "admin" || r.role === "superadmin");
+      r.role === "dispatcher" || r.role === "service" || r.role === "admin" || r.role === "superadmin");
     if (!allowed) throw new Error("Nur Zentrale/Disponent darf Rückgabe bestätigen");
 
     const { data: row, error } = await supabase
@@ -134,7 +134,7 @@ export const rueckgabeErzwingen = createServerFn({ method: "POST" })
     const { data: roles } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", userId);
     const allowed = (roles ?? []).some((r: any) =>
-      r.role === "dispatcher" || r.role === "admin" || r.role === "superadmin");
+      r.role === "dispatcher" || r.role === "service" || r.role === "admin" || r.role === "superadmin");
     if (!allowed) throw new Error("Nur Zentrale/Disponent darf Schlüssel zwangs-zurücknehmen");
 
     const { data: existing, error: exErr } = await supabase
@@ -190,7 +190,7 @@ export const manuellAusbuchen = createServerFn({ method: "POST" })
     const { data: roles } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", userId);
     const allowed = (roles ?? []).some((r: any) =>
-      r.role === "dispatcher" || r.role === "admin" || r.role === "superadmin");
+      r.role === "dispatcher" || r.role === "service" || r.role === "admin" || r.role === "superadmin");
     if (!allowed) throw new Error("Nur Zentrale/Disponent darf Schlüssel manuell ausbuchen");
 
     const domainId = await requireEffectiveDomainId(supabase, userId);
@@ -232,7 +232,7 @@ export const manuellEinbuchen = createServerFn({ method: "POST" })
     const { data: roles } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", userId);
     const allowed = (roles ?? []).some((r: any) =>
-      r.role === "dispatcher" || r.role === "admin" || r.role === "superadmin");
+      r.role === "dispatcher" || r.role === "service" || r.role === "admin" || r.role === "superadmin");
     if (!allowed) throw new Error("Nur Zentrale/Disponent darf Schlüssel einbuchen");
 
     const { data: existing, error: exErr } = await supabase
@@ -451,7 +451,7 @@ export async function runSchluesselRueckgabeReminders() {
       const { data: roles } = await supabaseAdmin
         .from("user_roles").select("user_id")
         .eq("domain_id", r.domain_id)
-        .in("role", ["admin", "dispatcher"]);
+        .in("role", ["admin", "dispatcher", "service"]);
       const emails = Array.from(new Set(
         (roles ?? []).map((x: any) => usersById.get(x.user_id)).filter(Boolean) as string[],
       ));

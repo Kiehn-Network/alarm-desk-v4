@@ -5,12 +5,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireEffectiveDomainId, getEffectiveDomainId } from "@/lib/tenant.server";
 import { toAuthPassword } from "@/lib/password-compat";
 
-const ROLES = ["admin", "dispatcher", "fahrer", "user"] as const;
+const ROLES = ["admin", "dispatcher", "service", "fahrer", "user"] as const;
 const roleEnum = z.enum(ROLES);
 
 // Returns the effective domain for the caller. Throws for non-admin callers
 // or superadmins that are not currently impersonating any domain.
-async function requireDomainAdmin(userId: string): Promise<string> {
+async function requireDomainAdmin(userId: string, allowService = false): Promise<string> {
   const { data: roles, error } = await supabaseAdmin
     .from("user_roles")
     .select("role, domain_id")
@@ -23,19 +23,37 @@ async function requireDomainAdmin(userId: string): Promise<string> {
     return domainId;
   }
   const isAdmin = (roles ?? []).some(
-    (r: any) => r.role === "admin" && r.domain_id && r.domain_id === domainId,
+    (r: any) => (r.role === "admin" || (allowService && r.role === "service")) && r.domain_id && r.domain_id === domainId,
   );
   if (!isAdmin) throw new Error("Nur Administratoren dürfen diese Aktion ausführen");
   if (!domainId) throw new Error("Keine Domäne zugewiesen");
   return domainId;
 }
 
+// Service-Rolle: verwaltet Benutzer, aber keine Admins.
+async function isNurService(userId: string, domainId: string) {
+  const { data } = await supabaseAdmin.from("user_roles").select("role, domain_id").eq("user_id", userId);
+  const rs = (data ?? []).filter((r: any) => r.role === "superadmin" || r.domain_id === domainId).map((r: any) => r.role);
+  return rs.includes("service") && !rs.includes("admin") && !rs.includes("superadmin");
+}
+async function assertRoleErlaubt(callerId: string, domainId: string, role: string) {
+  if (role === "admin" && await isNurService(callerId, domainId)) {
+    throw new Error("Service darf keine Administratoren anlegen");
+  }
+}
+
 // Ensures the target user belongs to the admin's domain (or is unassigned).
-async function assertUserInDomain(userId: string, domainId: string) {
+async function assertUserInDomain(userId: string, domainId: string, callerId?: string) {
   const { data } = await supabaseAdmin
     .from("profiles").select("domain_id").eq("id", userId).maybeSingle();
   if (!data || data.domain_id !== domainId) {
     throw new Error("Nutzer gehört nicht zu deiner Domäne");
+  }
+  if (callerId && await isNurService(callerId, domainId)) {
+    const { data: tr } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", userId);
+    if ((tr ?? []).some((r: any) => r.role === "admin" || r.role === "superadmin")) {
+      throw new Error("Service darf keine Administratoren bearbeiten");
+    }
   }
 }
 
@@ -80,7 +98,7 @@ export const getForcedImpersonation = createServerFn({ method: "GET" })
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
     // Only profiles within this domain.
     let { data: profiles, error: profErr } = await supabaseAdmin
       .from("profiles").select("id, display_name, avatar_url, einsatz_selectable, telefon").eq("domain_id", domainId);
@@ -136,7 +154,8 @@ export const createUser = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
+    await assertRoleErlaubt(context.userId, domainId, data.role);
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: toAuthPassword(data.password),
@@ -161,8 +180,9 @@ export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ user_id: z.string().uuid(), role: roleEnum }).parse(i))
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
-    await assertUserInDomain(data.user_id, domainId);
+    const domainId = await requireDomainAdmin(context.userId, true);
+    await assertUserInDomain(data.user_id, domainId, context.userId);
+    await assertRoleErlaubt(context.userId, domainId, data.role);
     // Never let a domain admin grant superadmin via this endpoint.
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id);
     const { error } = await supabaseAdmin.from("user_roles").insert({
@@ -182,8 +202,8 @@ export const updateUserProfile = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
-    await assertUserInDomain(data.user_id, domainId);
+    const domainId = await requireDomainAdmin(context.userId, true);
+    await assertUserInDomain(data.user_id, domainId, context.userId);
     const patch: any = { display_name: data.display_name };
     if (data.telefon !== undefined) patch.telefon = data.telefon || null;
     const { error } = await supabaseAdmin
@@ -199,8 +219,8 @@ export const setUserEinsatzSelectable = createServerFn({ method: "POST" })
     selectable: z.boolean(),
   }).parse(i))
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
-    await assertUserInDomain(data.user_id, domainId);
+    const domainId = await requireDomainAdmin(context.userId, true);
+    await assertUserInDomain(data.user_id, domainId, context.userId);
     const { error } = await (supabaseAdmin as any)
       .from("profiles")
       .update({ einsatz_selectable: data.selectable })
@@ -215,8 +235,8 @@ export const resetUserPassword = createServerFn({ method: "POST" })
     z.object({ user_id: z.string().uuid(), password: z.string().min(4).max(72) }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
-    await assertUserInDomain(data.user_id, domainId);
+    const domainId = await requireDomainAdmin(context.userId, true);
+    await assertUserInDomain(data.user_id, domainId, context.userId);
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.user_id, {
       password: toAuthPassword(data.password),
     });
@@ -228,9 +248,9 @@ export const deleteUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
     if (data.user_id === context.userId) throw new Error("Du kannst dich nicht selbst löschen");
-    await assertUserInDomain(data.user_id, domainId);
+    await assertUserInDomain(data.user_id, domainId, context.userId);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -240,9 +260,9 @@ export const impersonateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ user_id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
     if (data.user_id === context.userId) throw new Error("Du bist bereits angemeldet");
-    await assertUserInDomain(data.user_id, domainId);
+    await assertUserInDomain(data.user_id, domainId, context.userId);
     const { data: target, error: uErr } = await supabaseAdmin.auth.admin.getUserById(data.user_id);
     if (uErr || !target.user?.email) throw new Error(uErr?.message ?? "Benutzer nicht gefunden");
     const { data: link, error: lErr } = await supabaseAdmin.auth.admin.generateLink({
@@ -258,7 +278,7 @@ export const impersonateUser = createServerFn({ method: "POST" })
 export const listAllGruende = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
     const { data, error } = await supabaseAdmin
       .from("einsatz_gruende").select("*").eq("domain_id", domainId).order("name");
     if (error) throw new Error(error.message);
@@ -276,7 +296,7 @@ export const upsertGrund = createServerFn({ method: "POST" })
     }).parse(i),
   )
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
     if (data.id) {
       // Verify the Grund belongs to caller's domain before updating.
       const { data: existing } = await supabaseAdmin
@@ -302,7 +322,7 @@ export const deleteGrund = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().uuid() }).parse(i))
   .handler(async ({ data, context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
     const { data: existing } = await supabaseAdmin
       .from("einsatz_gruende").select("domain_id").eq("id", data.id).maybeSingle();
     if (!existing || existing.domain_id !== domainId) {
@@ -317,7 +337,7 @@ export const deleteGrund = createServerFn({ method: "POST" })
 export const adminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const domainId = await requireDomainAdmin(context.userId);
+    const domainId = await requireDomainAdmin(context.userId, true);
     const [profilesR, rolesR, dateienR, einsaetzeR, gruendeR] = await Promise.all([
       supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }).eq("domain_id", domainId),
       supabaseAdmin.from("user_roles").select("role, domain_id").eq("domain_id", domainId),
@@ -325,7 +345,7 @@ export const adminStats = createServerFn({ method: "GET" })
       supabaseAdmin.from("einsaetze").select("status").eq("domain_id", domainId),
       supabaseAdmin.from("einsatz_gruende").select("id", { count: "exact", head: true }).eq("domain_id", domainId),
     ]);
-    const byRole: Record<string, number> = { admin: 0, dispatcher: 0, fahrer: 0, user: 0 };
+    const byRole: Record<string, number> = { admin: 0, dispatcher: 0, service: 0, fahrer: 0, user: 0 };
     (rolesR.data ?? []).forEach((r: any) => { byRole[r.role] = (byRole[r.role] ?? 0) + 1; });
     const byStatus: Record<string, number> = {};
     (einsaetzeR.data ?? []).forEach((e: any) => { byStatus[e.status] = (byStatus[e.status] ?? 0) + 1; });
