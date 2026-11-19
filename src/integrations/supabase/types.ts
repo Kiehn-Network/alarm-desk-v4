@@ -2798,6 +2798,39 @@ export type Database = {
           },
         ]
       }
+      nutzer_aktivitaet: {
+        Row: {
+          aktion: string
+          created_at: string
+          domain_id: string | null
+          id: string
+          seite: string
+          user_id: string
+          user_name: string | null
+          ziel: string | null
+        }
+        Insert: {
+          aktion: string
+          created_at?: string
+          domain_id?: string | null
+          id?: string
+          seite: string
+          user_id?: string
+          user_name?: string | null
+          ziel?: string | null
+        }
+        Update: {
+          aktion?: string
+          created_at?: string
+          domain_id?: string | null
+          id?: string
+          seite?: string
+          user_id?: string
+          user_name?: string | null
+          ziel?: string | null
+        }
+        Relationships: []
+      }
       objekt_dossiers: {
         Row: {
           address: string | null

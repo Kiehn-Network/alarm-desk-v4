@@ -76,6 +76,7 @@ const sections: Section[] = [
     { to: "/revier-center", label: "Revier Center", icon: ShieldCheck, roles: ["admin", "dispatcher", "service"] },
     { to: "/esrp", label: "ESRP (ERP-Anbindung)", icon: Cable, roles: ["admin", "service"], module: "esrp" },
     { to: "/intervention", label: "Intervention", icon: Network, roles: ["admin", "dispatcher", "service"], module: "intervention" },
+    { to: "/logs-live", label: "Logs live", icon: Activity, roles: ["admin"] },
     { to: "/admin", label: "Admin Center", icon: Settings, roles: ["admin", "service"] },
     { to: "/superadmin", label: "SuperAdmin", icon: Crown, roles: ["superadmin"] },
   ]},

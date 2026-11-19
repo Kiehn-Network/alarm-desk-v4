@@ -12,6 +12,7 @@ import { useSupportNotifications } from "@/hooks/use-support-notifications";
 import { usePresenceBroadcast } from "@/hooks/use-presence";
 import { FahrerNameDialog } from "@/components/fahrer-name-dialog";
 import { useRole } from "@/hooks/use-role";
+import { useActivityLog } from "@/hooks/use-activity-log";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -25,6 +26,7 @@ function AuthLayout() {
   const { user, loading } = useAuth();
   useLocationTracker(!!user);
   useSupportNotifications();
+  useActivityLog(user?.id ?? null);
   const { role, domainId } = useRole();
   usePresenceBroadcast({
     enabled: !!user && !!domainId,

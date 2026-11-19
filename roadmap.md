@@ -70,3 +70,4 @@ Auswahl des Users: Zentrale & Fahrer priorisiert.
 
 - [x] Neue Rolle „Service“ (Disponent mit mehr Rechten), erhält Fahrzeugschaden-Meldungen
 - [x] Service-Zusatzrechte: Fuhrpark, Benutzer, Einstellungen/ERP, Dienstausweise
+- [x] Logs live: Klick-/Aktionsprotokoll aller Nutzer, Echtzeit für Admins, 7 Tage gespeichert

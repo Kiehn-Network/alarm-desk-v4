@@ -1,0 +1,1 @@
+ALTER TABLE public.nutzer_aktivitaet ALTER COLUMN domain_id SET DEFAULT public.current_user_domain_id();
