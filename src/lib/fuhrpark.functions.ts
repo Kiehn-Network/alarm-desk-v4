@@ -57,6 +57,7 @@ export type FahrzeugRow = {
   status: string;
   hauptfahrer: string | null;
   notizen: string | null;
+  fahrer_auswahl: boolean;
   erstellt_von_name: string | null;
   created_at: string;
   updated_at: string;
@@ -161,6 +162,7 @@ function fahrzeugDto(row: any, nextTermin?: { art: string; faellig_am: string } 
     status: row.status,
     hauptfahrer: row.hauptfahrer ?? null,
     notizen: row.notizen ?? null,
+    fahrer_auswahl: !!row.fahrer_auswahl,
     erstellt_von_name: row.erstellt_von_name ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at,
@@ -308,6 +310,7 @@ const fahrzeugBasis = {
   status: z.string().trim().max(30).optional(),
   hauptfahrer: SHORT,
   notizen: LONG,
+  fahrer_auswahl: z.boolean().optional(),
 };
 
 export const createFahrzeug = createServerFn({ method: "POST" })
@@ -353,6 +356,7 @@ export const updateFahrzeug = createServerFn({ method: "POST" })
         status: z.string().trim().max(30).optional(),
         hauptfahrer: SHORT,
         notizen: LONG,
+        fahrer_auswahl: z.boolean().optional(),
       })
       .parse(i),
   )
@@ -586,5 +590,78 @@ export const deleteKmEintrag = createServerFn({ method: "POST" })
     const { supabase } = context;
     const { error } = await supabase.from("fuhrpark_km_log").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---------------- Fahrer: Schaden melden ----------------
+
+async function fahrerKontext(supabase: any, userId: string) {
+  const domainId = await requireEffectiveDomainId(supabase, userId);
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: rollen } = await supabaseAdmin
+    .from("user_roles").select("role").eq("user_id", userId).eq("domain_id", domainId);
+  if (!(rollen ?? []).length) throw new Error("Keine Berechtigung.");
+  return { domainId, supabaseAdmin };
+}
+
+/** Fahrzeuge, die der Admin für Fahrer freigegeben hat. */
+export const listFahrerFahrzeuge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { domainId, supabaseAdmin } = await fahrerKontext(context.supabase, context.userId);
+    const { data, error } = await supabaseAdmin
+      .from("fuhrpark_fahrzeuge")
+      .select("id,kennzeichen,bezeichnung,marke,modell")
+      .eq("domain_id", domainId).eq("fahrer_auswahl", true).neq("status", "ausgemustert")
+      .order("kennzeichen");
+    if (error) throw new Error(error.message);
+    return { fahrzeuge: (data ?? []) as { id: string; kennzeichen: string; bezeichnung: string | null; marke: string | null; modell: string | null }[] };
+  });
+
+export const meldeFahrerSchaden = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) =>
+    z.object({
+      fahrzeug_id: z.string().uuid(),
+      beschreibung: z.string().trim().min(1, "Beschreibung fehlt").max(2000),
+      schwere: z.string().trim().max(20).optional(),
+      marker: markerSchema,
+    }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { domainId, supabaseAdmin } = await fahrerKontext(supabase, userId);
+    const { data: fz } = await supabaseAdmin
+      .from("fuhrpark_fahrzeuge").select("id,kennzeichen")
+      .eq("id", data.fahrzeug_id).eq("domain_id", domainId).eq("fahrer_auswahl", true).maybeSingle();
+    if (!fz) throw new Error("Fahrzeug nicht auswählbar.");
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("display_name,schicht_name").eq("id", userId).maybeSingle();
+    const name = (prof as any)?.schicht_name || (prof as any)?.display_name || "Fahrer";
+    const { error } = await supabaseAdmin.from("fuhrpark_schaeden").insert({
+      fahrzeug_id: fz.id,
+      gemeldet_am: new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Berlin" }),
+      beschreibung: data.beschreibung,
+      schwere: schwereNormal(data.schwere),
+      ...markerNormal(data.marker),
+      domain_id: domainId,
+      gemeldet_von: userId,
+      gemeldet_von_name: name,
+      status: "offen",
+    } as never);
+    if (error) throw new Error(error.message);
+    try {
+      const { data: empf } = await supabaseAdmin
+        .from("user_roles").select("user_id").eq("domain_id", domainId).in("role", ["admin", "dispatcher"]);
+      const { sendPushToUsers } = await import("./push.server");
+      await sendPushToUsers((empf ?? []).map((r: any) => r.user_id).filter((id: string) => id !== userId), {
+        title: `Fahrzeugschaden: ${fz.kennzeichen}`,
+        body: `${name}: ${data.beschreibung.slice(0, 140)}`,
+        url: "/fuhrpark",
+        tag: `schaden-${fz.id}`,
+      });
+    } catch (e) {
+      console.error("schaden push", e);
+    }
     return { ok: true };
   });

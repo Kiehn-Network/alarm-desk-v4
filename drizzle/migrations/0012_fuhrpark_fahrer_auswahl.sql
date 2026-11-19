@@ -1,0 +1,1 @@
+ALTER TABLE public.fuhrpark_fahrzeuge ADD COLUMN IF NOT EXISTS fahrer_auswahl boolean NOT NULL DEFAULT false;

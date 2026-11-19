@@ -1887,6 +1887,7 @@ export type Database = {
           domain_id: string
           erstellt_von: string | null
           erstellt_von_name: string | null
+          fahrer_auswahl: boolean
           hauptfahrer: string | null
           id: string
           kennzeichen: string
@@ -1907,6 +1908,7 @@ export type Database = {
           domain_id: string
           erstellt_von?: string | null
           erstellt_von_name?: string | null
+          fahrer_auswahl?: boolean
           hauptfahrer?: string | null
           id?: string
           kennzeichen: string
@@ -1927,6 +1929,7 @@ export type Database = {
           domain_id?: string
           erstellt_von?: string | null
           erstellt_von_name?: string | null
+          fahrer_auswahl?: boolean
           hauptfahrer?: string | null
           id?: string
           kennzeichen?: string

@@ -35,6 +35,7 @@ import { getEinsatzChecklistenStatus } from "@/lib/checklisten.functions";
 import { ObjektDossierDialog } from "@/components/objekt-dossier-dialog";
 import { KundenNotizenDialog } from "@/components/kunden-notizen";
 import { StickyNote } from "lucide-react";
+import { FahrzeugSchadenButton } from "@/components/fahrzeug-schaden-melden";
 import { enqueue } from "@/lib/offline-queue";
 import { useOfflineQueue } from "@/hooks/use-offline-queue";
 import { DienstTelefonPicker } from "@/components/dienst-telefon-picker";
@@ -257,7 +258,10 @@ function MeineEinsaetzePage() {
         <div className="text-[11px] uppercase tracking-widest text-muted-foreground flex items-center gap-2">
           <Truck className="size-3.5" /> Fahrer
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold">Meine Einsätze</h1>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h1 className="text-2xl md:text-3xl font-bold">Meine Einsätze</h1>
+          <FahrzeugSchadenButton />
+        </div>
         <p className="text-sm text-muted-foreground">
           Alle dir zugewiesenen Einsätze auf einen Blick.
         </p>

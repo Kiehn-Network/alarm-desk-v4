@@ -409,6 +409,7 @@ function FahrzeugDialog({
         status: fahrzeug.status ?? "aktiv",
         hauptfahrer: fahrzeug.hauptfahrer ?? "",
         notizen: fahrzeug.notizen ?? "",
+        fahrer_auswahl: fahrzeug.fahrer_auswahl ? "ja" : "",
       });
     }
   }, [fahrzeug?.id, fahrzeug?.updated_at]);
@@ -442,6 +443,7 @@ function FahrzeugDialog({
           status: form.status,
           hauptfahrer: form.hauptfahrer.trim() || null,
           notizen: form.notizen.trim() || null,
+          fahrer_auswahl: form.fahrer_auswahl === "ja",
         },
       });
       toast.success("Fahrzeug gespeichert.");
@@ -592,6 +594,11 @@ function FahrzeugDialog({
                         <Label className="text-xs">Notizen</Label>
                         <Textarea rows={2} value={form.notizen} onChange={(e) => setForm((f) => ({ ...f, notizen: e.target.value }))} />
                       </div>
+                      <label className="sm:col-span-2 flex items-center gap-2 text-sm">
+                        <input type="checkbox" className="size-4 accent-primary" checked={form.fahrer_auswahl === "ja"}
+                          onChange={(e) => setForm((f) => ({ ...f, fahrer_auswahl: e.target.checked ? "ja" : "" }))} />
+                        Fahrer dürfen dieses Fahrzeug für Schadensmeldungen auswählen
+                      </label>
                     </div>
                     <DialogFooter className="gap-2">
                       <Button variant="ghost" onClick={() => onBearbeitenChange(false)}>Abbrechen</Button>
@@ -611,6 +618,7 @@ function FahrzeugDialog({
                       <Zeile label="Antrieb" wert={TANKARTEN.find((t) => t.value === fahrzeug.tankart)?.label ?? fahrzeug.tankart} />
                       <Zeile label="Kilometerstand" wert={fmtKm(fahrzeug.km_stand)} />
                       <Zeile label="Hauptfahrer" wert={fahrzeug.hauptfahrer || "–"} />
+                      <Zeile label="Für Fahrer auswählbar" wert={fahrzeug.fahrer_auswahl ? "Ja" : "Nein"} />
                       {fahrzeug.notizen && <Zeile label="Notizen" wert={fahrzeug.notizen} voll />}
                     </div>
                     <DialogFooter className="gap-2">
