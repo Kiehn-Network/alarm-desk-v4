@@ -1,0 +1,3 @@
+CREATE POLICY "Superadmin verwaltet Login-Bilder (insert)" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'login-bilder' AND public.is_superadmin());
+CREATE POLICY "Superadmin verwaltet Login-Bilder (select)" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'login-bilder' AND public.is_superadmin());
+CREATE POLICY "Superadmin verwaltet Login-Bilder (delete)" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'login-bilder' AND public.is_superadmin());

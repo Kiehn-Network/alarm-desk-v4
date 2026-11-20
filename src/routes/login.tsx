@@ -10,6 +10,7 @@ import hero2 from "@/assets/login-hero-2.jpg";
 import hero3 from "@/assets/login-hero-3.jpg";
 import hero4 from "@/assets/login-hero-4.jpg";
 import { toAuthPassword } from "@/lib/password-compat";
+import { getLoginBilder } from "@/lib/login-bilder.functions";
 
 const HERO_IMAGES = [hero1, hero2, hero3, hero4];
 
@@ -50,7 +51,12 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [info, setInfo] = useState<VersionInfo | null>(null);
-  const [heroImage] = useState(getRandomHero);
+  const [heroImage, setHeroImage] = useState<string | null>(null);
+  useEffect(() => {
+    getLoginBilder()
+      .then((list) => setHeroImage(list.length ? list[Math.floor(Math.random() * list.length)]! : getRandomHero()!))
+      .catch(() => setHeroImage(getRandomHero()!));
+  }, []);
   const [mode, setMode] = useState<"login" | "forgot">("login");
   const [resetSent, setResetSent] = useState(false);
   const [dbStatus, setDbStatus] = useState<"connecting" | "online" | "offline">("connecting");
@@ -114,11 +120,11 @@ function LoginPage() {
     <div className="min-h-screen w-full flex bg-background text-foreground antialiased">
       {/* Left: Visual + Brand */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <img
+        {heroImage && <img
           src={heroImage}
           alt="AlarmDesk Leitstelle"
           className="absolute inset-0 w-full h-full object-cover opacity-40"
-        />
+        />}
         <div className="absolute inset-0 bg-gradient-to-tr from-background via-background/60 to-transparent" />
         <div className="absolute inset-0 opacity-40" style={{
           backgroundImage: "radial-gradient(circle at 20% 20%, oklch(0.68 0.17 255 / 30%) 0, transparent 50%), radial-gradient(circle at 80% 80%, oklch(0.78 0.13 235 / 25%) 0, transparent 50%)",

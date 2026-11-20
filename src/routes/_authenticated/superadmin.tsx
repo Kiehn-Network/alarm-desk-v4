@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoginBilderPanel } from "@/components/superadmin/login-bilder-panel";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -1741,6 +1742,7 @@ function SuperAdminPage() {
         </TabsContent>
 
         <TabsContent value="system" className="space-y-4">
+          <LoginBilderPanel />
           <Card>
             <CardHeader>
               <CardTitle>Aktuelle Version</CardTitle>
