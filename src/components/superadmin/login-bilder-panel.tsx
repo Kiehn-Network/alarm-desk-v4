@@ -13,10 +13,12 @@ export function LoginBilderPanel() {
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.storage.from(BUCKET).list("", { limit: 50 });
+    const { data, error } = await supabase.storage.from(BUCKET).list("", { limit: 50 });
+    if (error) { toast.error(`Bilder konnten nicht geladen werden: ${error.message}`); return; }
     const files = (data ?? []).filter((f) => f.id);
     if (!files.length) return setItems([]);
-    const { data: s } = await supabase.storage.from(BUCKET).createSignedUrls(files.map((f) => f.name), 3600);
+    const { data: s, error: e2 } = await supabase.storage.from(BUCKET).createSignedUrls(files.map((f) => f.name), 3600);
+    if (e2) toast.error(`Vorschau nicht möglich: ${e2.message}`);
     setItems((s ?? []).map((x, i) => ({ name: files[i]!.name, url: x.signedUrl ?? "" })));
   };
   useEffect(() => { load(); }, []);
@@ -24,15 +26,25 @@ export function LoginBilderPanel() {
   const upload = async (list: FileList | null) => {
     if (!list?.length) return;
     setBusy(true);
+    let ok = 0;
     try {
       for (const f of Array.from(list)) {
         if (!f.type.startsWith("image/")) { toast.error(`${f.name}: kein Bild`); continue; }
         if (f.size > MAX) { toast.error(`${f.name}: größer als 1 GB`); continue; }
         const ext = f.name.split(".").pop()?.toLowerCase() ?? "jpg";
         const { error } = await supabase.storage.from(BUCKET).upload(`${crypto.randomUUID()}.${ext}`, f, { contentType: f.type });
-        if (error) toast.error(`${f.name}: ${error.message}`);
+        if (error) {
+          const hint = /bucket not found/i.test(error.message)
+            ? " – Speicher „login-bilder“ fehlt (SQL-Datei Anmeldebilder ausführen)"
+            : /exceeded|too large|413/i.test(error.message)
+              ? " – Datei zu groß für den Speicher-Server"
+              : /row-level|policy|403|unauthorized/i.test(error.message)
+                ? " – keine Berechtigung (Superadmin-Regeln fehlen)"
+                : "";
+          toast.error(`${f.name}: ${error.message}${hint}`, { duration: 10000 });
+        } else ok++;
       }
-      toast.success("Bilder hochgeladen");
+      if (ok) toast.success(`${ok} Bild(er) hochgeladen`);
       await load();
     } finally { setBusy(false); }
   };
