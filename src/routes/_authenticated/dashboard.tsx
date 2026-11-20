@@ -9,6 +9,7 @@ import {
 import { getDashboardStats, getDashboardExtras } from "@/lib/dashboard.functions";
 import { FahrerTrackingSection } from "@/components/dashboard/fahrer-tracking";
 import { editEinsatzFull, listFahrer } from "@/lib/einsaetze.functions";
+import { listOffeneSchaeden } from "@/lib/fuhrpark.functions";
 import { rueckgabeBestaetigen } from "@/lib/schluesselbuch.functions";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -77,7 +78,14 @@ function DashboardContent() {
   const qc = useQueryClient();
   const { data: settings } = useAppSettings();
   const { data: modules } = useDomainModules();
-  const { domainId, canManage } = useRole();
+  const { domainId, canManage, isAdminOrService } = useRole();
+  const offeneSchaedenFn = useServerFn(listOffeneSchaeden);
+  const { data: offeneSchaeden } = useQuery({
+    queryKey: ["dashboard-offene-schaeden"],
+    enabled: !!isAdminOrService,
+    queryFn: () => offeneSchaedenFn(),
+    refetchInterval: 60_000,
+  });
   const schluesselbuchAktiv = modules?.has("schluesselbuch") ?? false;
   const hausnotrufAktiv = modules?.has("hausnotruf") ?? false;
   const aktiveProvider = (["malteser", "johanniter", "lgwa"] as const).filter((k) => modules?.has(k));
@@ -181,6 +189,7 @@ function DashboardContent() {
   ];
   const allWidgets: Array<{ id: string; label: string; span: number; node: React.ReactNode }> = [
     ...cards.map((c) => ({ id: c.label, label: c.label, span: 1, node: <StatCard {...c} /> })),
+    ...(isAdminOrService ? [{ id: "schaeden", label: "Offene Schäden", span: 1, node: <SchaedenCard schaeden={(offeneSchaeden as any)?.schaeden ?? []} /> }] : []),
     ...(schluesselbuchAktiv ? [{ id: "schluessel", label: "Schlüssel", span: 2, node: <SchluesselCard entries={schluessel ?? []} /> }] : []),
   ];
 
@@ -481,6 +490,47 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: nu
       <div className="mt-3 text-2xl font-bold tabular-nums leading-none">{value}</div>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-2 truncate">{label}</div>
     </div>
+  );
+}
+
+const SEITE_LABEL: Record<string, string> = { front: "Vorne", heck: "Hinten", links: "Links", rechts: "Rechts" };
+
+function SchaedenCard({ schaeden }: { schaeden: Array<{ id: string; fahrzeug_id: string; beschreibung: string; kennzeichen: string; bezeichnung: string | null; marker_seite: string | null; gemeldet_am: string }> }) {
+  const [open, setOpen] = useState(false);
+  const count = schaeden.length;
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="w-full text-left rounded-xl border border-border bg-card p-4 transition hover:border-primary/40 hover:-translate-y-0.5 duration-200" style={{ boxShadow: "var(--shadow-card)" }}>
+        <div className={`size-8 rounded-md grid place-items-center ${count ? "bg-destructive/15 text-destructive" : "bg-muted text-muted-foreground"}`}>
+          <Car className="size-4" />
+        </div>
+        <div className="mt-3 text-2xl font-bold tabular-nums leading-none">{count}</div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-2 truncate">Offene Schäden</div>
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Offene Fahrzeugschäden</DialogTitle>
+            <DialogDescription>{count ? `${count} offene Meldung${count === 1 ? "" : "en"}` : "Keine offenen Schäden."}</DialogDescription>
+          </DialogHeader>
+          <ul className="divide-y divide-border max-h-[60vh] overflow-y-auto">
+            {schaeden.map((s) => (
+              <li key={s.id} className="py-2.5 flex items-center gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium">{s.kennzeichen}{s.bezeichnung ? ` · ${s.bezeichnung}` : ""}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    <span className="font-medium text-foreground">{s.marker_seite ? SEITE_LABEL[s.marker_seite] ?? s.marker_seite : "Ohne Markierung"}</span> · {s.beschreibung}
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" asChild>
+                  <Link to="/fuhrpark" search={{ fahrzeug: s.fahrzeug_id, tab: "schaeden" }}>Öffnen</Link>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

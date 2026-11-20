@@ -35,6 +35,10 @@ export const Route = createFileRoute("/_authenticated/fuhrpark")({
       { property: "og:description", content: "Fahrzeuge, Termine und Schäden in der Alarmzentrale." },
     ],
   }),
+  validateSearch: (s: Record<string, unknown>): { fahrzeug?: string; tab?: string } => ({
+    ...(typeof s.fahrzeug === "string" ? { fahrzeug: s.fahrzeug } : {}),
+    ...(typeof s.tab === "string" ? { tab: s.tab } : {}),
+  }),
   component: FuhrparkPage,
 });
 
@@ -79,7 +83,10 @@ function FuhrparkPage() {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>("alle");
   const [neu, setNeu] = useState(false);
-  const [geoeffnet, setGeoeffnet] = useState<string | null>(null);
+  const search = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const [geoeffnet, setGeoeffnet] = useState<string | null>(search.fahrzeug ?? null);
+  useEffect(() => { if (search.fahrzeug) setGeoeffnet(search.fahrzeug); }, [search.fahrzeug]);
   const [bearbeite, setBearbeite] = useState(false);
 
   useEffect(() => {
@@ -222,7 +229,8 @@ function FuhrparkPage() {
           initialKm={aktuelles?.km_stand ?? null}
           initialBearbeiten={bearbeite}
           onBearbeitenChange={setBearbeite}
-          onClose={() => { setGeoeffnet(null); setBearbeite(false); }}
+          initialTab={search.fahrzeug === geoeffnet ? search.tab : undefined}
+          onClose={() => { setGeoeffnet(null); setBearbeite(false); if (search.fahrzeug) navigate({ search: {} }); }}
         />
       )}
     </div>
@@ -360,8 +368,9 @@ function NeuesFahrzeugDialog({ open, onClose }: { open: boolean; onClose: () => 
 }
 
 function FahrzeugDialog({
-  fahrzeugId, initialKm, initialBearbeiten, onBearbeitenChange, onClose,
+  fahrzeugId, initialKm, initialBearbeiten, onBearbeitenChange, onClose, initialTab,
 }: {
+  initialTab?: string;
   fahrzeugId: string;
   initialKm: number | null;
   initialBearbeiten: boolean;
@@ -382,7 +391,7 @@ function FahrzeugDialog({
   const kmDeleteFn = useServerFn(deleteKmEintrag);
 
   const [busy, setBusy] = useState(false);
-  const [tab, setTab] = useState("stamm");
+  const [tab, setTab] = useState(initialTab ?? "stamm");
 
   const { data, isFetching } = useQuery({
     queryKey: ["fuhrpark-fahrzeug", fahrzeugId],

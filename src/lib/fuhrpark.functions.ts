@@ -665,3 +665,31 @@ export const meldeFahrerSchaden = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/** Offene Schäden aller Fahrzeuge (für die Dashboard-Kachel). */
+export const listOffeneSchaeden = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const domainId = await requireEffectiveDomainId(supabase, userId);
+    const { data, error } = await supabase
+      .from("fuhrpark_schaeden")
+      .select("id,fahrzeug_id,beschreibung,schwere,gemeldet_am,marker_seite,fuhrpark_fahrzeuge(kennzeichen,bezeichnung)")
+      .eq("domain_id", domainId)
+      .eq("status", "offen")
+      .order("gemeldet_am", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return {
+      schaeden: (data ?? []).map((s: any) => ({
+        id: s.id as string,
+        fahrzeug_id: s.fahrzeug_id as string,
+        beschreibung: s.beschreibung as string,
+        schwere: s.schwere as string,
+        gemeldet_am: s.gemeldet_am as string,
+        marker_seite: (s.marker_seite ?? null) as string | null,
+        kennzeichen: (s.fuhrpark_fahrzeuge?.kennzeichen ?? "–") as string,
+        bezeichnung: (s.fuhrpark_fahrzeuge?.bezeichnung ?? null) as string | null,
+      })),
+    };
+  });
