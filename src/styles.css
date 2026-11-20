@@ -783,15 +783,15 @@ html.light { color-scheme: light; }
 
 /* Homepage (Marketing) – Leitstellen-Nacht mit Signal-Amber */
 :root {
-  --hp-bg: oklch(0.16 0.03 255);
-  --hp-surface: oklch(0.21 0.035 255);
-  --hp-line: oklch(0.32 0.035 255);
-  --hp-text: oklch(0.96 0.01 250);
-  --hp-muted: oklch(0.72 0.03 250);
-  --hp-signal: oklch(0.80 0.16 70);
-  --hp-signal-ink: oklch(0.20 0.04 60);
-  --hp-ok: oklch(0.78 0.15 155);
-  --hp-alarm: oklch(0.66 0.21 25);
+  --hp-bg: oklch(0.985 0.004 250);
+  --hp-surface: oklch(1 0 0);
+  --hp-line: oklch(0.91 0.01 250);
+  --hp-text: oklch(0.20 0.03 255);
+  --hp-muted: oklch(0.48 0.025 255);
+  --hp-signal: oklch(0.72 0.17 60);
+  --hp-signal-ink: oklch(0.18 0.04 60);
+  --hp-ok: oklch(0.58 0.15 155);
+  --hp-alarm: oklch(0.58 0.21 25);
 }
 @theme inline {
   --color-hp-bg: var(--hp-bg);
