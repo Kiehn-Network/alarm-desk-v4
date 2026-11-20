@@ -5,6 +5,9 @@ import {
   Activity, Server, ShieldCheck, Clock, Phone, Users, CheckCircle2, Radio, Tag,
 } from "lucide-react";
 import logo from "@/assets/alarmdesk-logo.png";
+import shotDashboard from "@/assets/app-dashboard.webp.asset.json";
+import shotAlarmierung from "@/assets/app-alarmierung.webp.asset.json";
+import shotEinsatz from "@/assets/app-einsatz-erstellen.webp.asset.json";
 
 export const Route = createFileRoute("/homepage")({
   head: () => ({
@@ -27,6 +30,7 @@ function LandingPage() {
     <div className="min-h-screen bg-hp-bg text-hp-text selection:bg-hp-signal/30" style={{ fontFamily: "'Manrope', ui-sans-serif, system-ui, sans-serif" }}>
       <Header />
       <Hero />
+      <Einblicke />
       <Ablauf />
       <Module />
       <Rollen />
@@ -90,51 +94,48 @@ function Hero() {
             ))}
           </div>
         </div>
-        <LeitstellenKarte />
+        <div className="relative">
+          <div className="absolute -inset-6 rounded-[2rem] bg-hp-signal/15 blur-3xl" />
+          <AppFenster src={shotDashboard.url} alt="AlarmDesk Dashboard" />
+        </div>
       </div>
     </section>
   );
 }
 
-function LeitstellenKarte() {
-  const rows = [
-    { nr: "E-2418", typ: "Einbruchmeldeanlage", ort: "Lagerhalle Nord", status: "Fahrer unterwegs", tone: "signal", eta: "06 Min" },
-    { nr: "E-2417", typ: "Brandmeldung", ort: "Bürokomplex West", status: "Vor Ort", tone: "alarm", eta: "—" },
-    { nr: "E-2416", typ: "Öffnung / Schließung", ort: "Filiale Altstadt", status: "Abgeschlossen", tone: "ok", eta: "—" },
-  ] as const;
-  const tone = { signal: "bg-hp-signal/15 text-hp-signal", alarm: "bg-hp-alarm/15 text-hp-alarm", ok: "bg-hp-ok/15 text-hp-ok" };
+function AppFenster({ src, alt }: { src: string; alt: string }) {
   return (
-    <div className="relative">
-      <div className="absolute -inset-6 rounded-[2rem] bg-hp-signal/10 blur-3xl" />
-      <div className="relative rounded-2xl border border-hp-line bg-hp-surface p-5 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm font-semibold"><Radio className="h-4 w-4 text-hp-alarm" /> Alarmierung · live</div>
-          <span className="font-mono text-xs text-hp-muted">Europe/Berlin</span>
-        </div>
-        <div className="space-y-2.5">
-          {rows.map((r) => (
-            <div key={r.nr} className="flex items-center justify-between gap-3 rounded-xl border border-hp-line/70 bg-hp-bg/60 px-4 py-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-semibold"><span className="font-mono text-hp-muted">{r.nr}</span>{r.typ}</div>
-                <div className="mt-0.5 flex items-center gap-1 text-xs text-hp-muted"><MapPin className="h-3 w-3" />{r.ort}</div>
-              </div>
-              <div className="text-right">
-                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone[r.tone]}`}>{r.status}</span>
-                <div className="mt-1 font-mono text-xs text-hp-muted">{r.eta !== "—" ? `Ankunft ${r.eta}` : " "}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-4 grid grid-cols-3 gap-2.5">
-          {[["14", "Offen heute"], ["5", "Fahrer im Dienst"], ["0", "ERP ausstehend"]].map(([v, l]) => (
-            <div key={l} className="rounded-xl border border-hp-line/70 bg-hp-bg/60 p-3">
-              <div className="text-2xl font-bold" style={display}>{v}</div>
-              <div className="text-xs text-hp-muted">{l}</div>
-            </div>
+    <div className="relative overflow-hidden rounded-2xl border border-hp-line bg-hp-surface shadow-2xl">
+      <div className="flex items-center gap-1.5 border-b border-hp-line px-4 py-2.5">
+        <span className="h-2.5 w-2.5 rounded-full bg-hp-alarm/70" />
+        <span className="h-2.5 w-2.5 rounded-full bg-hp-signal/70" />
+        <span className="h-2.5 w-2.5 rounded-full bg-hp-ok/70" />
+        <span className="ml-3 font-mono text-xs text-hp-muted">alarmdesk-software.de</span>
+      </div>
+      <img src={src} alt={alt} loading="lazy" className="block w-full" />
+    </div>
+  );
+}
+
+function Einblicke() {
+  const bilder = [
+    { src: shotAlarmierung.url, t: "Alarmierung", d: "Alle aktiven Einsätze mit Status, Fahrer und Zeiten – 20 pro Seite." },
+    { src: shotEinsatz.url, t: "Einsatz erstellen", d: "Kunde per Name, Schlüssel-, Anlagen- oder Teilnehmernummer finden." },
+  ];
+  return (
+    <section className="py-24">
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHead kicker="Einblicke" title="So sieht AlarmDesk im Alltag aus" sub="Echte Ansichten aus der App – mit Demo-Daten, ohne Kundendaten." />
+        <div className="mt-14 grid gap-8 lg:grid-cols-2">
+          {bilder.map((b) => (
+            <figure key={b.t}>
+              <AppFenster src={b.src} alt={b.t} />
+              <figcaption className="mt-4"><span className="font-semibold">{b.t}</span> <span className="text-hp-muted">– {b.d}</span></figcaption>
+            </figure>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   );
 }
 
