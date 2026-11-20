@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PlusCircle, Monitor, Bell, CalendarDays, FolderOpen, Truck,
   Network, Wrench, Home, Building2, KeyRound, KeySquare, Boxes, ShieldCheck, Settings, LogOut, Crown, UserCog, Users, Cable,
   Receipt, Upload, HelpCircle, Rocket, Search as SearchIcon, Mail, Activity, BarChart3, RefreshCw, LifeBuoy, Map as MapIcon, ExternalLink, DoorOpen, CarFront, Contact, Nfc, Shirt,
-  IdCard,
+  IdCard, Image as ImageIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,6 +109,7 @@ const superAdminSections: Section[] = [
   ]},
   { label: "Plattform", items: [
     { to: "/superadmin", tab: "system", label: "System", icon: RefreshCw },
+    { to: "/superadmin", tab: "loginbilder", label: "Anmeldebilder", icon: ImageIcon },
     { to: "/superadmin", tab: "selfhost", label: "Self-Hosting", icon: Crown },
     { to: "/superadmin", tab: "dbsync", label: "DB-Sync", icon: Upload },
   ]},

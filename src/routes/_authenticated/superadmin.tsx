@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Image as ImageIcon } from "lucide-react";
 import { LoginBilderPanel } from "@/components/superadmin/login-bilder-panel";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -1026,6 +1027,7 @@ const NAV_SECTIONS: { label: string; items: { value: string; label: string }[] }
   ]},
   { label: "Plattform", items: [
     { value: "system", label: "System" },
+    { value: "loginbilder", label: "Anmeldebilder" },
     { value: "platform-email", label: "E-Mail-Versand" },
     { value: "selfhost", label: "Self-Hosting" },
     { value: "dbsync", label: "DB-Sync" },
@@ -1316,6 +1318,7 @@ function SuperAdminPage() {
                 <SideTab value="tickets" icon={LifeBuoy}>Support-Tickets</SideTab>
                 <SideSection label="Plattform" />
                 <SideTab value="system" icon={RefreshCw}>System</SideTab>
+                <SideTab value="loginbilder" icon={ImageIcon}>Anmeldebilder</SideTab>
                 <SideTab value="platform-email" icon={Mail}>E-Mail-Versand</SideTab>
                 <SideTab value="selfhost" icon={Building2}>Self-Hosting</SideTab>
                 <SideTab value="dbsync" icon={Upload}>DB-Sync</SideTab>
@@ -1741,8 +1744,11 @@ function SuperAdminPage() {
           })}
         </TabsContent>
 
-        <TabsContent value="system" className="space-y-4">
+        <TabsContent value="loginbilder" className="space-y-4">
           <LoginBilderPanel />
+        </TabsContent>
+
+        <TabsContent value="system" className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Aktuelle Version</CardTitle>
