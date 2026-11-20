@@ -780,3 +780,32 @@ html.light { color-scheme: light; }
   .ausweis-druck { position: absolute; left: 0; top: 0; padding: 8mm; }
   .ausweis-druck .ausweis-karte { box-shadow: none !important; break-inside: avoid; }
 }
+
+/* Homepage (Marketing) – Leitstellen-Nacht mit Signal-Amber */
+:root {
+  --hp-bg: oklch(0.16 0.03 255);
+  --hp-surface: oklch(0.21 0.035 255);
+  --hp-line: oklch(0.32 0.035 255);
+  --hp-text: oklch(0.96 0.01 250);
+  --hp-muted: oklch(0.72 0.03 250);
+  --hp-signal: oklch(0.80 0.16 70);
+  --hp-signal-ink: oklch(0.20 0.04 60);
+  --hp-ok: oklch(0.78 0.15 155);
+  --hp-alarm: oklch(0.66 0.21 25);
+}
+@theme inline {
+  --color-hp-bg: var(--hp-bg);
+  --color-hp-surface: var(--hp-surface);
+  --color-hp-line: var(--hp-line);
+  --color-hp-text: var(--hp-text);
+  --color-hp-muted: var(--hp-muted);
+  --color-hp-signal: var(--hp-signal);
+  --color-hp-signal-ink: var(--hp-signal-ink);
+  --color-hp-ok: var(--hp-ok);
+  --color-hp-alarm: var(--hp-alarm);
+}
+@utility hp-grid {
+  background-image: linear-gradient(var(--hp-line) 1px, transparent 1px), linear-gradient(90deg, var(--hp-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 20%, transparent 70%);
+}

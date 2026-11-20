@@ -1,53 +1,36 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect } from "react";
 import {
-  Shield, Radar, MapPin, FileText, Bell, Users, KeyRound, Activity,
-  CheckCircle2, ArrowRight, Sparkles, Lock, Zap,
-  BarChart3, ListChecks, XCircle, FolderOpen, TrendingUp, Clock, Home,
-  ScanLine, Wrench, Bell as BellIcon, Settings,
-  Star, Quote, Phone, ClipboardList, Smartphone, Archive, Timer,
+  Radar, MapPin, Bell, KeyRound, ArrowRight, Lock, Truck, Shirt, IdCard, Search,
+  FolderOpen, MessageSquare, ClipboardList, Package, ListChecks, Smartphone, FileText,
+  Activity, Server, ShieldCheck, Clock, Phone, Users, CheckCircle2, Radio, Tag,
 } from "lucide-react";
 import logo from "@/assets/alarmdesk-logo.png";
 
 export const Route = createFileRoute("/homepage")({
   head: () => ({
     meta: [
-      { title: "AlarmDesk — Einsatz- & Sicherheitsmanagement der nächsten Generation" },
-      { name: "description", content: "AlarmDesk bündelt Einsatzleitung, Revier-Center, Notdienste und Abrechnung in einer modernen Plattform für Sicherheitsdienstleister." },
-      { property: "og:title", content: "AlarmDesk — Einsatz- & Sicherheitsmanagement" },
-      { property: "og:description", content: "Die zentrale Plattform für Wach- und Sicherheitsdienste: Einsätze, Revier, Notdienst, Abrechnung und mehr." },
-      { property: "og:url", content: "https://v4.alarmdesk-software.de/homepage" },
+      { title: "AlarmDesk – Leitstelle, Interventionsdienst & Revier in einer Plattform" },
+      { name: "description", content: "AlarmDesk steuert Alarmierung, Fahrer, Schlüssel, Fuhrpark, Kundenakten und ERP-Abrechnung für Sicherheitsdienste – in Echtzeit." },
+      { property: "og:title", content: "AlarmDesk – Die Plattform für Sicherheitsdienste" },
+      { property: "og:description", content: "Alarmierung, Fahrer-App, Schlüsselbuch, Fuhrpark, Kundenakte und ERP – alles in einer Leitstellen-Software." },
       { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://v4.alarmdesk-software.de/homepage" }],
   }),
   component: LandingPage,
 });
 
+const display = { fontFamily: "'Sora', ui-sans-serif, system-ui, sans-serif" };
+
 function LandingPage() {
-  useEffect(() => {
-    const html = document.documentElement;
-    const prev = html.classList.contains("light") ? "light" : html.classList.contains("dark") ? "dark" : null;
-    html.classList.remove("dark");
-    html.classList.add("light");
-    return () => {
-      html.classList.remove("light");
-      if (prev) html.classList.add(prev);
-    };
-  }, []);
   return (
-    <div
-      className="min-h-screen text-[#0f172a] selection:bg-[#4f46e5]/30"
-      style={{ backgroundColor: "#f8fafc", fontFamily: "'Manrope', ui-sans-serif, system-ui, sans-serif" }}
-    >
+    <div className="min-h-screen bg-hp-bg text-hp-text selection:bg-hp-signal/30" style={{ fontFamily: "'Manrope', ui-sans-serif, system-ui, sans-serif" }}>
       <Header />
       <Hero />
-      <LogosBar />
-      <Features />
-      <Modules />
-      <HnrModule />
-      <Testimonials />
-      <SecuritySection />
+      <Ablauf />
+      <Module />
+      <Rollen />
+      <Sicherheit />
       <CTA />
       <Footer />
     </div>
@@ -56,27 +39,21 @@ function LandingPage() {
 
 function Header() {
   return (
-    <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#f8fafc]/80 border-b border-[#e2e8f0]/60">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <img src={logo} alt="AlarmDesk Logo" className="size-8 rounded-md" />
-          <span className="font-semibold tracking-tight" style={{ fontFamily: "'Sora', sans-serif" }}>AlarmDesk</span>
-          <span className="ml-1 text-[10px] uppercase tracking-widest px-1.5 py-0.5 rounded bg-[#4f46e5]/15 text-[#4338ca] border border-[#4f46e5]/30">v4</span>
-        </div>
-        <nav className="hidden md:flex items-center gap-7 text-sm text-slate-600">
-          <a href="#features" className="hover:text-slate-900 transition">Funktionen</a>
-          <a href="#module" className="hover:text-slate-900 transition">Module</a>
-          <a href="#sicherheit" className="hover:text-slate-900 transition">Sicherheit</a>
-          <Link to="/hilfe" className="hover:text-slate-900 transition">Hilfe</Link>
+    <header className="sticky top-0 z-50 border-b border-hp-line/60 bg-hp-bg/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        <Link to="/homepage" className="flex items-center gap-2.5">
+          <img src={logo} alt="AlarmDesk" className="h-8 w-8 rounded-md" />
+          <span className="text-lg font-bold tracking-tight" style={display}>AlarmDesk</span>
+        </Link>
+        <nav className="hidden items-center gap-8 text-sm text-hp-muted md:flex">
+          <a href="#ablauf" className="transition hover:text-hp-text">Ablauf</a>
+          <a href="#module" className="transition hover:text-hp-text">Module</a>
+          <a href="#rollen" className="transition hover:text-hp-text">Rollen</a>
+          <a href="#sicherheit" className="transition hover:text-hp-text">Sicherheit</a>
         </nav>
-        <div className="flex items-center gap-2">
-          <Link to="/login" className="h-9 px-3 rounded-lg text-sm text-slate-700 hover:bg-[#ffffff] hover:text-slate-900 transition inline-flex items-center">
-            Anmelden
-          </Link>
-          <Link to="/login" className="h-9 px-4 rounded-lg text-sm font-medium bg-[#4f46e5] text-white hover:bg-[#4338ca] transition inline-flex items-center gap-1.5 shadow-lg shadow-[#4f46e5]/20">
-            Demo starten <ArrowRight className="size-3.5" />
-          </Link>
-        </div>
+        <Link to="/login" className="inline-flex h-9 items-center gap-1.5 rounded-full bg-hp-signal px-4 text-sm font-semibold text-hp-signal-ink transition hover:brightness-110">
+          Anmelden <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
     </header>
   );
@@ -84,238 +61,101 @@ function Header() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden pt-24 pb-16 lg:pt-28 lg:pb-24 px-6">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-[80%] h-[520px] rounded-full opacity-70"
-        style={{ background: "radial-gradient(60% 60% at 50% 40%, rgba(79,70,229,0.28), transparent 70%)", filter: "blur(120px)" }}
-      />
-      <div className="max-w-7xl mx-auto text-center relative z-10">
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-[#e2e8f0]/50 border border-[#4f46e5]/30 text-[#4f46e5]">
-          <span className="flex h-2 w-2 rounded-full bg-[#4f46e5]" />
-          <Sparkles className="size-3.5 text-[#4338ca]" /> Version 4 ist da
-        </span>
-        <h1
-          className="mt-8 text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] bg-clip-text text-transparent bg-gradient-to-b from-slate-900 to-slate-700"
-          style={{ fontFamily: "'Sora', sans-serif" }}
-        >
-          Einsatzmanagement,<br className="hidden sm:block" /> neu definiert.
-        </h1>
-        <p className="mt-6 max-w-2xl mx-auto text-lg md:text-xl text-slate-600 leading-relaxed">
-          AlarmDesk bündelt Einsätze, Revier-Center, Notdienste, Abrechnung und Kundendaten in einer modernen, mandantenfähigen Plattform — live, mobil und sicher.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-          <Link to="/login" className="h-12 px-7 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white font-semibold transition-all shadow-lg shadow-[#4f46e5]/25 inline-flex items-center gap-2">
-            Jetzt anmelden <ArrowRight className="size-4" />
-          </Link>
-          <a href="#features" className="h-12 px-7 rounded-lg bg-[#ffffff] border border-[#e2e8f0] hover:bg-[#e2e8f0] text-slate-900 font-semibold transition-all inline-flex items-center">
-            Funktionen entdecken
-          </a>
+    <section className="relative overflow-hidden">
+      <div className="hp-grid pointer-events-none absolute inset-0 opacity-40" />
+      <div className="relative mx-auto grid max-w-7xl items-center gap-14 px-6 pb-20 pt-20 lg:grid-cols-[1.1fr_1fr] lg:pt-28">
+        <div>
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-hp-line bg-hp-surface px-3 py-1 text-xs text-hp-muted">
+            <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-hp-ok opacity-70" /><span className="relative h-2 w-2 rounded-full bg-hp-ok" /></span>
+            Leitstelle online · Version 4
+          </div>
+          <h1 className="text-4xl font-bold leading-[1.05] tracking-tight md:text-6xl" style={display}>
+            Vom Alarm bis zur Rechnung.<br />
+            <span className="text-hp-signal">Ohne Medienbruch.</span>
+          </h1>
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-hp-muted">
+            AlarmDesk ist die Leitstellen-Software für Interventions- und Revierdienste: Einsätze disponieren, Fahrer live begleiten, Schlüssel lückenlos nachweisen und sauber ans ERP übergeben.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link to="/login" className="inline-flex h-12 items-center gap-2 rounded-full bg-hp-signal px-7 font-semibold text-hp-signal-ink transition hover:brightness-110">
+              Zur Anmeldung <ArrowRight className="h-4 w-4" />
+            </Link>
+            <a href="#module" className="inline-flex h-12 items-center rounded-full border border-hp-line px-7 font-semibold transition hover:bg-hp-surface">
+              Module ansehen
+            </a>
+          </div>
+          <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-hp-muted">
+            {["Push-Alarmierung", "DSGVO-konform in der EU", "Mandantenfähig"].map((t) => (
+              <span key={t} className="inline-flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-hp-ok" />{t}</span>
+            ))}
+          </div>
         </div>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs text-slate-600">
-          <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="size-3.5 text-emerald-400" /> DSGVO-konform</span>
-          <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="size-3.5 text-emerald-400" /> Hosting in DE</span>
-          <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="size-3.5 text-emerald-400" /> Mandantenfähig</span>
-        </div>
-
-        <DashboardPreview />
+        <LeitstellenKarte />
       </div>
     </section>
   );
 }
 
-function DashboardPreview() {
-  const stats = [
-    { l: "Monat Einsätze", v: 248, i: BarChart3, tone: "info" },
-    { l: "Aktive Einsätze", v: 12, i: CheckCircle2, tone: "success" },
-    { l: "Gesamt Einsätze", v: 1842, i: ListChecks, tone: "warning" },
-    { l: "Storniert", v: 7, i: XCircle, tone: "destructive" },
-    { l: "Datensätze", v: 5310, i: FolderOpen, tone: "muted" },
-    { l: "Schlüssel unterwegs", v: 31, i: KeyRound, tone: "warning" },
+function LeitstellenKarte() {
+  const rows = [
+    { nr: "E-2418", typ: "Einbruchmeldeanlage", ort: "Lagerhalle Nord", status: "Fahrer unterwegs", tone: "signal", eta: "06 Min" },
+    { nr: "E-2417", typ: "Brandmeldung", ort: "Bürokomplex West", status: "Vor Ort", tone: "alarm", eta: "—" },
+    { nr: "E-2416", typ: "Öffnung / Schließung", ort: "Filiale Altstadt", status: "Abgeschlossen", tone: "ok", eta: "—" },
   ] as const;
-  const toneMap: Record<string, string> = {
-    info: "bg-info/15 text-info",
-    success: "bg-success/15 text-success",
-    warning: "bg-warning/15 text-warning",
-    destructive: "bg-destructive/15 text-destructive",
-    muted: "bg-muted text-muted-foreground",
-  };
-  const recents = [
-    { d: "Einbruchmeldung · Müller GmbH", f: "T. Schneider", s: "vor 4 Min", du: "32m", st: "in_bearbeitung" },
-    { d: "Türöffnung · Praxis Dr. Weiß", f: "K. Bauer", s: "vor 18 Min", du: "1h 12m", st: "freigegeben" },
-    { d: "Revier-Kontrolle · Lager Ost", f: "A. Yilmaz", s: "vor 41 Min", du: "48m", st: "in_bearbeitung" },
-    { d: "Wasserschaden · Hotel Sonne", f: "M. Klein", s: "vor 1 Std", du: "2h 04m", st: "freigegeben" },
-    { d: "Alarm · Filiale Mitte", f: "S. Roth", s: "vor 2 Std", du: "27m", st: "abgelehnt" },
-  ];
-  const statusTone: Record<string, string> = {
-    in_bearbeitung: "bg-info/15 text-info",
-    freigegeben: "bg-success/15 text-success",
-    abgelehnt: "bg-destructive/15 text-destructive",
-  };
-  const nav = [
-    { i: Home, l: "Dashboard", active: true },
-    { i: BellIcon, l: "Alarmierung" },
-    { i: ListChecks, l: "Meine Einsätze" },
-    { i: Radar, l: "Revier-Center" },
-    { i: ScanLine, l: "OWKS" },
-    { i: Wrench, l: "Notdienst" },
-    { i: KeyRound, l: "Schlüsselbuch" },
-    { i: FolderOpen, l: "Dateien" },
-    { i: Users, l: "Kunden" },
-    { i: Settings, l: "Admin" },
-  ];
+  const tone = { signal: "bg-hp-signal/15 text-hp-signal", alarm: "bg-hp-alarm/15 text-hp-alarm", ok: "bg-hp-ok/15 text-hp-ok" };
   return (
-    <div className="mt-20 mx-auto max-w-6xl relative text-left">
-      <div aria-hidden className="absolute -inset-1 rounded-2xl bg-gradient-to-b from-[#4f46e5]/20 to-transparent blur-lg opacity-60" />
-      <div className="relative rounded-2xl border border-[#e2e8f0] bg-[#ffffff] overflow-hidden shadow-2xl">
-      <div className="h-10 border-b border-[#e2e8f0] flex items-center gap-1.5 px-4 bg-[#f8fafc]/60">
-        <span className="size-2.5 rounded-full bg-[#e2e8f0]" />
-        <span className="size-2.5 rounded-full bg-[#e2e8f0]" />
-        <span className="size-2.5 rounded-full bg-[#e2e8f0]" />
-        <span className="ml-3 text-xs text-slate-600">v4.alarmdesk-software.de/dashboard</span>
-      </div>
-      <div className="grid grid-cols-[200px_1fr]">
-        {/* Sidebar */}
-        <aside className="border-r border-[#e2e8f0] bg-[#f8fafc]/40 p-3 hidden sm:block">
-          <div className="flex items-center gap-2 px-2 py-2">
-            <img src={logo} alt="" className="size-6 rounded" />
-            <span className="text-sm font-semibold" style={{ fontFamily: "'Sora', sans-serif" }}>AlarmDesk</span>
-          </div>
-          <nav className="mt-3 space-y-0.5">
-            {nav.map((n) => (
-              <div key={n.l} className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-xs ${n.active ? "bg-[#4f46e5]/15 text-[#4f46e5] border border-[#4f46e5]/30" : "text-slate-600"}`}>
-                <n.i className="size-3.5" /> {n.l}
-              </div>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main */}
-        <div className="p-5 space-y-5 min-w-0">
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-slate-600">Dashboard</div>
-            <div className="text-lg font-bold mt-0.5 text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Guten Tag, Tim 👋</div>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {stats.map((s) => (
-              <div key={s.l} className="rounded-lg border border-[#e2e8f0] bg-[#f8fafc]/40 p-3">
-                <div className="size-7 rounded-md grid place-items-center bg-[#4f46e5]/15 text-[#4f46e5] border border-[#4f46e5]/30">
-                  <s.i className="size-3.5" />
-                </div>
-                <div className="mt-2 text-lg font-bold tabular-nums text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>{s.v.toLocaleString("de-DE")}</div>
-                <div className="text-[9px] uppercase tracking-wider text-slate-600 mt-0.5 truncate">{s.l}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-4">
-            <div className="lg:col-span-2 rounded-xl border border-[#e2e8f0] bg-[#f8fafc]/40 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <div className="text-sm font-semibold text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Letzte Einsätze</div>
-                  <div className="text-[10px] text-slate-600">Übersicht der jüngsten Aktivitäten</div>
-                </div>
-                <TrendingUp className="size-4 text-[#4338ca]" />
-              </div>
-              <table className="w-full text-xs">
-                <thead className="text-[9px] uppercase tracking-wider text-slate-600">
-                  <tr className="border-b border-[#e2e8f0]">
-                    <th className="text-left font-medium py-1.5">Datei</th>
-                    <th className="text-left font-medium py-1.5 hidden md:table-cell">Fahrer</th>
-                    <th className="text-left font-medium py-1.5 hidden md:table-cell">Start</th>
-                    <th className="text-left font-medium py-1.5">Dauer</th>
-                    <th className="text-left font-medium py-1.5">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recents.map((r, i) => (
-                    <tr key={i} className="border-b border-[#e2e8f0]/50 last:border-0">
-                      <td className="py-2 truncate max-w-[180px] text-slate-800">{r.d}</td>
-                      <td className="py-2 text-slate-600 hidden md:table-cell">{r.f}</td>
-                      <td className="py-2 text-slate-600 hidden md:table-cell">{r.s}</td>
-                      <td className="py-2 text-slate-600 tabular-nums">{r.du}</td>
-                      <td className="py-2">
-                        <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] ${statusTone[r.st]}`}>{r.st}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="space-y-4">
-              <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc]/40 p-4">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-slate-600">
-                  <Clock className="size-3" /> Durchschnitt (Monat)
-                </div>
-                <div className="mt-3 space-y-2 text-xs">
-                  <div className="flex justify-between"><span className="text-slate-600">Einsatzdauer</span><span className="font-medium tabular-nums text-slate-900">52m</span></div>
-                  <div className="flex justify-between"><span className="text-slate-600">Anfahrt</span><span className="font-medium tabular-nums text-slate-900">14m</span></div>
-                  <div className="flex justify-between"><span className="text-slate-600">Reaktionszeit</span><span className="font-medium tabular-nums text-slate-900">6m</span></div>
-                </div>
-              </div>
-              <div className="rounded-xl border border-[#e2e8f0] bg-[#f8fafc]/40 p-4">
-                <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-slate-600">
-                  <Users className="size-3" /> Top Teilnehmer
-                </div>
-                <div className="mt-3 space-y-2 text-xs">
-                  {[
-                    { n: "T. Schneider", v: 48 },
-                    { n: "K. Bauer", v: 36 },
-                    { n: "A. Yilmaz", v: 29 },
-                  ].map((p) => (
-                    <div key={p.n} className="flex items-center justify-between">
-                      <span className="text-slate-800">{p.n}</span>
-                      <span className="text-slate-600 tabular-nums">{p.v}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+    <div className="relative">
+      <div className="absolute -inset-6 rounded-[2rem] bg-hp-signal/10 blur-3xl" />
+      <div className="relative rounded-2xl border border-hp-line bg-hp-surface p-5 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-semibold"><Radio className="h-4 w-4 text-hp-alarm" /> Alarmierung · live</div>
+          <span className="font-mono text-xs text-hp-muted">Europe/Berlin</span>
         </div>
-      </div>
+        <div className="space-y-2.5">
+          {rows.map((r) => (
+            <div key={r.nr} className="flex items-center justify-between gap-3 rounded-xl border border-hp-line/70 bg-hp-bg/60 px-4 py-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-sm font-semibold"><span className="font-mono text-hp-muted">{r.nr}</span>{r.typ}</div>
+                <div className="mt-0.5 flex items-center gap-1 text-xs text-hp-muted"><MapPin className="h-3 w-3" />{r.ort}</div>
+              </div>
+              <div className="text-right">
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${tone[r.tone]}`}>{r.status}</span>
+                <div className="mt-1 font-mono text-xs text-hp-muted">{r.eta !== "—" ? `Ankunft ${r.eta}` : " "}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-3 gap-2.5">
+          {[["14", "Offen heute"], ["5", "Fahrer im Dienst"], ["0", "ERP ausstehend"]].map(([v, l]) => (
+            <div key={l} className="rounded-xl border border-hp-line/70 bg-hp-bg/60 p-3">
+              <div className="text-2xl font-bold" style={display}>{v}</div>
+              <div className="text-xs text-hp-muted">{l}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-function LogosBar() {
-  return (
-    <div className="border-y border-[#e2e8f0] bg-[#ffffff]/40">
-      <div className="max-w-7xl mx-auto px-6 py-8 text-center">
-        <p className="text-xs uppercase tracking-widest text-slate-600">
-          Vertraut von Sicherheits- und Wachdiensten in ganz Deutschland
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function Features() {
-  const items = [
-    { i: Activity, t: "Live-Monitor", d: "Standorte, Status und Einsätze in Echtzeit auf der Karte." },
-    { i: FileText, t: "Berichte & PDFs", d: "Automatische Berichtsnummer, PDF-Versand per E-Mail, ERP-Anbindung." },
-    { i: Bell, t: "Alarmierung", d: "Einsätze blitzschnell erstellen, halten und zuweisen." },
-    { i: Users, t: "Mandantenfähig", d: "Saubere Trennung pro Domäne mit SuperAdmin-Konsole." },
-    { i: KeyRound, t: "Schlüsselbuch", d: "Übergaben digital dokumentieren — wer hat was und seit wann." },
-    { i: Lock, t: "Rechte & Rollen", d: "Feingranulare Rollen, sichere RLS-Policies, Audit-fähig." },
+function Ablauf() {
+  const steps = [
+    { icon: Bell, t: "Alarm eingehen", d: "Einsatz anlegen, Kunde per Teilnehmer- oder Anlagennummer finden, Fahrer zuweisen – Push geht sofort raus." },
+    { icon: Truck, t: "Fahrer begleiten", d: "Live-Status, Ankunftszeit und Anruf-Button. Der Fahrer sieht nur Dateien und Schlüssel seines Kunden." },
+    { icon: ClipboardList, t: "Leitstelle prüft", d: "Protokoll kontrollieren, Zeiten und Texte korrigieren, PDF-Bericht an den Kunden senden." },
+    { icon: Server, t: "Einmal ans ERP", d: "Mit einem Klick übertragen – Personalnummer und Schichtname inklusive. Danach gesperrt." },
   ];
   return (
-    <section id="features" className="py-24 bg-[#ffffff] border-y border-[#e2e8f0]">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="max-w-2xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-[#4338ca] font-semibold">Funktionen</div>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Alles, was Ihr Team im Einsatz braucht.</h2>
-          <p className="mt-4 text-slate-600 leading-relaxed">Von der Disposition bis zur Abrechnung — in einer einzigen, schnellen Oberfläche.</p>
-        </div>
-        <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map((f) => (
-            <div key={f.t} className="group rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]/60 p-6 hover:border-[#4f46e5]/60 hover:bg-[#f8fafc] transition-all">
-              <div className="size-11 rounded-lg grid place-items-center bg-[#4f46e5]/10 text-[#4338ca] border border-[#4f46e5]/20 group-hover:bg-[#4f46e5]/20 transition-colors">
-                <f.i className="size-5" />
-              </div>
-              <div className="mt-5 font-semibold text-slate-900 text-lg" style={{ fontFamily: "'Sora', sans-serif" }}>{f.t}</div>
-              <div className="text-sm text-slate-600 mt-2 leading-relaxed">{f.d}</div>
+    <section id="ablauf" className="border-y border-hp-line/60 bg-hp-surface/40 py-24">
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHead kicker="Ablauf" title="Ein Einsatz, vier klare Schritte" />
+        <div className="mt-14 grid gap-4 md:grid-cols-4">
+          {steps.map((s, i) => (
+            <div key={s.t} className="relative rounded-2xl border border-hp-line bg-hp-bg p-6">
+              <span className="absolute right-5 top-5 font-mono text-xs text-hp-muted">0{i + 1}</span>
+              <s.icon className="h-6 w-6 text-hp-signal" />
+              <h3 className="mt-5 text-lg font-semibold" style={display}>{s.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-hp-muted">{s.d}</p>
             </div>
           ))}
         </div>
@@ -324,74 +164,43 @@ function Features() {
   );
 }
 
-function Modules() {
-  const mods = [
-    {
-      i: Bell,
-      t: "Einsatzverwaltung",
-      d: "Das Herzstück von AlarmDesk: Einsätze in Sekunden anlegen, einem Fahrer zuweisen, mit Hold-Button pausieren und über die Statusampel jederzeit sehen, wo der Einsatz steht. Berichte werden mit automatischer Nummer generiert und per E-Mail oder ERP versendet.",
-      tags: ["Hold-Button", "Statusampel", "Auto-Berichtsnummer", "PDF-Versand"],
-    },
-    {
-      i: Radar,
-      t: "Revier-Center / OWKS",
-      badge: "Neu in v4",
-      d: "Komplett neu in v4: Das Revier-Center bündelt das gesamte Objekt- und Wachschutz-Management an einem Ort. Verwalten Sie Objekte, kleben Sie NFC-Punkte an Kontrollstellen und planen Sie wiederkehrende Bestreifungen über den visuellen Zeitstrahl. Fahrer scannen vor Ort per NFC, die Leitstelle sieht jeden Kontrollpunkt live.",
-      tags: ["Objektverwaltung", "NFC-Scans", "Zeitstrahl-Planung", "Bestreifungspläne", "Rundgangsverwaltung"],
-    },
-    {
-      i: Zap,
-      t: "ESRP-Anbindung",
-      d: "Einmalig konfigurieren, dann läuft der Versand an Drittsysteme automatisch beim Abschluss eines Einsatzes — oder manuell aus dem Bericht-Dialog. Eine zentrale Outbox zeigt jeden Versand mit Statuslampe, fehlgeschlagene Übermittlungen lassen sich mit einem Klick wiederholen.",
-      tags: ["Auto-Versand", "Outbox", "Wiederholung", "Statuslampe"],
-    },
-    {
-      i: Wrench,
-      t: "Notdienst-Module",
-      d: "Individuell entwickelte Module für einzelne Auftraggeber: maßgeschneiderte Erfassungsmasken, eigene Mitarbeiter- und Verfügbarkeitsverwaltung, kundenspezifische PDF-Vorlagen und optionale Schnittstellen zu Drittsystemen. Weitere Notdienst-Module können jederzeit ergänzt werden.",
-      tags: ["Individuelle Formulare", "Eigene PDFs", "Verfügbarkeiten"],
-    },
-    {
-      i: FileText,
-      t: "Abrechnung & Dienstpläne",
-      d: "Abrechnungen pro Auftraggeber erstellen, mit Positionen aus erledigten Einsätzen, und direkt als PDF per E-Mail versenden. Dienstpläne ergänzen die Disposition um die Personalseite — wer wann wo ist.",
-      tags: ["Pro Auftraggeber", "PDF-Versand", "Dienstpläne"],
-    },
-    {
-      i: FolderOpen,
-      t: "Stammdaten & Dateien",
-      d: "Kundenverwaltung, Schlüsselbuch, Daten-Import und ein zentraler Dateien-Bereich — alle Stammdaten an einem Ort, sauber pro Mandant getrennt und mit Volltextsuche.",
-      tags: ["Kunden", "Schlüsselbuch", "Import", "Dateien"],
-    },
-  ];
+const MODULE = [
+  { g: "Einsatz", icon: Radar, t: "Alarmierung", d: "Einsätze mit Storno-Grund, Neuzuweisung und Einsatzprotokoll." },
+  { g: "Einsatz", icon: Smartphone, t: "Fahrer-App", d: "Meine Einsätze, Stempelzeiten per Klick, Notizen zum Objekt." },
+  { g: "Einsatz", icon: Bell, t: "Push-Benachrichtigung", d: "Pro Gerät steuerbar – für Fahrer und Zentrale." },
+  { g: "Einsatz", icon: MessageSquare, t: "Chat", d: "#Allgemein, #Zentrale und Direktnachrichten." },
+  { g: "Kunde", icon: FolderOpen, t: "Kundenakte", d: "Dateien, Schlüssel, Objektdossier und Einsätze an einem Ort." },
+  { g: "Kunde", icon: KeyRound, t: "Schlüsselbuch", d: "Ausgabe, Rücknahme, Zwangsrücknahme und Inventur mit PDF." },
+  { g: "Kunde", icon: ListChecks, t: "Checklisten", d: "Feste Abläufe je Objekt und Einsatzart." },
+  { g: "Kunde", icon: Tag, t: "Findo-ID", d: "Fundanhänger mit QR – Finder melden ohne Anmeldung." },
+  { g: "Betrieb", icon: Truck, t: "Fuhrpark", d: "Fahrzeuge, Termine, KM-Log und Schadensskizze vom Fahrer." },
+  { g: "Betrieb", icon: Package, t: "Lager", d: "Bestände und Ausgabe über die Lager-Station." },
+  { g: "Betrieb", icon: Shirt, t: "Dienstkleidung", d: "Größe, Zustand, Rückgabe und Verbleib je Mitarbeiter." },
+  { g: "Betrieb", icon: Phone, t: "Diensttelefone", d: "Geräte zuordnen und nachverfolgen." },
+  { g: "Verwaltung", icon: IdCard, t: "Dienstausweise", d: "Vorder- und Rückseite, eigene Vorlagen, QR-Prüfseite." },
+  { g: "Verwaltung", icon: FileText, t: "Abrechnung & ERP", d: "PDF-Export, Sonderabrechnungen und einmaliger ERP-Versand." },
+  { g: "Verwaltung", icon: Activity, t: "Logs live", d: "Aktionen in Echtzeit, 7 Tage gespeichert." },
+  { g: "Verwaltung", icon: Search, t: "Dashboard", d: "Anpassbare Kacheln pro Nutzer." },
+];
+
+function Module() {
+  const gruppen = ["Einsatz", "Kunde", "Betrieb", "Verwaltung"];
   return (
     <section id="module" className="py-24">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="max-w-2xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-[#4338ca] font-semibold">Module</div>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Eine Plattform, viele Spezialisten.</h2>
-          <p className="mt-4 text-slate-600 leading-relaxed">Aktivieren Sie nur, was Ihre Domäne braucht — wir erweitern AlarmDesk individuell für Ihre Abläufe.</p>
-        </div>
-        <div className="mt-14 grid md:grid-cols-2 gap-6">
-          {mods.map((m) => (
-            <div key={m.t} className="rounded-2xl border border-[#e2e8f0] bg-[#ffffff] p-7 hover:border-[#4f46e5]/60 transition-all">
-              <div className="flex items-start justify-between gap-3">
-                <div className="size-11 rounded-lg grid place-items-center bg-[#4f46e5]/10 text-[#4338ca] border border-[#4f46e5]/20 shrink-0">
-                  <m.i className="size-5" />
-                </div>
-                {m.badge && (
-                  <span className="text-[10px] uppercase tracking-widest px-2 py-1 rounded-full bg-[#4f46e5] text-white font-semibold">{m.badge}</span>
-                )}
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHead kicker="Module" title="Alles, was ein Sicherheitsdienst täglich braucht" sub={`${MODULE.length} Module – je nach Rolle sichtbar.`} />
+        <div className="mt-14 grid gap-10 lg:grid-cols-4">
+          {gruppen.map((g) => (
+            <div key={g}>
+              <div className="mb-4 font-mono text-xs uppercase tracking-widest text-hp-signal">{g}</div>
+              <div className="space-y-3">
+                {MODULE.filter((m) => m.g === g).map((m) => (
+                  <div key={m.t} className="group rounded-xl border border-hp-line bg-hp-surface/60 p-4 transition hover:border-hp-signal/60">
+                    <div className="flex items-center gap-2.5 font-semibold"><m.icon className="h-4 w-4 text-hp-muted transition group-hover:text-hp-signal" />{m.t}</div>
+                    <p className="mt-1.5 text-sm text-hp-muted">{m.d}</p>
+                  </div>
+                ))}
               </div>
-              <div className="mt-5 font-semibold text-lg text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>{m.t}</div>
-              <div className="text-sm text-slate-600 mt-2 leading-relaxed">{m.d}</div>
-              {m.tags && (
-                <div className="mt-4 flex flex-wrap gap-1.5">
-                  {m.tags.map((tag) => (
-                    <span key={tag} className="text-[10px] px-2 py-0.5 rounded-full bg-[#f8fafc] text-slate-700 border border-[#e2e8f0]">{tag}</span>
-                  ))}
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -400,148 +209,24 @@ function Modules() {
   );
 }
 
-function HnrModule() {
-  const steps = [
-    "Einsatz abrufen – Stammdaten digital am Mobilgerät verfügbar.",
-    "Ankunft & Zeiterfassung – Alle Ereignisse vor Ort strukturiert erfassen.",
-    "Ereignisse dokumentieren – Zustand, Maßnahmen, Übergabe in vordefinierten Feldern.",
-    "PDF-Bericht generieren – Vollständiger Bericht automatisch erstellt und archiviert.",
-  ];
-  const features = [
-    "Digitale Stammdatenverwaltung pro Objekt",
-    "Mobiler Zugriff für Fahrer",
-    "Strukturierte Zeiterfassung",
-    "Ereignisprotokoll mit Kategorien",
-    "Automatischer PDF-Bericht pro Einsatz",
-    "Archivierung & Suchfunktion",
-    "Anbindung an Leitstelle-Übersicht",
-  ];
-  const badges = [
-    { i: FileText, l: "PDF-Bericht" },
-    { i: Smartphone, l: "Mobil" },
-    { i: Archive, l: "Archiv" },
-    { i: Timer, l: "Zeiterfassung" },
+function Rollen() {
+  const rollen = [
+    { icon: Truck, t: "Fahrer", d: "Eigene Einsätze, Schichtname beim Login, Fahrzeugschäden melden, Objektnotizen." },
+    { icon: Radio, t: "Disponent", d: "Alarmierung, Kundenakte, Schlüsselbuch, Fuhrpark und Chat." },
+    { icon: Users, t: "Service", d: "Disponenten-Rechte plus Benutzer, Einstellungen/ERP, Ausweise und Fuhrpark." },
+    { icon: ShieldCheck, t: "Admin", d: "Volle Kontrolle über Firma, Rollen, Abrechnung und Logs live." },
   ];
   return (
-    <section id="hnr" className="py-24 bg-[#ffffff] border-y border-[#e2e8f0]">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-12">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-[0.2em] text-[#4338ca] font-semibold">Modul</span>
-              <span className="text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓ Vollständig entwickelt</span>
+    <section id="rollen" className="border-y border-hp-line/60 bg-hp-surface/40 py-24">
+      <div className="mx-auto max-w-7xl px-6">
+        <SectionHead kicker="Rollen" title="Jeder sieht genau, was er braucht" />
+        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {rollen.map((r) => (
+            <div key={r.t} className="rounded-2xl border border-hp-line bg-hp-bg p-6">
+              <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-hp-signal/15"><r.icon className="h-5 w-5 text-hp-signal" /></div>
+              <h3 className="mt-5 text-lg font-semibold" style={display}>{r.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-hp-muted">{r.d}</p>
             </div>
-            <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>HNR-Modul – Hausnotruf</h2>
-            <p className="mt-2 text-sm text-slate-600">Für Fahrer & Disponenten im Hausnotruf-Betrieb</p>
-            <p className="mt-6 text-slate-600 leading-relaxed">
-              Das HNR-Modul digitalisiert den Hausnotruf-Einsatz vollständig — vom Abruf der Stammdaten beim Fahrer über die Zeiterfassung vor Ort bis zum abschließenden PDF-Bericht. Kein Zettelwirtschaft, kein nachträgliches Tippen.
-            </p>
-
-            <div className="mt-8">
-              <div className="text-sm font-semibold mb-4 text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Ablauf im Einsatz</div>
-              <ol className="space-y-3">
-                {steps.map((s, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span className="size-7 rounded-full bg-[#4f46e5] text-white text-xs font-bold grid place-items-center shrink-0 shadow-lg shadow-[#4f46e5]/20">{i + 1}</span>
-                    <span className="text-sm text-slate-700 pt-1 leading-relaxed">{s}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          </div>
-
-          <div>
-            <div className="rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]/60 p-7">
-              <div className="flex items-center gap-2">
-                <Phone className="size-5 text-[#4338ca]" />
-                <div className="font-semibold text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Was das Modul liefert</div>
-              </div>
-              <ul className="mt-4 space-y-2.5">
-                {features.map((f) => (
-                  <li key={f} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckCircle2 className="size-4 mt-0.5 text-emerald-400 shrink-0" />
-                    <span>{f}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6 flex flex-wrap gap-2">
-                {badges.map((b) => (
-                  <span key={b.l} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#ffffff] border border-[#e2e8f0] text-xs text-slate-700">
-                    <b.i className="size-3.5 text-[#4338ca]" /> {b.l}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Testimonials() {
-  const reviews = [
-    {
-      n: "Michael K.",
-      r: "Leitstellenleiter, Sicherheitsdienst NRW",
-      t: "Endlich eine Oberfläche, die unsere Leitstelle wirklich versteht. Einsätze zuweisen, Status updaten, Notizen hinterlegen — alles ohne Umwege. Das Team war nach einem Tag drin.",
-    },
-    {
-      n: "Sandra B.",
-      r: "Betriebsleiterin, Sicherheits- & Pflegedienst",
-      t: "Das HNR-Modul hat unsere Hausnotruf-Abläufe komplett verändert. Die Fahrer haben alles auf dem Handy, der PDF-Bericht läuft automatisch. Wir sparen täglich mindestens eine Stunde Büroarbeit.",
-    },
-    {
-      n: "Thomas H.",
-      r: "Geschäftsführer, Objekt- & Revierdienst",
-      t: "Wir nutzen das Notdienst-Modul für unseren Telefonservice. Anruf rein, Maske ausfüllen, PDF an den Kunden — fertig. Professionell und schnell. Unsere Auftraggeber sind begeistert.",
-    },
-    {
-      n: "Jana W.",
-      r: "Disponentin, Wachdienst Berlin",
-      t: "Der Zeitstrahl im Revier-Center ist Gold wert. Ich plane Bestreifungen jetzt visuell statt in Excel-Listen und sehe Konflikte sofort. Die Fahrer scannen NFC vor Ort — kein Diskutieren mehr, ob jemand wirklich da war.",
-    },
-    {
-      n: "Christian R.",
-      r: "Inhaber, Sicherheitsdienst Süddeutschland",
-      t: "Die Mandantentrennung läuft sauber, RLS-Policies und Rollen passen genau zu unserem Aufbau. Als Geschäftsführer schlafe ich ruhiger, seit wir auf AlarmDesk umgestiegen sind.",
-    },
-    {
-      n: "Petra L.",
-      r: "Buchhaltung, Sicherheits- & Servicegruppe",
-      t: "Abrechnung pro Auftraggeber, automatischer PDF-Versand, fertige Positionen aus den Einsätzen — was früher zwei Tage Arbeit war, geht jetzt in zwei Stunden. Unbezahlbar.",
-    },
-  ];
-  return (
-    <section id="bewertungen" className="py-24">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="max-w-2xl">
-          <div className="text-xs uppercase tracking-[0.2em] text-[#4338ca] font-semibold">Stimmen aus der Praxis</div>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Was Kunden sagen.</h2>
-          <p className="mt-4 text-slate-600 leading-relaxed">Frühe Nutzer über ihre Erfahrung mit AlarmDesk im täglichen Betrieb.</p>
-        </div>
-        <div className="mt-14 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {reviews.map((r) => (
-            <figure key={r.n} className="rounded-2xl border border-[#e2e8f0] bg-[#ffffff] p-6 flex flex-col hover:border-[#4f46e5]/60 transition-all">
-              <Quote className="size-5 text-[#4f46e5]/70" />
-              <div className="mt-3 flex items-center gap-0.5 text-amber-400">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="size-4 fill-current" />
-                ))}
-              </div>
-              <blockquote className="mt-4 text-sm leading-relaxed text-slate-800 flex-1">
-                „{r.t}"
-              </blockquote>
-              <figcaption className="mt-5 flex items-center gap-3 pt-4 border-t border-[#e2e8f0]">
-                <div className="size-9 rounded-full bg-[#4f46e5]/15 text-[#4f46e5] border border-[#4f46e5]/30 grid place-items-center text-xs font-bold">
-                  {r.n.split(" ").map((p) => p[0]).join("")}
-                </div>
-                <div>
-                  <div className="text-sm font-semibold text-slate-900">{r.n}</div>
-                  <div className="text-xs text-slate-600">{r.r}</div>
-                </div>
-              </figcaption>
-            </figure>
           ))}
         </div>
       </div>
@@ -549,42 +234,25 @@ function Testimonials() {
   );
 }
 
-function SecuritySection() {
+function Sicherheit() {
+  const punkte = [
+    { icon: Lock, t: "Strikte Mandantentrennung", d: "Jede Firma sieht ausschließlich ihre eigenen Daten." },
+    { icon: KeyRound, t: "Kundengebundene Dateien", d: "Fahrer erhalten nur Unterlagen, die zum Kunden passen." },
+    { icon: Clock, t: "Nachvollziehbar", d: "Aktionsprotokoll mit automatischer Löschung nach 7 Tagen." },
+    { icon: Server, t: "Hosting in der EU", d: "Verschlüsselte Übertragung, ERP-Anbindung nur über HTTPS." },
+  ];
   return (
-    <section id="sicherheit" className="py-24 bg-[#ffffff] border-y border-[#e2e8f0]">
-      <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
-        <div>
-          <div className="text-xs uppercase tracking-[0.2em] text-[#4338ca] font-semibold">Sicherheit</div>
-          <h2 className="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Schutz, der zu Ihrer Branche passt.</h2>
-          <p className="mt-4 text-slate-600 leading-relaxed">Strikte Mandantentrennung, private Dokumenten-Speicher, signierte Download-Links, Row-Level-Security und Google-Login.</p>
-          <ul className="mt-8 space-y-3 text-sm text-slate-800">
-            {[
-              "Domain-Scoped Rollen & Berechtigungen",
-              "Verschlüsselte Speicherung sensibler Dokumente",
-              "Audit-fähige Aktivitätsprotokolle",
-              "DSGVO-konformes Hosting in Deutschland",
-            ].map((p) => (
-              <li key={p} className="flex items-start gap-2.5">
-                <CheckCircle2 className="size-4 mt-0.5 text-emerald-400 shrink-0" /> {p}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="rounded-2xl border border-[#e2e8f0] bg-[#f8fafc]/60 p-8">
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { i: Shield, t: "RLS", d: "Row-Level-Security" },
-              { i: Lock, t: "Privat", d: "Storage-Buckets" },
-              { i: Zap, t: "Schnell", d: "Edge-deployed" },
-              { i: Users, t: "Multi-Tenant", d: "Mandantenfähig" },
-            ].map((b) => (
-              <div key={b.t} className="rounded-xl border border-[#e2e8f0] bg-[#ffffff]/60 p-5 hover:border-[#4f46e5]/50 transition-colors">
-                <b.i className="size-5 text-[#4338ca]" />
-                <div className="mt-3 font-semibold text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>{b.t}</div>
-                <div className="text-xs text-slate-600 mt-1">{b.d}</div>
-              </div>
-            ))}
-          </div>
+    <section id="sicherheit" className="py-24">
+      <div className="mx-auto grid max-w-7xl gap-14 px-6 lg:grid-cols-[1fr_1.3fr]">
+        <SectionHead kicker="Sicherheit" title="Gebaut für sensible Kundendaten" sub="Schlüssel, Alarmpläne und Objektdaten verdienen mehr als eine Tabelle." align="left" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          {punkte.map((p) => (
+            <div key={p.t} className="rounded-2xl border border-hp-line bg-hp-surface/60 p-6">
+              <p.icon className="h-5 w-5 text-hp-ok" />
+              <h3 className="mt-4 font-semibold">{p.t}</h3>
+              <p className="mt-1.5 text-sm text-hp-muted">{p.d}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -593,20 +261,16 @@ function SecuritySection() {
 
 function CTA() {
   return (
-    <section className="py-24">
-      <div className="max-w-5xl mx-auto px-6">
-        <div className="rounded-3xl border border-[#e2e8f0] p-10 sm:p-14 text-center relative overflow-hidden"
-          style={{ background: "linear-gradient(135deg, rgba(79,70,229,0.18), #ffffff 60%)" }}>
-          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 w-3/4 h-48 bg-[#4f46e5]/25 blur-[100px] rounded-full" />
-          <h2 className="relative text-3xl sm:text-4xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Sora', sans-serif" }}>Bereit, Ihre Einsätze zu modernisieren?</h2>
-          <p className="relative mt-4 text-slate-700 max-w-xl mx-auto leading-relaxed">Loggen Sie sich ein und entdecken Sie AlarmDesk v4 — oder kontaktieren Sie uns für eine maßgeschneiderte Einführung.</p>
-          <div className="relative mt-8 flex flex-wrap items-center justify-center gap-3">
-            <Link to="/login" className="h-11 px-6 rounded-lg bg-[#4f46e5] hover:bg-[#4338ca] text-white font-semibold transition-all inline-flex items-center gap-2 shadow-lg shadow-[#4f46e5]/25">
-              Zur Anmeldung <ArrowRight className="size-4" />
-            </Link>
-            <a href="mailto:info@alarmdesk-software.de" className="h-11 px-6 rounded-lg bg-[#f8fafc] border border-[#e2e8f0] hover:bg-[#e2e8f0] text-slate-900 font-semibold transition-all inline-flex items-center">
-              Kontakt aufnehmen
-            </a>
+    <section className="px-6 pb-24">
+      <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl border border-hp-signal/40 bg-hp-surface p-10 md:p-16">
+        <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl" style={display}>Bereit für die nächste Schicht?</h2>
+            <p className="mt-3 text-hp-muted">Melde dich an oder schreib uns für einen Zugang für deine Firma.</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link to="/login" className="inline-flex h-12 items-center gap-2 rounded-full bg-hp-signal px-7 font-semibold text-hp-signal-ink transition hover:brightness-110">Anmelden <ArrowRight className="h-4 w-4" /></Link>
+            <a href="mailto:info@alarmdesk-software.de" className="inline-flex h-12 items-center rounded-full border border-hp-line px-7 font-semibold transition hover:bg-hp-bg">Kontakt</a>
           </div>
         </div>
       </div>
@@ -616,18 +280,25 @@ function CTA() {
 
 function Footer() {
   return (
-    <footer className="border-t border-[#e2e8f0] bg-[#f8fafc]">
-      <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-600">
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="AlarmDesk" className="size-6 rounded" />
-          <span>© {new Date().getFullYear()} AlarmDesk Software · Ein Produkt vom Kiehn Network</span>
-        </div>
-        <div className="flex items-center gap-5">
-          <Link to="/impressum" className="hover:text-slate-900 transition">Impressum</Link>
-          <Link to="/datenschutz" className="hover:text-slate-900 transition">Datenschutz</Link>
-          <Link to="/login" className="hover:text-slate-900 transition">Anmelden</Link>
+    <footer className="border-t border-hp-line/60">
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 text-sm text-hp-muted md:flex-row">
+        <span>AlarmDesk – ein Produkt des Kiehn Network © {new Date().getFullYear()}</span>
+        <div className="flex gap-6">
+          <Link to="/impressum" className="hover:text-hp-text">Impressum</Link>
+          <Link to="/datenschutz" className="hover:text-hp-text">Datenschutz</Link>
+          <Link to="/login" className="hover:text-hp-text">Anmelden</Link>
         </div>
       </div>
     </footer>
+  );
+}
+
+function SectionHead({ kicker, title, sub, align = "center" }: { kicker: string; title: string; sub?: string; align?: "center" | "left" }) {
+  return (
+    <div className={align === "center" ? "mx-auto max-w-2xl text-center" : ""}>
+      <div className="font-mono text-xs uppercase tracking-widest text-hp-signal">{kicker}</div>
+      <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl" style={display}>{title}</h2>
+      {sub && <p className="mt-4 text-hp-muted">{sub}</p>}
+    </div>
   );
 }
