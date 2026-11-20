@@ -6,6 +6,7 @@ import { useRole } from "@/hooks/use-role";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ListenPager, useSeiten } from "@/components/listen-pager";
 
 export const Route = createFileRoute("/_authenticated/logs-live")({
   head: () => ({
@@ -68,6 +69,7 @@ function LogsLive() {
       return [n, r.seite, r.aktion, r.ziel].some((v) => v?.toLowerCase().includes(s));
     });
   }, [rows, q, nutzer]);
+  const seiten = useSeiten(gefiltert, 20, `${q}|${nutzer}`);
 
   if (loading) return <div className="p-6 text-sm text-muted-foreground">Lade…</div>;
   if (!isAdmin) return <div className="p-6 text-sm text-muted-foreground">Nur Admins haben Zugriff auf die Live-Logs.</div>;
@@ -102,7 +104,7 @@ function LogsLive() {
           </thead>
           <tbody>
             {gefiltert.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-muted-foreground">Noch keine Einträge.</td></tr>}
-            {gefiltert.map((r) => (
+            {seiten.pageItems.map((r) => (
               <tr key={r.id} className={`border-b border-border/50 ${r.id === neu ? "bg-primary/10" : ""}`}>
                 <td className="p-3 whitespace-nowrap tabular-nums text-muted-foreground">{fmt.format(new Date(r.created_at))}</td>
                 <td className="p-3 font-medium whitespace-nowrap">{r.user_name || r.user_id.slice(0, 8)}</td>
@@ -113,6 +115,7 @@ function LogsLive() {
             ))}
           </tbody>
         </table>
+        <ListenPager {...seiten} />
       </div>
     </div>
   );

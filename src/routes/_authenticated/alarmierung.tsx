@@ -10,6 +10,7 @@ import {
   MoreHorizontal, FileText, Filter, Info, Pencil, Trash2, Network, Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ListenPager, useSeiten } from "@/components/listen-pager";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -360,6 +361,8 @@ function AlarmierungPage() {
     erledigt: einsaetze.filter(isErledigt).length,
   }), [einsaetze]);
 
+  const seiten = useSeiten(filtered, 20, `${search}|${tab}|${typFilter}|${dateFrom}|${dateTo}`);
+
   // Visible IDs in current filter view
   const visibleIds = useMemo(() => filtered.map((e) => e.id), [filtered]);
   const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
@@ -530,7 +533,7 @@ function AlarmierungPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {filtered.map((e) => {
+                {seiten.pageItems.map((e) => {
                   const typ = e.einsatz_typ ?? "av_einsatz";
                   const isHausnotruf = typ === "hausnotruf";
                   const aktiv = isAktiv(e);
@@ -662,6 +665,7 @@ function AlarmierungPage() {
             </table>
           </div>
         )}
+        {!isLoading && <ListenPager {...seiten} />}
       </div>
 
       <HistoryDialog einsatz={history} onClose={() => setHistory(null)} />
